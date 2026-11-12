@@ -4951,7 +4951,7 @@
           "description": "Show the files of your Desktop folder.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "arrange",
             "label": "prefs.desktop.icons",
             "control": "toggle",
             "keywords": "desktop icons files show hide"
@@ -5013,7 +5013,7 @@
           "description": "Colour of the icon names.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "icondetails",
             "label": "prefs.desktop.icon_text",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -5214,7 +5214,7 @@
           "description": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.depth_layering",
             "control": "toggle",
             "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
@@ -5227,7 +5227,7 @@
           "description": "A big clock drawn behind the subject of your wallpaper.",
           "x-settings": {
             "category": "desktop",
-            "section": "clock",
+            "section": "arrange",
             "label": "prefs.desktop.depth_clock",
             "control": "toggle",
             "keywords": "clock time wallpaper depth subject behind big widget"
@@ -5263,7 +5263,7 @@
           "description": "Auto picks the side where the subject leaves the time readable.",
           "x-settings": {
             "category": "desktop",
-            "section": "clock",
+            "section": "clockmore",
             "label": "prefs.label.clock_position",
             "control": "selector",
             "keywords": "clock side left right auto placement",
@@ -5290,7 +5290,7 @@
           "description": "Builds a matte so the clock goes behind the moving subject too.",
           "x-settings": {
             "category": "desktop",
-            "section": "clock",
+            "section": "clockmore",
             "label": "prefs.desktop.depth_clock_video",
             "control": "toggle",
             "preview": "DepthMatteStatus",
@@ -5308,7 +5308,7 @@
           "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
           "x-settings": {
             "category": "desktop",
-            "section": "clock",
+            "section": "clockmore",
             "label": "prefs.label.clock_colour",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -5348,7 +5348,7 @@
           "description": "Show widgets on the desktop. They pause while windows cover them.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widgets_enabled",
             "control": "toggle",
             "keywords": "widgets desktop show hide"
@@ -5361,10 +5361,10 @@
           "description": "Add widgets, then drag and resize them on the desktop (right click on the desktop or the Edit Desktop Widgets shortcut).",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widgets",
             "control": "custom",
-            "component": "DesktopWidgetsEditor",
+            "component": "DesktopWidgetsMore",
             "keywords": "widgets add remove media music calendar events system cpu ram gpu network note sticky weather arrange edit drag",
             "visibleWhen": {
               "key": "desktop.widgetsEnabled",
@@ -5430,7 +5430,7 @@
           "description": "Widgets snap to this grid while you move or resize them.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widget_grid",
             "control": "slider",
             "step": 4,
@@ -5461,7 +5461,7 @@
           "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widget_variant",
             "control": "selector",
             "keywords": "widget style surface glass background card pane",
@@ -8392,9 +8392,9 @@
           "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
           "x-settings": {
             "category": "overview",
-            "section": "layout",
+            "section": "grid",
             "label": "prefs.overview.rows",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
             "visibleWhen": {
@@ -8454,9 +8454,9 @@
           "description": "Columns of the grid; in the filmstrip, how many workspaces are visible at once.",
           "x-settings": {
             "category": "overview",
-            "section": "layout",
+            "section": "grid",
             "label": "prefs.overview.columns",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "overview columns grid horizontal workspaces count visible",
             "min": 1,

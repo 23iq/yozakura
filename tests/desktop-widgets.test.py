@@ -263,6 +263,9 @@ def sfind(name: str):
 
 
 sev('select("desktop")')
+# the full editor and the clock details live in the page's "More" sheet
+wait_until(lambda: sfind("settingsPage") is not None and sev('!!w.findItem("settingsPage").item'))
+sev('w.findItem("settingsPage").item.moreOpen = true')
 wait_until(lambda: sfind("addWidget:calendar") is not None)
 sev("SettingsStore.set('desktop.depthClock', true)")
 settle()

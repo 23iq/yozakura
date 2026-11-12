@@ -74,18 +74,37 @@ var category = {
     "title": "prefs.cat.desktop",
     "description": "prefs.cat.desktop.desc",
     "keywords": "desktop icons clock depth wallpaper widgets",
+    "stage": "DesktopStage",
+    "hero": {
+        "right": ["desktop.widgetsEnabled", "desktop.depthClock", "desktop.enabled"],
+        "hint": "prefs.desktop.hero_hint"
+    },
+    "row": ["widgets", "clock", "icons"],
     "sections": [
+        {
+            "id": "widgets",
+            "title": "prefs.desktop.section.widgets",
+            "entries": [
+                {
+                    "id": "desktop.widgetChips",
+                    "type": "custom",
+                    "component": "DesktopWidgetChips",
+                    "keys": ["desktop.widgets"],
+                    "part": true,
+                    "visibleWhen": {
+                        "key": "desktop.widgetsEnabled",
+                        "equals": true
+                    },
+                    "label": "prefs.desktop.widget_chips",
+                    "description": "prefs.desktop.widget_chips.desc",
+                    "keywords": "widgets add remove media music calendar system note weather on off"
+                }
+            ]
+        },
         {
             "id": "clock",
             "title": "prefs.desktop.section.clock",
             "entries": [
-                {
-                    "key": "desktop.depthClock",
-                    "type": "toggle",
-                    "label": "prefs.desktop.depth_clock",
-                    "description": "prefs.desktop.depth_clock.desc",
-                    "keywords": "clock time wallpaper depth subject behind big widget"
-                },
                 {
                     "key": "desktop.depthClockStyle",
                     "type": "custom",
@@ -97,7 +116,13 @@ var category = {
                     "label": "prefs.label.clock_style",
                     "description": "prefs.desktop.depth_clock_style.desc",
                     "keywords": "clock style yozakura poster kanji mincho look gallery"
-                },
+                }
+            ]
+        },
+        {
+            "id": "clockmore",
+            "title": "prefs.desktop.section.clock_details",
+            "entries": [
                 {
                     "key": "desktop.depthClockPosition",
                     "type": "selector",
@@ -154,8 +179,8 @@ var category = {
             ]
         },
         {
-            "id": "widgets",
-            "title": "prefs.desktop.section.widgets",
+            "id": "arrange",
+            "title": "prefs.desktop.section.arrange",
             "entries": [
                 {
                     "key": "desktop.widgetsEnabled",
@@ -174,7 +199,7 @@ var category = {
                 {
                     "key": "desktop.widgets",
                     "type": "custom",
-                    "component": "DesktopWidgetsEditor",
+                    "component": "DesktopWidgetsMore",
                     "visibleWhen": {
                         "key": "desktop.widgetsEnabled",
                         "equals": true
@@ -216,6 +241,20 @@ var category = {
                     "label": "prefs.desktop.widget_grid",
                     "description": "prefs.desktop.widget_grid.desc",
                     "keywords": "snap grid align spacing move resize"
+                },
+                {
+                    "key": "desktop.depthClock",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_clock",
+                    "description": "prefs.desktop.depth_clock.desc",
+                    "keywords": "clock time wallpaper depth subject behind big widget"
+                },
+                {
+                    "key": "desktop.enabled",
+                    "type": "toggle",
+                    "label": "prefs.desktop.icons",
+                    "description": "prefs.desktop.icons.desc",
+                    "keywords": "desktop icons files show hide"
                 }
             ]
         },
@@ -223,13 +262,6 @@ var category = {
             "id": "icons",
             "title": "prefs.desktop.section.icons",
             "entries": [
-                {
-                    "key": "desktop.enabled",
-                    "type": "toggle",
-                    "label": "prefs.desktop.icons",
-                    "description": "prefs.desktop.icons.desc",
-                    "keywords": "desktop icons files show hide"
-                },
                 {
                     "key": "desktop.iconSize",
                     "type": "slider",
@@ -260,7 +292,13 @@ var category = {
                     "label": "prefs.desktop.icon_spacing",
                     "description": "prefs.desktop.icon_spacing.desc",
                     "keywords": "icon spacing vertical gap rows"
-                },
+                }
+            ]
+        },
+        {
+            "id": "icondetails",
+            "title": "prefs.desktop.section.icon_details",
+            "entries": [
                 {
                     "key": "desktop.textColor",
                     "type": "custom",

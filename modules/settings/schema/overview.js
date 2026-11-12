@@ -11,6 +11,11 @@ var category = {
     "title": "prefs.cat.overview",
     "description": "prefs.cat.overview.desc",
     "keywords": "overview expose mission control workspaces grid strip filmstrip",
+    "stage": "OverviewStage",
+    "hero": {
+        "hint": "prefs.overview.hero_hint"
+    },
+    "row": ["layout", "grid", "size"],
     "sections": [
         {
             "id": "layout",
@@ -24,6 +29,8 @@ var category = {
                         "notEquals": "scrolling"
                     },
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "OverviewStyleThumb",
                     "options": [
                         {
                             "value": "grid",
@@ -49,7 +56,13 @@ var category = {
                     "label": "prefs.overview.style",
                     "description": "prefs.overview.style.desc",
                     "keywords": "overview style layout grid strip filmstrip carousel"
-                },
+                }
+            ]
+        },
+        {
+            "id": "grid",
+            "title": "prefs.overview.section.grid",
+            "entries": [
                 {
                     "key": "overview.rows",
                     "reason": "prefs.disabled.one_row_overview",
@@ -75,7 +88,7 @@ var category = {
                             ]
                         }
                     },
-                    "type": "slider",
+                    "type": "number",
                     "min": 1,
                     "max": 10,
                     "step": 1,
@@ -108,7 +121,7 @@ var category = {
                 },
                 {
                     "key": "overview.columns",
-                    "type": "slider",
+                    "type": "number",
                     "min": 1,
                     "max": 10,
                     "step": 1,

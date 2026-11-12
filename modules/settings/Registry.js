@@ -27,9 +27,10 @@ var EDITORS = {
     "ComingSoonRow": "editors/ComingSoonRow.qml",
     "ClockStyleGallery": "editors/ClockStyleGallery.qml",
     "ColorRoleSwatches": "editors/ColorRoleSwatches.qml",
-    "DesktopWidgetsEditor": "editors/DesktopWidgetsEditor.qml",
+    "DesktopWidgetsMore": "editors/DesktopWidgetsMore.qml",
     "ActivitiesEditor": "editors/ActivitiesEditor.qml",
     "DashboardTabsList": "editors/DashboardTabsList.qml",
+    "DesktopWidgetChips": "editors/DesktopWidgetChips.qml",
     "OrderedListEditor": "editors/OrderedListEditor.qml",
     "IslandActivitiesEditor": "editors/IslandActivitiesEditor.qml",
     "AiAgentsEditor": "editors/AiAgentsEditor.qml",
@@ -97,7 +98,8 @@ var THUMBS = {
     "WallFitThumb": "thumbs/WallFitThumb.qml",
     "WallTransitionThumb": "thumbs/WallTransitionThumb.qml",
     "LauncherStyleThumb": "thumbs/LauncherStyleThumb.qml",
-    "DashHomeThumb": "thumbs/DashHomeThumb.qml"
+    "DashHomeThumb": "thumbs/DashHomeThumb.qml",
+    "OverviewStyleThumb": "thumbs/OverviewStyleThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -113,7 +115,9 @@ var STAGES = {
     "LockStage": "stages/LockStage.qml",
     "WallpaperStage": "stages/WallpaperStage.qml",
     "LauncherStage": "stages/LauncherStage.qml",
-    "DashboardStage": "stages/DashboardStage.qml"
+    "DashboardStage": "stages/DashboardStage.qml",
+    "DesktopStage": "stages/DesktopStage.qml",
+    "OverviewStage": "stages/OverviewStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
