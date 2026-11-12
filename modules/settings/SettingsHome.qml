@@ -12,6 +12,7 @@ import "schema/Categories.js" as Categories
 import "SchemaUtil.js" as SchemaUtil
 import "ChangesModel.js" as ChangesModel
 import "HomeLayout.js" as HomeLayout
+import "Ui.js" as Ui
 
 // The home screen of the settings window: the sakura brand and one large
 // search field, then a bento of live tiles (HomeTile, packed by
@@ -24,14 +25,44 @@ FocusScope {
     id: home
 
     readonly property string query: search.text.trim()
-    readonly property var index: SchemaUtil.buildSearchIndex(Categories.categories, k => I18n.t(k)).map(it => Object.assign(it, {
-            "context": home.contextOf(it)
-        }))
+    // The search index of every window row: built on first need (the first
+    // query, or `wantIndex`), not at open (it walks every schema page).
+    property bool wantIndex: false
+    readonly property bool indexNeeded: home.wantIndex || home.query.length > 0
+    property var index: []
+    onIndexNeededChanged: home.buildIndex()
+    // another language: the labels change, build it again
+    readonly property int language: I18n.revision || 0
+    onLanguageChanged: {
+        home.index = [];
+        home.buildIndex();
+    }
+    function buildIndex() {
+        if (!home.indexNeeded || home.index.length > 0)
+            return;
+        home.index = SchemaUtil.buildSearchIndex(Categories.categories, k => I18n.t(k)).map(it => Object.assign(it, {
+                "context": home.contextOf(it)
+            }));
+    }
     readonly property var results: home.query.length > 0 ? SchemaUtil.search(home.index, home.query, 12, {
         "compositor": YozdService.compositorName,
         "get": SettingsStore.get
     }) : []
     property int resultIndex: 0
+    // Once home has shown its first frame: what that frame does not need
+    // (tile pictures and status lines, the preset footer) fills in then.
+    property bool warm: false
+    Connections {
+        target: home.warm ? null : home.Window.window
+        function onFrameSwapped() {
+            home.warm = true;
+        }
+    }
+    // no window to show in (a test, a render): at once
+    Component.onCompleted: {
+        if (!home.Window.window)
+            Qt.callLater(() => home.warm = true);
+    }
     readonly property var tiles: Categories.home()
     readonly property int columns: HomeLayout.columns(grid.width, Space.px(150))
     readonly property var packing: HomeLayout.pack(home.tiles, home.columns)
@@ -217,6 +248,7 @@ FocusScope {
                         required property var modelData
                         required property int index
                         destination: home.tiles.find(t => t.id === modelData.id)
+                        live: home.warm
                         x: modelData.col * (grid.colW + grid.gap)
                         y: modelData.row * (grid.rowH + grid.gap)
                         width: modelData.w * grid.colW + (modelData.w - 1) * grid.gap
@@ -267,12 +299,24 @@ FocusScope {
                 }
             }
 
-            // The active preset and its drift from it (Save to current preset).
-            PresetStatusFooter {
+            // The active preset and its drift from it (Save to current
+            // preset); by URL, after home shows (the preset service is not
+            // needed for the first frame).
+            Loader {
+                id: footer
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.min(parent.width, Space.px(360))
-                visible: shown && home.query.length === 0
-                onActionRequested: id => home.presetAction(id)
+                active: home.warm
+                asynchronous: true
+                source: Qt.resolvedUrl("presets/PresetStatusFooter.qml")
+                visible: Ui.prop(footer.item, "shown") === true && home.query.length === 0
+                Connections {
+                    target: footer.item
+                    ignoreUnknownSignals: true
+                    function onActionRequested(id) {
+                        home.presetAction(id);
+                    }
+                }
             }
         }
     }

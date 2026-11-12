@@ -239,6 +239,7 @@ Item {
         onDestinationOpened: (id, tile) => shell.openDestination(id, tile)
         onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
         onPresetAction: id => shell.presetAction(id)
+        wantIndex: changesSheet.open
     }
 
     // The shared element: a box growing from the tile to the window.

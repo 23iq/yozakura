@@ -6,7 +6,6 @@ import qs.modules.globals
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
-import qs.modules.settings.stages
 import "HomeStatus.js" as HomeStatus
 
 // One destination on the home bento: a kit Card that is live content, not
@@ -23,62 +22,46 @@ Card {
     required property var destination
     readonly property string kind: destination.id === "layout" ? "screen" : (destination.id === "wallpaper" ? "wallpaper" : (destination.id === "look" ? "palette" : "icon"))
     readonly property bool picture: tile.kind === "screen" || tile.kind === "wallpaper"
-    readonly property string status: HomeStatus.line(tile.destination.id, {
+    // false until home has shown its first frame: the status line (and the
+    // services it reads) fills in a frame later
+    property bool live: true
+    readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
         "wallpapers": GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.wallpaperPaths ? GlobalStates.wallpaperManager.wallpaperPaths.length : 0,
-        "preset": PresetStatusService.active || ""
-    })
+        "preset": tile.destination.id === "presets" ? (PresetStatusService.active || "") : ""
+    }) : ""
 
     objectName: "homeTile:" + destination.id
     interactive: true
     fill: !tile.picture
     Accessible.name: I18n.t(destination.title)
 
-    // The picture tiles: the real miniature / the wallpaper, full bleed.
+    // The picture tiles: the real miniature / the wallpaper, full bleed
+    // (HomeTileArt, by URL and asynchronously: home shows at once, the
+    // picture fades in a moment later and is compiled only then).
     background: Loader {
+        id: art
         anchors.fill: parent
-        active: tile.picture
-        sourceComponent: Stage {
-            id: stage
-            anchors.fill: parent
-            stageHeight: parent.height
-            radius: tile.radius
-            // hovered: the wallpaper swells a little and follows the pointer
-            imageScale: tile.hovered ? 1.08 : 1
-            imageShift: Qt.point(-tile.pointer.x * Space.m, -tile.pointer.y * Space.s)
-
-            ScreenMini {
-                anchors.fill: parent
-                // the dock stays clear of the name under it
-                anchors.bottomMargin: tile.padding + Space.controlM
-                corners: false
-                visible: tile.kind === "screen"
-                barOpacity: stage.barOpacity
-                cornerRadius: tile.radius
-                // at rest the windows would crowd the tile; hovered, they
-                // slide in and the miniature comes alive
-                showWindows: tile.hovered
-            }
-            // a scrim so the name reads on any wallpaper
-            Mark {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: parent.height * 0.5
-                radius: 0
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "transparent"
-                    }
-                    GradientStop {
-                        position: 1
-                        color: Qt.alpha(Colors.shadow, 0.62)
-                    }
-                }
+        active: tile.picture && tile.live
+        asynchronous: true
+        opacity: art.status === Loader.Ready ? 1 : 0
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
             }
         }
+        function load() {
+            if (art.active && !art.item)
+                art.setSource(Qt.resolvedUrl("HomeTileArt.qml"), {
+                    "tile": tile,
+                    "screen": tile.kind === "screen"
+                });
+        }
+        onActiveChanged: art.load()
+        Component.onCompleted: art.load()
     }
 
     Item {

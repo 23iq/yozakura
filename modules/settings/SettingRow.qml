@@ -56,7 +56,7 @@ FocusScope {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < Space.px(560)
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "selector")))
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "selector" || type === "text")))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
