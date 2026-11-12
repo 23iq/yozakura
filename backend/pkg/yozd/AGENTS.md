@@ -33,7 +33,9 @@ pkg/yozd/
 │   └── wayland/     generated protocol bindings (see wayland/AGENTS.md)
 ├── config/          TOML loader (imports), types -> ipc.Config, apply, watcher
 ├── server/          socket server + method dispatch (server.go), idle
-│                    monitors/inhibitors (idle.go), brightness, darkmode,
+│                    monitors/inhibitors (idle.go; flips are broadcast with
+│                    a seq, idle_events.go, and reach the shell's
+│                    IdleMonitor via pkg/svc/compositor/idle.go), brightness, darkmode,
 │                    config state and generated-file paths
 └── keymon/          physical input monitor (idle resume, modifier-only binds)
 ```
