@@ -4423,10 +4423,6 @@
   "prefs.changes.since_preset": "Since %1",
   "prefs.changes.none": "Everything is at its default.",
   "prefs.changes.none_preset": "Nothing changed since the preset was applied.",
-  "prefs.changes.count.one": "%1 setting differs",
-  "prefs.changes.count.few": "%1 settings differ",
-  "prefs.changes.count.many": "%1 settings differ",
-  "prefs.changes.count.other": "%1 settings differ",
   "prefs.changes.vs_default": "%1 · default %2",
   "prefs.changes.vs_preset": "%1 · in the preset %2",
   "prefs.changes.open": "Open this setting",
@@ -4634,5 +4630,10 @@
   "prefs.about.card.places": "Places",
   "prefs.about.card.legal": "Legal",
   "prefs.about.updates": "Updates",
-  "prefs.about.free": "Free software: use it, change it, share it."
+  "prefs.about.free": "Free software: use it, change it, share it.",
+  "prefs.changes.back_to_defaults": "Put all back",
+  "prefs.changes.back_to_preset": "Back to the preset",
+  "prefs.undo.changes_reset": "Changes put back",
+  "prefs.changes.band.one": "setting differs",
+  "prefs.changes.band.other": "settings differ"
 }
