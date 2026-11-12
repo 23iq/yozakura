@@ -23,7 +23,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-PAGES = {"displays": "displaysRow"}
+PAGES = {"displays": "displaysRow", "keyboard": "keyboardRow"}
 
 env = SettingsEnv("settings-devices-fit", devices=True)
 h = env.h

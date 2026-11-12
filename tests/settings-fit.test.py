@@ -26,7 +26,7 @@ from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
 CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
-             "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods", "voice", "timers", "routines", "ai", "ai-providers", "ai-code", "system", "updates", "windows", "power", "network", "bluetooth", "sound", "effects"]
+             "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods", "voice", "timers", "routines", "ai", "ai-providers", "ai-code", "system", "updates", "windows", "power", "network", "bluetooth", "sound", "effects", "input"]
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
