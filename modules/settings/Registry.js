@@ -101,7 +101,8 @@ var THUMBS = {
     "WallTransitionThumb": "thumbs/WallTransitionThumb.qml",
     "LauncherStyleThumb": "thumbs/LauncherStyleThumb.qml",
     "DashHomeThumb": "thumbs/DashHomeThumb.qml",
-    "OverviewStyleThumb": "thumbs/OverviewStyleThumb.qml"
+    "OverviewStyleThumb": "thumbs/OverviewStyleThumb.qml",
+    "ActivationThumb": "thumbs/ActivationThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -120,7 +121,8 @@ var STAGES = {
     "DashboardStage": "stages/DashboardStage.qml",
     "DesktopStage": "stages/DesktopStage.qml",
     "OverviewStage": "stages/OverviewStage.qml",
-    "TerminalStage": "stages/TerminalStage.qml"
+    "TerminalStage": "stages/TerminalStage.qml",
+    "VoiceStage": "stages/VoiceStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

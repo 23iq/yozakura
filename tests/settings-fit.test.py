@@ -8,10 +8,9 @@ row card ends inside the page, the stage ends above the row, the side
 columns end above the row, and a picture card's strip is one row.
 
 Destinations still exempt (no `row` yet, they keep the scrolling bento):
-changes, ai, ai-providers, ai-code,
-keyboard, input, displays, windows, specials,
-system, updates, voice, timers, routines, about, network, bluetooth, sound,
-effects, power. A test below fails when
+changes, ai, ai-providers, ai-code, keyboard, input, displays, windows,
+specials, system, updates, timers, routines, about, network, bluetooth,
+sound, effects, power. A test below fails when
 a category gains a `row` and is not in CONVERTED, so the list stays true.
 """
 import json
@@ -28,7 +27,7 @@ from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
 CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
-             "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods"]
+             "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods", "voice"]
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
