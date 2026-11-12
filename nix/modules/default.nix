@@ -80,6 +80,20 @@ in {
       };
     };
 
+    polkit.externalAgent = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Start hyprpolkitagent with every graphical session. By default the
+        shell asks for passwords with its own polkit agent (the
+        system.polkitAgent setting) and hyprpolkitagent is only the
+        fallback: `yozakura polkit-fallback` starts it at login when that
+        setting is off or Quickshell lacks its Polkit module. Only one agent
+        can register per session and the first one wins, so with this on
+        the shell's own agent stays idle.
+      '';
+    };
+
     depth.enable = lib.mkEnableOption "the depth clock (Python with rembg; the model is downloaded from Settings)";
 
     sddm = {
@@ -123,14 +137,28 @@ in {
         extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
       };
 
-      # Password prompts for system actions: hyprpolkitagent's user unit,
-      # started with the graphical session (niri/Mango start the binary
-      # from /run/current-system/sw/libexec themselves).
+      # Password prompts for system actions: the shell's own polkit agent,
+      # with hyprpolkitagent's user unit as the fallback. Whichever agent
+      # registers first wins, so the unit starts with the graphical session
+      # only with polkit.externalAgent; otherwise `yozakura polkit-fallback`
+      # starts it at login while the shell's agent is off or unavailable
+      # (on niri/Mango the generated config does the same).
       security.polkit.enable = lib.mkDefault true;
       environment.systemPackages = [ cfg.finalPackage pkgs.hyprpolkitagent ];
       environment.pathsToLink = [ "/libexec" ];
       systemd.packages = [ pkgs.hyprpolkitagent ];
-      systemd.user.services.hyprpolkitagent.wantedBy = lib.mkDefault [ "graphical-session.target" ];
+      systemd.user.services.hyprpolkitagent.wantedBy =
+        lib.mkIf cfg.polkit.externalAgent (lib.mkDefault [ "graphical-session.target" ]);
+      systemd.user.services.yozakura-polkit-fallback = lib.mkIf (!cfg.polkit.externalAgent) {
+        description = "Start hyprpolkitagent unless the Yozakura shell's own polkit agent is in use";
+        wantedBy = [ "graphical-session.target" ];
+        partOf = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${cfg.finalPackage}/bin/yozakura polkit-fallback";
+        };
+      };
 
       # gsettings writes (GTK theme, color scheme) need the dconf service
       programs.dconf.enable = lib.mkDefault true;
@@ -162,7 +190,8 @@ in {
     }
 
     (lib.mkIf cfg.compositors.hyprland {
-      # UWSM reaches graphical-session.target, which starts the polkit agent.
+      # UWSM reaches graphical-session.target, which starts the polkit
+      # fallback (or hyprpolkitagent itself with polkit.externalAgent).
       programs.hyprland.enable = lib.mkDefault true;
       programs.hyprland.withUWSM = lib.mkDefault true;
     })

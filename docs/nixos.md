@@ -72,16 +72,28 @@ keeps working across updates and garbage collection.
 | `voice.enable` | `false` | Packaged `whisper-server`; Settings only downloads the models |
 | `voice.acceleration` | `"cpu"` | `"vulkan"` (AMD/Intel) or `"cuda"` (NVIDIA, unfree) |
 | `depth.enable` | `false` | Python with rembg for the depth clock; Settings downloads the model |
+| `polkit.externalAgent` | `false` | Start `hyprpolkitagent` with every session instead of only as the fallback (see below) |
 | `sddm.enable` | `false` | SDDM (Qt 6, Wayland) with the `yozakura` theme |
 | `sddm.user` | first of `users` | Owner of `/var/lib/yozakura-sddm`, which the shell keeps in sync |
 
 The module also enables (each with `mkDefault`, so your own settings win):
-portals (`xdg-desktop-portal-gtk`), polkit and `hyprpolkitagent` (its user
-unit, started with the graphical session), dconf, PipeWire, Bluetooth,
+portals (`xdg-desktop-portal-gtk`), polkit and `hyprpolkitagent` (the
+fallback agent, see below), dconf, PipeWire, Bluetooth,
 UPower, power-profiles-daemon (left off when TLP or auto-cpufreq is on: the
 shell's power profiles then use TLP), NetworkManager,
 `gpu-screen-recorder` (setuid wrapper), brightnessctl's udev rules, I2C for
 DDC/CI and `services.locate` for the launcher's file search.
+
+**Password prompts.** The shell asks for passwords with its own polkit
+agent (Settings, `system.polkitAgent`, on by default). Only one agent can
+register per session and the first one wins, so `hyprpolkitagent` is not
+started with the session: the user unit `yozakura-polkit-fallback` runs
+`yozakura polkit-fallback` at login, which starts it only when that setting
+is off or the Quickshell build lacks its Polkit module. Turning the setting
+off in a running session starts it at once. Set
+`programs.yozakura.polkit.externalAgent = true;` to always start
+`hyprpolkitagent` instead (the previous behaviour; the shell's own agent
+then stays idle).
 
 Without the module (a nix profile install on another distribution), the
 package alone works too. System services are then up to the host
