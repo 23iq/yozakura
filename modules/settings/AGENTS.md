@@ -2,293 +2,293 @@
 
 ## OVERVIEW
 The settings window (`SettingsWindowInProcess.qml`, loaded by `shell.qml`, or
-its own process with `performance.separateWindows`, see SEPARATE PROCESS) is schema
-driven: settings are *declared* in `schema/*.js` and rendered by generic
-components. Search, modified/reset state and the audit are all generated from
-the same declarations.
+its own process with `performance.separateWindows`, see SEPARATE PROCESS) is
+the shell's showpiece and is schema driven: settings are *declared* in
+`schema/*.js` and rendered by generic components. Every change applies at
+once and can be undone; there is no Apply step. A page starts with its
+**stage** (a live miniature of the shell element it controls), then a few
+short rows. Search, modified / reset state, the CLI / MCP catalog and the
+audits are all generated from the same declarations.
+
+Design rules (owner's brief, binding for every page):
+- Only the important options are rows of the window. Rare knobs stay in the
+  schema with `advanced: true` (reachable through `yozakura config`, MCP and
+  presets, never rendered, never found by the window's search).
+- No text walls: a row is a short sentence-case label (four words at most)
+  and its control. The description is the label's tooltip, never printed.
+  A one-line `hint` (eight words at most) only where the effect cannot be
+  seen on the stage.
+- Visual by default: the stage reacts to every row; a choice between looks
+  is a row of picture cards.
+- One control per setting, one name per concept (the Island, not the notch).
 
 ## STRUCTURE
 ```
 modules/settings/
-├── SettingsWindow.qml      FloatingWindow wrapper without content (placement on the focused workspace,
-│                           re-homing, unsaved-changes guard)
+├── SettingsWindow.qml      FloatingWindow wrapper (placement on the focused workspace, re-homing)
 ├── SettingsWindowInProcess.qml  + SettingsShell, static (shell.qml KeepAliveLoader)
 ├── SettingsWindowSeparate.qml   + SettingsShell by URL, async, behind SettingsLoading (settings-window.qml)
 ├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
-├── ConfigWrite.js          pure: one dotted key into Config (SettingsStore.set, the main shell's PreviewSink)
-├── SettingsShell.qml       sidebar + current page + ChangesBar, keyboard shortcuts
-├── SettingsPageHost.qml    the page Loader: fresh per category, page table (SettingsPage fills sections per frame)
-├── SettingsSidebar.qml     brand, search (schema index), grouped categories (NavItem)
-├── SettingsPage.qml        renders one schema category (PageHeader + SettingsSection...)
-├── SettingsSection.qml     titled card of SettingRow
-├── SettingRow.qml          label/description/modified dot/reset + typed control + preview
-├── SettingLabel.qml        a row's label column; DisabledNote.qml: why a row is greyed + [Turn on]
+├── SettingsShell.qml       sidebar + DestinationHeader + SettingsPageHost + UndoPill; shortcuts
+├── SettingsSidebar.qml     brand, search (window rows only), flat destination list (NavItem),
+│                           one sliding selection mark (accent tint + brush signature)
+├── DestinationHeader.qml   destination icon + title, its tabs (kit Segmented), Reset page
+├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
+├── SettingsPage.qml        a schema category: its stage (Loader by URL) + SettingsSection...
+├── SettingsSection.qml     a kit Group of SettingRows (window entries only); hidden with no row
+├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
+├── UndoPill.qml            "<what> changed · Undo" after every change (Redo after an undo)
+├── PageHeader.qml          a hand-written page's action row (the window draws the title)
+├── UndoModel.js            pure: undo steps, coalescing, labels (tests/settings-undo.test.cjs)
+├── PageCache.js            pure: which pages stay alive (same test)
+├── ConfigWrite.js          pure: one dotted key into Config (SettingsStore, PreviewSink)
+├── SchemaUtil.js           pure: keys, conditions, inWindow, validation, search index (node-tested)
+├── ResetModel.js           pure: which entries Reset page and the counters touch
 ├── DisabledReason.js       pure: the failing condition -> reason text / the one switch that fixes it
-├── ViewToggle.qml          sidebar Simple / All switch; SimpleFooter.qml: "N more ... Show all"
-├── connect/ConnectPage.qml Network/Bluetooth/Sound/Effects pages: the live device panels
-├── mods/                   the Mods page (ModsEditor + parts, ModsModel.js)
-├── changes/                the Changes page (ChangesPage, ChangeRow; ChangesModel.js pure)
-├── thumbs/                 small card previews for `display: "cards"` selectors
-├── Macros.js, Synonyms.js  pure: macro sliders' key mapping; search synonyms (en + ru)
-├── AboutPage / PlaceholderPage / PageHeader / PillButton / NavItem / ChangesBar
-├── SchemaUtil.js           pure: keys, conditions, validation, search index (node-tested)
-├── SettingsDefaults.js     default of any key, from config/defaults/*.js
-├── Registry.js             custom editor / preview name -> file
-├── BarModules.js, Ui.js    bar module presentation, small UI helpers
-├── PanelsModel.js          pure bar.panels edits (add/remove/style/edge/move module)
-├── PanelSketch.js          pure schematic geometry of a panel (PanelsSchematic)
-├── schema/Categories.js    information architecture: groups + categories
-├── schema/<category>.js    one file per migrated category
-├── store/SettingsStore.qml get/set/reset/isModified + change flow (singleton)
-├── store/SchemePreviews.qml palettes per matugen scheme (`yozakura schemes`)
+├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES
+├── stages/                 Stage.qml (frame), StageSpot.qml (highlight), <Page>Stage.qml
+├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
-│                           List, Path, Screens, Chips) + ChoiceCard, PreviewStage
+│                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
 ├── editors/                rich `custom` editors (one file each, `property var entry`)
-├── previews/               live previews shown under an entry (`preview`)
-├── presets/                the "Presets" page (preset studio): gallery, mixer, editor,
-│                           thumbnails (PresetMiniShell, cached PNGs), session banner/pill/toast;
-│                           PresetModel.js holds the pure helpers (node-tested)
-└── store/PresetStudio.qml  studio data + actions: every operation is `<app> preset ...`
-                            (backend/pkg/presets), trial/edit sessions live in the backend
+├── previews/               old under-row previews (`preview`), for pages not converted yet
+├── schema/Categories.js    information architecture: destinations, tabs, sidebar blocks, resolve()
+├── schema/<category>.js    one file per category (a tab of a destination)
+├── store/SettingsStore.qml get / set (live + undo) / stageSet (wizard) / reset / focusKeys
+├── store/PresetStudio.qml  preset studio data + actions (`<app> preset ...`)
+├── presets/, displays/, keyboard/, extras/, connect/, mods/, changes/, system/  hand-written pages
+└── Macros.js, Synonyms.js  pure: macro sliders' key mapping; search synonyms (en + ru)
 ```
 
 ## LOOK
-The window is built from the shared kit (`qs.modules.components.kit`, see
-`docs/superpowers/plans/screens-brief.md`): sidebar rows are `ListRow`s in
-labelled blocks (`SectionLabel`, `Categories.sidebarSections()`), search is
-the kit `SearchField`, `PageHeader` is title + secondary with a quiet
-"Reset page" action, a section is a `Group` (its label action reads Reset /
-Show / Hide), a row is body label + caption description with the control
-flush right. Controls: `Switch` (ToggleControl), segmented `Chip`s or a
-`Dropdown` past `chipLimit` options (SelectorControl), `LineSlider`
-(SliderControl), `IconButton` stepper (NumberControl), `FieldBox` behind
-text / path / font fields, `ChoiceCard` / `PillButton` on the kit looks.
-No raw sizes, paddings or colors in new settings code: Type / Space / Look.
-Render: `tools/render/settings_render.py --languages ink,glass,tiles PAGE...`.
+Built only from the kit (`qs.modules.components.kit`); no raw sizes, colors
+or Rectangles/Texts (`kit-literals` ratchet: a new directory must be at
+zero; draw shapes of a miniature with `Mark`, surfaces with `StyledRect` and
+the theme's variants). The window must look deliberate in every visual
+language (ink, glass, tiles, classic, device) and in dark and light; nothing
+branches on the language name (`Look`).
+- Sidebar: brand, boxed SearchField, `SectionLabel` blocks, `NavItem` rows
+  (Space.controlS high, icon + label); the selection is ONE `StyledRect`
+  "primary" tint with the brush signature that glides (Motion.glide).
+- Header: destination icon (accent) + title role; tabs are the kit
+  `Segmented` (`focusable`, Left / Right); a tab to the right slides the page
+  in from the right (`SettingsPageHost.direction`).
+- Rows: label `body`, control flush right (inline) or full width under the
+  label (cards, editors, lists); hover / focus = the language's hover box;
+  a search jump = accent wash + focus.
+- Picture cards: `ChoiceCard` - the picture is the card (rounded mask, a
+  hairline edge, lifts on hover); selected = accent ring + title in the
+  active weight + check; FocusRing on keyboard focus.
+- Stage: `Stage` = wallpaper (palette backdrop without one) in a rounded,
+  hair-lined frame, Look.radius("surface"); the miniature on top.
+- Undo pill: popup surface, springs in, stays 5 s (longer while hovered).
+Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-03.png
+--languages ink,glass,tiles,classic,device [--mode light] [--size 1180x2400] PAGE...`
+(`--hover ENTRY` lights a stage part, `--undo` shows the pill).
 
-Hand-written pages (`page` in Categories.js) are mapped by name in
-`SettingsPageHost.pages`. The preset studio never writes preset files itself;
-a new mixable aspect is one entry in `backend/pkg/presets/aspects.go` (+
-`tests/fixtures/preset-aspects.json`, icon in `PresetModel.ASPECT_ICONS`,
-`prefs.presets.aspect.<id>[.desc]` strings). Render it with
-`tools/render/presets_render.py`.
-
-## ADDING A SETTING
-1. Make sure the key exists in `config/defaults/<domain>.js` (run `make
-   schema`: it regenerates the typed adapter `config/adapters/<Domain>Adapter.qml`)
-   and, for staged domains, the GlobalStates snapshot list - the audit fails
-   otherwise.
-2. Add one entry to the category's `schema/<category>.js` section:
-   ```js
-   { "key": "bar.frameThickness", "type": "slider", "min": 0, "max": 40, "step": 1, "unit": "px",
-     "visibleWhen": { "key": "bar.frameEnabled", "equals": true },
-     "label": "prefs.bar.frame_thickness", "description": "prefs.bar.frame_thickness.desc",
-     "keywords": "frame thickness width border" }
-   ```
-3. Add the label/description keys to `translations/{en,es,ru}.json`.
-4. `make schema`: the entry (label, description, options, range,
-   `visibleWhen`) becomes part of the settings catalog
-   (`assets/schema/*.schema.json`) used by `yozakura config` and the MCP
-   tools. Allowed values of `custom` entries (the editor owns them) go in
-   `config/meta/<domain>.js`.
-
-Entry fields: `key` (dotted, `domain.prop[.sub]`; `wallpaper.*` keys live in
-~/.cache/yozakura/wallpapers.json), `type` (`toggle | selector | slider | number
-| text | font | color-role | list | path | screens | multiselect | macro | custom`;
-`macro` = one slider over several keys, `"macro": "<id>"` from `Macros.js`, see MACROS;
-`color-role` = palette swatches + alpha for a color spec, with `gradient:
-true` a list of up to 4 stops), `label`, `description`, `keywords`,
-`placeholder` (i18n key), `pattern` (regex a `text` value must match before
-it is saved), `options`
-(`[{value, label, icon}]`), `min/max/step/unit`, `specialValues`
-(`[{value, label}]`), `visibleWhen` / `enabledWhen` (declarative:
-`{key, equals|notEquals|in|truthy|empty}`, `{key, some: {field, in|notIn}}`
-(a list holds an item whose field is / is not one of the values; a missing field
-counts as not in), `{all|any: [...]}`, `{not: ...}`),
-`display: "cards"` + `thumb` (a selector shown as preview cards,
-controls/CardSelector; the thumb is a `thumbs/<Name>.qml` registered in
-`Registry.THUMBS`, with `property var entry` and `property var value`; use it
-only where the choice is visual),
-`preview` (Registry name), `component` (custom editor name), `keys` (every
-key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
-`compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
-`id` (when there is no single `key`), `target` (PageLink), `sizeUnit`
-(font), `advanced` (expert knob: raw px / ms, "Match shell ..." plumbing,
-endpoints, per-surface opacities; shown only in the All view, see below),
-`reason` (i18n key: why the row is greyed when `enabledWhen` is not one
-switch; a single-toggle condition is named automatically with a [Turn on]
-action, tests/settings-advanced.test.cjs enforces it), `invert` (a toggle
-shown on for `false`: a positive name for a double-negative key such as
-notch.disableHoverExpansion "Media panel"; the key never changes),
-`surface` (a host/style picker's `modules/shell/hosts/SurfaceRegistry.js`
-id: the row notes "Island is off - shown as X" while the notch is off).
-
-Collection types (controls/ListControl, PathControl, ScreensControl,
-ChipsControl; pure helpers in SchemaUtil: listInsert/Remove/Move/Set,
-newListItem, toggleValue):
-- `list`: an array. Objects: `fields: [{key, type: text|number|selector|path|toggle,
-  label, placeholder, min/max/step/unit, options, monospace, secret (masked text), pattern, flex
-  (share of the row, e.g. 0.5)}]`, `newItem`, `itemLabel` ("Rule %1"),
-  `addLabel`, `emptyLabel`; strings: `itemType: "text" | "path"` (+ `pathKind`).
-  Items can be added, removed and reordered (system.idle.listeners,
-  notifications.rules, system.disks).
-- `path`: text + Browse (zenity/kdialog), `pathKind` "file" | "dir", `filter`.
-- `screens`: monitor multi-select (`[]` = every screen), lists connected and
-  remembered names.
-- `multiselect`: chips over `options`, value = array of option values.
-
-A rich editor: add `editors/<Name>.qml` (root has `property var entry`,
-reads/writes through `SettingsStore`), register it in `Registry.js`, use
-`"type": "custom", "component": "<Name>"`. Previews likewise in `previews/`.
-
-Section fields: `id`, `title`, `entries`, and `collapsible: true` (+
-`collapsed: true` to start folded) for advanced options; a search jump into
-a folded section unfolds it. A category file may pull sections from a
-sibling file (appearance.js splices in `schema/glass.js`).
-
-## SIMPLE / ALL
-`general.settingsShowAll` (machine-local, the sidebar ViewToggle; default
-Simple). Simple hides `advanced` entries and sections left empty, keeps an
-advanced entry the user changed, and ends the page with SimpleFooter. All
-shows every entry in place. Search indexes everything; a jump to an
-advanced entry reveals it in Simple (`SettingsStore.revealed`, cleared on
-page change). A new feature is ONE obvious row in Simple (on/off or style),
-its fine options `advanced`. Helpers: `schema/Advanced.js`.
-
-## MACROS
-Look > "Quick tune" (`schema/macros.js`): Motion, Density, Roundness, Depth,
-Glass. `Macros.js` (pure, tests/settings-macros.test.cjs) lists each macro's
-keys and points; a point leaving a key out does not care about it. The
-slider shows the point every key matches, else "Custom" with the handle on
-the nearest point. Moving it writes ONLY the keys that differ through
-`SettingsStore.set` (staged, Discard undoes it); nothing is written until the
-user moves it. Defaults must sit on a point. Compositor-only keys carry
-`compositor: [...]` and are skipped elsewhere.
-
-## SEARCH SYNONYMS / CHANGES PAGE
-`Synonyms.js` (tests/settings-synonyms.test.cjs): words people type (en + ru)
--> the words the schema uses; `SchemaUtil.search` also scores each
-substituted query, a little below direct hits. Add a row when a common word
-finds nothing. The "Changes" page (`changes/`, pure `ChangesModel.js`,
-tests/settings-changes.test.cjs) lists every entry `isModified` by page with
-reset + open; while a preset is applied it can list the differences from the
-preset instead (backend `preset.status` via PresetStatusService; reflects
-applied config, not staged edits).
-
-## ADDING A CATEGORY
-Create `schema/<id>.js` exporting `category = {id, icon, title, description,
-keywords, sections: [{id, title, entries: [...]}]}`, import it in
-`Categories.js` and put it in the group of the element it controls (one
-page per element; a setting is declared on one page only, see
-tests/settings-pages.test.cjs). Expert knobs get `"advanced": true`. A page
-merged into another keeps its old id working through `MOVED` in
-Categories.js; renamed keys keep the user's value through
-`config/meta/KeyAliases.js`.
+## NAVIGATION
+`schema/Categories.js`: `groups` are the destinations of the flat sidebar
+(Bar, Island, Dock, Launcher, Dashboard, Notifications, Lock screen, Desktop /
+Look, Wallpaper, Presets / Assistant / Displays, Keyboard & input, Windows,
+Network, Sound, Power, Apps, System), each `{id, icon, title: prefs.dest.<id>,
+categories: [tab ids]}`; `SIDEBAR_SECTIONS` the four labelled blocks. A
+category is one tab: its `title` is the tab label (one to three words). One
+tab = no tab strip. `resolve(id)` accepts a category id, a `MOVED` id
+(merged pages, former sidebar groups such as `popups`) or a destination id
+(its first tab), so `<app> run settings <id>`, `GlobalStates.settingsCategory`
+and old deep links keep working. `tabsOf(categoryId)`, `groupOf(categoryId)`.
+A category is either schema driven (`sections`, rendered by SettingsPage) or
+a hand-written page (`page`: a `Registry.PAGES` name, loaded by URL).
 
 ## CHANGE FLOW
-`SettingsStore.set()` writes Config immediately (the whole shell previews the
-change live). For staged domains it first calls the GlobalStates
-`mark{Theme,Shell,Compositor}Changed()` (snapshot + pause auto-save, the same
-flow the old panels used); the ChangesBar then applies (`apply*Changes`,
-writes the JSON files) or discards (restores the snapshot). Domains without a
-snapshot list are saved immediately (`Config.save<Domain>()`), and
-`wallpaper.*` keys go straight to the wallpaper manager (wallpapers.json).
+- `SettingsStore.set(key, value)`: LIVE. Config is written at once (the whole
+  shell follows), the domain's own auto-save persists it (`ConfigFile`,
+  coalesced: a burst is one write 150 ms after it stops, and a long burst
+  such as a slider drag is written every 250 ms, `config/WriteThrottle.js`),
+  `wallpaper.*` keys go to the wallpaper manager. The change is recorded on
+  the session undo history (`undoStack` / `redoStack`, `UndoModel.js`): the
+  same setting changed again within 1.5 s merges into one step, a step that
+  ends where it began disappears. `undo()` / `redo()` (Ctrl+Z, Ctrl+Shift+Z /
+  Ctrl+Y, the pill) replay the values without recording. `lastStep` feeds
+  the pill. A key with no entry of its own is named by its parent entry.
+- `SettingsStore.transaction(label, fn)`: every change `fn` makes is ONE step
+  (Reset page, a reset of a multi-key entry, a macro slider, an editor that
+  rewrites a whole object). Use it in any editor that writes several keys.
+- `reset(entry)`, `resetCategory(category)` (Reset page, window rows only,
+  `ResetModel.activeItems`): one step each; no confirmation (undo instead).
+- `SettingsStore.stageSet(key, value)`: the setup wizard only
+  (`OnboardingState.set`). Staged like the old Apply flow: the GlobalStates
+  snapshot of the domain is taken and its auto-save paused; `apply()` writes
+  (the wizard's finish), `discard()` restores. A wizard in its own process
+  relays staged values to the main shell (`preview.set`, PreviewSink.qml).
+  While the wizard holds a domain, a live `set` of that domain writes the
+  file explicitly (the wizard's staged values of that domain go with it).
+- `SettingsStore.flush()`: writes every coalesced edit still waiting (preset
+  commands call it through `PresetStudio.afterFlush`).
+- Nothing else may call `GlobalStates.mark*Changed` from the window: an
+  editor that wrote around SettingsStore staged changes nobody applied
+  (BarActivitiesSettings takes a `write` function now).
 
 ## SEPARATE PROCESS
 `performance.separateWindows` (default off): Settings (and the setup wizard,
 see modules/onboarding/AGENTS.md) runs as its own Quickshell process that
-costs nothing until opened and gives all its memory back when closed; each
-open compiles the window again (a few seconds, where a kept-alive in-process
-window reopens at once). Off, everything is as before.
-- Launch: every open path still sets `GlobalStates.settingsWindowVisible` /
-  `settingsCategory`; the main shell's `SeparateWindows` (modules/services)
-  turns that into `windows.open {kind, page, screen, workspace}` /
-  `windows.close` and mirrors the process in the flag (true while it runs).
-  The daemon (`backend/pkg/svc/windows`) starts `qs -p <shell dir>/settings-window.qml`
-  next to the running shell.qml (mods generation or Nix store path; base
-  source as fallback) with `<PREFIX>ROLE=settings` and `<PREFIX>WINDOW_*`,
-  one per kind: a later open sends `windows.command` raise (new page,
-  placement again), a toggle sends close (the window asks about unsaved
-  changes); a raise asked while the window still starts is kept (the
-  last one) and handed over in the answer to its `windows.ready`, a close
-  then stops the process (it never maps; an open after it starts a new one). Closed,
-  the window reports `windows.hiding` and quits (1 s grace for the last
-  writes); an open meanwhile raises it again (a new process if it quit
-  first),
-  the daemon reaps it, kills it on shutdown / reload / quit (SIGTERM, then
-  SIGKILL of its group), never restarts it; the orphan sweep knows the entry
-  files. A start failure falls back to the in-process window (so does no
-  daemon connection, `qs -p shell.qml` alone, no answer within 3 s, or a
-  process that exits before its window showed, unless the daemon stopped
-  it at shutdown / reload or its connection is gone; the wizard then does
-  not count as dismissed). A process that exited before it showed is not
-  started again: that window opens in-process for the rest of the session
-  (until the setting is turned off), logged once; a window open
-  in-process stays so when the setting changes. `OpeningPill` shows until
-  the window reports `windows.ready`; the frame maps first
-  (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).
-- Role: `ProcessRole` (modules/globals) keeps every session-wide service to
-  the main shell (see modules/services/AGENTS.md); a notification raised in
-  the window goes to the daemon (`notify.send`). The role variable is
-  trusted only in a window entry file (its `ShellId` pragma): `shell.qml` is
-  always the main shell. The daemon drops `<PREFIX>ROLE` / `WINDOW_*` from
-  its own environment and every other child (`envclean.WindowVars`), and a
-  window starts detached programs through `ProcessRole.detached(argv)`
-  (xdg-open, terminals), which removes them.
-- Staged changes (one staging, as in-process): the window stages in its own
-  Config exactly as in-process (`SettingsStore.set` -> GlobalStates snapshot,
-  auto-save paused) and, for a staged domain only, relays `preview.set
-  {owner, key, value}` (backend/pkg/svc/preview). Every other process (the
-  main shell, the other window) applies it in `PreviewSink` with the same
-  `ConfigWrite.assign` + snapshot (`GlobalStates.mark*Changed`), so the
-  desktop previews it, the other window shows it as unsaved, and nothing of
-  it is written. In-process Settings and the wizard share one set of
-  snapshots, so here too it is one staging: Apply or Discard by either ends
-  all of it (`preview.discard` restores every process's snapshots).
-  Apply (`PreviewSink.applyOwn`): the window drops its snapshots and sends
-  `preview.commit`; the main shell applies the staged entries the commit
-  carries (a `preview.set` the stream dropped), runs the same
-  `apply*Changes` as in-process and answers `preview.written`. Its Config holds every staged
-  value plus what the desktop changed meanwhile in a staged domain (widget
-  positions, dashboard cells, live activities), so those are written too,
-  as with one in-process Config; the windows follow the files. Only when no
-  main shell answers (2 s in the daemon, 4 s without the daemon) does the
-  window write, and only the domains it changed, each as only its own
-  changes over the current file (`StagedDomains.js`,
-  `ConfigFile.writeMerged`); it does not quit while that answer is pending. A window process gone (crash,
-  kill, closed without applying) while the other window runs leaves the
-  staging to that one; the last one gone discards it. The daemon keeps the
-  staged values, so a process (re)started meanwhile gets them again.
-  Unstaged settings are written by the window at once; the main shell
-  follows the file, and every process follows `config set`, MCP and presets
-  through its file watchers. Two processes auto-saving one domain do not
-  lose each other's edits: an edit still waiting for its write when the file
-  changes is merged into the new contents (`config/ConfigMerge.js`).
-- What the window cannot own is asked of the main shell
-  (`windows.relay {to: "shell", topic}`): wallpaper changes
-  (`RemoteWallpapers`, which reads wallpapers.json and scans the library like
-  the real manager), "Regenerate now" of app themes, desktop-widget edit mode
-  (the state and the depth clock areas come back), opening the wizard.
-- Pages: config-backed pages and search work on the window's own Config; Displays,
+costs nothing until opened and gives all its memory back when closed.
+- Launch / close / raise / fallback: unchanged (`SeparateWindows`,
+  `backend/pkg/svc/windows`, `windows.open/command/ready/hiding`, OpeningPill;
+  a start failure falls back to the in-process window). Closing never asks
+  anything: every change is already saved. The process quits 1 s after it
+  hid, after the last coalesced writes (ConfigFile flushes a pending write
+  on destruction).
+- Live changes: the window writes its own Config and its files (the same
+  coalesced auto-save as in-process); the main shell follows the files
+  through its file watchers. Why this and not the preview relay: the relay
+  stages in the main shell (snapshot + paused auto-save) and would need a
+  commit protocol to end; plain writes need no protocol, cannot leave the
+  main shell holding unsaved state, and the 250 ms cap keeps a slider drag
+  visibly live on the desktop (about four reloads per second). Two processes
+  writing one domain merge (`config/ConfigMerge.js`).
+- Undo in the window is the window's own history; it writes like any change.
+- The wizard's staging still uses the relay (PreviewSink: set / discard /
+  commit, main shell writes, window fallback after 2 / 4 s) exactly as before.
+- Role: `ProcessRole` keeps session-wide services to the main shell; what the
+  window cannot own is asked of the main shell (`windows.relay {to: "shell",
+  topic}`: wallpaper changes through RemoteWallpapers, "Regenerate now",
+  desktop-widget edit mode, opening the wizard).
+- Pages: config-backed pages and search use the window's Config; Displays,
   Keyboard, Extras, Mods, Presets, Routines, AI usage are daemon-backed (the
-  keep/revert prompt is drawn by the main shell from the daemon's session);
-  Network / Bluetooth / Sound talk to the system directly; the keybind editor
-  writes binds.json and the main shell's TOML writer follows the file; AI
-  providers / agents / MCP use a second `Ai` instance (reads only; automations
-  run in the main shell); About shows the last update check (scheduled checks
-  run in the main shell, "Check now" runs in the window). Not out of process:
-  the depth-clock matte progress (DepthMatteStatus) only sees jobs of its own
-  process, so it does not show the main shell's matte build.
+  keep / revert prompt of displays and keyboard is drawn by the main shell);
+  Network / Bluetooth / Sound talk to the system directly.
+
+## PERFORMANCE
+- Opening the window compiles the shell and ONE page: pages and stages are
+  created by URL (`Registry.PAGES`, `Registry.STAGES`); the host imports the
+  page directories only so Quickshell's scanner reaches them. Never name a
+  page or stage type statically in the shell.
+- The last 4 visited pages stay alive, hidden and disabled (PageCache.js);
+  a revisit shows the same page at once. Rows of a hidden page point at
+  nothing. Keep stages cheap while hidden (no endless animations; a stage
+  that animates should gate on `visible`).
+- SettingsPage builds its sections a few per frame and stays hidden until
+  what is on screen is built (`enterReady`); no row object exists for an
+  out-of-window entry.
+- Heavy live previews become pictures: the lock screen gallery builds one
+  LockView at a time, captures it (`grabToImage`) and destroys it.
+- Measure with the audit harness (scratch scripts based on
+  `tests/lib/settings_env.py`: time from `select()` to the host's `pageReady`
+  and to `item.complete`).
+
+## ADDING A SETTING
+1. The key exists in `config/defaults/<domain>.js` (`make schema` regenerates
+   the typed adapter); a staged domain also lists it in the GlobalStates
+   snapshot list (the wizard uses it).
+2. One entry in the category's `schema/<category>.js` section:
+   ```js
+   { "key": "bar.compact", "type": "toggle",
+     "label": "prefs.bar.compact", "description": "prefs.bar.compact.desc",
+     "keywords": "compact dense slim thin small height" }
+   ```
+   Not important enough for the window? Add `"advanced": true` (it stays in
+   the catalog and the CLI). Most new knobs are.
+3. Label / description keys in `translations/{en,es,ru}.json`.
+4. `make schema` (catalog `assets/schema/*.schema.json`).
+
+Entry fields: `key` (dotted, `domain.prop[.sub]`), `type` (`toggle | selector
+| slider | number | text | font | color-role | list | path | screens |
+multiselect | macro | custom`), `label`, `description` (tooltip + catalog),
+`hint` (i18n key: the one visible caption line, rare), `keywords`,
+`advanced` (not in the window), `placeholder`, `pattern`, `options`
+(`[{value, label, icon}]`), `display: "cards"` + `thumb` (picture cards),
+`min/max/step/unit`, `specialValues`, `visibleWhen` / `enabledWhen`
+(declarative: `{key, equals|notEquals|in|truthy|empty}`, `{key, some: {field,
+in|notIn}}`, `{all|any: [...]}`, `{not: ...}`), `reason` (why an
+`enabledWhen` row waits when no single switch decides it), `preview` (old
+under-row preview, unconverted pages only), `component` (custom editor),
+`keys` (every key a composite entry reads / resets), `sizeKey` / `sizeUnit`
+(font), `resettable: false`, `compositor`, `id`, `target` (PageLink),
+`invert` (a toggle shown on for false), `surface` (a host picker's surface
+id: the row notes "Island is off - shown as X" and HostThumb pictures it).
+Section fields: `id`, `title`, `entries`, `advanced: true` (the whole section
+is out of the window), `compositor`. A section shows only while one of its
+rows does. Category fields: `id`, `icon`, `title` (the tab label),
+`description`, `keywords`, `sections`, `stage` (Registry.STAGES name) or
+`page` (Registry.PAGES name).
+
+Control mapping (applied everywhere): on / off -> `toggle` (Switch);
+2 to 5 visual options -> `selector` + `display: "cards"` + `thumb`;
+2 to 4 non-visual options -> `selector` (kit Segmented); more -> `selector`
+(kit Dropdown); continuous -> `slider` in human units; a small count ->
+`number` (stepper); a font -> `font` (the picker; `sizeKey` adds the size).
+
+## CONVERTING A PAGE (checklist for the remaining destinations)
+Reference pages: Bar (`schema/bar.js`, `layout.js`, `stages/BarStage.qml`,
+`stages/OpensStage.qml`) and Look (`schema/appearance.js`, `icons-type.js`,
+`stages/LookStage.qml`, `stages/TypeStage.qml`).
+1. Budget: the page fits in about two window heights (1180x780) and has
+   about 8 to 15 rows (the window ~150 in all). Count with
+   `tests/settings-window.test.cjs` (add the page to its budget test).
+2. Curate: for every entry ask "would most people change this here?". If
+   not, `"advanced": true` (or the whole section). Plumbing never stays:
+   raw shell commands, timeouts in seconds, mount points, endpoints,
+   performance toggles, per-surface opacities, "match the shell" switches.
+   A row that only refines another (sub-options of an effect) goes too.
+3. One control per setting: if two rows (or two editors) write the same
+   key, keep one. A macro covers its keys: the raw knobs go out.
+4. Labels: sentence case, four words at most, no internal ids, tool names,
+   units in the label or "Enable X" (a switch says that). One name per
+   concept (Island; Lock screen; Assistant). Descriptions stay (tooltip and
+   catalog) but are one or two plain sentences; never narrate a picture.
+5. Visual choices become picture cards: `display: "cards"` + a `thumb`
+   (thumbs/<Name>.qml with `property var entry`, `property var value`; draw
+   on `MiniScreen` with `Mark` / `StyledRect` / `KitText`, the real shell
+   component where it is self-contained, e.g. the bar clock face; register
+   it in `Registry.THUMBS`). Options of a registry (styles, numerals) ->
+   a small editor that feeds `CardSelector` (editors/IndicatorCards.qml).
+6. The stage: `stages/<Page>Stage.qml` with a `Stage` root
+   (`stageHeight`), registered in `Registry.STAGES`, named by the category's
+   `"stage"`. Draw the real thing: the theme's own surfaces (`StyledRect`
+   variants "barbg", "popup", "bg"), kit components (they follow the look
+   live), real self-contained shell parts loaded by URL (no `import
+   qs.modules.<feature>` from settings: the `layers` audit). Read values with
+   `SettingsStore.get` so the stage follows every change; animate changes
+   with `Behavior` (Motion.glide) or a short settle animation.
+7. Wire row highlights: give each part a `StageSpot { keys: [...] }` with
+   the keys (prefixes) of the rows that change it. A spot must not sit
+   inside a `StyledRect` (it clips its children): put it beside the part
+   (`anchors.fill: part`). Macro rows point with their macro's keys.
+8. Move the page's `preview`s into the stage (or drop them) and remove
+   under-row previews from the page's window entries.
+9. No grey dead ends: an `enabledWhen` row either has a single switch
+   (the row offers [Turn on]) or is hidden while it waits.
+10. Translations for every new / changed key in en, es and ru. Remove keys
+    that became unused (the translations audit warns).
+11. Render the page in the five languages, dark and light, and look at it:
+    clipping, overlap, alignment, blank thumbs, contrast.
+12. `make schema`, `make check`.
+
+## MACROS
+Look > Feel (`schema/macros.js`): Motion, Density, Roundness, Depth, Glass.
+`Macros.js` (pure, tests/settings-macros.test.cjs) lists each macro's keys and
+points; the slider shows the point every key matches, else "Custom". Moving
+it writes only the keys that differ, as one undo step. Defaults must sit on
+a point. The keys a macro moves are not rows of their own.
+
+## SEARCH / CHANGES PAGE
+The sidebar search covers window rows only (`SchemaUtil.buildSearchIndex`
+skips out-of-window entries); a result names its destination and tab and
+lands on the row (scroll, accent wash, keyboard focus). `Synonyms.js` (en +
+ru) maps words people type to the words the schema uses. The Changes tab
+(Presets) lists window rows that differ from their defaults or the preset.
 
 ## VERIFY
-- `make check`: `settings-schema` audit (keys/defaults, translations,
-  options/ranges, conditions, registry, snapshot lists),
-  `tests/settings-schema.test.cjs` (schema/search/layout helpers),
-  `tests/settings-ui.test.py` (renderer behaviour, offscreen).
-- Separate process: `tests/separate-windows.test.py` (main-shell side: open/close
-  mirror, fallback, preview set/discard/commit, relays), `tests/window-entries.test.py`
-  (root files), `tests/process-role.test.py`, `tests/remote-wallpapers.test.py`,
-  `tests/config-write.test.cjs`, Go `backend/pkg/svc/{windows,preview}`.
-- `tools/render/settings_render.py [--mode dark|light|both] [--scroll N]
-  [--search q] [--size WxH] CATEGORY...` renders pages to PNG in a private
-  Xvfb with your real config, palette and wallpapers.
+- `make check`: the `settings-schema` audit (keys / defaults, translations,
+  options / ranges, conditions, registry), node tests
+  `tests/settings-{window,undo,tree,schema,pages,changes,core,synonyms,macros}.test.cjs`,
+  `tests/write-throttle.test.cjs`, QML tests `tests/settings-shell.test.py`
+  (undo, tabs, keep-alive, stage spots, dead ends, search),
+  `tests/settings-ui.test.py` (typed rows on every page),
+  `tests/settings-load-stable.test.py`, `tests/settings-regressions.test.py`,
+  `tests/config-file-autosave.test.py` (coalesced writes).
+- Separate process: `tests/separate-windows.test.py`, `tests/preview-staging.test.py`
+  (the wizard's relay), `tests/window-entries.test.py`, `tests/onboarding-*.test.py`.
+- Tests that open the whole shell end with `h.exit(...)`: kept-alive pages
+  must not outlive the singletons at interpreter teardown.
