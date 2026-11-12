@@ -42,7 +42,8 @@ func FishHook(cfg Config, configFile string) string {
 	}
 	b.WriteString("end\n")
 	if cfg.Greeting == "fastfetch" {
-		b.WriteString("function fish_greeting\n    fastfetch\nend\n")
+		// not installed (yet): no "Unknown command" on every new terminal
+		b.WriteString("function fish_greeting\n    if type -q fastfetch\n        fastfetch\n    end\nend\n")
 	} else {
 		b.WriteString("set -g fish_greeting\n")
 	}
