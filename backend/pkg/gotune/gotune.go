@@ -19,6 +19,7 @@ type Policy struct {
 	// GCPercent is the heap growth that triggers a collection (GOGC).
 	GCPercent int
 	// MaxProcs caps GOMAXPROCS; a machine with fewer CPUs keeps its count.
+	// 0 leaves GOMAXPROCS alone.
 	MaxProcs int
 }
 
@@ -35,12 +36,16 @@ type Policy struct {
 //   - GOGC 50 lets the heap grow by half its live size between collections
 //     instead of doubling: a lower peak footprint for twice the (tiny) GC
 //     work of a mostly idle, small-heap daemon.
-//   - The daemons are I/O bound (sockets, child processes, D-Bus). Four
-//     Ps is plenty for that and for parallel image encoding, and keeps the
-//     runtime from starting a GC worker per core on large machines.
+//   - The compositor daemon is I/O bound (compositor events, small JSON
+//     replies): two Ps are plenty and keep the runtime from starting a GC
+//     worker per core on large machines.
+//   - The shell daemon keeps every CPU: it encodes screenshots in process,
+//     one PNG band per P (internal/screenshot), so a cap would make a
+//     capture slower on any machine with more CPUs than the cap. Idle Ps
+//     cost no CPU; the idle footprint is trimmed by the two settings above.
 var (
 	// Daemon is the policy of the shell daemon (`yozakura` without args).
-	Daemon = Policy{MemLimit: 512 << 20, GCPercent: 50, MaxProcs: 4}
+	Daemon = Policy{MemLimit: 512 << 20, GCPercent: 50}
 	// CompositorDaemon is the policy of `yozd daemon`: compositor events
 	// and small JSON replies only.
 	CompositorDaemon = Policy{MemLimit: 256 << 20, GCPercent: 50, MaxProcs: 2}

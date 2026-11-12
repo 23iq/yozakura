@@ -12,9 +12,22 @@ func env(vars map[string]string) func(string) string {
 
 func TestPlanDefaults(t *testing.T) {
 	got := Plan(Daemon, env(nil), 16)
-	want := Settings{MemLimit: 512 << 20, GCPercent: 50, MaxProcs: 4}
+	want := Settings{MemLimit: 512 << 20, GCPercent: 50}
 	if got != want {
 		t.Fatalf("Plan = %+v, want %+v", got, want)
+	}
+}
+
+// The shell daemon encodes screenshots with one PNG band per P: capping
+// GOMAXPROCS would make captures slower on machines with more CPUs.
+func TestDaemonKeepsEveryCPU(t *testing.T) {
+	for _, procs := range []int{1, 4, 8, 64} {
+		if got := Plan(Daemon, env(nil), procs); got.MaxProcs != 0 {
+			t.Fatalf("procs %d: MaxProcs = %d, want untouched", procs, got.MaxProcs)
+		}
+	}
+	if got := Plan(CompositorDaemon, env(nil), 16); got.MaxProcs != 2 {
+		t.Fatalf("compositor daemon on 16 CPUs: MaxProcs = %d, want 2", got.MaxProcs)
 	}
 }
 
@@ -23,7 +36,7 @@ func TestPlanYieldsToEnvironment(t *testing.T) {
 	if got != (Settings{}) {
 		t.Fatalf("Plan with every variable set = %+v, want nothing", got)
 	}
-	got = Plan(Daemon, env(map[string]string{"GOGC": "off"}), 16)
+	got = Plan(CompositorDaemon, env(map[string]string{"GOGC": "off"}), 16)
 	if got.GCPercent != 0 || got.MemLimit == 0 || got.MaxProcs == 0 {
 		t.Fatalf("Plan with GOGC set = %+v", got)
 	}
@@ -44,7 +57,7 @@ func TestPlanNeverRaisesProcs(t *testing.T) {
 // payloads; a tighter value needs a reason, not a quiet edit.
 func TestPoliciesStayLoose(t *testing.T) {
 	for name, p := range map[string]Policy{"daemon": Daemon, "compositor": CompositorDaemon} {
-		if p.MemLimit < 256<<20 || p.GCPercent < 50 || p.MaxProcs < 2 {
+		if p.MemLimit < 256<<20 || p.GCPercent < 50 || (p.MaxProcs != 0 && p.MaxProcs < 2) {
 			t.Fatalf("%s policy too tight: %+v", name, p)
 		}
 	}
