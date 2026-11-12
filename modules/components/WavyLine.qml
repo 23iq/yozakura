@@ -53,9 +53,18 @@ Canvas {
     }
 
     // =========================================================================
-    // Animation Driver - FrameAnimation for smooth 60fps
+    // Animation Driver - capped repaint rate
     // =========================================================================
-    FrameAnimation {
+    // The phase comes from the clock (Date.now() in onPaint), so the wave
+    // moves at the same speed at any repaint rate. A FrameAnimation repainted
+    // the canvas (CPU raster + texture upload, and a frame of the whole
+    // window) at the output's refresh rate, up to 240/s. The wave is slow and
+    // low, so ~30 repaints per second draw the same motion.
+    readonly property int maxFps: 30
+
+    Timer {
+        interval: Math.round(1000 / root.maxFps)
+        repeat: true
         running: root.shouldAnimate
         onTriggered: root.requestPaint()
     }
