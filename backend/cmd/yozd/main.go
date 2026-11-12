@@ -220,7 +220,7 @@ func runDaemon(customConfigPath string) {
 				fmt.Println("Detected compositor:", comp)
 			} else {
 				fmt.Println("Error: no supported compositor detected")
-				os.Exit(1)
+				os.Exit(client.ExitNoCompositor)
 			}
 		}
 	}

@@ -11,3 +11,8 @@ const (
 	// are broadcast (with seq), so subscribers need not poll their state.
 	FeatureIdleEvents = "idle_events"
 )
+
+// ExitNoCompositor is the exit status of `daemon` when no supported
+// compositor runs in its session: its supervisor retries slowly instead of
+// in a tight loop (instancelock.ExitHeld is 3).
+const ExitNoCompositor = 4

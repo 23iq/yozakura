@@ -41,10 +41,6 @@ const maxSubscribeLine = 8 * 1024 * 1024
 const socketWaitStep = 100 * time.Millisecond
 const socketWaitTimeout = 5 * time.Second
 
-// daemonRestartDelay throttles restarts of a compositor daemon that exited
-// while the Manager was still running.
-const daemonRestartDelay = 500 * time.Millisecond
-
 // daemonHeldRecheck is how often the supervisor re-checks a lock held by
 // a foreign daemon instance.
 const daemonHeldRecheck = 3 * time.Second
@@ -151,10 +147,13 @@ func (m *Manager) startDaemonLocked() (*exec.Cmd, error) {
 }
 
 // superviseDaemon reaps the daemon and restarts it whenever it exits
-// before Close. Without it a daemon killed from outside stayed a zombie and
-// every daemon client failed with "connection refused" until a full restart.
+// before Close, with a backoff (restart.go). Without it a daemon killed from
+// outside stayed a zombie and every daemon client failed with "connection
+// refused" until a full restart.
 func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 	defer m.wg.Done()
+	var policy restartPolicy
+	started := time.Now()
 	for {
 		err := cmd.Wait()
 
@@ -164,21 +163,25 @@ func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 		}
 		m.daemonMu.Unlock()
 
+		noComp := exitedNoCompositor(err)
+		delay, first := policy.next(time.Since(started), noComp)
+		switch {
+		case !noComp:
+			logf("[compositor] %s daemon exited (%v), restarting in %v\n", brand.Daemon, err, delay)
+		case first:
+			logf("[compositor] %s found no supported compositor; retrying with a backoff of up to %v (compositor features are off meanwhile)\n", brand.Daemon, noCompositorMax)
+		}
+
 		for {
 			select {
 			case <-m.stopCh:
 				return
-			case <-time.After(daemonRestartDelay):
+			case <-time.After(delay):
 			}
 			// Another daemon owns the instance lock: respawning would only
 			// make it refuse again, so keep waiting until it is gone.
 			if _, held := instancelock.Held(instancelock.DaemonPath(brand.DaemonSocketPath())); held {
-				err = fmt.Errorf("another %s instance holds the lock", brand.Daemon)
-				select {
-				case <-m.stopCh:
-					return
-				case <-time.After(daemonHeldRecheck):
-				}
+				delay = daemonHeldRecheck
 				continue
 			}
 			m.daemonMu.Lock()
@@ -186,14 +189,15 @@ func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 				m.daemonMu.Unlock()
 				return
 			}
-			fmt.Fprintf(os.Stderr, "[compositor] %s daemon exited (%v), restarting\n", brand.Daemon, err)
 			next, startErr := m.startDaemonLocked()
 			m.daemonMu.Unlock()
 			if startErr == nil {
 				cmd = next
+				started = time.Now()
 				break
 			}
-			err = startErr
+			delay, _ = policy.next(0, false)
+			logf("[compositor] %v, retrying in %v\n", startErr, delay)
 		}
 	}
 }
