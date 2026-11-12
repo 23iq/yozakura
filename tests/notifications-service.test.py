@@ -8,7 +8,12 @@ against stubbed Quickshell types and a fake disk behind FileView:
 - discarded / cleared notifications are destroyed after the grace period,
 - saves are coalesced, compact, and flushed when the service goes away,
 - the history is loaded once (a later reload keeps newer notifications) and
-  nothing is written before it was read.
+  nothing is written before it was read,
+- notifications that arrive before the history is read survive its load as
+  the same live objects (popup, timer, actions; a server notification keeps
+  its id and idOffset, saved ids that could collide move instead),
+- a missing history file (first run, cleared cache) counts as an empty
+  history: the deferred reload of the file written meanwhile changes nothing.
 """
 import json
 import sys
@@ -62,6 +67,10 @@ h.module("Quickshell.Services.Notifications", {
                           "property bool persistenceSupported; property var extraHints; "
                           "property var trackedNotifications: ({ values: [] }); signal notification(var notification) }",
     "Notification": "QtObject { property int id; property string summary; property string body; "
+                    "property string appIcon; property string appName; property string desktopEntry; "
+                    "property string image; property int urgency: 1; property var actions: []; "
+                    "property bool tracked; property int expireTimeout: -1; property var hints: ({}); "
+                    "property int invokes: 0; property int dismissed: 0; function dismiss() { dismissed++ } "
                     "signal closed(int reason) }",
     "NotificationUrgency": "QtObject { enum Urgency { Low, Normal, Critical } }",
 })
@@ -99,10 +108,25 @@ h.stub("NotificationRules", """QtObject {
 root = h.load("""
 import QtQuick
 import FakeDisk
+import Quickshell.Services.Notifications
 Item {
     id: harnessRoot
     property var seenTimeouts: []
     property alias loader: loader
+    // A live D-Bus notification with a "default" action that counts invokes
+    Component {
+        id: serverComp
+        Notification {
+            id: sn
+            actions: [({ "identifier": "default", "text": "Open", "invoke": () => sn.invokes++ })]
+        }
+    }
+    function serverNotif(server, nid, summary) {
+        const n = serverComp.createObject(harnessRoot, { "id": nid, "summary": summary, "appName": "Chat" });
+        server.trackedNotifications = { "values": server.trackedNotifications.values.concat([n]) };
+        server.notification(n);
+        return n;
+    }
     Loader {
         id: loader
         sourceComponent: Component {
@@ -220,17 +244,82 @@ check(len(writes()) == n_before + 1 and writes()[-1]["block"], "pending save flu
 check(any(n["summary"] == "last words" for n in json.loads(writes()[-1]["text"])), "flushed save is current")
 
 # --- B: no preload; nothing is written before the history was read ---------
+# The saved history also holds an id (1) that the first live server
+# notification of this run gets: the live one must keep it.
+old_b = old + [{"id": 1, "appName": "Mail", "summary": "old 1", "body": "", "time": 1, "actions": [],
+                "appIcon": "", "image": "", "urgency": "1"}]
 h.eval(root, "Disk.preload = false")
-h.eval(root, f"Disk.files[{json.dumps(history_path)}] = {json.dumps(json.dumps(old))}")
+h.eval(root, f"Disk.files[{json.dumps(history_path)}] = {json.dumps(json.dumps(old_b))}")
 h.eval(root, "Disk.writes = []")
 h.eval(root, "loader.active = true")
-popup("startup", 60000)
+ev("reaper.grace = 50")
+startup = ev('notifyInternal({ "summary": "startup", "expireTimeout": 60000, "actions": [{ "identifier": "go", "text": "Go" }], '
+             '"actionHandlers": { "go": id => { root.internalIdCounter += 1000 } } })')
+startup_id = startup.property("id")
+server_obj = ev("root.parent.parent.serverNotif(notifServer, 1, 'live chat')")
+pump(50)
+live_server = ev("list.find(n => n.notification !== null)")
+check(live_server is not None and live_server.property("id") == 1, "a server notification before the load gets id 1")
+destroyed_live: list[str] = []
+startup.destroyed.connect(lambda *_a: destroyed_live.append("startup"))
+live_server.destroyed.connect(lambda *_a: destroyed_live.append("server"))
 pump(200)
 check(writes() == [], "no write before the history was read")
 wait_until(lambda: ev("historyLoaded"))
 wait_until(lambda: len(writes()) > 0)
 saved = json.loads(writes()[-1]["text"])
-check({5, 9}.issubset({n["id"] for n in saved}), "history kept after startup notifications")
+check({"old 5", "old 9", "old 1"}.issubset({n["summary"] for n in saved}), "history kept after startup notifications")
+check({"startup", "live chat"}.issubset({n["summary"] for n in saved}), "the startup notifications are saved too")
+ids = js("list.map(n => n.id)")
+check(len(ids) == len(set(ids)) == 5, f"one entry each, no id twice: {ids}")
+check(ev(f"list.find(n => n.id === {startup_id}) === list.find(n => n.summary === 'startup')"), "startup notification kept its id")
+check(ev("list.find(n => n.summary === 'startup').popup && !list.find(n => n.summary === 'startup').isCached"),
+      "the startup notification is still a live popup")
+check(ev("list.find(n => n.summary === 'startup').timer !== null"), "its popup timer is kept")
+check(ev("list.find(n => n.id === 1).summary") == "live chat", "the live server notification keeps id 1")
+check(ev("list.find(n => n.id === 1).popup && !list.find(n => n.id === 1).isCached"), "the live server notification is still a popup")
+check(ev("idOffset") == 0, "idOffset does not move under live server notifications")
+check(all(i < 0 for i in js("list.filter(n => n.isCached).map(n => n.id)")),
+      "saved ids that a server id could reach moved out of the way")
+counter = ev("internalIdCounter")
+check(ev(f"attemptInvokeAction({startup_id}, 'go', false)") and ev("internalIdCounter") == counter + 1000,
+      "the startup notification's action still runs")
+check(ev("attemptInvokeAction(1, 'default', false)") and server_obj.property("invokes") == 1,
+      "the live server notification's action still reaches the sender")
+pump(150)
+check(destroyed_live == [], f"live notifications are never retired by the load: {destroyed_live}")
+ev("historyFile.reload()")
+pump(100)
+check(len(js("list.map(n => n.id)")) == 5, "a later reload changes nothing")
+h.eval(root, "loader.active = false")
+pump(50)
+
+# --- C: first run, no history file; the deferred reload finds the file
+# written meanwhile and must not replace the live notification -----------
+for preload in (True, False):
+    h.eval(root, f"Disk.preload = {'true' if preload else 'false'}")
+    h.eval(root, "Disk.files = ({})")
+    h.eval(root, "Disk.writes = []")
+    h.eval(root, "loader.active = true")
+    ev("reaper.grace = 50")
+    first = ev('notifyInternal({ "summary": "first run", "expireTimeout": 60000 })')
+    first_id = first.property("id")
+    gone: list[int] = []
+    first.destroyed.connect(lambda *_a: gone.append(1))
+    if not preload:
+        ev("historyFile.reload()")  # the first read of the missing file
+    wait_until(lambda: ev("historyLoaded"))
+    wait_until(lambda: len(writes()) > 0)
+    offset = ev("idOffset")
+    ev("historyFile.reload()")  # what the deferred reload does at 2 s
+    pump(400)
+    tag = "preloaded" if preload else "deferred"
+    check(js("list.map(n => n.id)") == [first_id], f"{tag}: the list is the live notification only")
+    check(ev("list[0].popup && !list[0].isCached"), f"{tag}: missing history: the popup stays live")
+    check(ev("idOffset") == offset, f"{tag}: idOffset unchanged by the reload")
+    check(gone == [], f"{tag}: the live notification is not destroyed")
+    h.eval(root, "loader.active = false")
+    pump(50)
 
 if fails:
     print(f"{len(fails)} failure(s)")

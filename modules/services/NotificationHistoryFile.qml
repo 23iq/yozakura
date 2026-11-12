@@ -20,6 +20,9 @@ QtObject {
 
     // The file was read; text() holds it
     signal loaded
+    // The file could not be read (missing on a first run or after the cache
+    // was cleared, or unreadable): there is no saved history
+    signal missing
 
     function text() {
         return file.view.text();
@@ -57,7 +60,10 @@ QtObject {
             file.loaded();
             file._setReady();
         }
-        onLoadFailed: file._setReady()
+        onLoadFailed: {
+            file.missing();
+            file._setReady();
+        }
     }
 
     property Timer writeTimer: Timer {

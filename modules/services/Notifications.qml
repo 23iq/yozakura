@@ -214,7 +214,8 @@ Singleton {
         path: Brand.cacheDir + "/notifications.json"
         // At most 5 per app + summary, compact
         serialize: () => NotificationHistory.serialize(root.list)
-        onLoaded: root.loadNotifications()
+        onLoaded: root.loadNotifications(false)
+        onMissing: root.loadNotifications(true)
     }
 
     // A popup's hide step after its timeout animation (one deadline per id)
@@ -250,9 +251,9 @@ Singleton {
         }
     }
 
-    function jsonToNotif(json) {
+    function jsonToNotif(json, id) {
         return notifComponent.createObject(root, {
-            "id": json.id,
+            "id": id,
             "actions": json.actions,
             "appIcon": json.cachedAppIcon || json.appIcon  // Usar cached si disponible
             ,
@@ -280,30 +281,34 @@ Singleton {
         historyFile.save();
     }
 
-    // Once: a later reload must not replace the list (and idOffset) under
-    // the notifications that arrived since.
+    // Once, merged under the live notifications (NotificationHistory.merge):
+    // the ones that arrived before the history was read stay as they are
+    // (popup, actions, ids). A missing or unreadable file is an empty
+    // history, so a later reload never replaces live state.
     property bool historyLoaded: false
-    function loadNotifications() {
+    function loadNotifications(missing) {
         if (root.historyLoaded)
             return;
-        try {
-            const data = JSON.parse(historyFile.text());
-            const before = root.list.slice();
-            root.list = data.map(jsonToNotif);
-            root.historyLoaded = true;
-            root.retire(before);
-            // Set idOffset to max id + 1
-            let maxId = 0;
-            root.list.forEach(notif => {
-                if (notif.id > maxId)
-                    maxId = notif.id;
-                if (notif.id <= -1000000)
-                    root.internalIdCounter = Math.max(root.internalIdCounter, Math.abs(notif.id) - 999999);
-            });
-            root.idOffset = maxId + 1;
-        } catch (e) {
-            console.log("No saved notifications or error loading:", e);
+        root.historyLoaded = true;
+        let data = [];
+        if (!missing) {
+            try {
+                data = JSON.parse(historyFile.text());
+            } catch (e) {
+                console.log("No saved notifications or error loading:", e);
+            }
         }
+        const live = root.list.map(n => ({
+                    "id": n.id,
+                    "time": n.time,
+                    "summary": n.summary
+                }));
+        const fixed = root.list.some(n => n.notification !== null) || notifServer.trackedNotifications.values.length > 0;
+        const m = NotificationHistory.merge(data, live, root.idOffset, root.internalIdCounter, fixed);
+        root.idOffset = m.idOffset;
+        root.internalIdCounter = m.internalIdCounter;
+        if (m.entries.length > 0)
+            root.list = [...m.entries.map(e => jsonToNotif(e.json, e.id)), ...root.list];
     }
 
     onListChanged: {
