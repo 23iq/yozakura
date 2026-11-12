@@ -109,6 +109,29 @@ h.eval(lb, "adapterUpdated()")
 h.eval(la, "adapterUpdated()")
 check(h.eval(lb, "writes") == 0 and h.eval(la, "writes") == 0, "pauseAutoSave alone still pauses every domain")
 
+# Coalesced writes: a burst is one write when it stops, and a long burst (a
+# slider drag) is written every autoSaveMaxWait ms, never at every tick.
+from PySide6.QtTest import QTest  # noqa: E402
+
+timed = h.load(SCENE.replace('property bool pauseAutoSave: false',
+                             'property bool pauseAutoSave: false\n    property int autoSaveDelay: 150\n'
+                             '    property int autoSaveMaxWait: 250'), auto_stub=False)
+tb = h.eval(timed, "bar")
+h.eval(tb, "content = JSON.stringify({ position: 'left' }); loaded()")
+for _ in range(5):
+    h.eval(tb, "adapterUpdated()")
+    QTest.qWait(10)
+check(h.eval(tb, "writes") == 0, "a short burst waits for its end")
+QTest.qWait(300)
+check(h.eval(tb, "writes") == 1, "a short burst is one write")
+for _ in range(60):
+    h.eval(tb, "adapterUpdated()")
+    QTest.qWait(16)
+during = h.eval(tb, "writes") - 1
+check(2 <= during <= 6, f"a one-second drag writes a few times ({during}), not at every tick")
+QTest.qWait(300)
+check(h.eval(tb, "saveTimer.running") is False, "the trailing write leaves no timer running")
+
 if failures:
     print(f"config-file-autosave: {len(failures)} failure(s)")
     sys.exit(1)

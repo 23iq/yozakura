@@ -59,8 +59,11 @@ Singleton {
     // Derived, never assigned: nothing can leave it stuck on or off.
     property int autoSaveHolds: 0
     readonly property bool pauseAutoSave: autoSaveHolds > 0 || GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
-    // Edits are coalesced into one write per domain after this many ms.
+    // Edits are coalesced into one write per domain after this many ms, and
+    // written at least this often while they keep coming (a slider drag in a
+    // separate Settings window reaches the main shell live, ConfigFile).
     readonly property int autoSaveDelay: 150
+    readonly property int autoSaveMaxWait: 250
 
     // What ConfigFile asks per domain: a hold pauses every domain, a staged
     // change only the domains it stages (AutoSavePause.js); pauseAutoSave
