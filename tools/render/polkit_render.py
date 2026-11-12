@@ -6,7 +6,9 @@ offscreen (private Xvfb, never the desktop) over a dimmed wallpaper.
                                   [--wallpaper FILE] [LANGUAGE ...]
 
 States: `prompt` (password asked, a few masked characters typed), `error`
-(after a wrong password), `identities` (two identities: the picker).
+(after a wrong password), `identities` (two identities: the picker),
+`identity` (one identity with a full name: "John Doe (john)"), `longaction`
+(a long action id, wrapped).
 Writes <out>/polkit-<state>-<language>.png, every visual language by
 default. The flows are the stubs of tests/lib/polkit_env.py with neutral
 sample data; palette and wallpaper as settings_render.py (the repo's first
@@ -35,6 +37,7 @@ from settings_render import palette, wallpaper_state  # noqa: E402
 
 MESSAGE = "Authentication is required to install software"
 ACTION = "org.freedesktop.policykit.exec"
+LONG_ACTION = "org.example.vendor.application.subsystem.privileged-helper.run-maintenance-task"
 
 
 def main() -> int:
@@ -79,9 +82,10 @@ Window {{
     Component {{ id: flowComp; AuthFlow {{}} }}
     QtObject {{ id: me; property int id: 1000; property string string: "user"; property string displayName: "user"; property bool isGroup: false }}
     QtObject {{ id: admin; property int id: 1001; property string string: "admin"; property string displayName: "Administrator"; property bool isGroup: false }}
-    function makeFlow(two) {{
-        return flowComp.createObject(win, {{ message: {json.dumps(MESSAGE)}, actionId: {json.dumps(ACTION)},
-            identities: two ? [me, admin] : [me], selectedIdentity: me }});
+    QtObject {{ id: john; property int id: 1002; property string string: "unix-user:john"; property string displayName: "John Doe,,,"; property bool isGroup: false }}
+    function makeFlow(two, who, action) {{
+        return flowComp.createObject(win, {{ message: {json.dumps(MESSAGE)}, actionId: action || {json.dumps(ACTION)},
+            identities: two ? [me, admin] : [who || me], selectedIdentity: who || me }});
     }}
     PolkitDialog {{ id: dialog; objectName: "dialog"; anchors.centerIn: parent; shown: true }}
 }}""")
@@ -112,6 +116,16 @@ Window {{
     dialog.setProperty("flow", two)
     ev(two, 'request("Password: ", false)')
     snap("identities")
+
+    gecos = ev(win, "makeFlow(false, john)")
+    dialog.setProperty("flow", gecos)
+    ev(gecos, 'request("Password: ", false)')
+    snap("identity")
+
+    long_action = ev(win, f"makeFlow(false, null, {json.dumps(LONG_ACTION)})")
+    dialog.setProperty("flow", long_action)
+    ev(long_action, 'request("Password: ", false)')
+    snap("longaction")
 
 
 if __name__ == "__main__":
