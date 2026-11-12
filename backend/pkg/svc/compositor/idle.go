@@ -5,7 +5,6 @@ import (
 	"slices"
 	"sync"
 
-	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/yozd/client"
 )
 
@@ -151,6 +150,18 @@ func drainIdle(c <-chan IdleUpdate) {
 	}
 }
 
+// resync drops what is queued for c and returns the current status with a
+// new epoch: the forwarder could not deliver an update, so its subscriber
+// must re-read its monitor. Draining under h.mu keeps every update queued
+// after the returned status newer than it.
+func (h *idleHub) resync(c <-chan IdleUpdate) IdleStatus {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	drainIdle(c)
+	h.status.Epoch++
+	return h.status
+}
+
 // subscribe returns the update channel, the status to start from and a
 // cancel function.
 func (h *idleHub) subscribe() (<-chan IdleUpdate, IdleStatus, func()) {
@@ -184,32 +195,4 @@ func (h *idleHub) closeAll() {
 // cancel function. The channel is closed when the Manager shuts down.
 func (m *Manager) SubscribeIdle() (<-chan IdleUpdate, IdleStatus, func()) {
 	return m.idle.subscribe()
-}
-
-// subscribeIdle serves an "idlemon" IPC subscription.
-func (s *Service) subscribeIdle(sub *ipc.Subscriber) {
-	if s.mgr == nil {
-		return
-	}
-	ch, st, cancel := s.mgr.SubscribeIdle()
-	sub.Send("idlemon.status", st)
-	go func() {
-		defer cancel()
-		for {
-			select {
-			case u, ok := <-ch:
-				if !ok {
-					return
-				}
-				if u.Status != nil {
-					sub.Send("idlemon.status", *u.Status)
-				}
-				if u.Change != nil {
-					sub.Send("idlemon.changed", *u.Change)
-				}
-			case <-sub.StopCh():
-				return
-			}
-		}
-	}()
 }

@@ -60,10 +60,19 @@ func NewSubscriber(buf int) *Subscriber {
 	return &Subscriber{Events: make(chan ServiceEvent, buf), stop: make(chan struct{})}
 }
 
+// Push queues event without blocking; it is dropped when the buffer is full.
 func (s *Subscriber) Push(event ServiceEvent) {
+	s.TryPush(event)
+}
+
+// TryPush is Push reporting whether event was queued, for streams that must
+// recover from a drop (resend their state) instead of losing it silently.
+func (s *Subscriber) TryPush(event ServiceEvent) bool {
 	select {
 	case s.Events <- event:
+		return true
 	default:
+		return false
 	}
 }
 
@@ -76,6 +85,11 @@ func (s *Subscriber) StopCh() <-chan struct{} { return s.stop }
 
 func (s *Subscriber) Send(service string, data any) {
 	s.Push(ServiceEvent{Service: service, Data: data})
+}
+
+// TrySend is Send reporting whether the event was queued (see TryPush).
+func (s *Subscriber) TrySend(service string, data any) bool {
+	return s.TryPush(ServiceEvent{Service: service, Data: data})
 }
 
 // Server is a line-delimited JSON server over a Unix socket.
