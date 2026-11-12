@@ -16,6 +16,7 @@ import (
 	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
+	"yozakura/backend/pkg/gotune"
 	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/migrate"
 
@@ -413,6 +414,7 @@ func runShell() {
 		os.Exit(1)
 	}
 	defer lock.Release()
+	gotune.Apply(gotune.Daemon, os.Getenv)
 	// We own the lock, so only a build that predates it can still be up.
 	if legacyAlive() {
 		pid := readPIDFile()

@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/gotune"
 	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/yozd/client"
 	"yozakura/backend/pkg/yozd/config"
@@ -60,6 +61,7 @@ func main() {
 	remainingArgs := os.Args[i:]
 	switch remainingArgs[0] {
 	case "daemon":
+		gotune.Apply(gotune.CompositorDaemon, os.Getenv)
 		runDaemon(customConfigPath)
 	case "subscribe":
 		runSubscribe()
