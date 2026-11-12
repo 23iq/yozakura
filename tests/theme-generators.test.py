@@ -208,6 +208,10 @@ kconf = str(kconf)
 check("kitty: no look keys while the terminal look is off", not any(k in kconf for k in (
     "cursor_shape", "window_padding_width", "cursor_blink_interval")), kconf[:300])
 check("kitty: cursor_text_color kept", "cursor_text_color " in kconf)
+# A window closed maximized must not make every later kitty open maximized
+# (kitty replays the remembered state only with remember_window_size on).
+check("kitty: remembered window state off", "\nremember_window_size no\n" in kconf)
+check("kitty: no size or start state forced", not any(k in kconf for k in ("initial_window_", "startup_session", "start_as")))
 h.eval(kitty, "Config.terminal.enabled = true")
 h.eval(kitty, "root.generate(fakeColors)")
 kconf = str(h.eval(kitty, "root.writer.text"))
