@@ -63,6 +63,8 @@ Item {
     property bool currentNoteIsMarkdown: false
     property bool loadingNote: false
     property bool editorDirty: false
+    // The last save of the open note failed (it stays dirty: the next edit retries)
+    property bool saveFailed: false
 
     NotesStore {
         id: store
@@ -298,11 +300,13 @@ Item {
 
         // Get the text content
         var content = editorPane.text(currentNoteIsMarkdown);
-        store.write(currentNoteId, currentNoteIsMarkdown, content);
-        editorDirty = false;
+        const ok = store.write(currentNoteId, currentNoteIsMarkdown, content);
+        saveFailed = !ok;
+        editorDirty = !ok;
 
         // Update modified timestamp
-        store.touch(currentNoteId);
+        if (ok)
+            store.touch(currentNoteId);
     }
 
     function openNoteInEditor(noteId) {
@@ -349,8 +353,9 @@ Item {
         moveNote(1);
     }
 
-    function saveNotesOrder() {
-        store.writeIndex(allNotes);
+    // `removedIds`: notes deleted here (others missing from allNotes are kept)
+    function saveNotesOrder(removedIds) {
+        store.writeIndex(allNotes, removedIds || []);
     }
 
     // A text change in an editor marks the open note dirty (debounced save)

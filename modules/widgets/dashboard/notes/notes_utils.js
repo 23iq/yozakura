@@ -125,6 +125,100 @@ function parseIndex(jsonString) {
 }
 
 /**
+ * Parse index.json for a read-modify-write: every field is kept; an empty
+ * file is an empty index, an unreadable one is null (never rewritten from it).
+ */
+function parseIndexStrict(jsonString) {
+    if (!jsonString)
+        return { order: [], notes: {} };
+    try {
+        var data = JSON.parse(jsonString);
+        if (!data || typeof data !== "object" || Array.isArray(data))
+            return null;
+        data.order = Array.isArray(data.order) ? data.order : [];
+        data.notes = data.notes && typeof data.notes === "object" ? data.notes : {};
+        return data;
+    } catch (e) {
+        return null;
+    }
+}
+
+/** The notes of an index, in its order: [{ id, title, created, modified, isMarkdown, isCreateButton }] */
+function indexEntries(indexData) {
+    var entries = [];
+    for (var i = 0; i < indexData.order.length; i++) {
+        var meta = indexData.notes[indexData.order[i]];
+        if (meta) {
+            entries.push({
+                id: indexData.order[i],
+                title: meta.title || "Untitled",
+                created: meta.created || "",
+                modified: meta.modified || "",
+                isMarkdown: meta.isMarkdown || false,
+                isCreateButton: false
+            });
+        }
+    }
+    return entries;
+}
+
+/**
+ * The index to write for the tab's `notes` (order + metadata) over the index
+ * on disk (`disk`, null when unreadable). Notes the disk has and the tab does
+ * not (added by a quick note or the MCP tools since the tab read it) are kept,
+ * first, unless the tab removed them (`removedIds`); for a note on both sides
+ * the disk metadata wins (titles and timestamps are written there first);
+ * other fields are kept.
+ */
+function mergeIndex(disk, notes, removedIds) {
+    var base = disk || { order: [], notes: {} };
+    var listed = {}, removed = {};
+    notes.forEach(function (n) {
+        listed[n.id] = true;
+    });
+    (removedIds || []).forEach(function (id) {
+        removed[id] = true;
+    });
+    var extra = base.order.filter(function (id) {
+        return !listed[id] && !removed[id] && !!base.notes[id];
+    });
+    var out = {};
+    for (var key in base)
+        out[key] = base[key];
+    out.order = extra.concat(notes.map(function (n) {
+        return n.id;
+    }));
+    out.notes = {};
+    extra.forEach(function (id) {
+        out.notes[id] = base.notes[id];
+    });
+    notes.forEach(function (n) {
+        var meta = {
+            title: n.title,
+            created: n.created,
+            modified: n.modified,
+            isMarkdown: n.isMarkdown || false
+        };
+        var known = base.notes[n.id] || {};
+        for (var k in known)
+            meta[k] = known[k];
+        out.notes[n.id] = meta;
+    });
+    return out;
+}
+
+/** `indexData` with note `noteId` changed by `fields` (+ modified now), or null when it is not there. */
+function updateNote(indexData, noteId, fields) {
+    if (!indexData || !indexData.notes[noteId])
+        return null;
+    var meta = indexData.notes[noteId];
+    for (var k in fields)
+        meta[k] = fields[k];
+    meta.modified = getCurrentTimestamp();
+    return indexData;
+}
+
+/**
  * Serialize index object to JSON string
  * @param {object} indexData - Index object
  * @returns {string} JSON string

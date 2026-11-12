@@ -39,7 +39,7 @@ QtObject {
         function onNoteDeleted(noteId) {
             const tab = storeSync.tab;
             tab.allNotes = tab.allNotes.filter(n => n.id !== noteId);
-            tab.saveNotesOrder();
+            tab.saveNotesOrder([noteId]);
             if (tab.currentNoteId === noteId) {
                 tab.currentNoteId = "";
                 tab.currentNoteContent = "";
@@ -48,8 +48,11 @@ QtObject {
             tab.updateFilteredNotes();
         }
 
-        function onNoteRead(ok, content) {
+        function onNoteRead(noteId, ok, content) {
             const tab = storeSync.tab;
+            // A read for a note that is no longer the open one
+            if (noteId !== tab.currentNoteId)
+                return;
             tab.currentNoteContent = ok ? content : "";
             tab.currentNoteTitle = ok ? (tab.titleOf(tab.currentNoteId) ?? tab.currentNoteTitle) : "";
             tab.editorDirty = false;
