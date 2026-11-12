@@ -305,7 +305,7 @@ for preload in (True, False):
     first = ev('notifyInternal({ "summary": "first run", "expireTimeout": 60000 })')
     first_id = first.property("id")
     gone: list[int] = []
-    first.destroyed.connect(lambda *_a: gone.append(1))
+    first.destroyed.connect(lambda *_a, gone=gone: gone.append(1))
     if not preload:
         ev("historyFile.reload()")  # the first read of the missing file
     wait_until(lambda: ev("historyLoaded"))
