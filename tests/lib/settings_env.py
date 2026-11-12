@@ -592,6 +592,15 @@ QtObject {
     }
     function getAllApps() { return apps }
 }"""
+# Night light (Displays page): idle stand-in; tests/lib/device_fixtures.py has a live one.
+NIGHT_LIGHT_STUB = """pragma Singleton
+QtObject {
+    property bool active: false
+    property int temp: 4500
+    function toggle() {}
+    function setEnabled(v) {}
+    function setTemperature(v) {}
+}"""
 # Keyboard page (modules/settings/keyboard): idle stand-in; tests/lib/keyboard_env.py swaps in the real one.
 KEYBOARD_STUB = """pragma Singleton
 QtObject {
@@ -841,7 +850,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
                                               "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
