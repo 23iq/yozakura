@@ -302,18 +302,19 @@ def test_download_release_url(home, root):
     check(any("https://example.invalid/o/r/releases/latest/download/SHA256SUMS" in x for x in lines),
           f"no tag: not the latest release: {lines}")
 
-    # a tag without release assets (v-prefixed tags get none): the latest
-    # release instead, not a failed install
-    calls.unlink()
-    script = ('curl() { printf "%s\\n" "$*" >>"$CALLS"; [[ "$*" != *"/releases/download/"* ]]; }\n'
-              f'REPO_URL=https://example.invalid/o/r.git; SRC_DIR={root}\n'
-              'RELEASE_TAG=v0.4.2; download_release; echo "exit=$?"\n')
-    r = sh(lib_env + script, home)
-    lines = calls.read_text().splitlines()
-    check("releases/download/v0.4.2/SHA256SUMS" in lines[0], f"tag first: {lines}")
-    check(any("releases/latest/download/SHA256SUMS" in x for x in lines[1:]) and
-          any("releases/latest/download/yozakura-linux-" in x for x in lines), f"no fallback to the latest release: {lines}")
-    check("has no binaries; trying the latest release" in r.stdout, f"fallback not said: {r.stdout}")
+    # a tag without release assets (v-prefixed tags, a beta without
+    # assets): a clear failure, never another release's binaries
+    for tag in ("v0.4.2", "0.4.3-beta.1"):
+        calls.unlink(missing_ok=True)
+        script = ('curl() { printf "%s\\n" "$*" >>"$CALLS"; [[ "$*" != *"/releases/download/"* ]]; }\n'
+                  f'REPO_URL=https://example.invalid/o/r.git; SRC_DIR={root}\n'
+                  f'RELEASE_TAG={tag}; download_release && echo exit=0 || echo "exit=$?"\n')
+        r = sh(lib_env + script, home)
+        lines = calls.read_text().splitlines()
+        check(len(lines) == 1 and f"releases/download/{tag}/SHA256SUMS" in lines[0], f"{tag}: only its own release: {lines}")
+        check(not any("/latest/" in x for x in lines), f"{tag}: fell back to the latest release: {lines}")
+        check("exit=1" in r.stdout, f"{tag}: did not fail: {r.stdout}")
+        check(f"release {tag} has no prebuilt binaries; build it from source" in r.stdout, f"{tag}: not said: {r.stdout}")
 
 
 def test_save_channel(home, root):

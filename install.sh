@@ -1857,17 +1857,13 @@ download_release() {
   esac
   # The release the checkout is on (tag channels), else the latest one. A
   # tag without release assets (only tags without a leading v get them, see
-  # .github/workflows/release.yml) falls back to the latest release.
+  # .github/workflows/release.yml) fails: another release's binaries would
+  # not match the checked-out sources.
   base="${REPO_URL%.git}/releases/latest/download"
-  if [[ -n "$RELEASE_TAG" ]]; then
-    if curl -fsSL "${REPO_URL%.git}/releases/download/$RELEASE_TAG/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS"; then
-      base="${REPO_URL%.git}/releases/download/$RELEASE_TAG"
-    else
-      echo "release $RELEASE_TAG has no binaries; trying the latest release"
-    fi
-  fi
-  if [[ "$base" == */latest/download ]]; then
-    curl -fsSL "$base/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS" || return 1
+  [[ -z "$RELEASE_TAG" ]] || base="${REPO_URL%.git}/releases/download/$RELEASE_TAG"
+  if ! curl -fsSL "$base/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS"; then
+    [[ -z "$RELEASE_TAG" ]] || echo "release $RELEASE_TAG has no prebuilt binaries; build it from source (Go 1.21+ and make)"
+    return 1
   fi
   for b in "$APP_ID" "$DAEMON_ID"; do
     curl -fsSL "$base/$b-linux-$arch" -o "$SRC_DIR/$b-linux-$arch" || return 1
