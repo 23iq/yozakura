@@ -863,6 +863,21 @@ def test_ly_and_no_systemd_login_managers():
         sb.cleanup()
 
 
+def test_root_and_missing_sudo_give_guidance():
+    sb = Sandbox("arch")
+    try:
+        (sb.bin / "sudo").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 1 and "sudo is not installed" in err, f"missing sudo exit {rc}", err)
+        for line in ("pacman -Syu sudo", "useradd -m -G wheel yourname", "passwd yourname", "/etc/sudoers.d/10-wheel"):
+            check(line in err, f"missing-sudo guidance lacks {line!r}", err)
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check("apt install sudo" in err and "usermod -aG sudo yourname" in err, "debian guidance wrong", err)
+    finally:
+        sb.cleanup()
+
+
 def test_dry_run_without_git():
     sb = Sandbox("arch", strict=True)
     try:
@@ -883,6 +898,7 @@ def main():
         test_sddm_installed_but_disabled_is_set_up,
         test_other_login_manager_installed_but_disabled,
         test_ly_and_no_systemd_login_managers,
+        test_root_and_missing_sudo_give_guidance,
         test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,

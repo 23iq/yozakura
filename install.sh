@@ -742,16 +742,59 @@ ask() {
 }
 
 # === sudo ===
+# sudo_setup_lines [user]: the commands (shown, never run) that give this
+# distribution a user with sudo rights, for a system where only root exists
+# yet or sudo is missing. Arch: a full upgrade with it (no partial upgrades).
+sudo_setup_lines() {
+  local who="${1:-yourname}" wheel="echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel"
+  case "$DISTRO" in
+  arch) printf '%s
+' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  fedora) printf '%s
+' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
+  suse) printf '%s
+' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  debian) printf '%s
+' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
+  *) printf '%s
+' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  esac
+}
+
+# sudo_grant_lines USER: the commands (as root) that let USER use sudo.
+sudo_grant_lines() {
+  case "$DISTRO" in
+  debian) printf '%s\n' "usermod -aG sudo $1" ;;
+  fedora) printf '%s\n' "usermod -aG wheel $1" ;;
+  *) printf '%s\n' "usermod -aG wheel $1" "echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel" ;;
+  esac
+}
+
+# die_without_user TITLE: TITLE, then how to create a user with sudo rights
+# (as root) and run the installer as that user.
+die_without_user() {
+  local lines=() l
+  while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines)
+  die "$1" "The installer runs as your user and uses sudo for the system steps." \
+    "No user with sudo rights yet? As root on ${DISTRO_NAME:-this system} (replace yourname):" \
+    "${lines[@]}" "Then log in as that user (or: su - yourname) and run the installer again."
+}
+
 need_sudo() {
   [[ "$SUDO_OK" == 1 ]] && return 0
   if [[ "$DRY_RUN" == 1 ]]; then
     try_sudo
     return 0
   fi
-  has_cmd sudo || die "sudo is not installed." "Install it as root (pacman -S sudo / dnf install sudo), or use --no-deps."
+  has_cmd sudo || die_without_user "sudo is not installed (use --no-deps to skip every step that needs it)."
   [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
   SUDO_FAILED=0
-  try_sudo || die "sudo authentication failed."
+  if ! try_sudo; then
+    local lines=() l
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$(id -un)")
+    die "sudo authentication failed." "A wrong password, or $(id -un) may not use sudo yet. To allow it, as root:" \
+      "${lines[@]}" "Then log in again and re-run the installer."
+  fi
 }
 
 # try_sudo: need_sudo that reports instead of ending the install; a refused
@@ -1846,7 +1889,18 @@ install_binaries() {
 # root-owned copy, so code running as the user cannot swap what runs as root.
 # helper_stale: the helper is missing or differs from the installed binary
 # (asked before the build too, so sudo is requested up front).
-helper_stale() { [[ ! -x "$SYS_HELPER" ]] || ! cmp -s "$BIN_DIR/$APP_ID" "$SYS_HELPER"; }
+helper_stale() { [[ ! -x "$SYS_HELPER" ]] || ! same_file "$BIN_DIR/$APP_ID" "$SYS_HELPER"; }
+
+# same_file A B: equal contents (cmp is in diffutils, which a minimal system
+# may not have; sha256sum is coreutils).
+same_file() {
+  if has_cmd cmp; then
+    cmp -s "$1" "$2"
+  else
+    local a b
+    a="$(sha256sum <"$1" 2>/dev/null)" && b="$(sha256sum <"$2" 2>/dev/null)" && [[ "$a" == "$b" ]]
+  fi
+}
 
 # helper_sudo: sudo up front for the helper, with the other gates, so no
 # password prompt waits after the build. A refusal is only a warning.
@@ -2225,7 +2279,10 @@ nixos_flow() {
 
 main() {
   parse_args "$@"
-  [[ "$EUID" -eq 0 ]] && die "Run this as your user, not root." "It uses sudo for the steps that need it."
+  if [[ "$EUID" -eq 0 ]]; then
+    detect_system
+    die_without_user "Run this as your user, not root."
+  fi
   if [[ "$DRY_RUN" == 0 ]]; then
     mkdir -p "$LOG_DIR"
     printf '# %s installer, %s\n' "$DISPLAY_NAME" "$(date)" >"$LOG_FILE"
