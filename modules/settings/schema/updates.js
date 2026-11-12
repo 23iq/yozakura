@@ -1,7 +1,9 @@
 .pragma library
 
-// Updates & OCR: background update checks and the tesseract languages used
-// by the OCR tool. Entry format: see modules/settings/AGENTS.md.
+// Updates & OCR: the stage is the update state with its one action and the
+// channels as lanes (UpdatesStage); the row: background checks and the
+// channel, and the tesseract languages used by the OCR tool. Entry format:
+// see modules/settings/AGENTS.md.
 
 var OCR_KEYS = ["eng", "spa", "lat", "jpn", "chi_sim", "chi_tra", "kor", "rus"];
 
@@ -11,24 +13,20 @@ var category = {
     "title": "prefs.cat.updates",
     "description": "prefs.cat.updates.desc",
     "keywords": "updates version release changelog ocr text recognition tesseract languages",
+    "stage": "UpdatesStage",
+    "hero": {
+        "hint": "prefs.updates.hero_hint"
+    },
+    "row": ["updates", "ocr"],
     "sections": [
         {
             "id": "updates",
             "title": "prefs.updates.section.updates",
             "entries": [
                 {
-                    "id": "updates.status",
-                    "type": "custom",
-                    "component": "UpdatesStatus",
-                    "resettable": false,
-                    "label": "prefs.updates.status",
-                    "description": "prefs.updates.status.desc",
-                    "keywords": "version check now changelog release about"
-                },
-                {
                     "key": "system.updateServiceEnabled",
                     "type": "toggle",
-                    "label": "shell.system.update_service",
+                    "label": "prefs.updates.service",
                     "description": "prefs.updates.service.desc",
                     "keywords": "updates check background notify new version"
                 },
@@ -57,7 +55,7 @@ var category = {
         },
         {
             "id": "ocr",
-            "title": "shell.system.ocr_languages",
+            "title": "prefs.updates.section.ocr",
             "entries": [
                 {
                     "id": "system.ocr",

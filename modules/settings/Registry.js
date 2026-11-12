@@ -51,7 +51,6 @@ var EDITORS = {
     "LanguageCards": "editors/LanguageCards.qml",
     "ExclusiveCard": "system/ExclusiveCard.qml",
     "VoiceStatus": "editors/VoiceStatus.qml",
-    "UpdatesStatus": "editors/UpdatesStatus.qml",
     "OcrLanguages": "editors/OcrLanguages.qml",
     "TerminalGlassLink": "editors/TerminalGlassLink.qml",
     "TerminalLookEditor": "editors/TerminalLookEditor.qml",
@@ -118,7 +117,8 @@ var STAGES = {
     "AssistantStage": "stages/AssistantStage.qml",
     "ProvidersBand": "stages/ProvidersBand.qml",
     "TasksStage": "stages/TasksStage.qml",
-    "SystemStage": "stages/SystemStage.qml"
+    "SystemStage": "stages/SystemStage.qml",
+    "UpdatesStage": "stages/UpdatesStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
