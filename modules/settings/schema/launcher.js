@@ -16,7 +16,7 @@ var category = {
         "right": ["layout.launcher.preview", "layout.launcher.icons", "prefix.launcher.aiOnTab"],
         "hint": "prefs.launcher.hero_hint"
     },
-    "row": ["searches", "appearance", "providers"],
+    "row": [{ "id": "searches", "weight": 1.3 }, { "id": "appearance", "weight": 0.85 }, "providers"],
     "sections": [
         {
             "id": "searches",

@@ -2204,7 +2204,7 @@
   "prefs.term.opacity.desc": "The opacity the kitty, ghostty, foot and alacritty themes are designed with. The Glass amount then scales it: more glass, more see-through. From preset follows the preset's background surface. With Glass off it is used as is.",
   "prefs.term.opacity.preset": "From preset",
   "prefs.term.glass": "Glass",
-  "prefs.term.section.look": "Terminal look",
+  "prefs.term.section.look": "Prompt",
   "prefs.term.look.prompt": "Prompt",
   "prefs.term.look.prompt.desc": "Pick how your fish prompt looks. It follows your colors and updates when the theme changes, no restart needed.",
   "prefs.term.look.enabled": "Use this prompt in fish",
@@ -2213,7 +2213,7 @@
   "prefs.term.look.engine.desc": "The program that draws the prompt. Both look the same; it gets installed if it's missing. Applies while \"Use this prompt in fish\" is on.",
   "prefs.term.look.engine.starship": "Starship",
   "prefs.term.look.engine.ohmyposh": "Oh My Posh",
-  "prefs.term.section.greeting": "When a terminal opens",
+  "prefs.term.section.greeting": "Greeting",
   "prefs.term.fetch": "System info greeting",
   "prefs.term.fetch.desc": "fastfetch once in every new terminal, in fish, bash and zsh, in colors that follow your palette. Works with or without the prompt above.",
   "prefs.term.fetch.on": "Show system info when a terminal opens",
@@ -4563,5 +4563,14 @@
   "prefs.undo.clock_moved": "Clock moved",
   "prefs.desktop.section.icon_details": "Icon labels",
   "prefs.overview.hero_hint": "Click + or − beside the workspaces to add or remove a column or a row",
-  "prefs.overview.section.grid": "Grid"
+  "prefs.overview.section.grid": "Grid",
+  "prefs.term.hero_hint": "Pick a prompt below and the terminal shows it",
+  "prefs.term.section.cursor": "Cursor",
+  "prefs.term.section.engine": "Prompt engine",
+  "prefs.term.section.fetch": "Greeting details",
+  "prefs.term.greeting_look": "Greeting look",
+  "prefs.term.greeting_look.desc": "Off, or the fastfetch look a new terminal greets you with.",
+  "prefs.term.section.prompt_more": "Prompt status",
+  "prefs.term.look.full": "Prompt status and gallery",
+  "prefs.term.look.full.desc": "The prompt preview, what keeps it from showing and the action that fixes it, and every preset described."
 }

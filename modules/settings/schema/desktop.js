@@ -79,7 +79,7 @@ var category = {
         "right": ["desktop.widgetsEnabled", "desktop.depthClock", "desktop.enabled"],
         "hint": "prefs.desktop.hero_hint"
     },
-    "row": ["widgets", "clock", "icons"],
+    "row": ["widgets", { "id": "clock", "weight": 1.3 }, { "id": "icons", "weight": 0.75 }],
     "sections": [
         {
             "id": "widgets",

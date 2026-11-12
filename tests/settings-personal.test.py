@@ -182,6 +182,26 @@ h.eval(item("card:strip"), "clicked()")
 check(ev("Config.overview.style") == "strip" and h.eval(item("overviewStage"), "rows") == 1, "overview: the strip is one row")
 ev("SettingsStore.undo()")
 
+# ---- Terminal -----------------------------------------------------------------
+ev("TerminalLookService.presets = [{id: 'plain', name: 'Plain'}, {id: 'sakura-powerline', name: 'Sakura'}]")
+ev("TerminalLookService.fetchPresets = [{id: 'sakura', name: 'Sakura'}]")
+select("terminal")
+check(wait_until(lambda: h.eval(item("terminalWindow"), "status === Loader.Ready")), "terminal: the stage is the terminal window")
+check(item("promptCard:plain") is not None and item("promptCard:sakura-powerline") is not None,
+      "terminal: a picture per prompt")
+notice = item("terminalNotice")
+check(h.eval(notice, "visible") is True, "terminal: with the prompt off the stage says so")
+h.eval(notice, "clicked()")
+check(ev("Config.terminal.enabled") is True and h.eval(notice, "visible") is False, "terminal: ...and a click turns it on")
+ev("SettingsStore.undo()")
+n = steps()
+h.eval(item("greeting:sakura"), "clicked()")
+check(ev("Config.terminal.greeting") == "fastfetch" and ev("Config.terminal.fastfetchPreset") == "sakura" and steps() == n + 1,
+      "terminal: a greeting look turns the greeting on in one step")
+check(h.eval(item("terminalWindow"), "item.greeting") is True, "terminal: the stage's terminal greets")
+h.eval(item("greeting:off"), "clicked()")
+check(ev("Config.terminal.greeting") == "none", "terminal: Off turns it off")
+
 if failures:
     print(f"{len(failures)} failure(s)", file=sys.stderr)
 h.exit(1 if failures else 0)

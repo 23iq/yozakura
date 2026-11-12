@@ -2208,7 +2208,7 @@
   "prefs.term.opacity.desc": "Непрозрачность, с которой задуманы темы kitty, ghostty, foot и alacritty. Затем её масштабирует количество стекла: больше стекла — прозрачнее. «Из пресета» берёт фон пресета. При выключенном Glass используется как есть.",
   "prefs.term.opacity.preset": "Из пресета",
   "prefs.term.glass": "Стекло",
-  "prefs.term.section.look": "Вид терминала",
+  "prefs.term.section.look": "Приглашение",
   "prefs.term.look.prompt": "Приглашение",
   "prefs.term.look.prompt.desc": "Выберите вид приглашения fish. Оно следует вашим цветам и обновляется при смене темы без перезапуска.",
   "prefs.term.look.enabled": "Использовать это приглашение в fish",
@@ -2217,7 +2217,7 @@
   "prefs.term.look.engine.desc": "Программа, которая рисует приглашение. Оба выглядят одинаково; если его нет, он будет установлен. Действует, пока включено «Использовать это приглашение в fish».",
   "prefs.term.look.engine.starship": "Starship",
   "prefs.term.look.engine.ohmyposh": "Oh My Posh",
-  "prefs.term.section.greeting": "При открытии терминала",
+  "prefs.term.section.greeting": "Приветствие",
   "prefs.term.fetch": "Приветствие со сведениями о системе",
   "prefs.term.fetch.desc": "fastfetch один раз в каждом новом терминале, в fish, bash и zsh, в цветах вашей палитры. Работает с приглашением выше и без него.",
   "prefs.term.fetch.on": "Показывать сведения о системе при открытии терминала",
@@ -4591,5 +4591,14 @@
   "prefs.undo.clock_moved": "Часы перемещены",
   "prefs.desktop.section.icon_details": "Подписи значков",
   "prefs.overview.hero_hint": "Нажмите + или − рядом с рабочими столами, чтобы добавить или убрать столбец или ряд",
-  "prefs.overview.section.grid": "Сетка"
+  "prefs.overview.section.grid": "Сетка",
+  "prefs.term.hero_hint": "Выберите приглашение ниже — терминал его покажет",
+  "prefs.term.section.cursor": "Курсор",
+  "prefs.term.section.engine": "Движок приглашения",
+  "prefs.term.section.fetch": "Детали приветствия",
+  "prefs.term.greeting_look": "Вид приветствия",
+  "prefs.term.greeting_look.desc": "Выключено или вид fastfetch, которым встречает новый терминал.",
+  "prefs.term.section.prompt_more": "Состояние приглашения",
+  "prefs.term.look.full": "Состояние и галерея приглашений",
+  "prefs.term.look.full.desc": "Превью приглашения, что мешает ему появиться, и действие, которое это исправит, а также описание каждого пресета."
 }

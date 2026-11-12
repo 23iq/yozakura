@@ -59,6 +59,8 @@ var EDITORS = {
     "OcrLanguages": "editors/OcrLanguages.qml",
     "TerminalGlassLink": "editors/TerminalGlassLink.qml",
     "TerminalLookEditor": "editors/TerminalLookEditor.qml",
+    "PromptStrip": "editors/PromptStrip.qml",
+    "GreetingChips": "editors/GreetingChips.qml",
     "FastfetchEditor": "editors/FastfetchEditor.qml",
     "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
@@ -117,7 +119,8 @@ var STAGES = {
     "LauncherStage": "stages/LauncherStage.qml",
     "DashboardStage": "stages/DashboardStage.qml",
     "DesktopStage": "stages/DesktopStage.qml",
-    "OverviewStage": "stages/OverviewStage.qml"
+    "OverviewStage": "stages/OverviewStage.qml",
+    "TerminalStage": "stages/TerminalStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

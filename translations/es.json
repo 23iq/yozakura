@@ -2204,7 +2204,7 @@
   "prefs.term.opacity.desc": "La opacidad con la que se diseñan los temas de kitty, ghostty, foot y alacritty. La cantidad de cristal la escala después: más cristal, más transparente. Del preset sigue la superficie de fondo del preset. Con Glass desactivado se usa tal cual.",
   "prefs.term.opacity.preset": "Del preajuste",
   "prefs.term.glass": "Cristal",
-  "prefs.term.section.look": "Aspecto de la terminal",
+  "prefs.term.section.look": "Prompt",
   "prefs.term.look.prompt": "Prompt",
   "prefs.term.look.prompt.desc": "Elige cómo se ve tu prompt de fish. Sigue tus colores y se actualiza al cambiar el tema, sin reiniciar.",
   "prefs.term.look.enabled": "Usar este prompt en fish",
@@ -2213,7 +2213,7 @@
   "prefs.term.look.engine.desc": "El programa que dibuja el prompt. Ambos se ven igual; se instala si falta. Se aplica mientras \"Usar este prompt en fish\" está activo.",
   "prefs.term.look.engine.starship": "Starship",
   "prefs.term.look.engine.ohmyposh": "Oh My Posh",
-  "prefs.term.section.greeting": "Al abrir una terminal",
+  "prefs.term.section.greeting": "Saludo",
   "prefs.term.fetch": "Saludo con información del sistema",
   "prefs.term.fetch.desc": "fastfetch una vez en cada terminal nueva, en fish, bash y zsh, con colores que siguen tu paleta. Funciona con o sin el prompt de arriba.",
   "prefs.term.fetch.on": "Mostrar información del sistema al abrir una terminal",
@@ -4563,5 +4563,14 @@
   "prefs.undo.clock_moved": "Reloj movido",
   "prefs.desktop.section.icon_details": "Etiquetas de iconos",
   "prefs.overview.hero_hint": "Haz clic en + o − junto a los espacios para añadir o quitar una columna o una fila",
-  "prefs.overview.section.grid": "Cuadrícula"
+  "prefs.overview.section.grid": "Cuadrícula",
+  "prefs.term.hero_hint": "Elige un prompt abajo y la terminal lo muestra",
+  "prefs.term.section.cursor": "Cursor",
+  "prefs.term.section.engine": "Motor del prompt",
+  "prefs.term.section.fetch": "Detalles del saludo",
+  "prefs.term.greeting_look": "Aspecto del saludo",
+  "prefs.term.greeting_look.desc": "Apagado, o el aspecto de fastfetch con el que te saluda una terminal nueva.",
+  "prefs.term.section.prompt_more": "Estado del prompt",
+  "prefs.term.look.full": "Estado y galería del prompt",
+  "prefs.term.look.full.desc": "La vista previa del prompt, lo que impide que se vea y la acción que lo arregla, y cada preset descrito."
 }

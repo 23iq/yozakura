@@ -11,6 +11,12 @@ var category = {
     "title": "prefs.cat.terminal",
     "description": "prefs.cat.terminal.desc",
     "keywords": "terminal prompt starship oh-my-posh fish fastfetch greeting cursor padding kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
+    "stage": "TerminalStage",
+    "hero": {
+        "right": ["terminal.enabled", "terminal.cursorBlink"],
+        "hint": "prefs.term.hero_hint"
+    },
+    "row": [{ "id": "look", "weight": 1.4 }, { "id": "greeting", "weight": 0.85 }, "cursor"],
     "sections": [
         {
             "id": "look",
@@ -19,7 +25,7 @@ var category = {
                 {
                     "id": "terminal.look",
                     "type": "custom",
-                    "component": "TerminalLookEditor",
+                    "component": "PromptStrip",
                     "keys": ["terminal.prompt"],
                     "label": "prefs.term.look.prompt",
                     "description": "prefs.term.look.prompt.desc",
@@ -32,6 +38,92 @@ var category = {
                     "description": "prefs.term.look.enabled.desc",
                     "keywords": "prompt fish enable hook conf.d"
                 },
+                {
+                    "key": "terminal.cursorBlink",
+                    "reason": "prefs.disabled.needs_kitty",
+                    "enabledWhen": {
+                        "all": [
+                            {
+                                "key": "terminal.enabled",
+                                "equals": true
+                            },
+                            {
+                                "key": "apps.theming.kitty",
+                                "equals": true
+                            }
+                        ]
+                    },
+                    "type": "toggle",
+                    "label": "prefs.term.look.blink",
+                    "description": "prefs.term.look.blink.desc",
+                    "keywords": "kitty cursor blink blinking"
+                }
+            ]
+        },
+        {
+            "id": "greeting",
+            "title": "prefs.term.section.greeting",
+            "entries": [
+                {
+                    "id": "terminal.greetingChips",
+                    "type": "custom",
+                    "component": "GreetingChips",
+                    "keys": ["terminal.greeting", "terminal.fastfetchPreset"],
+                    "part": true,
+                    "label": "prefs.term.greeting_look",
+                    "description": "prefs.term.greeting_look.desc",
+                    "keywords": "greeting fastfetch system info when a terminal opens look off"
+                }
+            ]
+        },
+        {
+            "id": "cursor",
+            "title": "prefs.term.section.cursor",
+            "entries": [
+                {
+                    "key": "terminal.cursorShape",
+                    "reason": "prefs.disabled.needs_kitty",
+                    "enabledWhen": {
+                        "all": [
+                            {
+                                "key": "terminal.enabled",
+                                "equals": true
+                            },
+                            {
+                                "key": "apps.theming.kitty",
+                                "equals": true
+                            }
+                        ]
+                    },
+                    "type": "custom",
+                    "component": "CursorShapeChips",
+                    "label": "prefs.term.look.cursor",
+                    "description": "prefs.term.look.cursor.desc",
+                    "keywords": "kitty cursor shape block beam underline caret"
+                }
+            ]
+        },
+        {
+            "id": "promptmore",
+            "title": "prefs.term.section.prompt_more",
+            "entries": [
+                {
+                    "id": "terminal.lookFull",
+                    "type": "custom",
+                    "component": "TerminalLookEditor",
+                    "keys": ["terminal.prompt"],
+                    "part": true,
+                    "resettable": false,
+                    "label": "prefs.term.look.full",
+                    "description": "prefs.term.look.full.desc",
+                    "keywords": "prompt engine install nerd font fish login shell default foreign config preview gallery"
+                }
+            ]
+        },
+        {
+            "id": "engine",
+            "title": "prefs.term.section.engine",
+            "entries": [
                 {
                     "key": "terminal.engine",
                     "enabledWhen": {
@@ -79,53 +171,12 @@ var category = {
                     "label": "prefs.term.look.padding",
                     "description": "prefs.term.look.padding.desc",
                     "keywords": "kitty padding margin window spacing"
-                },
-                {
-                    "key": "terminal.cursorShape",
-                    "reason": "prefs.disabled.needs_kitty",
-                    "enabledWhen": {
-                        "all": [
-                            {
-                                "key": "terminal.enabled",
-                                "equals": true
-                            },
-                            {
-                                "key": "apps.theming.kitty",
-                                "equals": true
-                            }
-                        ]
-                    },
-                    "type": "custom",
-                    "component": "CursorShapeChips",
-                    "label": "prefs.term.look.cursor",
-                    "description": "prefs.term.look.cursor.desc",
-                    "keywords": "kitty cursor shape block beam underline caret"
-                },
-                {
-                    "key": "terminal.cursorBlink",
-                    "reason": "prefs.disabled.needs_kitty",
-                    "enabledWhen": {
-                        "all": [
-                            {
-                                "key": "terminal.enabled",
-                                "equals": true
-                            },
-                            {
-                                "key": "apps.theming.kitty",
-                                "equals": true
-                            }
-                        ]
-                    },
-                    "type": "toggle",
-                    "label": "prefs.term.look.blink",
-                    "description": "prefs.term.look.blink.desc",
-                    "keywords": "kitty cursor blink blinking"
                 }
             ]
         },
         {
-            "id": "greeting",
-            "title": "prefs.term.section.greeting",
+            "id": "fetch",
+            "title": "prefs.term.section.fetch",
             "entries": [
                 {
                     "id": "terminal.fetch",

@@ -15,7 +15,7 @@ var category = {
     "hero": {
         "hint": "prefs.overview.hero_hint"
     },
-    "row": ["layout", "grid", "size"],
+    "row": [{ "id": "layout", "weight": 1.2 }, "grid", { "id": "size", "weight": 0.8 }],
     "sections": [
         {
             "id": "layout",

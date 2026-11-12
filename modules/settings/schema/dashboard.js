@@ -14,7 +14,7 @@ var category = {
         "right": ["layout.dashboard.heroTint", "layout.dashboard.showMetrics"],
         "hint": "prefs.dashboard.hero_hint"
     },
-    "row": ["home", "tabs"],
+    "row": [{ "id": "home", "weight": 1.3 }, { "id": "tabs", "weight": 0.8 }],
     "sections": [
         {
             "id": "home",

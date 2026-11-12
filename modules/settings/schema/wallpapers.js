@@ -40,7 +40,7 @@ var category = {
         "left": ["wallpaper.browser"],
         "hint": "prefs.wall.hero_hint"
     },
-    "row": ["panorama", "transition", "colours"],
+    "row": [{ "id": "panorama", "weight": 0.9 }, { "id": "transition", "weight": 1.35 }, { "id": "colours", "weight": 0.75 }],
     "sections": [
         {
             "id": "library",

@@ -27,7 +27,7 @@
       "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing. Applies while \"Use this prompt in fish\" is on.",
       "x-settings": {
         "category": "terminal",
-        "section": "look",
+        "section": "engine",
         "label": "prefs.term.look.engine",
         "control": "selector",
         "keywords": "prompt engine starship oh-my-posh omp",
@@ -52,11 +52,11 @@
       "default": "sakura-powerline",
       "x-settings": {
         "category": "terminal",
-        "section": "look",
-        "label": "prefs.term.look.prompt",
-        "entry": "terminal.look",
-        "entryTitle": "Prompt",
-        "keywords": "prompt starship oh-my-posh fish powerline nerd font preview theme shell look"
+        "section": "promptmore",
+        "label": "prefs.term.look.full",
+        "entry": "terminal.lookFull",
+        "entryTitle": "Prompt status and gallery",
+        "keywords": "prompt engine install nerd font fish login shell default foreign config preview gallery"
       },
       "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
     },
@@ -66,7 +66,7 @@
       "default": "none",
       "x-settings": {
         "category": "terminal",
-        "section": "greeting",
+        "section": "fetch",
         "label": "prefs.term.fetch",
         "entry": "terminal.fetch",
         "entryTitle": "System info greeting",
@@ -85,7 +85,7 @@
       "default": "own",
       "x-settings": {
         "category": "terminal",
-        "section": "greeting",
+        "section": "fetch",
         "label": "prefs.term.fetch",
         "entry": "terminal.fetch",
         "entryTitle": "System info greeting",
@@ -107,7 +107,7 @@
       "default": "sakura",
       "x-settings": {
         "category": "terminal",
-        "section": "greeting",
+        "section": "fetch",
         "label": "prefs.term.fetch",
         "entry": "terminal.fetch",
         "entryTitle": "System info greeting",
@@ -127,7 +127,7 @@
       "default": "",
       "x-settings": {
         "category": "terminal",
-        "section": "greeting",
+        "section": "fetch",
         "label": "prefs.term.fetch",
         "entry": "terminal.fetch",
         "entryTitle": "System info greeting",
@@ -144,7 +144,7 @@
       "description": "Space between the kitty window edge and the text. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
       "x-settings": {
         "category": "terminal",
-        "section": "look",
+        "section": "engine",
         "label": "prefs.term.look.padding",
         "control": "slider",
         "step": 1,
@@ -177,7 +177,7 @@
       "description": "The kitty cursor. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
       "x-settings": {
         "category": "terminal",
-        "section": "look",
+        "section": "cursor",
         "label": "prefs.term.look.cursor",
         "control": "custom",
         "component": "CursorShapeChips",
