@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"time"
 
 	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/proc"
@@ -46,16 +47,45 @@ func (w *watchProc) stop() {
 	}
 }
 
+// Respawn backoff for `wl-paste --watch`: it exits at once when the
+// compositor lacks the data-control protocol or is gone, and respawning it
+// in a tight loop would spin a core. The delay doubles per short-lived run
+// up to watchBackoffMax and is back at watchBackoffMin after a run that
+// lasted watchHealthyRun.
+var (
+	watchBackoffMin = 500 * time.Millisecond
+	watchBackoffMax = 30 * time.Second
+	watchHealthyRun = 30 * time.Second
+)
+
+// nextWatchDelay returns the wait before the next respawn, given the
+// previous delay and how long the last run lasted.
+func nextWatchDelay(prev, ran time.Duration) time.Duration {
+	if ran >= watchHealthyRun || prev <= 0 {
+		return watchBackoffMin
+	}
+	return min(prev*2, watchBackoffMax)
+}
+
 func (w *watchProc) run() {
 	if _, err := exec.LookPath("wl-paste"); err != nil {
 		return
 	}
-	for {
+	var delay time.Duration
+	for first := true; ; first = false {
 		select {
 		case <-w.stopCh:
 			return
 		default:
 		}
+		if !first {
+			select {
+			case <-w.stopCh:
+				return
+			case <-time.After(delay):
+			}
+		}
+		started := time.Now()
 		cmd := exec.CommandContext(context.Background(), "wl-paste", "--watch", "sh", "-c", "cat >/dev/null; echo REFRESH_LIST")
 		cmd.Env = envclean.ChildEnv()
 		// Put the watcher in its own process group so we can kill the
@@ -95,6 +125,7 @@ func (w *watchProc) run() {
 		case <-done:
 		}
 		cmd.Wait()
+		delay = nextWatchDelay(delay, time.Since(started))
 	}
 }
 
