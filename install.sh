@@ -46,9 +46,9 @@ WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = 
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 # Update channel (stable, beta, git; see sync_repo), the release tag to check
-# out (--ref, from `yozakura update`), whether --channel was given, and the
-# tag the checkout ended up on (download_release).
-CHANNEL="" REF="" CHANNEL_SET=0 RELEASE_TAG=""
+# out (--ref, from `yozakura update`), whether --channel was given, the tag
+# the checkout ended up on (download_release) and --allow-downgrade.
+CHANNEL="" REF="" CHANNEL_SET=0 RELEASE_TAG="" ALLOW_DOWNGRADE=0
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
@@ -661,11 +661,21 @@ Install:
                     pre-releases and newer stable releases) or git (every
                     commit on main). An install saves it as the setting
                     system.updateChannel; an update uses that setting
-                    (default stable). A checkout already at or past the
-                    channel's newest release is kept as it is. Without it
-                    a first install follows main, as before.
+                    (default stable). Only releases newer than $LAST_RELEASE_WITHOUT_CHANNELS
+                    (the last one without channels) count; until one
+                    exists stable and beta build main. A checkout
+                    already at or past the channel's newest release is
+                    kept as it is.
+                    Without --channel a first install builds main and is
+                    then on the default stable channel: updates keep it
+                    where it is until a newer release is tagged, then move
+                    it to that release. To keep following main, pass
+                    --channel git (later: '$APP_ID update channel git').
   --ref TAG         stable/beta: check out this release tag (what
                     '$APP_ID update' passes after deciding the target)
+  --allow-downgrade stable/beta: move to the release even when the checkout
+                    is ahead of it or has commits that are on no branch of
+                    origin (they stay on their branch, no longer built)
   -h, --help        this help
 
 Environment: YOZAKURA_REPO_URL (git remote or path), YOZAKURA_RAW_BASE (where
@@ -696,6 +706,7 @@ parse_args() {
     --dry-run) DRY_RUN=1 ;;
     --verbose) VERBOSE=1 ;;
     --update) UPDATE_ONLY=1 INSTALL_DEPS=0 ASSUME_YES=1 COMP_CONFIG=0 REBOOT=0 ;;
+    --allow-downgrade) ALLOW_DOWNGRADE=1 ;;
     -y | --yes) ASSUME_YES=1 ;;
     --dir | --bin-dir | --branch | --compositor | --channel | --ref)
       [[ $# -ge 2 ]] || die "$1 needs a value"
@@ -733,6 +744,10 @@ parse_args() {
   [[ -z "$BRANCH" ]] || CHANNEL=git
   if [[ -n "$REF" && "$CHANNEL" != stable && "$CHANNEL" != beta ]]; then
     die "--ref needs --channel stable or beta."
+  fi
+  if [[ -n "$REF" ]] && ! has_channels "$REF"; then
+    die "--ref $REF is not a release with update channels." \
+      "Releases up to $LAST_RELEASE_WITHOUT_CHANNELS predate them; name a newer X.Y.Z or X.Y.Z-beta.N tag."
   fi
 }
 
@@ -1599,18 +1614,43 @@ resolve_channel() {
   return 0
 }
 
+# The last release without update channels: its install.sh and binary know
+# nothing about channels or a detached checkout, so only newer releases are a
+# channel's target (backend LastWithoutChannels, UpdateVersions.js
+# LAST_WITHOUT_CHANNELS, all checked against the shared fixture).
+LAST_RELEASE_WITHOUT_CHANNELS=0.3.1
+
+# version_key TAG: a key that orders versions as a string comparison
+# (equal-length digit strings; a release above its own betas); fails for a
+# tag that is not X.Y.Z or X.Y.Z-beta.N (optional leading v; each number 0 or
+# up to nine digits without a leading zero, as the other implementations).
+version_key() {
+  local n='(0|[1-9][0-9]{0,8})' re
+  re="^v?$n\.$n\.$n(-beta\.$n)?\$"
+  [[ "$1" =~ $re ]] || return 1
+  printf '%012d%012d%012d%d%012d\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" \
+    "$([[ -n "${BASH_REMATCH[5]}" ]] && echo 0 || echo 1)" "${BASH_REMATCH[5]:-0}"
+}
+
+# has_channels TAG: TAG is a version newer than LAST_RELEASE_WITHOUT_CHANNELS.
+has_channels() {
+  local key floor
+  key="$(version_key "$1")" || return 1
+  floor="$(version_key "$LAST_RELEASE_WITHOUT_CHANNELS")"
+  [[ "$key" > "$floor" ]]
+}
+
 # pick_tag CHANNEL: the channel's newest tag among the names on stdin (one
-# per line; "" when none). A leading v is accepted; of two spellings of one
-# version the one without it wins. Pure bash: the keys are equal-length
-# digit strings, so a string comparison orders them.
+# per line; "" when none). Releases up to LAST_RELEASE_WITHOUT_CHANNELS never
+# count; of two spellings of one version the one without v wins.
 pick_tag() {
-  local ch="$1" t key best="" tag="" re='^v?([0-9]+)\.([0-9]+)\.([0-9]+)(-beta\.([0-9]+))?$'
+  local ch="$1" t key best="" tag="" floor
+  floor="$(version_key "$LAST_RELEASE_WITHOUT_CHANNELS")"
   if [[ "$ch" == stable || "$ch" == beta ]]; then
     while IFS= read -r t; do
-      [[ "$t" =~ $re ]] || continue
-      [[ -n "${BASH_REMATCH[5]}" && "$ch" != beta ]] && continue
-      printf -v key '%012d%012d%012d%d%012d' "$((10#${BASH_REMATCH[1]}))" "$((10#${BASH_REMATCH[2]}))" \
-        "$((10#${BASH_REMATCH[3]}))" "$([[ -n "${BASH_REMATCH[5]}" ]] && echo 0 || echo 1)" "$((10#${BASH_REMATCH[5]:-0}))"
+      key="$(version_key "$t")" || continue
+      [[ "$key" > "$floor" ]] || continue
+      [[ "$t" == *-beta.* && "$ch" != beta ]] && continue
       if [[ -z "$best" || "$key" > "$best" || ("$key" == "$best" && "$tag" == v* && "$t" != v*) ]]; then
         best="$key" tag="$t"
       fi
@@ -1619,26 +1659,66 @@ pick_tag() {
   printf '%s\n' "$tag"
 }
 
+# remote_tags: "<commit> <tag>" for each tag of origin, annotated tags read
+# as their commit (what `yozakura update` resolves too).
+remote_tags() {
+  local out sha ref name
+  local -A commit=() peeled=()
+  out="$(git -C "$SRC_DIR" ls-remote --tags origin)" || return 1
+  while IFS=$'\t' read -r sha ref; do
+    name="${ref#refs/tags/}"
+    [[ "$name" != "$ref" ]] || continue
+    if [[ "$name" == *'^{}' ]]; then
+      name="${name%'^{}'}" commit[$name]="$sha" peeled[$name]=1
+    elif [[ -z "${peeled[$name]:-}" ]]; then
+      commit[$name]="$sha"
+    fi
+  done <<<"$out"
+  for name in "${!commit[@]}"; do printf '%s %s\n' "${commit[$name]}" "$name"; done
+}
+
+# local_commits TAG_COMMITS...: how many commits of HEAD are on no branch of
+# origin and behind none of the given commits (origin's tags): work that
+# only exists in this checkout.
+local_commits() {
+  local c keep=()
+  for c in "$@"; do git -C "$SRC_DIR" cat-file -e "$c^{commit}" 2>/dev/null && keep+=("$c"); done
+  git -C "$SRC_DIR" rev-list --count HEAD --not --remotes "${keep[@]}" 2>/dev/null || echo 0
+}
+
 # checkout_release [fresh]: on the stable/beta channel, move the checkout to
-# --ref or the channel's newest tag (a detached HEAD). On its own it only
-# moves forward: a checkout at or past the tag (installs that followed main)
-# or on another line stays; a fresh clone always moves. Local changes are
-# kept, as on the git channel.
+# --ref or the channel's newest tag on origin (a detached HEAD), at the
+# commit origin has for it. On its own it only moves forward: a checkout at
+# or past the tag (installs that followed main) or on another line stays; a
+# fresh clone always moves. Local changes are kept, as on the git channel,
+# and so are commits that are on no branch of origin (unless
+# --allow-downgrade).
 checkout_release() {
   [[ "$CHANNEL" == stable || "$CHANNEL" == beta ]] || return 0
-  local tag="$REF" head target src
+  local tag="$REF" head target src tags n where line
+  local -a commits=()
   printf -v src '%q' "$SRC_DIR"
   if [[ "$DRY_RUN" == 1 ]]; then
-    dry_note run "git -C $src checkout -q --detach ${tag:-<the newest $CHANNEL release tag>} (kept as it is with local changes or when already at or past it)"
+    dry_note run "git -C $src checkout -q --detach ${tag:-<the newest $CHANNEL release tag>} (kept as it is with local changes or commits, when already at or past it, or while no release has update channels)"
     return 0
   fi
-  [[ -n "$tag" ]] || tag="$(git -C "$SRC_DIR" tag -l | pick_tag "$CHANNEL")"
+  if ! tags="$(remote_tags)"; then
+    warn "Could not read the release tags of origin; building the checkout as it is."
+    return 0
+  fi
+  while IFS= read -r line; do [[ -n "$line" ]] && commits+=("${line%% *}"); done <<<"$tags"
+  [[ -n "$tag" ]] || tag="$(while IFS= read -r line; do printf '%s\n' "${line#* }"; done <<<"$tags" | pick_tag "$CHANNEL")"
   if [[ -z "$tag" ]]; then
-    warn "No $CHANNEL release is tagged yet; building the checkout as it is."
+    where="$(git -C "$SRC_DIR" symbolic-ref --quiet --short HEAD 2>/dev/null)" || where="the checkout"
+    warn "No $CHANNEL release with update channels yet (releases up to $LAST_RELEASE_WITHOUT_CHANNELS predate them); building $where as it is."
+    info "The $CHANNEL channel is kept: the first release with update channels is installed by '$APP_ID update'."
     return 0
   fi
-  target="$(git -C "$SRC_DIR" rev-parse -q --verify "refs/tags/$tag^{commit}")" ||
-    die "Release $tag is not in $SRC_DIR." "Fetch it: git -C $src fetch --tags origin"
+  target=""
+  while IFS= read -r line; do [[ "${line#* }" == "$tag" ]] && target="${line%% *}"; done <<<"$tags"
+  [[ -n "$target" ]] || die "Release $tag is not on origin." "See the releases: git -C $src ls-remote --tags origin"
+  git -C "$SRC_DIR" cat-file -e "$target^{commit}" 2>/dev/null ||
+    die "Release $tag ($target) is not in $SRC_DIR." "Fetch it: git -C $src fetch --tags --force origin"
   head="$(git -C "$SRC_DIR" rev-parse HEAD)"
   if [[ "$head" == "$target" ]]; then
     RELEASE_TAG="$tag"
@@ -1650,7 +1730,7 @@ checkout_release() {
     info "To take $tag: commit or stash them, then run '$APP_ID update' again."
     return 0
   fi
-  if [[ "${1:-}" != fresh && -z "$REF" ]] && ! git -C "$SRC_DIR" merge-base --is-ancestor "$head" "$target"; then
+  if [[ "${1:-}" != fresh && -z "$REF" && "$ALLOW_DOWNGRADE" == 0 ]] && ! git -C "$SRC_DIR" merge-base --is-ancestor "$head" "$target"; then
     if git -C "$SRC_DIR" merge-base --is-ancestor "$target" "$head"; then
       ok "Sources at $(git -C "$SRC_DIR" rev-parse --short HEAD), at or past $tag (the newest $CHANNEL release)"
     else
@@ -1658,6 +1738,14 @@ checkout_release() {
       info "To move to it anyway: $APP_ID update --channel $CHANNEL --allow-downgrade"
     fi
     return 0
+  fi
+  if [[ "$ALLOW_DOWNGRADE" == 0 ]] && ! git -C "$SRC_DIR" merge-base --is-ancestor "$head" "$target"; then
+    n="$(local_commits "${commits[@]}")"
+    if [[ "$n" != 0 ]]; then
+      warn "$SRC_DIR has $n commit(s) on no branch of origin that $tag does not contain; kept and built as it is."
+      info "To build $tag anyway (the commits stay on their branch): $APP_ID update --channel $CHANNEL --allow-downgrade"
+      return 0
+    fi
   fi
   if git -C "$SRC_DIR" checkout -q --detach "$target" 2>>"$LOG_FILE"; then
     RELEASE_TAG="$tag"
@@ -1685,7 +1773,9 @@ sync_repo() {
   fi
   [[ -d "$SRC_DIR/.git" || -f "$SRC_DIR/.git" ]] || die "$SRC_DIR exists but is not a git checkout." "Move it away or pass --dir."
   if [[ "$CHANNEL" == stable || "$CHANNEL" == beta ]]; then
-    run "Fetching updates" "Check your connection." git -C "$SRC_DIR" fetch --quiet --tags origin
+    # forced: a release tag moved on origin replaces the local one instead of
+    # failing every later fetch ("would clobber existing tag")
+    run "Fetching updates" "Check your connection." git -C "$SRC_DIR" fetch --quiet --tags --force origin
     checkout_release
     return
   fi
@@ -1765,13 +1855,20 @@ download_release() {
     return 1
     ;;
   esac
-  # The release the checkout is on (tag channels), else the latest one.
+  # The release the checkout is on (tag channels), else the latest one. A
+  # tag without release assets (only tags without a leading v get them, see
+  # .github/workflows/release.yml) falls back to the latest release.
+  base="${REPO_URL%.git}/releases/latest/download"
   if [[ -n "$RELEASE_TAG" ]]; then
-    base="${REPO_URL%.git}/releases/download/$RELEASE_TAG"
-  else
-    base="${REPO_URL%.git}/releases/latest/download"
+    if curl -fsSL "${REPO_URL%.git}/releases/download/$RELEASE_TAG/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS"; then
+      base="${REPO_URL%.git}/releases/download/$RELEASE_TAG"
+    else
+      echo "release $RELEASE_TAG has no binaries; trying the latest release"
+    fi
   fi
-  curl -fsSL "$base/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS" || return 1
+  if [[ "$base" == */latest/download ]]; then
+    curl -fsSL "$base/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS" || return 1
+  fi
   for b in "$APP_ID" "$DAEMON_ID"; do
     curl -fsSL "$base/$b-linux-$arch" -o "$SRC_DIR/$b-linux-$arch" || return 1
   done
