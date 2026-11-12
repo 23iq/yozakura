@@ -166,6 +166,8 @@ func logoProblem(key string) string {
 		return fmt.Sprintf("is too large (text up to %d KiB, PNG up to %d MiB)", termlook.MaxTextLogo>>10, termlook.MaxImageLogo>>20)
 	case "logo_format":
 		return "is neither UTF-8 text nor a PNG image"
+	case "logo_hidden":
+		return "is hidden or under a hidden directory (a dot name, such as ~/.ssh)"
 	}
 	return key
 }

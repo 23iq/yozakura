@@ -42,6 +42,16 @@ func TestCheckLogoPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	big := file("big.txt", strings.Repeat("x", MaxTextLogo+1))
+	// hidden: a dot file, a file under a dot directory (~/.ssh), a link to one
+	if err := os.Mkdir(filepath.Join(dir, ".ssh"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	key := file(".ssh/id_ed25519", "-----BEGIN OPENSSH PRIVATE KEY-----\n")
+	dotFile := file(".token", "secret\n")
+	keyLink := filepath.Join(dir, "key.txt")
+	if err := os.Symlink(key, keyLink); err != nil {
+		t.Fatal(err)
+	}
 	cases := []struct {
 		path string
 		kind string
@@ -59,6 +69,10 @@ func TestCheckLogoPath(t *testing.T) {
 		{dir, "", ErrLogoNotFile},
 		{"/dev/null", "", ErrLogoNotFile},
 		{big, "", ErrLogoTooLarge},
+		{key, "", ErrLogoHidden},
+		{dotFile, "", ErrLogoHidden},
+		{keyLink, "", ErrLogoHidden},
+		{filepath.Join(dir, ".ssh", "..", "art.txt"), LogoText, nil},
 		{file("bin.dat", "GIF89a\x00\x01\x02"), "", ErrLogoFormat},
 		{file("latin1.txt", "caf\xe9\n"), "", ErrLogoFormat},
 		{file("blank.txt", "  \n\n"), "", ErrLogoFormat},

@@ -10103,7 +10103,7 @@
             "entryTitle": "System info greeting",
             "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
           },
-          "description": "Custom greeting logo (fastfetchLogo custom): an absolute path to a UTF-8 text file (up to 64 KiB; $1..$5 colour markers, or ANSI colours: other escape sequences are removed) or a PNG (up to 8 MiB, shown in kitty; other terminals get the sakura text logo). Machine-local.",
+          "description": "Custom greeting logo (fastfetchLogo custom): an absolute path, outside hidden (dot) files and directories such as ~/.ssh, to a UTF-8 text file (up to 64 KiB; $1..$5 colour markers, or ANSI colours: other escape sequences are removed) or a PNG (up to 8 MiB, shown in kitty; other terminals get the sakura text logo). Machine-local.",
           "format": "path",
           "x-local": true
         },

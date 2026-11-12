@@ -100,12 +100,14 @@ func stringEnd(rs []rune, j int) int {
 // the fastfetch logo of it: "file-raw" when colour sequences are left,
 // else "file" ($1..$5 colour markers).
 func copyCustomLogo(src, dst string) (FetchLogo, error) {
-	data, err := os.ReadFile(src)
+	f, err := os.Open(src)
 	if err != nil {
 		return FetchLogo{}, ErrLogoMissing
 	}
-	if len(data) > MaxTextLogo {
-		return FetchLogo{}, ErrLogoTooLarge
+	defer f.Close()
+	data, err := readCapped(f, MaxTextLogo)
+	if err != nil {
+		return FetchLogo{}, err
 	}
 	if !utf8.Valid(data) {
 		return FetchLogo{}, ErrLogoFormat

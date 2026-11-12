@@ -58,7 +58,7 @@ test("every logo key has its translation, every look its description", () => {
     const idx = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/terminal/fastfetch/presets.json"), "utf8"));
     for (const p of idx.presets)
         assert.ok(en[p.description], p.description);
-    for (const e of ["logo_path", "logo_missing", "logo_not_file", "logo_too_large", "logo_format"])
+    for (const e of ["logo_path", "logo_missing", "logo_not_file", "logo_too_large", "logo_format", "logo_hidden"])
         assert.ok(en["prefs.term.fetch.logo_error." + e], e);
 });
 

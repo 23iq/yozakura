@@ -34,7 +34,7 @@ var keys = {
     "fastfetchLogoPath": {
         "local": true,
         "format": "path",
-        "description": "Custom greeting logo (fastfetchLogo custom): an absolute path to a UTF-8 text file (up to 64 KiB; $1..$5 colour markers, or ANSI colours: other escape sequences are removed) or a PNG (up to 8 MiB, shown in kitty; other terminals get the sakura text logo). Machine-local."
+        "description": "Custom greeting logo (fastfetchLogo custom): an absolute path, outside hidden (dot) files and directories such as ~/.ssh, to a UTF-8 text file (up to 64 KiB; $1..$5 colour markers, or ANSI colours: other escape sequences are removed) or a PNG (up to 8 MiB, shown in kitty; other terminals get the sakura text logo). Machine-local."
     },
     "padding": {
         "min": 0,

@@ -2,6 +2,7 @@ package termlook
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -78,6 +79,12 @@ func TestGreetingPrintsASanitisedCopyOfTheLogo(t *testing.T) {
 	writeFile(t, bad, "\xff\xfe")
 	if _, err := copyCustomLogo(bad, filepath.Join(t.TempDir(), "x")); !isLogoError(err) {
 		t.Errorf("binary logo: %v", err)
+	}
+	// a file that grew past the cap after the check: the read itself is capped
+	grown := filepath.Join(env.Home, "grown.txt")
+	writeFile(t, grown, strings.Repeat("x", MaxTextLogo+1))
+	if _, err := copyCustomLogo(grown, filepath.Join(t.TempDir(), "x")); !errors.Is(err, ErrLogoTooLarge) {
+		t.Errorf("grown logo: %v", err)
 	}
 	// off: the copy goes
 	if err := RemoveGreeting(env); err != nil {

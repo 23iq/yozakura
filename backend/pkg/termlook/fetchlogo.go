@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	_ "image/png" // DecodeConfig of PNG logos
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,6 +40,7 @@ var (
 	ErrLogoNotFile  = errors.New("logo_not_file") // a directory, device, ...
 	ErrLogoTooLarge = errors.New("logo_too_large")
 	ErrLogoFormat   = errors.New("logo_format") // binary that is not a PNG
+	ErrLogoHidden   = errors.New("logo_hidden") // under a dot directory / a dot file (~/.ssh, ...)
 )
 
 // CustomLogo is a checked custom logo.
@@ -49,11 +51,20 @@ type CustomLogo struct {
 }
 
 // CheckLogoPath validates a custom logo path: absolute, no control
-// characters, an existing regular file (symlinks followed) under the size
-// cap, either UTF-8 text or a PNG image.
+// characters, no hidden (dot) component (a text logo is printed in every
+// terminal: ~/.ssh/id_ed25519 or ~/.config/x/token must never be one), an
+// existing regular file (symlinks followed) under the size cap, either
+// UTF-8 text or a PNG image.
 func CheckLogoPath(p string) (CustomLogo, error) {
 	if p == "" || !filepath.IsAbs(p) || hasControl(p) {
 		return CustomLogo{}, ErrLogoPath
+	}
+	if hiddenPath(p) {
+		return CustomLogo{}, ErrLogoHidden
+	}
+	// a link outside (~/logo.txt -> ~/.ssh/id_ed25519) the same
+	if real, err := filepath.EvalSymlinks(p); err == nil && hiddenPath(real) {
+		return CustomLogo{}, ErrLogoHidden
 	}
 	st, err := os.Stat(p)
 	if err != nil {
@@ -83,12 +94,12 @@ func CheckLogoPath(p string) (CustomLogo, error) {
 		}
 		return CustomLogo{Path: p, Kind: LogoImage, Width: ImageLogoWidth, Height: imageRows(cfg.Width, cfg.Height)}, nil
 	}
-	if st.Size() > MaxTextLogo {
-		return CustomLogo{}, ErrLogoTooLarge
-	}
-	data, err := os.ReadFile(p)
-	if err != nil {
+	if _, err := f.Seek(0, 0); err != nil {
 		return CustomLogo{}, ErrLogoMissing
+	}
+	data, err := readCapped(f, MaxTextLogo)
+	if err != nil {
+		return CustomLogo{}, err
 	}
 	if !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0 || strings.TrimSpace(string(data)) == "" {
 		return CustomLogo{}, ErrLogoFormat
@@ -98,6 +109,29 @@ func CheckLogoPath(p string) (CustomLogo, error) {
 		kind = LogoANSI
 	}
 	return CustomLogo{Path: p, Kind: kind}, nil
+}
+
+// hiddenPath: a component of the cleaned absolute path p starts with a dot.
+func hiddenPath(p string) bool {
+	for _, c := range strings.Split(filepath.Clean(p), string(filepath.Separator)) {
+		if strings.HasPrefix(c, ".") {
+			return true
+		}
+	}
+	return false
+}
+
+// readCapped reads r up to limit bytes: ErrLogoTooLarge past it (the file
+// may grow between a stat and the read, so the read itself is capped).
+func readCapped(r io.Reader, limit int64) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(r, limit+1))
+	if err != nil {
+		return nil, ErrLogoMissing
+	}
+	if int64(len(data)) > limit {
+		return nil, ErrLogoTooLarge
+	}
+	return data, nil
 }
 
 // imageRows is the height in cells of a w x h picture drawn ImageLogoWidth
@@ -116,7 +150,7 @@ func hasControl(s string) bool {
 	return false
 }
 
-var logoErrors = []error{ErrLogoPath, ErrLogoMissing, ErrLogoNotFile, ErrLogoTooLarge, ErrLogoFormat}
+var logoErrors = []error{ErrLogoPath, ErrLogoMissing, ErrLogoNotFile, ErrLogoTooLarge, ErrLogoFormat, ErrLogoHidden}
 
 func isLogoError(err error) bool {
 	for _, e := range logoErrors {

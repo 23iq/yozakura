@@ -2237,6 +2237,7 @@
   "prefs.term.fetch.logo_error.logo_not_file": "Это не обычный файл. Пока показывается логотип сакуры.",
   "prefs.term.fetch.logo_error.logo_too_large": "Файл слишком большой (текст до 64 КиБ, PNG до 8 МиБ). Пока показывается логотип сакуры.",
   "prefs.term.fetch.logo_error.logo_format": "Используйте текстовый файл в UTF-8 или картинку PNG. Пока показывается логотип сакуры.",
+  "prefs.term.fetch.logo_error.logo_hidden": "Выберите файл вне скрытых папок: имена с точкой в начале, как ~/.ssh, могут хранить секреты, а логотип виден в каждом терминале. Пока показывается логотип сакуры.",
   "prefs.term.fetch.image.title": "Картинка показывается в kitty",
   "prefs.term.fetch.image.desc": "Другие терминалы, tmux и сеансы ssh получают текстовый логотип сакуры; его же показывает этот предпросмотр.",
   "prefs.term.fetch.missing.title": "fastfetch не установлен",

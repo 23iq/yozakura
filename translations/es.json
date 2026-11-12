@@ -2233,6 +2233,7 @@
   "prefs.term.fetch.logo_error.logo_not_file": "No es un archivo normal. Mientras tanto se muestra el logo sakura.",
   "prefs.term.fetch.logo_error.logo_too_large": "El archivo es demasiado grande (texto hasta 64 KiB, PNG hasta 8 MiB). Mientras tanto se muestra el logo sakura.",
   "prefs.term.fetch.logo_error.logo_format": "Usa un archivo de texto UTF-8 o una imagen PNG. Mientras tanto se muestra el logo sakura.",
+  "prefs.term.fetch.logo_error.logo_hidden": "Elige un archivo fuera de carpetas ocultas: los nombres que empiezan por punto, como ~/.ssh, pueden guardar secretos y el logo se muestra en cada terminal. Mientras tanto se muestra el logo sakura.",
   "prefs.term.fetch.image.title": "La imagen se muestra en kitty",
   "prefs.term.fetch.image.desc": "Las demás terminales, tmux y las sesiones ssh reciben el logo sakura de texto, que es también lo que muestra esta vista previa.",
   "prefs.term.fetch.missing.title": "fastfetch no está instalado",
