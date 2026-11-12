@@ -40,7 +40,13 @@ Flickable {
     // the row is laid out only once all its cards exist (equal heights)
     readonly property int lastRowIndex: (page.category.sections || []).reduce((m, sec, i) => page.rowIds.indexOf(sec.id) >= 0 ? i : m, -1)
     readonly property bool fitted: page.rowIds.length > 0
-    readonly property real rowH: Look.cardRowHeight
+    // `form: "list"` (a page whose substance is a list: networks, devices,
+    // shortcuts, providers): a short hero band (about a quarter of the
+    // page, full width) and one row of tall cards taking the rest; the list
+    // scrolls inside its card. Default: the 16:9 stage over a short row.
+    readonly property bool listForm: page.fitted && page.category.form === "list"
+    readonly property real bandH: page.stageUrl !== "" ? Math.round(Math.max(Space.px(120), page.height * 0.24, heroLeftCol.height + Space.l, heroRightCol.height + Space.l)) : 0
+    readonly property real rowH: page.listForm ? Math.max(Look.cardRowHeight, page.height - Space.s - page.bandH - (page.hero.hint ? Space.xl : 0) - page.gap - page.pad) : Look.cardRowHeight
     readonly property real pad: Space.l
     // sections of a fitted page that are not in the row (in the sheet)
     readonly property var moreSections: page.fitted ? (page.category.sections || []).map((s, i) => ({
@@ -205,8 +211,9 @@ Flickable {
             readonly property real room: heroArea.width - (page.sideW + page.gap) * sideCount
             // fitted: the height the header, hint and row leave
             readonly property real fitHeight: page.height - Space.s - (page.hero.hint ? Space.xl : 0) - page.gap - page.rowH - page.pad
-            height: Math.round(page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460))))
-            width: Math.round(Math.min(room, height * 16 / 9))
+            height: Math.round(page.listForm ? page.bandH : (page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460)))))
+            // the list form's band spans the room beside the side columns
+            width: Math.round(page.listForm ? room : Math.min(room, height * 16 / 9))
             // the stage and its side column(s) centred as one group
             readonly property real groupWidth: width + (page.sideW + page.gap) * sideCount
             readonly property real groupX: (heroArea.width - groupWidth) / 2
@@ -226,6 +233,7 @@ Flickable {
         }
 
         Column {
+            id: heroLeftCol
             objectName: "heroLeft"
             x: stageLoader.x - page.gap - page.sideW
             width: page.sideW
@@ -243,6 +251,7 @@ Flickable {
         }
 
         Column {
+            id: heroRightCol
             objectName: "heroRight"
             x: stageLoader.x + stageLoader.width + page.gap
             width: page.sideW

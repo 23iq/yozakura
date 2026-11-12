@@ -66,7 +66,7 @@ Window {
         walk(w.contentItem, x => { if (!host && x.objectName === "settingsPage") host = x; });
         var page = host ? host.item : null;
         if (!page) return null;
-        var out = { "h": page.height, "contentH": page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9 };
+        var out = { "h": page.height, "contentH": page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0 };
         walk(page, x => {
             var n = String(x.objectName);
             if (n.indexOf("settingsSection:") === 0 && x.visible && x.fixed) {
@@ -74,8 +74,10 @@ Window {
                 out.cards.push([n, Math.round(p.y + x.height)]);
                 out.rowTop = Math.min(out.rowTop, Math.round(p.y));
             }
-            if (n === "pageStage" && x.visible)
+            if (n === "pageStage" && x.visible) {
                 out.stage = Math.round(x.mapToItem(page, 0, x.height).y);
+                out.stageH = x.height;
+            }
             if ((n === "heroLeft" || n === "heroRight") && x.visible)
                 out.sides = Math.max(out.sides, Math.round(x.mapToItem(page, 0, x.height).y));
         });
@@ -102,6 +104,10 @@ def fits(label: str) -> None:
     if m["stage"] >= 0:
         check(m["stage"] <= m["rowTop"], f"{label}: the stage ends above the row ({m['stage']} > {m['rowTop']})")
     check(m["sides"] <= m["rowTop"], f"{label}: the side columns end above the row ({m['sides']} > {m['rowTop']})")
+    if m["list"]:
+        # the list form: a short band, the cards take the rest
+        check(m["stageH"] <= m["h"] * 0.3, f"{label}: the list form's band is short ({m['stageH']})")
+        check(m["rowTop"] <= m["h"] * 0.45, f"{label}: the list form's cards take the rest ({m['rowTop']})")
 
 
 for cat in CONVERTED:

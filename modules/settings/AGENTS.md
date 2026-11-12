@@ -335,6 +335,24 @@ Schema fields (category):
   fixed height (`Look.cardRowHeight`, 216 px). Sections not in `row` open in
   the "More · N" sheet (end of the hint line), never under the fold; search
   results inside it open the sheet and scroll to the row.
+- `form: "list"` (optional; default the stage form): for a page whose
+  substance is a list (Wi-Fi networks, Bluetooth devices, shortcuts, AI
+  providers, the extras catalog). The hero becomes a short band (about a
+  quarter of the page, as wide as the room beside the side columns) and
+  the row's cards are tall, taking the rest of the height; the list
+  scrolls inside its card with a fade, the other cards of the row hold
+  compact rows. The band is a compact status scene, a `Stage` like any
+  other but drawn for a wide, short box: the connected network and its
+  signal, the paired devices as small chips, the active provider and its
+  usage; never a whole-screen miniature. Its switches go in `hero.right`.
+  Example:
+  ```js
+  "form": "list",
+  "stage": "NetworkBand",
+  "hero": { "right": ["network.wifiEnabled"], "hint": "prefs.net.hint" },
+  "row": ["networks", "details"],
+  ```
+  Without a `stage` the row takes the whole page.
 - entry `part: true`: an editor of one part of a composite value that
   another row also edits (exempt from the one-control check).
 
