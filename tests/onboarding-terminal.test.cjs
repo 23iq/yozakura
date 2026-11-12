@@ -19,7 +19,7 @@ test("a first run on a plain bash preselects the prompt and fish", () => {
 });
 
 test("nothing is preselected without a status, on a re-run, or with a prompt or shell of the user's own", () => {
-    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, known: false });
+    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, known: false, loginFiles: false });
     for (const ctx of [
         { firstRun: false, status: fresh },
         { firstRun: true, status: { ...fresh, foreignPromptInit: true } },
@@ -38,6 +38,18 @@ test("fish that cannot be installed here is not preselected; one already the log
     assert.deepStrictEqual([f.prompt, f.fish], [true, false]);
     const on = C.defaults({ firstRun: true, status: fresh, promptOn: true, fishCard: "selectable" });
     assert.deepStrictEqual([on.prompt, on.fish], [false, true]);
+});
+
+test("bash login files of the user's own hold fish back, not the prompt", () => {
+    const own = { ...fresh, loginFiles: ["~/.bash_profile"] };
+    const d = C.defaults({ firstRun: true, status: own, promptOn: false, fishCard: "selectable" });
+    assert.deepStrictEqual([d.prompt, d.fish, d.loginFiles], [true, false, true]);
+    // a zsh user's files: nothing was going to be preselected anyway
+    const z = C.defaults({ firstRun: true, status: { ...own, loginShell: "/usr/bin/zsh" }, promptOn: false, fishCard: "selectable" });
+    assert.deepStrictEqual([z.fish, z.loginFiles], [false, false]);
+    assert.deepStrictEqual(C.heldLoginFiles(own), ["~/.bash_profile"]);
+    assert.deepStrictEqual(C.heldLoginFiles(null), []);
+    assert.deepStrictEqual(C.heldLoginFiles({ loginFiles: "x" }), []);
 });
 
 test("Continue applies what is ticked and still to do", () => {

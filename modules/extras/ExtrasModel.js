@@ -208,6 +208,19 @@ function awaitingAuth(jobs) {
     return false;
 }
 
+// byJob without the jobs that are still running or queued (keyed maps of
+// Progress): the queue lives in the daemon, so after the connection is lost
+// they are stale; the subscription's snapshot brings back live ones.
+function withoutActive(byKey) {
+    var out = {};
+    for (var k in byKey || {}) {
+        var p = byKey[k];
+        if (!(p && (p.state === "running" || p.state === "queued")))
+            out[k] = p;
+    }
+    return out;
+}
+
 // Whether the job can be stopped now (queued always; running only when the
 // backend can kill it without leaving the package database locked).
 function cancellable(progress) {

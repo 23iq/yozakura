@@ -31,6 +31,8 @@ Column {
     readonly property string login: Choice.loginState(root.status, root.choices.fishDefault === true, root.fishCard, root.loginJobs)
     readonly property bool tickPrompt: root.choices.termPrompt === true
     readonly property bool tickFish: root.choices.termFish === true && root.login !== "failed"
+    // bash login files of the user's own: why fish was not preselected
+    readonly property var loginFiles: Choice.heldLoginFiles(root.status)
     readonly property var pending: Choice.actions({
         "prompt": root.tickPrompt,
         "fish": root.tickFish
@@ -134,6 +136,16 @@ Column {
         icon: "info"
         title: I18n.t("onboarding.terminal.plan.title")
         message: root.pending.includes("fish") ? I18n.t(root.fishInstalled ? "onboarding.terminal.plan.fish" : "onboarding.terminal.plan.fish_install") : ((root.promptOn || root.pending.includes("prompt")) && root.login === "none" && !(root.status && root.status.fishIsLoginShell) ? I18n.t("onboarding.terminal.plan.prompt_only") : "")
+    }
+
+    LookNotice {
+        objectName: "loginFiles"
+        width: parent.width
+        visible: root.loginFiles.length > 0 && !root.tickFish && root.login === "none"
+        tone: "info"
+        icon: "info"
+        title: I18n.t("onboarding.terminal.login_files.title")
+        message: I18n.t("onboarding.terminal.login_files.desc", root.loginFiles.join(", "))
     }
 
     LookNotice {

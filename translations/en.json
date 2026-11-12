@@ -1561,6 +1561,8 @@
   "onboarding.terminal.plan.fish": "fish becomes your login shell; you will be asked for your password. New terminals open fish right away, everything else after your next login.",
   "onboarding.terminal.plan.fish_install": "fish is installed and becomes your login shell; you will be asked for your password. New terminals open fish right away, everything else after your next login.",
   "onboarding.terminal.plan.prompt_only": "fish stays as it is, so the prompt shows only when you start fish yourself; your terminals keep your current shell.",
+  "onboarding.terminal.login_files.title": "Your login files stay in charge",
+  "onboarding.terminal.login_files.desc": "%1 holds settings of your own (for example starting the desktop or exporting variables). fish does not read these files when you log in, so it is not preselected; switch it on if you have moved them to fish.",
   "onboarding.terminal.login_failed.title": "Your login shell was not changed",
   "onboarding.terminal.login_failed.desc": "The password was cancelled or the change failed. Terminals keep your current shell, so the prompt only shows when you start fish yourself. Switch the option on again to retry when you continue.",
   "onboarding.terminal.engine_manual.title": "%1 can't be installed from here",

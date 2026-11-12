@@ -2,14 +2,14 @@ package termrun
 
 import (
 	"os"
-	"os/user"
 	"strings"
 )
 
 // A chsh during the session (the setup wizard's "make fish my default
 // shell") changes the passwd login shell, but the session keeps the $SHELL
 // it started with, and every terminal starts $SHELL: without this a new
-// terminal would open the old shell until the next login.
+// terminal would open the old shell until the next login. Only a change
+// made during the session counts (ChangedShell).
 
 // PasswdShell returns the shell field of name's entry in passwd data ("").
 func PasswdShell(passwd []byte, name string) string {
@@ -25,28 +25,34 @@ func PasswdShell(passwd []byte, name string) string {
 	return ""
 }
 
-// LoginShell is the current user's shell in /etc/passwd ("" when unknown).
-func LoginShell() string {
-	u, err := user.Current()
-	if err != nil {
+// ChangedShell returns now, the passwd shell at this moment, when a chsh
+// replaced start, the passwd shell when the daemon started: both known,
+// different, now an absolute path to an executable file. "" otherwise, and
+// terminals keep the session's $SHELL: a $SHELL that differs from passwd
+// from the start (Hyprland `env = SHELL,...`, environment.d, a login file
+// export) is the user's choice, not a stale value.
+func ChangedShell(start, now string, executable func(string) bool) string {
+	if start == "" || now == start || !strings.HasPrefix(now, "/") || executable == nil || !executable(now) {
 		return ""
 	}
-	data, err := os.ReadFile("/etc/passwd")
-	if err != nil {
-		return ""
-	}
-	return PasswdShell(data, u.Username)
+	return now
 }
 
-// WithLoginShell returns argv run with SHELL set to login when login is an
-// absolute path other than current (the session's $SHELL); argv as it is
-// otherwise. The value travels as one argument of env, never as code, and
-// only $SHELL changes: a shell named in argv itself still runs.
-func WithLoginShell(argv []string, login, current string) []string {
-	if len(argv) == 0 || !strings.HasPrefix(login, "/") || login == current {
+// IsExecutable reports a regular file with an execute bit (symlinks followed).
+func IsExecutable(path string) bool {
+	st, err := os.Stat(path)
+	return err == nil && st.Mode().IsRegular() && st.Mode().Perm()&0o111 != 0
+}
+
+// WithShell returns argv run with SHELL set to shell when shell is an
+// absolute path (ChangedShell); argv as it is otherwise. The value travels
+// as one argument of env, never as code, and only $SHELL changes: a shell
+// named in argv itself still runs.
+func WithShell(argv []string, shell string) []string {
+	if len(argv) == 0 || !strings.HasPrefix(shell, "/") {
 		return argv
 	}
-	return append([]string{"env", "SHELL=" + login}, argv...)
+	return append([]string{"env", "SHELL=" + shell}, argv...)
 }
 
 // IsTerminalEntry reports a desktop entry whose [Desktop Entry] group lists

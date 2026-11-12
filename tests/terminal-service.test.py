@@ -1,7 +1,8 @@
 """TerminalService (real) offscreen: a plain terminal window starts with
-$SHELL set to the login shell /etc/passwd has now (term.status loginShell),
-so fish made the default shell in this session is what new terminals open;
-without a known login shell the argv is unchanged.
+$SHELL set to the shell of a chsh made this session (term.status
+terminalShell), so fish made the default shell in this session is what new
+terminals open; without one (no chsh, or a $SHELL the user chose that differs
+from passwd from the start) the argv is unchanged.
 """
 import json
 import sys
@@ -56,8 +57,11 @@ h.eval(root, "open()")
 check("no status yet: the terminal starts as configured", last() == ["kitty"], last())
 h.eval(root, "setStatus({loginShell: '/usr/bin/fish', fishIsLoginShell: true})")
 h.eval(root, "open()")
+check("a passwd shell alone (no chsh this session) keeps $SHELL", last() == ["kitty"], last())
+h.eval(root, "setStatus({loginShell: '/usr/bin/fish', terminalShell: '/usr/bin/fish'})")
+h.eval(root, "open()")
 check("after chsh the terminal gets the new login shell", last() == ["env", "SHELL=/usr/bin/fish", "kitty"], last())
-h.eval(root, "setStatus({loginShell: 'fish'})")
+h.eval(root, "setStatus({loginShell: 'fish', terminalShell: 'fish'})")
 h.eval(root, "open()")
 check("a shell that is not an absolute path is not passed", last() == ["kitty"], last())
 

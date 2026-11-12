@@ -101,7 +101,7 @@ SUSE_STUBS = {
 FAKE_BIN = (
     "#!/bin/bash\n"
     + LOGGER
-    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
+    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine"; exit "${FAKE_DOCTOR_RC:-0}" ;; esac\n'
     + '[[ "$*" == "install --help" ]] && { echo "Unknown target \'--help\'" >&2; exit 1; }\n'
     + 'if [[ "$*" == "install --exclusive --help" ]]; then\n'
     + '  [[ -n "${FAKE_EXCLUSIVE:-}" ]] && { echo "Usage: yozakura install hyprland --exclusive [-y]"; exit 0; }\n'
@@ -366,6 +366,7 @@ def test_yes_install_optional_failure_does_not_abort():
         voice = sb.calls("voice_setup.sh")
         check(voice == [["--vulkan"]], f"voice on AMD not built with --vulkan: {voice}")
         check(re.search(r"voice: failed \(see log\)", err), "summary lacks the voice failure", err)
+        check("an optional part failed" in err and "blossoms are out" not in err, "optional failure has an unqualified headline", err)
         check(any("doctor" in c for c in sb.calls("yozakura")), "doctor did not run after the failure")
         helper = [c for c in sb.calls("sudo") if c[:1] == ["install"]]
         check(
@@ -835,10 +836,58 @@ def test_sddm_installed_but_disabled_is_set_up():
         systemd_root(sb)
         sb.extra_env["STUB_SUDO_FAIL"] = "systemctl enable sddm"
         rc, err, _ = sb.run("-y", "--compositor", "niri")
-        check(rc == 0, f"failing sddm enable exit {rc}", err)
+        check(rc == 2, f"failing sddm enable exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "failed login screen has a success headline", err)
         check(["systemctl", "enable", "--now", "bluetooth"] in sb.calls("sudo"), "bluetooth skipped after sddm failed")
         check(re.search(r"sddm: failed", err), "summary lacks the sddm failure", err)
         check("new login screen" not in err and "niri-session" in err, "next steps promise a login screen", err)
+    finally:
+        sb.cleanup()
+
+
+def test_dangling_display_manager_link():
+    sb = Sandbox("arch")
+    try:
+        # display-manager.service still links to a removed gdm: no login
+        # manager is enabled; the installed sddm is found and set up.
+        systemd_root(sb, dm="gdm")
+        (sb.root / "sysroot/usr/lib/systemd/system/gdm.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+none: SDDM", err), "dangling link counted as an enabled gdm", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not set up behind a dangling link", sb.log.read_text())
+        installed_unit(sb, "sddm.service")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and "sddm is installed but not enabled" in err, "installed sddm behind a dangling link not reported", err)
+    finally:
+        sb.cleanup()
+
+
+def test_suse_display_manager_unit_is_left_alone():
+    sb = Sandbox("suse")
+    try:
+        # Tumbleweed: display-manager.service is a real unit that starts the
+        # login manager update-alternatives selects; no /etc link.
+        systemd_root(sb)
+        installed_unit(sb, "display-manager.service")
+        installed_unit(sb, "sddm.service")
+        dms = sb.root / "sysroot/usr/lib/X11/displaymanagers"
+        dms.mkdir(parents=True)
+        (dms / "gdm").write_text("")
+        alt = sb.root / "sysroot/etc/alternatives"
+        alt.mkdir(parents=True)
+        (alt / "default-displaymanager").symlink_to(dms / "gdm")
+        for args in (("-y",), ("-y", "--with-sddm")):
+            rc, err, _ = sb.run(*args, "--compositor", "niri")
+            check(rc == 0, f"{args} exit {rc}", err)
+            check(re.search(r"Login\s+gdm \(display-manager.service of the distribution", err), f"{args}: managed login manager not reported", err)
+            enables = [c for c in sb.calls("sudo") if c[:2] == ["systemctl", "enable"]]
+            check(not any("sddm" in c or "gdm" in " ".join(c) for c in enables), f"{args}: enabled a login manager: {enables}")
+            check(not any(c[:1] == ["bash"] and c[1].endswith("install-sddm-theme.sh") for c in sb.calls("sudo")), f"{args}: SDDM theme installed")
+            check("not enabled" not in err and "Install SDDM" not in err, f"{args}: SDDM offered", err)
+        # Without the alternatives link it is reported under the unit's name.
+        (alt / "default-displaymanager").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+display-manager \(", err), "unnamed managed login manager not reported", err)
     finally:
         sb.cleanup()
 
@@ -865,6 +914,8 @@ def test_other_login_manager_installed_but_disabled():
         check("sddm" not in " ".join(c for call in pacman_upgrades(sb) for c in call).split(), "--yes installed SDDM next to gdm")
         check("niri-session" in err and "new login screen" not in err, "next steps promise a login screen", err)
         check("sudo systemctl enable gdm.service" in err, "next steps lack how to enable gdm", err)
+        # A folded next-steps row keeps its hanging indent.
+        check(re.search(r"for a login screen: sudo\s*│\n\s*│ {4}systemctl enable gdm.service", err), "folded row lost its indent", err)
 
         # Interactive: 1 = enable gdm (Proceed: y, Reboot: n).
         rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
@@ -922,6 +973,11 @@ def test_ly_and_no_systemd_login_managers():
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and re.search(r"Login\s+ly\s", err), "enabled ly not detected", err)
         check("not enabled" not in err and "Log out (or reboot)" in err, "enabled ly reported as off", err)
+        # ly removed, its wants link left behind: nothing is enabled.
+        (sb.root / "sysroot/usr/lib/systemd/system/ly@.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and re.search(r"Login\s+none", err), "dangling ly link counted as enabled", err)
+        (wants / "ly@tty2.service").unlink()
 
         # No systemd: what was found is reported, nothing is guessed.
         sb.extra_env["YOZAKURA_SYSROOT"] = str(sb.root / "nosystemd")
@@ -931,6 +987,22 @@ def test_ly_and_no_systemd_login_managers():
         check("lightdm found (no systemd" in err, "plan does not say lightdm was found without systemd", err)
         check(not any(c[:2] == ["systemctl", "enable"] for c in sb.calls("sudo")), "services enabled without systemd")
         check("if lightdm shows a login screen" in err and "niri-session" in err, "next steps lack both ways", err)
+    finally:
+        sb.cleanup()
+
+
+def test_missing_required_component_exits_2():
+    sb = Sandbox("arch")
+    try:
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and "blossoms are out" in err and "NEEDS ATTENTION" not in err, f"clean install exit {rc}", err)
+        # The closing doctor reports a missing required component (exit 1).
+        sb.extra_env["FAKE_DOCTOR_RC"] = "1"
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 2, f"missing required component exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "headline claims success", err)
+        check("NEEDS ATTENTION" in err and "required components are missing" in err, "NEEDS ATTENTION lacks the doctor result", err)
+        check("doctor: fine" in err, "doctor output not shown", err)
     finally:
         sb.cleanup()
 
@@ -948,6 +1020,30 @@ def test_root_and_missing_sudo_give_guidance():
         sb.os_release.write_text(OS_RELEASE["debian"])
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check("apt install sudo" in err and f"usermod -aG sudo {me}" in err, "debian guidance wrong", err)
+        wheel = "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+        sb.os_release.write_text(OS_RELEASE["arch"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(wheel in err and "> /etc/sudoers.d" not in err, "sudoers line is not 0440 and non-clobbering", err)
+    finally:
+        sb.cleanup()
+
+
+def test_refused_sudo_password_guidance():
+    sb = Sandbox("arch")
+    try:
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        sb.extra_env["STUB_SUDO_DENY"] = "1"
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "sudo authentication failed." in err, f"refused sudo exit {rc}", err + shown)
+        check("If the password was right" in err and "install -m 0440" in err, "arch guidance lacks the wheel line", err)
+        # Debian, the user already in the sudo group: only the password was wrong.
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        real_id = shutil.which("id")
+        (sb.bin / "id").unlink()
+        Sandbox._script(sb.bin / "id", f'#!/bin/bash\n[[ "$1" == -nG ]] && {{ echo "{me} sudo"; exit 0; }}\nexec {real_id} "$@"\n')
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "password was not accepted" in err, f"debian wrong password exit {rc}", err + shown)
+        check("usermod" not in err, "a sudo group member is told to join it", err)
     finally:
         sb.cleanup()
 
@@ -972,7 +1068,11 @@ def main():
         test_sddm_installed_but_disabled_is_set_up,
         test_other_login_manager_installed_but_disabled,
         test_ly_and_no_systemd_login_managers,
+        test_dangling_display_manager_link,
+        test_suse_display_manager_unit_is_left_alone,
         test_root_and_missing_sudo_give_guidance,
+        test_refused_sudo_password_guidance,
+        test_missing_required_component_exits_2,
         test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
