@@ -24,6 +24,10 @@ type terminalEnv struct {
 	config func() termrun.Config
 	home   func() string
 	start  func(argv []string) error
+	// The passwd login shell and the session's $SHELL: a terminal starts
+	// the login shell once it differs (nil: argv as it is).
+	loginShell func() string
+	shell      func() string
 }
 
 func defaultTerminalEnv() terminalEnv {
@@ -31,6 +35,9 @@ func defaultTerminalEnv() terminalEnv {
 		config: storedTerminalConfig,
 		home:   func() string { h, _ := os.UserHomeDir(); return h },
 		start:  startDetached,
+
+		loginShell: termrun.LoginShell,
+		shell:      func() string { return os.Getenv("SHELL") },
 	}
 }
 
@@ -90,9 +97,19 @@ func runTerminal(args []string, env terminalEnv, errOut io.Writer) int {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
 	}
+	argv = withSessionLoginShell(argv, env.loginShell, env.shell)
 	if err := env.start(argv); err != nil {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
 	}
 	return 0
+}
+
+// withSessionLoginShell is termrun.WithLoginShell with the lookups of an
+// env (either nil: argv as it is).
+func withSessionLoginShell(argv []string, login, shell func() string) []string {
+	if login == nil || shell == nil {
+		return argv
+	}
+	return termrun.WithLoginShell(argv, login(), shell())
 }

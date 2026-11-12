@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/termlook"
+	"yozakura/backend/pkg/termrun"
 )
 
 // Status is the state the settings page shows.
@@ -91,16 +92,10 @@ func (s *Service) loginShell() string {
 	}
 	name := s.o.User()
 	data, err := s.o.Passwd()
-	if name == "" || err != nil {
+	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(string(data), "\n") {
-		f := strings.Split(line, ":")
-		if len(f) >= 7 && f[0] == name {
-			return strings.TrimSpace(f[6])
-		}
-	}
-	return ""
+	return termrun.PasswdShell(data, name)
 }
 
 // foreignPromptFile returns the first of config.fish and conf.d/*.fish

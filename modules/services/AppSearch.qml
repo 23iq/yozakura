@@ -177,11 +177,18 @@ Singleton {
     }
     
 
+    // A terminal emulator starts the login shell chosen this session
+    // (TerminalService.withLoginShell); every other app is started as is.
+    function isTerminal(app) {
+        return Array.from(app.categories || []).indexOf("TerminalEmulator") >= 0;
+    }
+
     function launchApp(app) {
         const path = app.fileName || app.path || app.filePath;
+        const wrap = argv => isTerminal(app) ? TerminalService.withLoginShell(argv) : argv;
         
         if (path && path.toString().endsWith('.desktop')) {
-            runInActiveWorkspace(["gio", "launch", path.toString()]);
+            runInActiveWorkspace(wrap(["gio", "launch", path.toString()]));
             return;
         }
 
@@ -189,7 +196,7 @@ Singleton {
             // Drop unexpanded field codes (%f, %U, ...); everything else is argv.
             const argv = app.command.filter(arg => !/^%[fFuUijkc]$/.test(arg));
             if (argv.length > 0) {
-                runInActiveWorkspace(argv);
+                runInActiveWorkspace(wrap(argv));
                 return;
             }
         }
