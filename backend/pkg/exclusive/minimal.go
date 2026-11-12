@@ -79,11 +79,9 @@ func intoNixStore(p string) bool {
 func minimalEntry(lua bool, backup, hypr, polkit string) string {
 	c, block := "#", brand.HyprConfBlock()
 	user := "source = " + filepath.Join(hypr, "user.conf")
-	start := "exec-once = " + polkit
 	if lua {
 		c, block = "--", brand.HyprLuaBlock()
 		user = fmt.Sprintf("local user = loadfile(%q) if user then user() end", filepath.Join(hypr, "user.lua"))
-		start = fmt.Sprintf("hl.on(\"hyprland.start\", function() hl.exec_cmd(%q) end)", polkit)
 	}
 	cmd := brand.Command("install", "--restore")
 	lines := []string{
@@ -94,9 +92,59 @@ func minimalEntry(lua bool, backup, hypr, polkit string) string {
 		strings.TrimSuffix(block, "\n"),
 	}
 	if polkit != "" {
-		lines = append(lines, start)
+		lines = append(lines, polkitStart(lua, polkit))
 	}
 	return strings.Join(append(lines, user, ""), "\n")
+}
+
+// polkitStart is the minimal entry's line that runs the polkit command.
+func polkitStart(lua bool, polkit string) string {
+	if lua {
+		return fmt.Sprintf("hl.on(\"hyprland.start\", function() hl.exec_cmd(%q) end)", polkit)
+	}
+	return "exec-once = " + polkit
+}
+
+// UpdatePolkit brings the polkit line of the active exclusive entry in hypr
+// up to date: a line that is exactly the one this package wrote for one of
+// the commands in old becomes the line for polkit. The entry is generated
+// (the user's tweaks live in user.conf / user.lua), but only a regular file
+// is rewritten, never a symlink (Home Manager), and an edited line stays.
+// Reports whether it wrote.
+func UpdatePolkit(hypr string, old []string, polkit string) (bool, error) {
+	entry := activeEntry(hypr)
+	if entry == "" || polkit == "" {
+		return false, nil
+	}
+	path := filepath.Join(hypr, entry)
+	if info, err := os.Lstat(path); err != nil || !info.Mode().IsRegular() {
+		return false, nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, nil
+	}
+	lua := entry == luaEntry
+	stale := map[string]bool{}
+	for _, o := range old {
+		if o != "" && o != polkit {
+			stale[polkitStart(lua, o)] = true
+		}
+	}
+	lines := strings.Split(string(data), "\n")
+	n := 0
+	for i, l := range lines {
+		body := strings.TrimSuffix(l, "\r")
+		if stale[body] {
+			lines[i] = polkitStart(lua, polkit) + l[len(body):]
+			n++
+		}
+	}
+	if n == 0 {
+		return false, nil
+	}
+	info, _ := os.Stat(path)
+	return true, replaceFile(path, []byte(strings.Join(lines, "\n")), info.Mode().Perm())
 }
 
 func userNote(lua bool) string {

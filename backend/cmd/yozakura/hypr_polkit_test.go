@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"yozakura/backend/pkg/brand"
 )
 
 const (
@@ -108,6 +110,27 @@ func TestRepairPolkitSkipsHomeManagerEntry(t *testing.T) {
 	}
 	if ok, err := migratePolkitLine(lua, ""); ok || err != nil {
 		t.Fatalf("no launcher: wrote %v (%v)", ok, err)
+	}
+}
+
+// Exclusive mode's minimal entry, written before the shell had its own
+// agent, started hyprpolkitagent directly: the repair points it at
+// polkit-fallback, in the generated entry only.
+func TestRepairMigratesExclusiveEntryPolkitLine(t *testing.T) {
+	home := t.TempDir()
+	marker := brand.ConfigBlockMarker("#") + " exclusive mode"
+	body := marker + "\n# This file was replaced by exclusive mode.\n\nexec-once = /usr/lib/hyprpolkitagent/hyprpolkitagent\nsource = /x/user.conf\n"
+	path := writeHypr(t, home, "hyprland.conf", body)
+	repairHyprlandEntry(home, "/opt/bin/yozakura")
+	want := strings.Replace(body, "/usr/lib/hyprpolkitagent/hyprpolkitagent", "/opt/bin/yozakura polkit-fallback", 1)
+	if got := readText(t, path); got != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", got, want)
+	}
+	user := "exec-once = /usr/lib/hyprpolkitagent/hyprpolkitagent\n"
+	path = writeHypr(t, home, "hyprland.conf", user)
+	repairHyprlandEntry(home, "/opt/bin/yozakura")
+	if got := readText(t, path); got != user {
+		t.Fatalf("a user entry changed:\n%s", got)
 	}
 }
 
