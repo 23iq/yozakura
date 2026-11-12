@@ -281,6 +281,7 @@ MIRROR = [
     "modules/bar/workspaces/indicators",
     "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
+    "modules/widgets/dashboard/DashboardTabs.js",
     "modules/widgets/dashboard/wallpapers/WallpaperDefaults.js",
     "modules/widgets/launcher/Providers.js",
     "modules/specials/Specials.js",

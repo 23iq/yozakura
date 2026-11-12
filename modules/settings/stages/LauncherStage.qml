@@ -265,9 +265,11 @@ Stage {
                         text: String(SettingsStore.get("prefix." + modelData) || "")
                     }
                 }
-                StageSpot {
-                    keys: ["prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"]
-                }
+            }
+            StageSpot {
+                anchors.fill: tabRow
+                visible: tabRow.visible && opacity > 0
+                keys: ["prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"]
             }
 
             MouseArea {

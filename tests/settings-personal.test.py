@@ -122,6 +122,27 @@ ev("SettingsStore.undo()")
 h.eval(item("launcherMiniArea"), "clicked(null)")
 check(wait_until(lambda: h.eval(shell, "currentCategory") == "layout"), "launcher: a click on it opens Where things open")
 
+# ---- Dashboard ----------------------------------------------------------------
+select("dashboard")
+dstage = item("dashboardStage")
+check(item("dashboardMini") is not None and item("dashboardHero") is not None,
+      "dashboard: the stage draws the dashboard on its home view")
+h.eval(item("dashboardTab:metrics"), "clicked()")
+check(h.eval(dstage, "current") == "metrics", "dashboard: a click on a tab of the stage shows it")
+n = steps()
+h.eval(item("dashboardTabSwitch:metrics"), "toggled(false)")
+check(steps() == n + 1 and item("dashboardTab:metrics") is None, "dashboard: hiding a tab is one step and leaves the rail")
+check(h.eval(dstage, "current") == "widgets", "dashboard: ...and the stage falls back to the first tab")
+ev("SettingsStore.undo()")
+h.eval(item("dashboardTabMove:widgets:down"), "clicked()")
+check(h.eval(dstage, "tabs.map(t => t.id).join(',')").startswith("wallpapers,widgets"),
+      "dashboard: moving a tab reorders the stage's rail")
+ev("SettingsStore.undo()")
+h.eval(item("card:bento"), "clicked()")
+check(ev("Config.layout.dashboard.home") == "bento", "dashboard: the Widget grid card switches the home view")
+check(item("settingsSection:home") is not None, "dashboard: the home card is in the row")
+ev("SettingsStore.undo()")
+
 if failures:
     print(f"{len(failures)} failure(s)", file=sys.stderr)
 h.exit(1 if failures else 0)

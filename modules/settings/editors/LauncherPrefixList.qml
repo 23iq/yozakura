@@ -80,7 +80,6 @@ Column {
                         id: arrow
                         required property int modelData
                         objectName: "launcherMove:" + line.modelData + (modelData < 0 ? ":up" : ":down")
-                        anchors.verticalCenter: parent.verticalCenter
                         size: "xs"
                         opacity: hover.hovered ? 1 : 0
                         enabled: modelData < 0 ? line.position > 0 : line.position < root.inline.length - 1
