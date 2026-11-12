@@ -201,7 +201,8 @@ Item {
     Ambient {
         objectName: "windowAmbient"
         anchors.fill: parent
-        source: SettingsStore.wallpaper
+        // the wallpaper after the first frame (decode + blur cost it; it fades in)
+        source: homeView.warm ? SettingsStore.wallpaper : ""
         plain: Config.performance.batterySaver === true
     }
 
