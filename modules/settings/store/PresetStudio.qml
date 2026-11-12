@@ -178,6 +178,26 @@ Singleton {
         flushDelay.restart();
     }
 
+    // Before a command that brings back the config from before a trial or
+    // an edit (revert, cancel): the wizard's staging is dropped, and a live
+    // change still waiting for its coalesced write is written first, so the
+    // restore replaces it. Left pending, the write would land after the
+    // restore (ConfigFile merges a pending edit into a file changed on
+    // disk) and bring the cancelled edit back; dropped unwritten, a domain
+    // the restore leaves as it is would keep the edit unsaved.
+    function beforeRestore(fn) {
+        if (SettingsStore.hasChanges)
+            SettingsStore.discard();
+        SettingsStore.flush();
+        fn();
+    }
+
+    // A preset command rewrote the config files: the settings window's undo
+    // history describes the config before it and goes.
+    function configReplaced() {
+        SettingsStore.clearHistory();
+    }
+
     // ── Apply / try ─────────────────────────────────────────────────────
     // One session/apply at a time: `pending` is set before the flush, so a
     // double click (or a second action) never starts a second command.
@@ -193,6 +213,7 @@ Singleton {
         afterFlush(() => {
             run(["apply", name, "--json"], (ok, out, err) => {
                 pending = "";
+                configReplaced();
                 if (!ok)
                     fail(err);
                 const kept = ok ? ((parse(out) || {}).keptUserValues || []).length : 0;
@@ -211,6 +232,7 @@ Singleton {
         afterFlush(() => {
             run(["try", name], (ok, out, err) => {
                 pending = "";
+                configReplaced();
                 if (!ok) {
                     fail(err);
                     return;
@@ -234,6 +256,7 @@ Singleton {
         const done = () => {
             return run(["try", keep ? "--keep" : "--revert"], (ok, out, err) => {
                 pending = "";
+                configReplaced();
                 if (!ok)
                     fail(err);
 
@@ -241,14 +264,10 @@ Singleton {
                 refresh();
             });
         };
-        if (keep) {
+        if (keep)
             afterFlush(done);
-        } else {
-            if (SettingsStore.hasChanges)
-                SettingsStore.discard();
-
-            done();
-        }
+        else
+            beforeRestore(done);
     }
 
     // ── Create / organize ───────────────────────────────────────────────
@@ -444,6 +463,7 @@ Singleton {
         const done = () => {
             return run(args, (ok, out, err) => {
                 pending = "";
+                configReplaced();
                 if (!ok) {
                     fail(err);
                     return;
@@ -455,14 +475,10 @@ Singleton {
                 refresh();
             });
         };
-        if (save) {
+        if (save)
             afterFlush(done);
-        } else {
-            if (SettingsStore.hasChanges)
-                SettingsStore.discard();
-
-            done();
-        }
+        else
+            beforeRestore(done);
     }
 
     // A render slot for a thumbnail (false: wait for renderingChanged).
