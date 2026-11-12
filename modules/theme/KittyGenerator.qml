@@ -110,6 +110,13 @@ QtObject {
         // when this was enabled at startup; without it a preset switch would
         // need a terminal restart.
         conf += `dynamic_background_opacity yes\n`;
+        // kitty (0.50) also replays the maximized state of the last closed
+        // window when remember_window_size is on (its default), and the
+        // compositor honours that request: one window closed maximized made
+        // every later one open maximized. Off, kitty starts at its initial
+        // size (initial_window_width/height, the user's own when set); a
+        // tiling layout sizes the window either way.
+        conf += `remember_window_size no\n`;
         conf += `selection_foreground ${selectionForeground}\n`;
         conf += `selection_background ${selectionBackground}\n`;
         conf += `url_color ${urlColor}\n\n`;

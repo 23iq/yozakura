@@ -22,11 +22,6 @@ Item {
     readonly property var terminals: Model.terminalChoices(detected, terminal)
     readonly property var term: Config.terminal
     readonly property var preview: TerminalLookService.previews[TermModel.previewKey(TerminalLookService.engine, TerminalLookService.prompt)]
-    readonly property string fish: TermModel.fishState(TerminalLookService.status)
-    readonly property bool fishBusy: ExtrasService.cardState("fish") === "installing"
-    // installing fish or the login-shell change failed: the request did not happen
-    readonly property var loginJobs: Object.values(ExtrasService.jobs || {}).filter(j => j && j.kind === "login")
-    readonly property bool fishFailed: !root.fishBusy && !root.loginJobs.some(j => j.state === "queued" || j.state === "running") && (ExtrasService.cardState("fish") === "failed" || root.loginJobs.some(j => j.state === "failed"))
     readonly property var presetInfo: TerminalLookService.presets.find(p => p.id === TerminalLookService.prompt) ?? null
     readonly property bool needsNerdFont: !!presetInfo && presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
     readonly property bool nerdInstallable: ExtrasService.cardState("nerd-font") !== "unavailable"
@@ -40,19 +35,11 @@ Item {
         wizard.remember("terminal", t);
     }
 
-    // "New terminals start in fish with this prompt": the previewed prompt
-    // is switched on too when no card was picked (enablePrompt also queues
-    // its engine).
-    function makeFishDefault() {
-        if (root.fish === "ok")
-            return;
-        if (root.term && !root.term.enabled && TerminalLookService.prompt !== "")
-            TerminalLookService.enablePrompt(TerminalLookService.prompt);
-        TerminalLookService.makeFishDefault();
-        wizard.remember("fishDefault", true);
-    }
-
     Component.onCompleted: {
+        // The prompt / login-shell ticks are applied when the user
+        // continues past the step (never on skip or close).
+        if (root.wizard)
+            root.wizard.leaveGuard = () => shellChoice.apply();
         TerminalLookService.load();
         TerminalLookService.ensure(TerminalLookService.prompt, TerminalLookService.engine);
     }
@@ -215,20 +202,10 @@ Item {
                         backgroundOpacity: Glass.terminalOpacity
                     }
 
-                    ChoiceRow {
-                        objectName: "fishDefault"
+                    TerminalShellChoice {
+                        id: shellChoice
                         width: parent.width
-                        mode: "toggle"
-                        icon: "terminal"
-                        enabled: root.fish !== "ok" && !root.fishBusy
-                        checked: root.fish === "ok" || (!!root.wizard && root.wizard.choices.fishDefault === true && !root.fishFailed)
-                        title: I18n.t("onboarding.terminal.fish")
-                        subtitle: I18n.t(root.fish === "ok" ? "onboarding.terminal.fish.ok" : (root.fish === "missing" ? "onboarding.terminal.fish.missing" : "onboarding.terminal.fish.desc"))
-                        badge: root.fishBusy ? I18n.t("prefs.term.look.installing") : ""
-                        onToggled: v => {
-                            if (v)
-                                root.makeFishDefault();
-                        }
+                        wizard: root.wizard
                     }
 
                     // Same cue as Settings > Terminal: the prompt needs a Nerd Font.
@@ -276,6 +253,8 @@ Item {
                         objectName: "onboardingPromptGallery"
                         width: galleryFlick.width - Space.m
                         markOnlyWhenOn: true
+                        // the prompt Continue switches on is the marked one
+                        chosen: shellChoice.tickPrompt
                     }
                 }
             }

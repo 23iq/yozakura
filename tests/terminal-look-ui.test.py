@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from terminal_env import TerminalEnv, sample_previews  # noqa: E402
+from terminal_env import STATUS, TerminalEnv, sample_previews  # noqa: E402
 
 from PySide6.QtCore import QPointF, Qt  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
@@ -239,6 +239,23 @@ check(calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh"], "fastfetch
 ev("ExtrasService.status = Object.assign({}, ExtrasService.status, {fastfetch: {id: 'fastfetch', state: 'missing'}})")
 ev("TerminalLookService.installEngine('ohmyposh')")
 check(calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh", "fastfetch"], "missing fastfetch comes with the engine")
+
+# A card clicked before term.status arrived: the engine check waits for the
+# status instead of being dropped (the engine was never queued).
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': null})")
+ev("TerminalLookService.status = null")
+ev("Config.terminal.engine = 'ohmyposh'")
+n = len(calls("extras.install"))
+ev("TerminalLookService.enablePrompt('plain')")
+pump(60)
+check(len(calls("extras.install")) == n, "no install decided without a status")
+late = {**STATUS, "engineInstalled": {"starship": True, "ohmyposh": False}}
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s})" % json.dumps(late))
+ev("TerminalLookService.refreshStatus()")
+check(len(calls("extras.install")) == n + 1 and calls("extras.install")[-1]["params"]["ids"][0] == "oh-my-posh",
+      "the engine is queued once the status arrives: %s" % calls("extras.install")[n:])
+ev("TerminalLookService.refreshStatus()")
+check(len(calls("extras.install")) == n + 1, "a later status does not queue it again")
 
 if failures:
     print(f"{len(failures)} failure(s)")

@@ -58,8 +58,9 @@ def i18n_qml(lang: str = "en") -> str:
 
 SERVICES = {
     # the real one sets the prompt, switches it on and saves
-    "TerminalLookService": re.sub(r"\n\s*function (choose|enablePrompt)\(id\) \{\}", "", TERMINAL_LOOK_STUB).replace(
+    "TerminalLookService": re.sub(r"\n\s*function (choose\(id\)|enablePrompt\(id\)|makeFishDefault\(\)) \{\}", "", TERMINAL_LOOK_STUB).replace(
         "QtObject {", "import qs.config\nQtObject {\n    property var chosen: []\n    property bool nerdFontAvailable: true\n"
+        "    property int fishDefaults: 0\n    function makeFishDefault() { fishDefaults++ }\n"
         "    function enablePrompt(id) { chosen = chosen.concat([id]); Config.terminal.prompt = id;"
         " Config.terminal.enabled = true }", 1),
     "GlobalShortcuts": """pragma Singleton

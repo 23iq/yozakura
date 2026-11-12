@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/specials"
+	"yozakura/backend/pkg/termrun"
 )
 
 // launchEnv is what `launch` needs from the system (swapped in tests).
@@ -16,10 +17,18 @@ type launchEnv struct {
 	dirs     []string
 	lookPath func(string) (string, error)
 	start    func(argv []string) error
+	// A terminal app starts the passwd login shell once it differs from
+	// the session's $SHELL (cmds_terminal.go); nil: argv as it is.
+	readFile   func(string) ([]byte, error)
+	loginShell func() string
+	shell      func() string
 }
 
 func defaultLaunchEnv() launchEnv {
-	return launchEnv{dirs: specials.ApplicationDirs(), lookPath: exec.LookPath, start: startDetached}
+	return launchEnv{
+		dirs: specials.ApplicationDirs(), lookPath: exec.LookPath, start: startDetached,
+		readFile: os.ReadFile, loginShell: termrun.LoginShell, shell: func() string { return os.Getenv("SHELL") },
+	}
 }
 
 // runLaunch starts an installed app by desktop id the way the launcher does
@@ -44,6 +53,11 @@ func runLaunch(args []string, env launchEnv, stderr io.Writer) int {
 			return 1
 		}
 		argv = []string{"gtk-launch", id}
+	}
+	if env.readFile != nil {
+		if data, err := env.readFile(file); err == nil && termrun.IsTerminalEntry(string(data)) {
+			argv = withSessionLoginShell(argv, env.loginShell, env.shell)
+		}
 	}
 	if err := env.start(argv); err != nil {
 		fmt.Fprintf(stderr, "launch: %v\n", err)

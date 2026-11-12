@@ -771,6 +771,115 @@ def test_sddm_installed_but_disabled_is_set_up():
         sb.cleanup()
 
 
+def installed_unit(sb, name):
+    """A login manager unit installed in the fake systemd root, not enabled."""
+    unit = sb.root / "sysroot/usr/lib/systemd/system" / name
+    unit.parent.mkdir(parents=True, exist_ok=True)
+    unit.write_text("")
+
+
+def test_other_login_manager_installed_but_disabled():
+    sb = Sandbox("arch")
+    try:
+        systemd_root(sb)
+        installed_unit(sb, "gdm.service")
+        # --yes: reported, never enabled; no SDDM next to it; console steps.
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"--yes exit {rc}", err)
+        check("gdm is installed but not enabled" in err, "--yes does not report the disabled gdm", err)
+        check(re.search(r"Login\s+gdm is installed but not enabled: left as it is", err), "plan lacks the login outcome", err)
+        enables = [c for c in sb.calls("sudo") if c[:2] == ["systemctl", "enable"]]
+        check(not any("gdm.service" in c or "sddm" in c for c in enables), f"--yes enabled a login manager: {enables}")
+        check("sddm" not in " ".join(c for call in pacman_upgrades(sb) for c in call).split(), "--yes installed SDDM next to gdm")
+        check("niri-session" in err and "new login screen" not in err, "next steps promise a login screen", err)
+        check("sudo systemctl enable gdm.service" in err, "next steps lack how to enable gdm", err)
+
+        # Interactive: 1 = enable gdm (Proceed: y, Reboot: n).
+        rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
+        check(rc == 0, f"enable gdm exit {rc}", err + shown)
+        check("Login screen" in err and "Enable gdm" in err, "no login screen menu", err)
+        check(["systemctl", "enable", "gdm.service"] in sb.calls("sudo"), "gdm not enabled", sb.log.read_text())
+        check(["systemctl", "enable", "--now", "gdm.service"] not in sb.calls("sudo"), "gdm started mid-install")
+        check(re.search(r"Login\s+gdm is installed but not enabled: enable it", err), "plan lacks the enable outcome", err)
+        check("pick niri on the new login screen" in err, "next steps do not point at gdm", err)
+
+        # Interactive: 2 = SDDM with the theme instead.
+        rc, err, shown = sb.run("--compositor", "niri", answers="2\ny\nn\n")
+        check(rc == 0, f"sddm instead exit {rc}", err + shown)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not enabled", sb.log.read_text())
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "gdm touched when SDDM was chosen")
+        check(any("sddm" in u for u in pacman_upgrades(sb)), "SDDM not installed", sb.log.read_text())
+
+        # Interactive: 3 = leave it.
+        rc, err, shown = sb.run("--compositor", "niri", answers="3\ny\nn\n")
+        check(rc == 0, f"leave exit {rc}", err + shown)
+        check(not any(c[:2] == ["systemctl", "enable"] and ("gdm.service" in c or "sddm" in c) for c in sb.calls("sudo")), "leave enabled something")
+        check("niri-session" in err and "Ctrl+Alt+F2" in err, "leave lacks the console steps", err)
+
+        # --no-sddm: SDDM is not offered (1 = enable, 2 = leave).
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="2\ny\nn\n")
+        check(rc == 0 and "Install SDDM" not in err, "--no-sddm still offers SDDM", err)
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "--no-sddm: 2 should leave gdm")
+
+        # --with-sddm --yes: SDDM takes the place of the disabled gdm.
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--with-sddm")
+        check(rc == 0, f"--with-sddm exit {rc}", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "--with-sddm did not enable SDDM", sb.log.read_text())
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "--with-sddm touched gdm")
+
+        # A dry run shows the choice and runs nothing.
+        rc, err, shown = sb.run("--compositor", "niri", "--dry-run", answers="1\ny\nn\n")
+        check(rc == 0 and "would run: sudo systemctl enable gdm.service" in err, "dry run does not show the enable", err)
+        check(["systemctl", "enable", "gdm.service"] not in sb.calls("sudo"), "dry run enabled gdm")
+    finally:
+        sb.cleanup()
+
+
+def test_ly_and_no_systemd_login_managers():
+    sb = Sandbox("arch")
+    try:
+        # ly 1.1+ is a ly@ttyN template with no display-manager link.
+        systemd_root(sb)
+        installed_unit(sb, "ly@.service")
+        rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
+        check(rc == 0 and ["systemctl", "enable", "ly@tty2.service"] in sb.calls("sudo"), "ly not enabled on tty2", err + sb.log.read_text())
+        # Enabled ly: taken as the working login screen, no question.
+        wants = sb.root / "sysroot/etc/systemd/system/multi-user.target.wants"
+        wants.mkdir(parents=True, exist_ok=True)
+        (wants / "ly@tty2.service").symlink_to(sb.root / "sysroot/usr/lib/systemd/system/ly@.service")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+ly\s", err), "enabled ly not detected", err)
+        check("not enabled" not in err and "Log out (or reboot)" in err, "enabled ly reported as off", err)
+
+        # No systemd: what was found is reported, nothing is guessed.
+        sb.extra_env["YOZAKURA_SYSROOT"] = str(sb.root / "nosystemd")
+        Sandbox._script(sb.bin / "lightdm", "#!/bin/bash\n")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"no-systemd exit {rc}", err)
+        check("lightdm found (no systemd" in err, "plan does not say lightdm was found without systemd", err)
+        check(not any(c[:2] == ["systemctl", "enable"] for c in sb.calls("sudo")), "services enabled without systemd")
+        check("if lightdm shows a login screen" in err and "niri-session" in err, "next steps lack both ways", err)
+    finally:
+        sb.cleanup()
+
+
+def test_root_and_missing_sudo_give_guidance():
+    sb = Sandbox("arch")
+    try:
+        (sb.bin / "sudo").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 1 and "sudo is not installed" in err, f"missing sudo exit {rc}", err)
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        for line in ("pacman -Syu sudo", f"usermod -aG wheel {me}", "/etc/sudoers.d/10-wheel", f"log in again as {me}"):
+            check(line in err, f"missing-sudo guidance lacks {line!r}", err)
+        check("useradd" not in err, "the user exists: no useradd", err)
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check("apt install sudo" in err and f"usermod -aG sudo {me}" in err, "debian guidance wrong", err)
+    finally:
+        sb.cleanup()
+
+
 def test_dry_run_without_git():
     sb = Sandbox("arch", strict=True)
     try:
@@ -789,6 +898,9 @@ def main():
         test_aur_failure_does_not_abort,
         test_yay_bootstrap_failure_does_not_abort,
         test_sddm_installed_but_disabled_is_set_up,
+        test_other_login_manager_installed_but_disabled,
+        test_ly_and_no_systemd_login_managers,
+        test_root_and_missing_sudo_give_guidance,
         test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,

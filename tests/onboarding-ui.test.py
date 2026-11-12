@@ -242,12 +242,12 @@ check(card is not None, "prompt gallery shows the presets")
 ev("Config.terminal.prompt = 'sakura-powerline'; Config.terminal.enabled = false")
 sakura = vfind(win, "promptCard:sakura-powerline")
 check(sakura is not None and h.eval(sakura, "selected") is False, "no card is marked while the prompt is off")
-# "Make fish my default shell" promises "with this prompt": it switches the
-# previewed prompt on too.
-h.eval(h.find(win, "fishDefault"), "toggled(true)")
-check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == ["sakura-powerline"], "the fish toggle turns the shown prompt on")
-check(h.eval(sakura, "selected") is True, "the prompt that is on is marked")
-ev("TerminalLookService.chosen = []; Config.terminal.enabled = false")
+# Ticking "use this prompt" marks the card it switches on; nothing is applied
+# before Continue (tests/onboarding-terminal-ui.test.py).
+h.eval(vfind(win, "promptOn"), "toggled(true)")
+check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == [], "a tick applies nothing before Continue")
+check(h.eval(sakura, "selected") is True, "the ticked prompt is marked")
+h.eval(vfind(win, "promptOn"), "toggled(false)")
 if card is not None:
     h.eval(card, "clicked()")
 check(h.eval(card, "selected") is True, "the picked card is marked")
@@ -256,7 +256,7 @@ check(h.find(win, "fishDefault") is not None, "Make fish my default shell row")
 # the toggle shows what happened: a failed fish install / chsh unchecks it
 ev('wizard.remember("fishDefault", true)')
 check(h.eval(h.find(win, "fishDefault"), "checked") is True, "a requested fish default shows checked while it runs")
-ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "login", entries: [], state: "failed", reason: "auth_cancelled"}})')
+ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "loginshell", entries: [], state: "failed", reason: "auth_cancelled"}})')
 check(h.eval(h.find(win, "fishDefault"), "checked") is False, "a failed chsh shows unchecked")
 ev('ExtrasService.jobs = ({})')
 check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == ["plain"], "the gallery turns the prompt on through enablePrompt")
