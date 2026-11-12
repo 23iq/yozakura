@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"yozakura/backend/pkg/brand"
@@ -28,11 +32,15 @@ type convertEnv struct {
 	svc   *convertsvc.Service
 	tick  time.Duration
 	tools func() *conv.Tools
+	// interrupted closes on SIGINT / SIGTERM: the jobs are cancelled and
+	// cleaned up before the command exits (nil = never)
+	interrupted <-chan struct{}
 }
 
 func defaultConvertEnv() convertEnv {
 	s := convertsvc.NewService(paths.New().CacheDir)
-	return convertEnv{svc: s, tick: 100 * time.Millisecond, tools: s.Tools}
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	return convertEnv{svc: s, tick: 100 * time.Millisecond, tools: s.Tools, interrupted: ctx.Done()}
 }
 
 // runConvert implements `yozakura convert`; it converts in this process
@@ -127,7 +135,12 @@ func runConvert(args []string, env convertEnv, out, errOut io.Writer) int {
 		fmt.Fprintf(errOut, "Error: %v\n", err)
 		return 1
 	}
-	jobs := waitJobs(env)
+	jobs, interrupted := waitJobs(env)
+	env.svc.Stop()
+	if interrupted {
+		fmt.Fprintln(errOut, "Interrupted: conversions stopped")
+		return 130
+	}
 	failed := 0
 	for _, j := range jobs {
 		if j.State != convertsvc.StateDone {
@@ -152,7 +165,8 @@ func runConvert(args []string, env convertEnv, out, errOut io.Writer) int {
 	return 0
 }
 
-func waitJobs(env convertEnv) []convertsvc.Job {
+// waitJobs waits for every job; true when a signal cut it short.
+func waitJobs(env convertEnv) ([]convertsvc.Job, bool) {
 	for {
 		jobs := env.svc.Jobs()
 		busy := false
@@ -162,9 +176,13 @@ func waitJobs(env convertEnv) []convertsvc.Job {
 			}
 		}
 		if !busy {
-			return jobs
+			return jobs, false
 		}
-		time.Sleep(env.tick)
+		select {
+		case <-env.interrupted:
+			return jobs, true
+		case <-time.After(env.tick):
+		}
 	}
 }
 

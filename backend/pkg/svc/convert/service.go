@@ -54,8 +54,12 @@ type Service struct {
 	cancels map[string]func()
 	seq     int
 
-	sem      chan struct{}
-	officeMu sync.Mutex // one LibreOffice profile: one conversion at a time
+	sem chan struct{}
+	// one LibreOffice at a time on this process's profile; a channel so a
+	// cancelled job stops waiting
+	office  chan struct{}
+	wg      sync.WaitGroup
+	stopped bool
 }
 
 // NewService returns the service with the real host.
@@ -74,7 +78,10 @@ func New(o Options) *Service {
 	if o.Workers <= 0 {
 		o.Workers = 2
 	}
-	return &Service{o: o, jobs: map[string]*Job{}, cancels: map[string]func(){}, sem: make(chan struct{}, o.Workers)}
+	s := &Service{o: o, jobs: map[string]*Job{}, cancels: map[string]func(){}, sem: make(chan struct{}, o.Workers),
+		office: make(chan struct{}, 1)}
+	s.sweep()
+	return s
 }
 
 // Register exposes the service over IPC.
@@ -132,6 +139,10 @@ func Probe(path string, t *conv.Tools) File {
 		return f
 	case st.IsDir():
 		f.Error = "a folder"
+		return f
+	case !st.Mode().IsRegular():
+		// a FIFO or a device: never opened (reading could block)
+		f.Error = "not a regular file"
 		return f
 	}
 	f.Size = st.Size()

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"yozakura/backend/pkg/brand"
 	conv "yozakura/backend/pkg/convert"
 )
 
@@ -41,6 +40,7 @@ type Job struct {
 
 	outDir  string
 	quality conv.Quality
+	ctx     context.Context
 }
 
 func (j *Job) finished() bool {
@@ -85,41 +85,60 @@ func (s *Service) Start(p StartParams) ([]Job, error) {
 	q := conv.ParseQuality(p.Quality)
 	out := make([]Job, 0, len(p.Items))
 	for _, it := range p.Items {
-		j := s.newJob(it, outDir, q)
-		out = append(out, *j)
-		if j.State == StateQueued {
-			go s.run(j.ID)
+		j, err := s.newJob(it, outDir, q)
+		if err != nil {
+			return out, err
 		}
+		out = append(out, j)
 	}
 	return out, nil
 }
 
-func (s *Service) newJob(it Item, outDir string, q conv.Quality) *Job {
+// newJob checks the file (outside the lock: a slow disk must not stall the
+// service) and registers the job with its own context, so a cancel that
+// arrives before the job runs still reaches it. A queued job starts.
+func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 	path := it.Path
 	if abs, err := filepath.Abs(path); err == nil {
 		path = abs
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.seq++
-	j := &Job{ID: fmt.Sprintf("c%d", s.seq), Path: path, Name: filepath.Base(path), To: it.Target,
-		State: StateQueued, Progress: -1, outDir: outDir, quality: q}
-	if fm, ok := conv.Detect(path); !ok {
-		j.State, j.Error = StateFailed, "unknown format"
-	} else {
-		j.From = fm.ID
+	state, msg, from := StateQueued, "", ""
+	switch fm, ok := conv.Detect(path); {
+	case !conv.IsRegular(path):
+		state, msg = StateFailed, "not a regular file"
+	case !ok:
+		state, msg = StateFailed, "unknown format"
+	default:
+		from = fm.ID
 		if _, ok := conv.Lookup(it.Target); !ok {
-			j.State, j.Error = StateFailed, "unknown target "+it.Target
+			state, msg = StateFailed, "unknown target "+it.Target
 		}
 	}
-	if j.outDir == "" && s.isPasted(path) {
-		j.outDir = s.pastedOutDir()
+	if outDir == "" && s.isPasted(path) {
+		outDir = s.pastedOutDir()
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.stopped {
+		cancel()
+		return Job{}, errors.New("the converter is shutting down")
+	}
+	s.seq++
+	j := &Job{ID: fmt.Sprintf("c%d", s.seq), Path: path, Name: filepath.Base(path), From: from, To: it.Target,
+		State: state, Error: msg, Progress: -1, outDir: outDir, quality: q, ctx: ctx}
 	s.jobs[j.ID] = j
 	s.order = append(s.order, j.ID)
 	s.trim()
 	s.publish(j)
-	return j
+	if state == StateQueued {
+		s.cancels[j.ID] = cancel
+		s.wg.Add(1)
+		go s.run(j.ID)
+	} else {
+		cancel()
+	}
+	return *j, nil
 }
 
 // trim forgets the oldest finished jobs beyond maxJobs; s.mu is held.
@@ -151,15 +170,15 @@ func (s *Service) update(id string, fn func(j *Job)) {
 }
 
 func (s *Service) run(id string) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	defer s.wg.Done()
 	s.mu.Lock()
 	j, ok := s.jobs[id]
+	cancel := s.cancels[id]
 	if !ok || j.State != StateQueued {
 		s.mu.Unlock()
 		return
 	}
-	s.cancels[id] = cancel
+	ctx := j.ctx
 	req := conv.Request{Src: j.Path, From: j.From, To: j.To, Quality: j.quality}
 	outDir := j.outDir
 	s.mu.Unlock()
@@ -167,6 +186,9 @@ func (s *Service) run(id string) {
 		s.mu.Lock()
 		delete(s.cancels, id)
 		s.mu.Unlock()
+		if cancel != nil {
+			cancel()
+		}
 	}()
 
 	select {
@@ -179,18 +201,21 @@ func (s *Service) run(id string) {
 	output, err := s.convert(ctx, id, req, outDir)
 	s.update(id, func(j *Job) {
 		switch {
+		case err == nil:
+			// a result renamed into place is done, even if a cancel came late
+			j.State, j.Output, j.Progress, j.Error = StateDone, output, 1, ""
 		case ctx.Err() != nil:
 			j.State, j.Error = StateCancelled, ""
-		case err != nil:
-			j.State, j.Error = StateFailed, err.Error()
 		default:
-			j.State, j.Output, j.Progress = StateDone, output, 1
+			j.State, j.Error = StateFailed, err.Error()
 		}
 	})
 }
 
-// convert runs one job: a private work directory next to the output (so
-// the result is renamed, never copied), a reserved output name, the plan.
+// convert runs one job in a private work directory: under the cache when
+// it is on the output's filesystem (nothing appears in the user's folder
+// and the result is still renamed, never copied), else a hidden one in the
+// output folder. The result gets a reserved name only once it exists.
 func (s *Service) convert(ctx context.Context, id string, req conv.Request, outDir string) (string, error) {
 	t := s.Tools()
 	to, _ := conv.Lookup(req.To)
@@ -198,18 +223,23 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	if dir == "" {
 		dir = filepath.Dir(req.Src)
 	}
-	work, err := os.MkdirTemp(dir, "."+brand.AppID+"-convert-")
+	work, err := s.workDir(dir)
 	if err != nil {
-		return "", fmt.Errorf("cannot write to %s", dir)
+		return "", err
 	}
 	defer os.RemoveAll(work)
-	plan, err := conv.BuildPlan(req, t, work, conv.PlanOptions{OfficeProfile: filepath.Join(s.o.CacheDir, "office-profile")})
+	plan, err := conv.BuildPlan(req, t, work, conv.PlanOptions{OfficeProfile: s.officeProfile()})
 	if err != nil {
 		return "", err
 	}
 	if plan.Engine == conv.EngineSoffice || plan.Engine == conv.EngineDocPDF {
-		s.officeMu.Lock()
-		defer s.officeMu.Unlock()
+		// one LibreOffice per profile; a cancelled job stops waiting
+		select {
+		case s.office <- struct{}{}:
+			defer func() { <-s.office }()
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
 	}
 	if plan.Engine == conv.EngineFFmpeg {
 		plan.Duration = t.ProbeDuration(ctx, req.Src)
@@ -218,6 +248,9 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	if err := plan.Run(ctx, func(f float64) {
 		s.update(id, func(j *Job) { j.Progress = f })
 	}); err != nil {
+		return "", err
+	}
+	if err := ctx.Err(); err != nil {
 		return "", err
 	}
 	final, err := conv.Reserve(req.Src, to.Ext(), dir)
