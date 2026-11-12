@@ -19,7 +19,7 @@ test("a first run on a plain bash preselects the prompt and fish", () => {
 });
 
 test("nothing is preselected without a status, on a re-run, or with a prompt or shell of the user's own", () => {
-    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, known: false, loginFiles: false });
+    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, fetch: false, known: false, loginFiles: false });
     for (const ctx of [
         { firstRun: false, status: fresh },
         { firstRun: true, status: { ...fresh, foreignPromptInit: true } },
@@ -59,6 +59,43 @@ test("Continue applies what is ticked and still to do", () => {
     assert.deepStrictEqual(C.actions({ prompt: false, fish: false }, ctx), []);
     assert.deepStrictEqual(C.actions({ prompt: true, fish: true }, { ...ctx, promptOn: true, login: "pending" }), []);
     assert.deepStrictEqual(C.actions({ prompt: true, fish: true }, { ...ctx, fishCard: "unavailable" }), ["prompt"]);
+});
+
+// term.status.greeting of a machine with fastfetch and no fetch call of the user's
+const greet = (over = {}) => ({ on: false, fastfetchInstalled: true, ownConfig: false,
+    shells: [{ shell: "fish", state: "off" }, { shell: "bash", state: "off" }, { shell: "zsh", state: "absent" }], ...over });
+
+test("the greeting is never preselected: it edits the user's rc files, so it is opt-in", () => {
+    const st = { ...fresh, greeting: greet() };
+    assert.strictEqual(C.defaults({ firstRun: true, status: st, promptOn: false, fishCard: "selectable" }).fetch, false);
+    const missing = { ...fresh, greeting: greet({ fastfetchInstalled: false }) };
+    assert.strictEqual(C.defaults({ firstRun: true, status: missing, fishCard: "selectable", fetchCard: "selectable" }).fetch, false);
+    // a prompt of the user's keeps the prompt unticked, and the greeting too
+    const foreignPrompt = { ...st, foreignPromptInit: true };
+    assert.deepStrictEqual(C.defaults({ firstRun: true, status: foreignPrompt, fishCard: "selectable" }), { prompt: false, fish: false, fetch: false, known: true, loginFiles: false });
+    assert.strictEqual(C.defaults({ firstRun: false, status: st }).fetch, false);
+    // the prompt and fish are still preselected beside it
+    const d = C.defaults({ firstRun: true, status: st, promptOn: false, fishCard: "selectable" });
+    assert.strictEqual(d.prompt && d.fish, true);
+});
+
+test("Continue turns the greeting on with the sakura look, or the user's own fastfetch config", () => {
+    const ctx = { status: fresh, promptOn: false, fishCard: "selectable", login: "none" };
+    assert.deepStrictEqual(C.actions({ fetch: true }, ctx), ["fetch"]);
+    assert.deepStrictEqual(C.actions({ fetch: true }, { ...ctx, greetingOn: true }), []);
+    assert.deepStrictEqual(C.actions({ prompt: true, fish: true, fetch: true }, ctx), ["prompt", "fish", "fetch"]);
+    // on already (an earlier Continue) and unticked: off, but only on Continue
+    assert.deepStrictEqual(C.actions({ fetchOff: true }, { ...ctx, greetingOn: true }), ["fetchOff"]);
+    assert.deepStrictEqual(C.actions({ fetchOff: true }, ctx), []);
+    assert.deepStrictEqual(C.actions({}, { ...ctx, greetingOn: true }), []);
+    // the notice says it edits the startup files (and installs fastfetch)
+    assert.strictEqual(C.fetchPlanKey(["fetch"], true), "onboarding.terminal.plan.fetch");
+    assert.strictEqual(C.fetchPlanKey(["prompt", "fetch"], false), "onboarding.terminal.plan.fetch_install");
+    assert.strictEqual(C.fetchPlanKey(["prompt"], true), "");
+    assert.strictEqual(C.fetchPlanKey(["fetchOff"], true), "");
+    assert.strictEqual(C.fetchLook({ greeting: greet() }), "sakura");
+    assert.strictEqual(C.fetchLook({ greeting: greet({ ownConfig: true }) }), "own");
+    assert.strictEqual(C.fetchLook(null), "sakura");
 });
 
 test("login state: pending while it runs, failed after a cancelled password", () => {

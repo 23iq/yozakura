@@ -33,6 +33,15 @@ func (f *fakeTerm) Call(method string, params any) (json.RawMessage, error) {
 	return nil, errors.New("down")
 }
 
+func (f *fakeTerm) GetConfig(key string) (any, error) {
+	for i := len(f.sets) - 1; i >= 0; i-- {
+		if f.sets[i][0] == key {
+			return f.sets[i][1], nil
+		}
+	}
+	return nil, errors.New("unset")
+}
+
 func (f *fakeTerm) SetConfig(key string, v any) error {
 	f.sets = append(f.sets, [2]any{key, v})
 	return f.setErr

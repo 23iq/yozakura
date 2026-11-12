@@ -6,11 +6,14 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import "../terminal/TermModel.js" as TermModel
+import "../terminal/FetchModel.js" as FetchModel
 
 // Terminal look: the prompt presets, rendered previews and fish/engine
 // status of the backend `term` service (backend/pkg/svc/term), shown by the
-// prompt gallery (modules/terminal). Previews are cached per engine +
-// preset and re-fetched when the palette or the installed engines change.
+// prompt gallery (modules/terminal), and the fastfetch greeting (its looks,
+// previews of what fastfetch prints, status.greeting). Previews are cached
+// per engine + preset (per look + logo) and re-fetched when the palette or
+// the installed engines change.
 // Installs go through ExtrasService (starship, oh-my-posh, fish, login
 // shell); the backend writes the prompt files, never QML.
 Singleton {
@@ -24,6 +27,14 @@ Singleton {
     // previewKey(engine, id) -> {left: [[span]], right: [span], exact, engine, reason}
     property var previews: ({})
     property string error: ""
+    // Greeting looks [{id, name, description, logo, own}] and previews
+    // (FetchModel.previewKey -> {lines: [[span]], exact, reason, imageLogo}).
+    property var fetchPresets: []
+    property var fetchPreviews: ({})
+    // {on, fastfetchInstalled, ownConfig, shells: [{shell, state, file}], logoError, imageLogo}
+    readonly property var greeting: root.status?.greeting ?? null
+    readonly property bool fastfetchInstalled: !!(root.greeting && root.greeting.fastfetchInstalled) || ExtrasService.cardState("fastfetch") === "installed"
+    property var _wantedFetch: ({})
 
     readonly property string engine: Config.terminal ? Config.terminal.engine : "starship"
     readonly property string prompt: Config.terminal ? Config.terminal.prompt : ""
@@ -66,6 +77,10 @@ Singleton {
                 }
                 root.presets = result;
             });
+            BackendService.call("term.fetch.presets", {}, (result, error) => {
+                if (!error && result)
+                    root.fetchPresets = result;
+            });
             ExtrasService.load();
         }
         root.refreshStatus();
@@ -81,7 +96,7 @@ Singleton {
     function _setStatus(st) {
         root.status = st;
         const inst = st.engineInstalled || {};
-        const sig = (inst.starship ? "s" : "-") + (inst.ohmyposh ? "o" : "-");
+        const sig = (inst.starship ? "s" : "-") + (inst.ohmyposh ? "o" : "-") + (st.greeting && st.greeting.fastfetchInstalled ? "f" : "-");
         if (root._enginesSig !== "" && sig !== root._enginesSig)
             root.invalidate();
         root._enginesSig = sig;
@@ -157,6 +172,93 @@ Singleton {
         root._generation++;
         root._pending = ({});
         Object.keys(root._wanted).forEach(key => root._queue(key));
+        Object.keys(root._wantedFetch).forEach(key => root._queueFetch(key));
+    }
+
+    // Greeting preview of a look + logo (undefined until it arrives; read
+    // fetchPreviews in bindings, call ensureFetch() once).
+    function ensureFetch(preset, logo, path) {
+        if (!preset)
+            return;
+        const key = FetchModel.previewKey(preset, logo, path);
+        if (!root._wantedFetch[key]) {
+            const w = Object.assign({}, root._wantedFetch);
+            w[key] = {
+                "preset": preset,
+                "logo": logo,
+                "logoPath": path || ""
+            };
+            root._wantedFetch = w;
+        }
+        if (root.fetchPreviews[key] === undefined)
+            root._queueFetch(key);
+    }
+
+    // Like _queue: Qt.callLater keeps only the last call of a function.
+    property var _fetchQueued: []
+    function _queueFetch(key) {
+        if (root._fetchQueued.indexOf(key) < 0)
+            root._fetchQueued.push(key);
+        Qt.callLater(root._drainFetch);
+    }
+    function _drainFetch() {
+        const keys = root._fetchQueued;
+        root._fetchQueued = [];
+        keys.forEach(key => root._fetchGreeting(key));
+    }
+
+    function _fetchGreeting(key) {
+        const want = root._wantedFetch[key];
+        if (!want || root._pending["fetch:" + key])
+            return;
+        root._pending["fetch:" + key] = true;
+        const gen = root._generation;
+        const params = Object.assign({}, want);
+        const ansi = FetchModel.ansiTable(Colors, Colors.background.hslLightness < 0.5);
+        if (ansi.length === 16)
+            params.ansi = ansi;
+        BackendService.call("term.fetch.preview", params, (result, error) => {
+            if (gen !== root._generation)
+                return;
+            delete root._pending["fetch:" + key];
+            if (error || !result)
+                return;
+            const next = Object.assign({}, root.fetchPreviews);
+            next[key] = result;
+            root.fetchPreviews = next;
+        });
+    }
+
+    // fastfetch through the extras queue (the greeting is silent until it
+    // is installed).
+    function installFastfetch() {
+        if (ExtrasService.cardState("fastfetch") === "selectable")
+            ExtrasService.install(["fastfetch"]);
+    }
+
+    // The user switched the greeting on in this version (Settings, the
+    // wizard): it may add its line to ~/.bashrc / ~/.zshrc from now on. A
+    // greeting on from before the update stays in fish until then.
+    function allowGreetingShells() {
+        BackendService.call("term.fetch.allow", {}, (result, error) => {
+            if (!error && result)
+                root._setStatus(result);
+        });
+    }
+
+    // The wizard turns the greeting on with a look: written like
+    // enablePrompt, fastfetch queued when it is missing.
+    function enableGreeting(preset, logo) {
+        if (!Config.terminal)
+            return;
+        DryRun.journal("enable the fastfetch greeting (" + preset + ", " + logo + ")");
+        root.allowGreetingShells();
+        Config.terminal.fastfetchPreset = preset;
+        Config.terminal.fastfetchLogo = logo;
+        Config.terminal.greeting = "fastfetch";
+        Config.saveTerminal();
+        if (root.greeting && !root.greeting.fastfetchInstalled)
+            root.installFastfetch();
     }
 
     // The user picked prompt `id`: switch it on (an existing prompt is only
@@ -260,7 +362,8 @@ Singleton {
         }
     }
 
-    // Installs and the login shell change what `term.status` reports.
+    // Installs (fastfetch: the greeting preview turns real) and the login
+    // shell change what `term.status` reports.
     Connections {
         target: ExtrasService
         function onStatusChanged() {
@@ -285,6 +388,15 @@ Singleton {
             root.apply();
         }
         function onGreetingChanged() {
+            root.apply();
+        }
+        function onFastfetchPresetChanged() {
+            root.apply();
+        }
+        function onFastfetchLogoChanged() {
+            root.apply();
+        }
+        function onFastfetchLogoPathChanged() {
             root.apply();
         }
     }

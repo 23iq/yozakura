@@ -25,7 +25,8 @@ const (
 	displaySubs  = "list set identify help"
 	keyboardSubs = "list add remove switch-bind next help"
 	extrasSubs   = "list install status help"
-	termSubs     = "list set preview status off help"
+	termSubs     = "list set preview status off greeting help"
+	greetSubs    = "on off preset logo presets preview help"
 )
 
 // Completion scripts complete config keys and values from the live catalog
@@ -78,7 +79,8 @@ _{bin}() {
     extras)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{extrasSubs}" -- "$cur")) ;;
     term)
-        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{termSubs}" -- "$cur")) ;;
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{termSubs}" -- "$cur"))
+        (( COMP_CWORD == 3 )) && [[ ${COMP_WORDS[2]} == greeting ]] && COMPREPLY=($(IFS=' ' compgen -W "{greetSubs}" -- "$cur")) ;;
     stopwatch)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{swSubs}" -- "$cur")) ;;
     remind)
@@ -120,7 +122,9 @@ _{bin}() {
     display) (( CURRENT == 3 )) && compadd -- {displaySubs} ;;
     keyboard) (( CURRENT == 3 )) && compadd -- {keyboardSubs} ;;
     extras) (( CURRENT == 3 )) && compadd -- {extrasSubs} ;;
-    term) (( CURRENT == 3 )) && compadd -- {termSubs} ;;
+    term)
+        (( CURRENT == 3 )) && compadd -- {termSubs}
+        (( CURRENT == 4 )) && [[ $words[3] == greeting ]] && compadd -- {greetSubs} ;;
     stopwatch) (( CURRENT == 3 )) && compadd -- {swSubs} ;;
     remind) (( CURRENT == 3 )) && compadd -- {remindSubs} ;;
     wallpaper|lockwall) _files ;;
@@ -164,6 +168,7 @@ complete -c {bin} -n '__{bin}_at display "" 2' -a '{displaySubs}'
 complete -c {bin} -n '__{bin}_at keyboard "" 2' -a '{keyboardSubs}'
 complete -c {bin} -n '__{bin}_at extras "" 2' -a '{extrasSubs}'
 complete -c {bin} -n '__{bin}_at term "" 2' -a '{termSubs}'
+complete -c {bin} -n '__{bin}_at term greeting 3' -a '{greetSubs}'
 complete -c {bin} -n '__{bin}_at stopwatch "" 2' -a '{swSubs}'
 complete -c {bin} -n '__{bin}_at remind "" 2' -a '{remindSubs}'
 complete -c {bin} -n '__{bin}_at cmd "" 2' -a '(begin; {bin} cmd __ids 2>/dev/null; echo list; end)'
@@ -198,6 +203,7 @@ func completionScript(shell string) (string, error) {
 		"{keyboardSubs}", keyboardSubs,
 		"{extrasSubs}", extrasSubs,
 		"{termSubs}", termSubs,
+		"{greetSubs}", greetSubs,
 	).Replace(tpl), nil
 }
 

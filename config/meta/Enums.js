@@ -101,4 +101,7 @@ var KEYBOARD_SWITCH_BINDS = ["alt_shift", "super_space", "caps", "ctrl_shift", "
 // Terminal look (backend/pkg/termlook).
 var TERMINAL_ENGINES = ["starship", "ohmyposh"];
 var TERMINAL_GREETINGS = ["none", "fastfetch"];
+// assets/terminal/fastfetch/presets.json (tests/term-fetch-model.test.cjs keeps them equal)
+var TERMINAL_FETCH_PRESETS = ["sakura", "compact", "boxed", "full", "minimal", "own"];
+var TERMINAL_FETCH_LOGOS = ["distro", "sakura", "custom", "none"];
 var TERMINAL_CURSOR_SHAPES = ["block", "beam", "underline"];

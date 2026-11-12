@@ -24,9 +24,15 @@ Item {
     property string cursorShape: "beam"
     property bool cursorBlink: true
     property bool greeting: false
+    // What the greeting prints ([[span]], a `term.fetch.preview`); null:
+    // the small built-in sample. showSession: false keeps only the prompt
+    // waiting for input under it (the greeting preview).
+    property var greetingLines: null
+    property bool showSession: true
     property real backgroundOpacity: 1
     property bool animate: true
 
+    readonly property var shownSession: root.showSession ? root.session : root.session.slice(root.session.length - 1)
     readonly property var promptLines: root.preview && root.preview.left && root.preview.left.length > 0 ? root.preview.left : [[]]
     readonly property var rightSpans: root.preview ? (root.preview.right || []) : []
     readonly property color fg: Colors.overSurface
@@ -295,7 +301,7 @@ Item {
                     clip: true
 
                     Repeater {
-                        model: root.greeting ? root.fetchLines : []
+                        model: root.greeting ? (root.greetingLines || root.fetchLines) : []
                         delegate: PromptLine {
                             required property var modelData
                             spans: modelData
@@ -307,12 +313,12 @@ Item {
                     }
 
                     Repeater {
-                        model: root.session
+                        model: root.shownSession
                         delegate: Column {
                             id: step
                             required property var modelData
                             required property int index
-                            readonly property bool last: index === root.session.length - 1
+                            readonly property bool last: index === root.shownSession.length - 1
                             width: lines.width
 
                             // Prompt lines above the input line

@@ -37,7 +37,8 @@
   "allowUnused": {},
   "usedPrefixes": {
    "notify.": "summaryKey/bodyKey/labelKey/args of backend notify.request (timers, tasks, usage, routines in backend/pkg/svc), translated by modules/notifications/NotifyRequest.js",
-   "term.prompt.": "prompt preset descriptions of the backend term.presets (assets/terminal/prompts/*.json description keys), shown by modules/terminal/PromptGallery.qml"
+   "term.prompt.": "prompt preset descriptions of the backend term.presets (assets/terminal/prompts/*.json description keys), shown by modules/terminal/PromptGallery.qml",
+   "term.fetch.preset.": "greeting look descriptions of the backend term.fetch.presets (assets/terminal/fastfetch/presets.json description keys), shown by modules/terminal/FastfetchSection.qml"
   },
   "keyDataFiles": [
    "assets/commands/commands.json"
