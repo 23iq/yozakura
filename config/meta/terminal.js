@@ -19,8 +19,9 @@ var keys = {
         "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
     },
     "greeting": {
+        "local": true,
         "enum": Enums.TERMINAL_GREETINGS,
-        "description": "What a new terminal prints: fastfetch runs once per terminal in fish, bash and zsh (interactive shells on a terminal only; not in tmux/screen panes or nested shells), whether or not the prompt is on. bash/zsh get one marked line in ~/.bashrc / ~/.zshrc that sources <config>/<app>/greeting.sh; turning it off removes it."
+        "description": "What a new terminal prints: fastfetch runs once per terminal in fish, bash and zsh (interactive shells on a terminal only; not in tmux/screen panes or nested shells), whether or not the prompt is on. bash/zsh get one marked line in ~/.bashrc / ~/.zshrc that sources <config>/<app>/greeting.sh; turning it off removes it. Machine-local: presets never switch the greeting on or off (they can carry its look)."
     },
     "fastfetchPreset": {
         "enum": Enums.TERMINAL_FETCH_PRESETS,
