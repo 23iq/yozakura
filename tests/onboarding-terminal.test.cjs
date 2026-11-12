@@ -19,7 +19,7 @@ test("a first run on a plain bash preselects the prompt and fish", () => {
 });
 
 test("nothing is preselected without a status, on a re-run, or with a prompt or shell of the user's own", () => {
-    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, known: false });
+    assert.deepStrictEqual(C.defaults({ firstRun: true, status: null }), { prompt: false, fish: false, fetch: false, known: false });
     for (const ctx of [
         { firstRun: false, status: fresh },
         { firstRun: true, status: { ...fresh, foreignPromptInit: true } },
@@ -47,6 +47,41 @@ test("Continue applies what is ticked and still to do", () => {
     assert.deepStrictEqual(C.actions({ prompt: false, fish: false }, ctx), []);
     assert.deepStrictEqual(C.actions({ prompt: true, fish: true }, { ...ctx, promptOn: true, login: "pending" }), []);
     assert.deepStrictEqual(C.actions({ prompt: true, fish: true }, { ...ctx, fishCard: "unavailable" }), ["prompt"]);
+});
+
+// term.status.greeting of a machine with fastfetch and no fetch call of the user's
+const greet = (over = {}) => ({ on: false, fastfetchInstalled: true, ownConfig: false,
+    shells: [{ shell: "fish", state: "off" }, { shell: "bash", state: "off" }, { shell: "zsh", state: "absent" }], ...over });
+
+test("a first run preselects the greeting when fastfetch is there or installable", () => {
+    const st = { ...fresh, greeting: greet() };
+    assert.strictEqual(C.defaults({ firstRun: true, status: st, promptOn: false, fishCard: "selectable" }).fetch, true);
+    const missing = { ...fresh, greeting: greet({ fastfetchInstalled: false }) };
+    assert.strictEqual(C.defaults({ firstRun: true, status: missing, fishCard: "selectable", fetchCard: "selectable" }).fetch, true);
+    // a prompt of the user's keeps the prompt unticked, not the greeting
+    const foreignPrompt = { ...st, foreignPromptInit: true };
+    assert.deepStrictEqual(C.defaults({ firstRun: true, status: foreignPrompt, fishCard: "selectable" }), { prompt: false, fish: false, fetch: true, known: true });
+});
+
+test("the greeting is not preselected on a re-run, when on, unreachable or run by the user already", () => {
+    const st = { ...fresh, greeting: greet() };
+    assert.strictEqual(C.defaults({ firstRun: false, status: st }).fetch, false);
+    assert.strictEqual(C.defaults({ firstRun: true, status: st, greetingOn: true }).fetch, false);
+    assert.strictEqual(C.defaults({ firstRun: true, status: { ...fresh, greeting: greet({ fastfetchInstalled: false }) }, fetchCard: "unavailable" }).fetch, false);
+    const foreign = greet({ shells: [{ shell: "bash", state: "foreign", file: "/home/u/.bashrc" }] });
+    assert.strictEqual(C.defaults({ firstRun: true, status: { ...fresh, greeting: foreign } }).fetch, false);
+    // an older daemon without the greeting status
+    assert.strictEqual(C.defaults({ firstRun: true, status: fresh }).fetch, false);
+});
+
+test("Continue turns the greeting on with the sakura look, or the user's own fastfetch config", () => {
+    const ctx = { status: fresh, promptOn: false, fishCard: "selectable", login: "none" };
+    assert.deepStrictEqual(C.actions({ fetch: true }, ctx), ["fetch"]);
+    assert.deepStrictEqual(C.actions({ fetch: true }, { ...ctx, greetingOn: true }), []);
+    assert.deepStrictEqual(C.actions({ prompt: true, fish: true, fetch: true }, ctx), ["prompt", "fish", "fetch"]);
+    assert.strictEqual(C.fetchLook({ greeting: greet() }), "sakura");
+    assert.strictEqual(C.fetchLook({ greeting: greet({ ownConfig: true }) }), "own");
+    assert.strictEqual(C.fetchLook(null), "sakura");
 });
 
 test("login state: pending while it runs, failed after a cancelled password", () => {

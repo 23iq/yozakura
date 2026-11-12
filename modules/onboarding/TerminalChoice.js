@@ -10,7 +10,11 @@
 // Nothing is preselected when the user has a prompt of their own (a fish
 // file starts starship / oh-my-posh), a login shell of their own (other
 // than the distribution's bash / sh), on a re-run of the wizard, or before
-// the terminal status is known. The ticks are applied only by Continue.
+// the terminal status is known. "Show system info when a terminal opens"
+// (the fastfetch greeting) is preselected on a first run unless it is on
+// already, a shell of the user's runs a fetch tool itself, or fastfetch
+// can neither be found nor installed. The ticks are applied only by
+// Continue.
 
 var PLAIN_SHELLS = ["bash", "sh"];
 
@@ -24,17 +28,41 @@ function fishReachable(status, fishCard) {
     return !!(status && status.fishInstalled) || fishCard !== "unavailable";
 }
 
+// The greeting can run here: fastfetch is installed or the catalog can
+// install it, and no shell of the user's runs a fetch tool already.
+function fetchReachable(status, fetchCard) {
+    var g = status ? status.greeting : null;
+    if (!g)
+        return false;
+    var foreign = (g.shells || []).some(function (s) {
+        return s && s.state === "foreign";
+    });
+    return !foreign && (!!g.fastfetchInstalled || (!!fetchCard && fetchCard !== "unavailable"));
+}
+
+// The look the wizard turns the greeting on with: the user's own fastfetch
+// config when there is one, else the sakura look (and logo).
+function fetchLook(status) {
+    var g = status ? status.greeting : null;
+    return g && g.ownConfig ? "own" : "sakura";
+}
+
 // ctx: {firstRun, status (term.status), promptOn, fishCard (ExtrasService
-// cardState of "fish")} -> {prompt, fish, known}. known: the status is
-// there (defaults are decided once, then remembered).
+// cardState of "fish"), greetingOn, fetchCard (cardState of "fastfetch")}
+// -> {prompt, fish, fetch, known}. known: the status is there (defaults
+// are decided once, then remembered).
 function defaults(ctx) {
     var st = ctx ? ctx.status : null;
     var out = {
         "prompt": false,
         "fish": false,
+        "fetch": false,
         "known": !!st
     };
-    if (!st || !ctx.firstRun || st.foreignPromptInit)
+    if (!st || !ctx.firstRun)
+        return out;
+    out.fetch = !ctx.greetingOn && fetchReachable(st, ctx.fetchCard);
+    if (st.foreignPromptInit)
         return out;
     var fishLogin = !!st.fishIsLoginShell;
     var plain = PLAIN_SHELLS.indexOf(_base(st.loginShell)) >= 0;
@@ -44,9 +72,9 @@ function defaults(ctx) {
     return out;
 }
 
-// What Continue applies: a subset of ["prompt", "fish"]. choice: {prompt,
-// fish} as ticked; ctx: {status, promptOn, fishCard, login} (login:
-// loginState()).
+// What Continue applies: a subset of ["prompt", "fish", "fetch"]. choice:
+// {prompt, fish, fetch} as ticked; ctx: {status, promptOn, fishCard, login,
+// greetingOn} (login: loginState()).
 function actions(choice, ctx) {
     var out = [];
     var st = ctx.status || {};
@@ -54,6 +82,8 @@ function actions(choice, ctx) {
         out.push("prompt");
     if (choice.fish && !st.fishIsLoginShell && ctx.login !== "pending" && fishReachable(st, ctx.fishCard))
         out.push("fish");
+    if (choice.fetch && !ctx.greetingOn)
+        out.push("fetch");
     return out;
 }
 

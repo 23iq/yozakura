@@ -7,9 +7,11 @@ import qs.config
 import "../terminal/TermModel.js" as TermModel
 import "TerminalChoice.js" as Choice
 
-// The terminal step's shell choices: "use this prompt in fish" and "make
-// fish my default shell". On a first run both are preselected unless the
-// user has a prompt or a shell of their own (TerminalChoice.defaults); the
+// The terminal step's shell choices: "use this prompt in fish", "make
+// fish my default shell" and "show system info when a terminal opens" (the
+// fastfetch greeting). On a first run they are preselected unless the
+// user has a prompt, a shell or a fetch tool of their own
+// (TerminalChoice.defaults); the
 // ticks are applied only when the user continues past the step (apply(),
 // the step's leave guard), never on skip or close. A plain notice says what
 // Continue does; a failed or cancelled login-shell change is said plainly.
@@ -25,6 +27,10 @@ Column {
     readonly property bool foreign: !!(root.status && root.status.foreignPromptInit)
     readonly property bool fishInstalled: !!(root.status && root.status.fishInstalled)
     readonly property string fishCard: ExtrasService.cardState("fish")
+    readonly property string fetchCard: ExtrasService.cardState("fastfetch")
+    readonly property bool greetingOn: !!(Config.terminal && Config.terminal.greeting === "fastfetch")
+    readonly property bool fetchForeign: !!root.status && !!root.status.greeting && (root.status.greeting.shells || []).some(s => s.state === "foreign")
+    readonly property bool tickFetch: root.choices.termFetch === true
     // fish is missing and nothing here can install it: the user does
     readonly property bool fishManual: !!root.status && !root.fishInstalled && root.fishCard === "unavailable"
     readonly property var loginJobs: Choice.loginJobs(ExtrasService.jobs)
@@ -33,12 +39,14 @@ Column {
     readonly property bool tickFish: root.choices.termFish === true && root.login !== "failed"
     readonly property var pending: Choice.actions({
         "prompt": root.tickPrompt,
-        "fish": root.tickFish
+        "fish": root.tickFish,
+        "fetch": root.tickFetch
     }, {
         "status": root.status,
         "promptOn": root.promptOn,
         "fishCard": root.fishCard,
-        "login": root.login
+        "login": root.login,
+        "greetingOn": root.greetingOn
     })
     // The prompt engine is missing and the catalog has no source for it on
     // this distribution: it must be installed by hand (its package name).
@@ -55,12 +63,15 @@ Column {
             "firstRun": root.firstRun,
             "status": root.status,
             "promptOn": root.promptOn,
-            "fishCard": root.fishCard
+            "fishCard": root.fishCard,
+            "greetingOn": root.greetingOn,
+            "fetchCard": root.fetchCard
         });
         if (!d.known)
             return;
         root.wizard.remember("termPrompt", d.prompt);
         root.wizard.remember("termFish", d.fish);
+        root.wizard.remember("termFetch", d.fetch);
     }
 
     // Continue: switch the prompt on and / or make fish the login shell
@@ -73,7 +84,18 @@ Column {
             TerminalLookService.makeFishDefault();
             root.wizard.remember("fishDefault", true);
         }
+        if (todo.includes("fetch"))
+            TerminalLookService.enableGreeting(Choice.fetchLook(root.status), "sakura");
         return true;
+    }
+
+    function setFetch(on) {
+        root.wizard.remember("termFetch", on);
+        // Switched on earlier in this wizard: off now, like the prompt.
+        if (!on && root.greetingOn && Config.terminal) {
+            Config.terminal.greeting = "none";
+            Config.saveTerminal();
+        }
     }
 
     function setPrompt(on) {
@@ -123,6 +145,18 @@ Column {
         subtitle: I18n.t(root.login === "ok" ? "onboarding.terminal.fish.ok" : (root.fishManual ? "onboarding.terminal.fish.manual" : (root.fishInstalled ? "onboarding.terminal.fish.desc" : "onboarding.terminal.fish.missing")))
         badge: root.login === "pending" ? I18n.t("prefs.term.look.installing") : ""
         onToggled: v => root.setFish(v)
+    }
+
+    ChoiceRow {
+        objectName: "fetchOn"
+        width: parent.width
+        mode: "toggle"
+        icon: "info"
+        enabled: !root.fetchForeign
+        checked: root.greetingOn || root.tickFetch
+        title: I18n.t("onboarding.terminal.fetch")
+        subtitle: I18n.t(root.fetchForeign ? "onboarding.terminal.fetch.foreign" : (Choice.fetchLook(root.status) === "own" ? "onboarding.terminal.fetch.own" : "onboarding.terminal.fetch.desc"))
+        onToggled: v => root.setFetch(v)
     }
 
     // What Continue does, in plain words.
