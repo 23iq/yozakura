@@ -22,6 +22,8 @@ cmd/yozd/            CLI: daemon, subscribe, window|workspace|monitor|layout|
                      config|system|darkmode|brightness|overview <action>
                      (client side builds "Group.Method" requests)
 pkg/yozd/
+├── client/          System.Subscribe stream client, shared by `yozd subscribe`
+│                    and the backend's in-process subscriber (pkg/svc/compositor)
 ├── ipc/             Compositor interface (interface.go), shared types,
 │   │                config payloads (config.go), cache, colors
 │   ├── hyprland/    socket2 events + dispatch, conf/Lua generators

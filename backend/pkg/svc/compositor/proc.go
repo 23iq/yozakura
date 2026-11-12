@@ -1,7 +1,6 @@
 package compositor
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,10 +16,11 @@ import (
 	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/yozd/client"
 )
 
-// State is the snapshot pushed to subscribers on every `yozd subscribe`
-// event (yozd = brand.Daemon). Mirrors the shape the QML service consumed
+// State is the snapshot pushed to subscribers on every event of the daemon's
+// System.Subscribe stream (yozd = brand.Daemon). Mirrors the shape the QML service consumed
 // before the refactor.
 type State struct {
 	Windows      []json.RawMessage `json:"windows,omitempty"`
@@ -33,6 +33,11 @@ type State struct {
 }
 
 const subscribeRetryDelay = 500 * time.Millisecond
+
+// maxSubscribeLine bounds one event line of the subscribe stream (a full
+// state dump with every window); a longer line drops the connection, which
+// is then re-established.
+const maxSubscribeLine = 8 * 1024 * 1024
 const socketWaitStep = 100 * time.Millisecond
 const socketWaitTimeout = 5 * time.Second
 
@@ -44,12 +49,14 @@ const daemonRestartDelay = 500 * time.Millisecond
 // a foreign daemon instance.
 const daemonHeldRecheck = 3 * time.Second
 
-// Manager owns the long-running daemon children (yozd daemon, yozd subscribe)
-// and exposes their state to the rest of the compositor service. The Manager
-// is started once by the daemon and shut down on daemon exit; child processes
-// are placed in their own process group so a single SIGKILL cleans them up.
-// Both children are supervised: each is reaped by its own goroutine and
-// restarted if it exits before Close (e.g. killed from outside).
+// Manager owns the long-running compositor daemon child (yozd daemon) and
+// its event stream, and exposes the state to the rest of the compositor
+// service. The Manager is started once by the daemon and shut down on daemon
+// exit; the child is placed in its own process group so a single SIGKILL
+// cleans it up. The child is supervised: it is reaped by its own goroutine
+// and restarted if it exits before Close (e.g. killed from outside). The
+// event stream is read in-process from the daemon socket and re-established
+// whenever it drops.
 type Manager struct {
 	tomlPath  string
 	configDir string
@@ -62,14 +69,15 @@ type Manager struct {
 	daemonMu  sync.Mutex
 	daemonCmd *exec.Cmd
 	stopping  bool // set by Close under daemonMu; no restarts after it
-	subCmdMu  sync.Mutex
-	subCmd    *exec.Cmd
 
 	subsMu      sync.Mutex
 	subscribers map[chan State]struct{}
 
 	stopCh chan struct{}
-	wg     sync.WaitGroup
+	// stopCtx is cancelled by Close; it aborts a blocked socket read.
+	stopCtx    context.Context
+	stopCancel context.CancelFunc
+	wg         sync.WaitGroup
 }
 
 // NewManager constructs a Manager. nil defaults to the same XDG layout the
@@ -79,6 +87,7 @@ func NewManager(p PathResolver) *Manager {
 		stopCh:      make(chan struct{}),
 		subscribers: make(map[chan State]struct{}),
 	}
+	m.stopCtx, m.stopCancel = context.WithCancel(context.Background())
 	if p == nil {
 		m.tomlPath = defaultTomlPath()
 	} else {
@@ -90,8 +99,8 @@ func NewManager(p PathResolver) *Manager {
 }
 
 // Start ensures the daemon config dir exists, then launches `yozd daemon`
-// followed by `yozd subscribe`. Both children run in their own process group
-// so Close() can SIGKILL the whole group in one shot.
+// and the goroutine that subscribes to its socket. The child runs in its own
+// process group so Close() can SIGKILL the whole group in one shot.
 func (m *Manager) Start() error {
 	if _, err := exec.LookPath(m.bin); err != nil {
 		return fmt.Errorf("%s not found next to the executable or in PATH: %w", brand.Daemon, err)
@@ -213,9 +222,10 @@ func (m *Manager) waitForSocket(path string, timeout time.Duration) error {
 	return fmt.Errorf("%s socket %s did not appear", brand.Daemon, path)
 }
 
-// subscribeLoop keeps a `yozd subscribe` process alive. It waits for the
-// daemon socket before launching, and re-launches on premature exit (e.g.
-// the daemon being restarted, a transient disconnect).
+// subscribeLoop keeps a System.Subscribe connection to the daemon socket
+// open. It waits for the socket before connecting, and reconnects after a
+// short delay whenever the stream ends (the daemon being restarted, a
+// transient disconnect, an oversized line).
 func (m *Manager) subscribeLoop() {
 	defer m.wg.Done()
 	for {
@@ -225,7 +235,8 @@ func (m *Manager) subscribeLoop() {
 		default:
 		}
 
-		if err := m.waitForSocket(brand.DaemonSocketPath(), socketWaitTimeout); err != nil {
+		path := brand.DaemonSocketPath()
+		if err := m.waitForSocket(path, socketWaitTimeout); err != nil {
 			select {
 			case <-m.stopCh:
 				return
@@ -237,35 +248,7 @@ func (m *Manager) subscribeLoop() {
 			continue
 		}
 
-		cmd := exec.CommandContext(context.Background(), m.bin, "subscribe")
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			time.Sleep(subscribeRetryDelay)
-			continue
-		}
-		cmd.Stderr = io.Discard
-		if err := cmd.Start(); err != nil {
-			time.Sleep(subscribeRetryDelay)
-			continue
-		}
-
-		m.subCmdMu.Lock()
-		m.subCmd = cmd
-		m.subCmdMu.Unlock()
-		select {
-		case <-m.stopCh: // Close ran between our stop check and Start
-			killGroup(cmd)
-		default:
-		}
-
-		m.readSubscribe(stdout)
-
-		m.subCmdMu.Lock()
-		m.subCmd = nil
-		m.subCmdMu.Unlock()
-
-		_ = cmd.Wait()
+		_ = client.Subscribe(m.stopCtx, path, maxSubscribeLine, m.handleLine)
 
 		select {
 		case <-m.stopCh:
@@ -275,25 +258,25 @@ func (m *Manager) subscribeLoop() {
 	}
 }
 
+// readSubscribe feeds every line of r to handleLine (tests drive it with a
+// recorded stream).
 func (m *Manager) readSubscribe(r io.Reader) {
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
-	for sc.Scan() {
-		line := sc.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-		// One decode per line: the state is unmarshalled straight into State
-		// (it used to go through a json.RawMessage and a second Unmarshal).
-		var payload struct {
-			State *State `json:"state"`
-		}
-		if err := json.Unmarshal(line, &payload); err != nil || payload.State == nil {
-			continue
-		}
-		m.setState(*payload.State)
-		m.broadcast(*payload.State)
+	_ = client.ReadLines(r, maxSubscribeLine, m.handleLine)
+}
+
+// handleLine applies one line of the subscribe stream; lines without a
+// state (the subscribe reply, garbage) are ignored.
+func (m *Manager) handleLine(line []byte) {
+	// One decode per line: the state is unmarshalled straight into State
+	// (it used to go through a json.RawMessage and a second Unmarshal).
+	var payload struct {
+		State *State `json:"state"`
 	}
+	if err := json.Unmarshal(line, &payload); err != nil || payload.State == nil {
+		return
+	}
+	m.setState(*payload.State)
+	m.broadcast(*payload.State)
 }
 
 func (m *Manager) setState(st State) {
@@ -389,8 +372,9 @@ func (m *Manager) Eval(expression string) (string, int, error) {
 	return m.Dispatch([]string{"config", "raw-batch", "eval " + expression})
 }
 
-// Close kills the daemon process groups, then waits for the supervising
-// goroutines to reap them. Safe to call multiple times.
+// Close kills the daemon process group and drops the event stream, then
+// waits for the supervising goroutines to finish. Safe to call multiple
+// times.
 func (m *Manager) Close() {
 	m.mu.Lock()
 	started := m.started
@@ -405,14 +389,9 @@ func (m *Manager) Close() {
 	daemonCmd := m.daemonCmd
 	m.daemonMu.Unlock()
 	close(m.stopCh)
+	m.stopCancel() // closes the subscribe connection
 
-	m.subCmdMu.Lock()
-	sub := m.subCmd
-	m.subCmd = nil
-	m.subCmdMu.Unlock()
-
-	// subscribeLoop and superviseDaemon own Wait() for their children.
-	killGroup(sub)
+	// superviseDaemon owns Wait() for the daemon.
 	killGroup(daemonCmd)
 
 	done := make(chan struct{})
