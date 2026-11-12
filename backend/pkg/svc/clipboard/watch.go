@@ -133,6 +133,12 @@ func (w *watchProc) run() {
 // or plain text — in that priority order) and upserts it into the
 // unpinned store. Returns whether content was captured.
 func (s *Service) checkAndInsert() bool {
+	types, typesErr := proc.Run(context.Background(), "wl-paste", "--list-types")
+	if typesErr == nil && isSensitiveOffer(string(types), readOffer) {
+		// Password managers mark their copies; keep them out of history.
+		return false
+	}
+
 	// Files first (text/uri-list).
 	if out, err := proc.Run(context.Background(), "wl-paste", "--type", "text/uri-list"); err == nil {
 		content := bytes.ReplaceAll(out, []byte("\r"), nil)
@@ -146,7 +152,7 @@ func (s *Service) checkAndInsert() bool {
 	}
 
 	// Images.
-	if types, err := proc.Run(context.Background(), "wl-paste", "--list-types"); err == nil {
+	if typesErr == nil {
 		for _, line := range strings.Split(string(types), "\n") {
 			mime := strings.TrimSpace(line)
 			if !strings.HasPrefix(mime, "image/") {
