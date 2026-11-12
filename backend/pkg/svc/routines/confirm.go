@@ -13,7 +13,8 @@ import (
 // with "allow for this session", a permissive policy or YOLO: they rewrite
 // keybinds, close windows, delete routines and notes or install software. The agents policy
 // (svc/agents) and the chat policy (modules/services/ai/Permissions.js)
-// use the same list.
+// use the same list. ConfirmCall adds the calls of other tools that can
+// run a command line (confirm_calls.go).
 var ConfirmTools = map[string]bool{
 	"binds_set": true, "binds_remove": true, "app_close": true, "routine_delete": true, "notes_delete": true,
 	"extras_install": true, // installs software, may enable a repo and asks for root
@@ -38,7 +39,7 @@ func ConfirmSteps(r Routine, lookup func(string) (Routine, bool)) []string {
 		for _, s := range steps {
 			switch s.Kind {
 			case KindTool:
-				if t := strings.TrimSpace(s.Tool); ConfirmTools[t] || unsafeTools[t] {
+				if t := strings.TrimSpace(s.Tool); ConfirmCall(t, s.Args) || unsafeTools[t] {
 					seen[t] = true
 				}
 			case KindAction:

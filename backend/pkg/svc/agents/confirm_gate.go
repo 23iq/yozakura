@@ -1,5 +1,7 @@
 package agents
 
+import "yozakura/backend/pkg/svc/routines"
+
 // ConfirmGate extends the always-confirm list beyond fixed tool names: a
 // routine_run/routine_save whose routine runs confirm-required steps must
 // ask too (routines.ConfirmSteps). It is told when the user allows such a
@@ -25,11 +27,14 @@ func (m *Manager) confirmLocked(req PermissionRequest) bool {
 		return true
 	}
 	name := YozakuraTool(req.Tool)
-	if name == "" || m.gate == nil {
+	if name == "" {
 		return false
 	}
 	in, _ := req.Input.(map[string]any)
-	return m.gate.NeedsConfirm(name, in)
+	if routines.ConfirmCall(name, in) {
+		return true // a command-valued config key, a special's command or bind
+	}
+	return m.gate != nil && m.gate.NeedsConfirm(name, in)
 }
 
 // allowedLocked tells the gate the user allowed a confirm request (m.mu

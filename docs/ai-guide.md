@@ -306,7 +306,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `config_schema` | yes | domains (no args) or every key of a domain/prefix with type, default, title, description, enum, range |
 | `config_describe` | yes | one key in full: `{"key":"bar.layout.style"}` |
 | `config_get` | yes | `{"key":"bar.position"}` or `{"domain":"bar"}` (whole effective domain) |
-| `config_set` | no | `{"key":"bar.position","value":"bottom"}`; returns `changed: [{key, old, new}]`; same validation as the CLI; `force` skips enum/range |
+| `config_set` | no | `{"key":"bar.position","value":"bottom"}`; returns `changed: [{key, old, new}]`; same validation as the CLI; `force` skips enum/range; a command-valued key (`general.terminalCommand`, `system.idle.general.*_cmd`, `system.idle.listeners`, `specials.workspaces`, `ai.agents.*.binary`/`extraArgs`, or an enclosing object that sets one) always asks the user, even in YOLO (`routines.CommandConfigKeys`) |
 | `presets_list` | yes | presets with domains, description and the active one |
 | `preset_apply` | no | `{"name":"Neon Tokyo"}` |
 | `preset_save` | no | `{"name":"Backup"}`, `domains`, `overwrite` |
@@ -323,7 +323,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `media_status`, `media_control`, `volume_get`, `volume_set`, `shell_toggle` | | system |
 | `shell_commands` | yes | the quick commands (launcher `>`): id, title, usage, argument spec |
 | `specials_list` | yes | special workspaces with binds, apps and current window counts |
-| `special_open`, `special_add`, `special_update`, `special_remove`, `special_app_add` | no | manage special workspaces: `{"name":"Chat","toggle":"SUPER+S","apps":["org.telegram.desktop"]}` |
+| `special_open`, `special_add`, `special_update`, `special_remove`, `special_app_add` | no | manage special workspaces: `{"name":"Chat","toggle":"SUPER+S","apps":["org.telegram.desktop"]}`; `special_app_add` with a `command` and `special_add`/`special_update` with `toggle`/`send` always ask the user |
 | `shell_command` | no | run one: `{"command":"glass","arg":"0.6"}`, `{"command":"dnd"}` |
 | `timer_list`, `reminder_list` | yes | timers (id, name, state, time left), stopwatch (elapsed, laps), reminders |
 | `timer_start` | no | `{"duration":"10m","name":"tea"}`, `{"duration":"18:00"}`, `{"pomodoro":true,"duration":"50m","break":"10m"}` |
