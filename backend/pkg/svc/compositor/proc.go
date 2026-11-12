@@ -129,8 +129,13 @@ func (m *Manager) startDaemonLocked() (*exec.Cmd, error) {
 	cmd := exec.CommandContext(context.Background(), m.bin, "-c", m.tomlPath, "daemon")
 	cmd.Env = envclean.ChildEnv()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Stdout = io.Discard
-	cmd.Stderr = io.Discard
+	// The daemon's own messages (config load and apply errors) go to the
+	// backend log, prefixed and bounded (daemonlog.go).
+	out := newLineLog(os.Stderr, "[compositor] "+brand.Daemon+": ")
+	cmd.Stdout, cmd.Stderr = out, out
+	// A child still holding the pipes must not keep Wait (and the
+	// restart) waiting after the daemon itself exited.
+	cmd.WaitDelay = 2 * time.Second
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("%s daemon: %w", brand.Daemon, err)
 	}
