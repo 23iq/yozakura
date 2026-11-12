@@ -39,6 +39,15 @@ func readText(t *testing.T, path string) string {
 	return string(b)
 }
 
+// polkitRepairHome is a temp HOME whose hypr and data dirs are the default
+// ones under it (CI sets XDG_CONFIG_HOME / XDG_DATA_HOME elsewhere).
+func polkitRepairHome(t *testing.T) string {
+	t.Helper()
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("XDG_DATA_HOME", "")
+	return t.TempDir()
+}
+
 // The startup repair turns the installer's old line into polkit-fallback,
 // once, in both entry languages, and goodbye still finds the new line.
 func TestRepairMigratesInstallerPolkitLine(t *testing.T) {
@@ -47,7 +56,7 @@ func TestRepairMigratesInstallerPolkitLine(t *testing.T) {
 		{"hyprland.lua", oldLuaPolkit, newLuaPolkit},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			home := t.TempDir()
+			home := polkitRepairHome(t)
 			body := "monitor = , preferred, auto, 1\n\n" + tc.old + "\n"
 			path := writeHypr(t, home, tc.name, body)
 
@@ -75,7 +84,7 @@ func TestRepairMigratesInstallerPolkitLine(t *testing.T) {
 // Only the exact old line with our marker changes: the user's own agent
 // line, one without the marker or one they edited stays as it is.
 func TestRepairLeavesOtherPolkitLines(t *testing.T) {
-	home := t.TempDir()
+	home := polkitRepairHome(t)
 	body := strings.Join([]string{
 		"exec-once = systemctl --user start hyprpolkitagent",
 		"exec-once = /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 # yozakura: polkit",
@@ -98,7 +107,7 @@ func TestRepairLeavesOtherPolkitLines(t *testing.T) {
 // Like the rest of the repair, nothing is written while an entry is a
 // Home Manager link into the Nix store.
 func TestRepairPolkitSkipsHomeManagerEntry(t *testing.T) {
-	home := t.TempDir()
+	home := polkitRepairHome(t)
 	lua := writeHypr(t, home, "hyprland.lua", oldLuaPolkit+"\n")
 	// isHomeManagerManaged reads the link text, so a /nix/store target that
 	// does not exist here is enough.
@@ -118,7 +127,7 @@ func TestRepairPolkitSkipsHomeManagerEntry(t *testing.T) {
 // agent, started hyprpolkitagent directly: the repair points it at
 // polkit-fallback, in the generated entry only.
 func TestRepairMigratesExclusiveEntryPolkitLine(t *testing.T) {
-	home := t.TempDir()
+	home := polkitRepairHome(t)
 	marker := brand.ConfigBlockMarker("#") + " exclusive mode"
 	body := marker + "\n# This file was replaced by exclusive mode.\n\nexec-once = /usr/lib/hyprpolkitagent/hyprpolkitagent\nsource = /x/user.conf\n"
 	path := writeHypr(t, home, "hyprland.conf", body)
@@ -138,7 +147,7 @@ func TestRepairMigratesExclusiveEntryPolkitLine(t *testing.T) {
 // A CRLF entry keeps its line ends; a launcher path with a space or a #
 // stays one sh word and is not cut by a hyprlang comment.
 func TestRepairPolkitLineCRLFAndQuoting(t *testing.T) {
-	home := t.TempDir()
+	home := polkitRepairHome(t)
 	body := "monitor = , preferred, auto, 1\r\n" + oldConfPolkit + "\r\nbind = SUPER, Q, killactive\r\n"
 	path := writeHypr(t, home, "hyprland.conf", body)
 	repairHyprlandEntry(home, "/opt/bin/yozakura")
