@@ -63,6 +63,7 @@ func (s *Service) greeting() termlook.GreetingConfig {
 // edit ~/.bashrc and ~/.zshrc. Until then a greeting that was on before
 // the update stays in fish, where it was.
 func (s *Service) fetchAllow(json.RawMessage) (any, error) {
+	s.resolveZDotDir()
 	s.mu.Lock()
 	err := termlook.AllowGreetingShells(s.o.Env)
 	if err == nil {

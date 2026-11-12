@@ -65,6 +65,43 @@ func TestZshDotDirFallsBack(t *testing.T) {
 	}
 }
 
+// A zsh that does not answer is not asked again (every terminal.json change
+// would wait for the timeout otherwise).
+func TestZshDotDirCachesNoAnswer(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("ZDOTDIR", "")
+	look := fakeZsh(t, "echo x >> \"$HOME/calls\"\necho no answer\n")
+	for range 3 {
+		if got := ZshDotDir(home, look); got != home {
+			t.Fatalf("got %q", got)
+		}
+	}
+	if n := strings.Count(readFile(t, filepath.Join(home, "calls")), "x"); n != 1 {
+		t.Errorf("zsh ran %d times", n)
+	}
+}
+
+// Off with no record (never let into bash / zsh): the rc files are left
+// alone; with the record (an earlier "on"), off removes the line.
+func TestGreetingOffWithoutRecordLeavesRCFiles(t *testing.T) {
+	env := greetEnv(t)
+	rc := filepath.Join(env.Home, ".zshrc")
+	line := "# >>> " + rcMarker(env) + " >>>\n. x\n# <<< " + rcMarker(env) + " <<<\n"
+	writeFile(t, rc, line)
+	cfg := GreetingConfig{Preset: "sakura", Logo: LogoSakura, LoginShell: "/usr/bin/zsh"}
+	applyGreeting(t, cfg, env)
+	if got := readFile(t, rc); got != line {
+		t.Errorf(".zshrc edited without a record: %q", got)
+	}
+	if err := AllowGreetingShells(env); err != nil {
+		t.Fatal(err)
+	}
+	applyGreeting(t, cfg, env)
+	if data, err := os.ReadFile(rc); err == nil && strings.Contains(string(data), rcMarker(env)) {
+		t.Errorf("line left with a record: %q", data)
+	}
+}
+
 // ZDOTDIR set in ~/.zshenv only: the line goes into $ZDOTDIR/.zshrc, a
 // line an earlier run left in ~/.zshrc goes, and turning off (from any
 // environment) cleans both.

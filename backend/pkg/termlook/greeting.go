@@ -247,6 +247,12 @@ func ApplyGreeting(cfg GreetingConfig, pal Palette, presets []FetchPreset, sakur
 		return GreetingStatus{}, fmt.Errorf("termlook: env needs AppID, Home and ConfigHome")
 	}
 	if !cfg.On {
+		if !greetingRecorded(env) {
+			// never in bash / zsh (their lines need the record): only our
+			// own files can be there, the rc files are left unread
+			removeFiles(GreetingScriptFile(env), FetchConfigFile(env), fetchKittyFile(env), fetchLogoFile(env))
+			return GreetingState(cfg, env), removeFishGreeting(env)
+		}
 		return GreetingState(cfg, env), removeGreeting(env, ignoreManaged)
 	}
 	p, ok := FindFetchPreset(presets, cfg.Preset)

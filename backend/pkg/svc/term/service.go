@@ -307,6 +307,7 @@ func findPreset(ps []termlook.Preset, id string) (termlook.Preset, bool) {
 // Apply writes the prompt files for the current config and palette (the
 // hook is removed when the prompt is disabled) and the greeting.
 func (s *Service) Apply() error {
+	s.resolveZDotDir()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return errors.Join(s.applyPrompt(), s.applyGreeting())
@@ -341,6 +342,14 @@ func (s *Service) apply(json.RawMessage) (any, error) {
 }
 
 var errStarted = errors.New("term: already started")
+
+// resolveZDotDir asks zsh for its ZDOTDIR (once per process, cached) before
+// s.mu is taken, so a slow ~/.zshenv never runs with the lock held.
+func (s *Service) resolveZDotDir() {
+	if s.o.Env.ResolveZDotDir != nil && s.o.Env.ZDotDir == "" {
+		s.o.Env.ResolveZDotDir()
+	}
+}
 
 // Start applies the prompt once when enabled and re-applies it whenever
 // colors.json or terminal.json changes, until Stop.

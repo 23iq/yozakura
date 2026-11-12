@@ -24,12 +24,13 @@ var zdotdirBudget = 2 * time.Second
 
 var zdotdirCache struct {
 	sync.Mutex
-	dirs map[string]string // home -> answer of zsh
+	dirs map[string]string // home -> answer of zsh ("" it did not answer)
 }
 
 // ZshDotDir is the directory zsh reads .zshrc from for the user whose home
-// is home: what zsh prints after its startup files (cached once zsh
-// answered), else $ZDOTDIR of this process, else home.
+// is home: what zsh prints after its startup files, else $ZDOTDIR of this
+// process, else home. zsh is asked once per process: its answer, or its
+// failure to answer (a hanging zshenv), is cached.
 func ZshDotDir(home string, look func(string) (string, bool)) string {
 	fallback := func() string {
 		if d := os.Getenv("ZDOTDIR"); filepath.IsAbs(d) {
@@ -46,17 +47,17 @@ func ZshDotDir(home string, look func(string) (string, bool)) string {
 	}
 	zdotdirCache.Lock()
 	defer zdotdirCache.Unlock()
-	if d, ok := zdotdirCache.dirs[home]; ok {
-		return d
+	d, ok := zdotdirCache.dirs[home]
+	if !ok {
+		d = askZsh(zsh, home, false)
+		if zdotdirCache.dirs == nil {
+			zdotdirCache.dirs = map[string]string{}
+		}
+		zdotdirCache.dirs[home] = d
 	}
-	d := askZsh(zsh, home, false)
 	if d == "" {
 		return fallback()
 	}
-	if zdotdirCache.dirs == nil {
-		zdotdirCache.dirs = map[string]string{}
-	}
-	zdotdirCache.dirs[home] = d
 	return d
 }
 

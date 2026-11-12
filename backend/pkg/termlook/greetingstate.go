@@ -45,6 +45,13 @@ func writeGreetingRecord(env Env, r greetingRecord) error {
 	return writeAtomic(greetingRecordFile(env), append(data, '\n'))
 }
 
+// greetingRecorded: the record exists (the greeting was let into bash and
+// zsh, or created directories, at some point).
+func greetingRecorded(env Env) bool {
+	_, err := os.Stat(greetingRecordFile(env))
+	return err == nil
+}
+
 // GreetingAllShells reports whether the user let the greeting into bash and
 // zsh (their rc files); false: fish only.
 func GreetingAllShells(env Env) bool { return readGreetingRecord(env).Shells == shellsAll }
