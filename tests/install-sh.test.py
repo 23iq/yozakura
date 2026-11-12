@@ -869,11 +869,13 @@ def test_root_and_missing_sudo_give_guidance():
         (sb.bin / "sudo").unlink()
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 1 and "sudo is not installed" in err, f"missing sudo exit {rc}", err)
-        for line in ("pacman -Syu sudo", "useradd -m -G wheel yourname", "passwd yourname", "/etc/sudoers.d/10-wheel"):
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        for line in ("pacman -Syu sudo", f"usermod -aG wheel {me}", "/etc/sudoers.d/10-wheel", f"log in again as {me}"):
             check(line in err, f"missing-sudo guidance lacks {line!r}", err)
+        check("useradd" not in err, "the user exists: no useradd", err)
         sb.os_release.write_text(OS_RELEASE["debian"])
         rc, err, _ = sb.run("-y", "--compositor", "niri")
-        check("apt install sudo" in err and "usermod -aG sudo yourname" in err, "debian guidance wrong", err)
+        check("apt install sudo" in err and f"usermod -aG sudo {me}" in err, "debian guidance wrong", err)
     finally:
         sb.cleanup()
 

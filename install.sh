@@ -770,14 +770,20 @@ sudo_grant_lines() {
   esac
 }
 
-# die_without_user TITLE: TITLE, then how to create a user with sudo rights
-# (as root) and run the installer as that user.
+# die_without_user TITLE: TITLE, then (as root) how to create a user with
+# sudo rights, or for the user running this how to get sudo, and run the
+# installer again.
 die_without_user() {
-  local lines=() l
-  while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines)
-  die "$1" "The installer runs as your user and uses sudo for the system steps." \
-    "No user with sudo rights yet? As root on ${DISTRO_NAME:-this system} (replace yourname):" \
-    "${lines[@]}" "Then log in as that user (or: su - yourname) and run the installer again."
+  local lines=() l me
+  if [[ "$EUID" -eq 0 ]]; then
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines)
+    die "$1" "The installer runs as your user and uses sudo for the system steps." \
+      "No user with sudo rights yet? As root on ${DISTRO_NAME:-this system} (replace yourname):" \
+      "${lines[@]}" "Then log in as that user (or: su - yourname) and run the installer again."
+  fi
+  me="$(id -un)"
+  while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines "$me" | head -n1 && sudo_grant_lines "$me")
+  die "$1" "As root (su -) on ${DISTRO_NAME:-this system}:" "${lines[@]}" "Then log in again as $me and run the installer again."
 }
 
 need_sudo() {
