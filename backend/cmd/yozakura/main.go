@@ -48,8 +48,7 @@ func main() {
 			showHelp()
 			return
 		case "update":
-			runUpdate()
-			return
+			os.Exit(runUpdate(args[1:], defaultUpdateEnv()))
 		case "refresh":
 			runRefresh()
 			return
@@ -718,7 +717,8 @@ Usage: {bin} [COMMAND]
 
 Commands:
     (none)                            Launch {name}
-    update                           Update {name} (pull, rebuild, reinstall)
+    update [--channel C] [--check]   Update {name} on its update channel (stable, beta, git)
+    update channel [stable|beta|git] Show or save the update channel ({bin} update --help)
     doctor [-v] [--with f,...]       Check every dependency; prints the install command
     refresh                          Refresh local/dev profile (for developers)
     lock                             Activate lockscreen

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -16,39 +15,6 @@ import (
 	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/termlook"
 )
-
-// runUpdate updates a source install the same way the hosted installer
-// does: install.sh --update in the checkout pulls, rebuilds the backend and
-// reinstalls the binary where this one lives. Nix installs update through
-// their flake instead.
-func runUpdate() {
-	exe := currentExecutable()
-	if fileExists("/etc/NIXOS") || strings.HasPrefix(exe, "/nix/store/") {
-		fmt.Printf("%s is installed through Nix: update your flake input (nix flake update) or run '%s refresh' for a nix profile install.\n", brand.DisplayName, brand.AppID)
-		return
-	}
-	src := paths.FindBaseShellSource()
-	if src == "" || !fileExists(filepath.Join(src, ".git")) {
-		fmt.Fprintf(os.Stderr, "Error: no git checkout of %s found. Install it with:\n  curl -fsSL %s | bash\n", brand.DisplayName, installerURL())
-		os.Exit(1)
-	}
-	fmt.Println("Updating " + brand.DisplayName + " in " + src + "...")
-	args := updateArgs(src, exe)
-	if args == nil {
-		fmt.Fprintf(os.Stderr, "Error: %s has no install.sh; update it with git pull && make build.\n", src)
-		os.Exit(1)
-	}
-	cmd := exec.CommandContext(context.Background(), "bash", args...)
-	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: update failed: %v\n", err)
-		os.Exit(1)
-	}
-	rebuildModsAfterUpdate()
-	if isAlive() {
-		fmt.Printf("Run '%s reload' to restart the shell on the new version.\n", brand.AppID)
-	}
-}
 
 // updateArgs builds the installer command line for an update of src. The
 // binary is reinstalled next to the running one when that directory is

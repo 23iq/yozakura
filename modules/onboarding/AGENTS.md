@@ -21,7 +21,7 @@ onboarding/
 ├── TerminalShellChoice    StepTerminal: "use this prompt" + "fish as login shell" (TerminalChoice.js)
 ├── LookPresetGrid / LookWallpaperStrip / OnboardingTabs   parts of StepLook
 ├── OllamaPullRow          StepAi: "pull a model" chips under Ollama (ExtrasService.ollamaPull)
-├── SummaryCard / ExclusiveChoice   parts of StepFinish
+├── SummaryCard / ExclusiveChoice / UpdateChannelChoice   parts of StepFinish
 ├── PresetCard / PresetPreview   static mini desktop from a preset's bar.json/theme.json
 ├── DryRunBadge / DryRunWallpapers   dry run only (see DRY RUN)
 ├── FocusChip / ChoiceRow  kit wrappers: a keyboard-reachable Chip, a ListRow that checks / toggles
@@ -59,6 +59,9 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   (`TerminalChoice.defaults`); the ticks are applied by Continue (the step's
   `leaveGuard`), never on skip / close; a failed or cancelled chsh is said on
   the step and the summary.
+- Update channel (`UpdateChannelChoice`, summary step): stable / beta / git
+  rows; only a click writes `system.updateChannel` (through `wizard.set`,
+  staged like the other steps), so leaving stable or skipping changes nothing.
 - Exclusive mode (Hyprland, `ExclusiveService`): the summary toggle only
   remembers `exclusive`; `finish()` on the last step enables it.
 - Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);

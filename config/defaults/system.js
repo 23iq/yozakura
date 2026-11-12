@@ -4,6 +4,7 @@ var data = {
     "disks": ["/"],
     "language": "auto",
     "updateServiceEnabled": true,
+    "updateChannel": "stable",
     "polkitAgent": true,
     "idle": {
         "general": {

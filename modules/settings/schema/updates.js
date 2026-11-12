@@ -31,6 +31,27 @@ var category = {
                     "label": "shell.system.update_service",
                     "description": "prefs.updates.service.desc",
                     "keywords": "updates check background notify new version"
+                },
+                {
+                    "key": "system.updateChannel",
+                    "type": "selector",
+                    "label": "prefs.updates.channel",
+                    "description": "prefs.updates.channel.desc",
+                    "keywords": "update channel stable beta git main pre-release prerelease nightly branch",
+                    "options": [
+                        {
+                            "value": "stable",
+                            "label": "prefs.updates.channel_stable"
+                        },
+                        {
+                            "value": "beta",
+                            "label": "prefs.updates.channel_beta"
+                        },
+                        {
+                            "value": "git",
+                            "label": "prefs.updates.channel_git"
+                        }
+                    ]
                 }
             ]
         },

@@ -1,0 +1,168 @@
+// Package updatechannel decides what an update moves a source install to.
+//
+// Three channels exist: "stable" follows the X.Y.Z release tags, "beta"
+// follows X.Y.Z-beta.N pre-release tags plus any newer stable release, and
+// "git" follows the tip of the branch (main). Only releases newer than
+// LastWithoutChannels are targets of a tag channel. The version rules here are the
+// reference; modules/services/UpdateVersions.js (the shell's update notice)
+// and install.sh (pick_tag) implement the same rules and are tested against
+// the same cases, tests/fixtures/update-channels.json.
+package updatechannel
+
+import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+// The channels, in order from the most to the least stable.
+const (
+	Stable = "stable"
+	Beta   = "beta"
+	Git    = "git"
+)
+
+// Default is the channel of an install that never chose one.
+const Default = Stable
+
+// Channels lists every channel name.
+var Channels = []string{Stable, Beta, Git}
+
+// Valid reports whether name is a channel.
+func Valid(name string) bool {
+	for _, c := range Channels {
+		if c == name {
+			return true
+		}
+	}
+	return false
+}
+
+// Version is a release (Beta < 0) or a beta pre-release (Beta >= 0).
+type Version struct {
+	Major, Minor, Patch int
+	Beta                int
+}
+
+// LastWithoutChannels is the last release without update channels. Its
+// install.sh and binary know nothing about channels or a detached checkout:
+// an install moved to it (or to anything older) would rebuild it forever.
+// Only newer releases are targets of a tag channel (HasChannels).
+const LastWithoutChannels = "0.3.1"
+
+// Each number is 0 or up to nine digits without a leading zero, so every
+// implementation reads it the same way (no overflow, no two spellings).
+const num = `(0|[1-9][0-9]{0,8})`
+
+var versionRe = regexp.MustCompile(`^v?` + num + `\.` + num + `\.` + num + `(?:-beta\.` + num + `)?$`)
+
+var floor = func() Version {
+	v, ok := Parse(LastWithoutChannels)
+	if !ok {
+		panic("updatechannel: bad LastWithoutChannels")
+	}
+	return v
+}()
+
+// HasChannels reports whether v is newer than LastWithoutChannels, i.e. a
+// release whose installer and binary follow update channels.
+func HasChannels(v Version) bool { return v.Compare(floor) > 0 }
+
+// Parse reads a tag: X.Y.Z or X.Y.Z-beta.N with an optional leading "v".
+// Anything else (rc tags, two-part versions, build metadata, leading
+// zeros, numbers of ten digits or more) is not a version of any channel.
+func Parse(tag string) (Version, bool) {
+	m := versionRe.FindStringSubmatch(strings.TrimSpace(tag))
+	if m == nil {
+		return Version{}, false
+	}
+	n := make([]int, 4)
+	for i, s := range m[1:] {
+		if s == "" {
+			n[i] = -1
+			continue
+		}
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			return Version{}, false
+		}
+		n[i] = v
+	}
+	return Version{Major: n[0], Minor: n[1], Patch: n[2], Beta: n[3]}, true
+}
+
+// IsBeta reports whether v is a pre-release.
+func (v Version) IsBeta() bool { return v.Beta >= 0 }
+
+func (v Version) String() string {
+	s := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
+	if v.IsBeta() {
+		s += fmt.Sprintf("-beta.%d", v.Beta)
+	}
+	return s
+}
+
+func cmpInt(a, b int) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	}
+	return 0
+}
+
+// Compare orders by semver precedence: numbers numerically, a release above
+// its own betas, beta.N numerically (beta.10 > beta.9).
+func (v Version) Compare(o Version) int {
+	for _, d := range []int{cmpInt(v.Major, o.Major), cmpInt(v.Minor, o.Minor), cmpInt(v.Patch, o.Patch)} {
+		if d != 0 {
+			return d
+		}
+	}
+	switch {
+	case v.IsBeta() == o.IsBeta():
+		return cmpInt(v.Beta, o.Beta)
+	case v.IsBeta():
+		return -1
+	}
+	return 1
+}
+
+// Compare compares two tags; ok is false when either is not a version.
+func Compare(a, b string) (int, bool) {
+	x, okA := Parse(a)
+	y, okB := Parse(b)
+	if !okA || !okB {
+		return 0, false
+	}
+	return x.Compare(y), true
+}
+
+// Select returns the tag a channel moves to: the highest stable tag for
+// stable, the highest stable or beta tag for beta (so a newer stable
+// release always wins over older betas), "" for git, an unknown channel or
+// no matching tag. Tags at or below LastWithoutChannels never match. Of two
+// spellings of one version the one without "v" wins, whatever the order.
+func Select(tags []string, channel string) string {
+	if channel != Stable && channel != Beta {
+		return ""
+	}
+	best, bestTag := Version{}, ""
+	for _, t := range tags {
+		v, ok := Parse(t)
+		if !ok || (v.IsBeta() && channel != Beta) || !HasChannels(v) {
+			continue
+		}
+		if bestTag == "" {
+			best, bestTag = v, t
+			continue
+		}
+		d := v.Compare(best)
+		if d > 0 || (d == 0 && strings.HasPrefix(bestTag, "v") && !strings.HasPrefix(t, "v")) {
+			best, bestTag = v, t
+		}
+	}
+	return bestTag
+}

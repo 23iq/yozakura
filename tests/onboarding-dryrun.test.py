@@ -7,7 +7,8 @@ shows on the card and the peek pill; "Use 165 Hz" + Keep and an app install
 are journaled and answered by DryRunBackend.js (session countdown ticks,
 install progress, the <PREFIX>DRYRUN_FAIL list) while no mutating request
 ever reaches the socket (fail closed: unknown methods are mocked too);
-reads still do.
+reads still do. The summary's update channel pick only changes the dry
+run's config copy.
 """
 from __future__ import annotations
 
@@ -198,6 +199,19 @@ wait_until(lambda: "extras.status" in sent())
 settle()
 status_params = json.loads(ev("JSON.stringify(Wire.params.filter((p, i) => Wire.sent[i] === 'extras.status'))"))
 check(status_params and all(not (p or {}).get("refresh") for p in status_params), f"no forced re-detection: {status_params}")
+
+# Update channel (summary): a pick changes the dry run's config copy only.
+ev(f"wizard.go({STEPS.index('finish')})")
+wait_until(lambda: vfind("channel:beta") is not None)
+settle()  # the summary's own reads (extras / exclusive status) first
+before = list(sent())
+row = vfind("channel:beta")
+check(row is not None, "the summary offers the update channel")
+if row is not None:
+    h.eval(row, "clicked()")
+settle()
+check(ev("Config.system.updateChannel") == "beta", "the channel pick is written (to the dry run's config copy)")
+check(sent()[len(before):] == [], f"the channel pick sends nothing to the backend: {sent()[len(before):]}")
 
 # Fail closed: a method not known as a read is mocked, journaled, never sent.
 ev('BackendService.call("nightlight.set", {"enabled": true}, () => {})')

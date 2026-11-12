@@ -24,7 +24,13 @@ Item {
     readonly property string voiceState: ExtrasService.cardState("voice")
     readonly property var voiceProgress: ExtrasService.progress["voice"] ?? null
     readonly property bool installing: ExtrasService.busy
+    // compact: a small card (720p): no logo and the title role, so the
+    // summary, the only-shell choice and the update channel fit; tight: up
+    // to a 1080p card, the smaller logo and spacing for the same reason
+    // (the content fits the Flickable unscrolled; it scrolls only when an
+    // install note or the expanded only-shell details are added)
     readonly property bool compact: height < 560
+    readonly property bool tight: height < 720
 
     // "2 installed · 1 failed · 1 installing"
     function installLine(s, none) {
@@ -136,7 +142,8 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: ScrollBar {
-            policy: column.implicitHeight > flick.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            // shown whenever there is more below, not only while scrolling
+            policy: column.implicitHeight > flick.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
         }
 
         Column {
@@ -145,7 +152,7 @@ Item {
             x: (flick.width - width) / 2
             y: Math.max(0, (flick.height - implicitHeight) / 2)
             topPadding: Space.xs
-            spacing: root.compact ? Space.l : Space.xl
+            spacing: root.tight ? Space.l : Space.xl
 
             // ---- hero --------------------------------------------------------
             Column {
@@ -153,8 +160,9 @@ Item {
                 spacing: Space.s
 
                 SakuraLogo {
+                    visible: !root.compact
                     anchors.horizontalCenter: parent.horizontalCenter
-                    size: root.compact ? Space.px(52) : Math.min(Space.controlXL, Math.round(root.height * 0.12))
+                    size: root.tight ? Space.px(52) : Math.min(Space.controlXL, Math.round(root.height * 0.12))
                 }
                 KitText {
                     width: parent.width
@@ -232,6 +240,13 @@ Item {
                     wizard: root.wizard
                     onExpanded: scrollEnd.restart()
                 }
+            }
+
+            // ---- update channel (after the summary and the only-shell choice) -----
+            UpdateChannelChoice {
+                objectName: "updateChannel"
+                width: parent.width
+                wizard: root.wizard
             }
 
             KitText {

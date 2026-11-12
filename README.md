@@ -211,14 +211,38 @@ installer installs from it and `yozakura doctor` checks it.
 ### Update, check and uninstall
 
 ```bash
-yozakura update     # pull, rebuild and reinstall both binaries (runs install.sh --update)
+yozakura update     # update on your channel, rebuild and reinstall both binaries (runs install.sh --update)
+yozakura update --check            # installed version, channel and its target; changes nothing
+yozakura update channel [beta]     # show / save the update channel: stable, beta or git
 yozakura reload     # restart the shell on the new version
 yozakura doctor     # every dependency, what is missing and the command that installs it
 yozakura goodbye    # remove the binaries and the compositor blocks; asks about source and config
 ```
 
 Re-running the one-liner also updates. Local changes in the checkout are kept
-(and built); the installer prints how to reset to upstream.
+(and built); the installer prints how to reset to upstream. `yozakura update`
+stops on uncommitted changes instead (commit or stash them first), except on
+a branch of your own, which it rebuilds as it is.
+
+**Update channels** (`system.updateChannel`, also in Settings > Updates and
+at the end of the setup wizard): `stable` (default) follows the `X.Y.Z`
+releases, `beta` the `X.Y.Z-beta.N` pre-releases and any newer stable
+release, `git` every commit on `main`. Only releases newer than 0.3.1 (the
+last one without update channels) count: until one is tagged, `stable` and
+`beta` leave the install where it is ("no release with update channels
+yet"). A checkout already at or past the channel's newest release is left as
+it is, and so is one with commits of its own that are on no branch of the
+remote (nothing is rewound or left out unless you pass `--allow-downgrade`);
+`yozakura update --channel git` updates on another channel once, and
+`install.sh --channel beta` installs on that channel. The one-liner without
+`--channel` builds `main` and is then on the default `stable` channel:
+updates keep it where it is until a newer release is tagged, then move it to
+that release. To keep following `main`, run `yozakura update channel git`
+(or install with `--channel git`). Release tags are `X.Y.Z` /
+`X.Y.Z-beta.N` without a leading `v`: only those get release binaries (a
+`v` tag is still followed and built from source; where the installer cannot
+build, it takes the latest release's binaries instead). Nix installs update through their flake;
+channels do not apply there.
 
 `yozakura install hyprland` adds one block to `~/.config/hypr/hyprland.lua`:
 

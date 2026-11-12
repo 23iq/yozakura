@@ -38,7 +38,23 @@ jobs:
         working-directory: dist
         run: sha256sum yozakura-linux-* yozd-linux-* > SHA256SUMS
 
+      # The update channels compare the version file with the tags
+      # (backend/pkg/updatechannel): a tag whose version file says
+      # otherwise makes installs on it look older or newer than they are.
+      - name: Check the version file
+        run: |
+          if [ "$(tr -d '[:space:]' < version)" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "::warning::version file says $(cat version), the tag is $GITHUB_REF_NAME"
+          fi
+
+      # X.Y.Z-beta.N tags are pre-releases for the beta channel: never the
+      # "latest" release that stable installs download binaries from.
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes
+        run: |
+          flags=()
+          case "$GITHUB_REF_NAME" in
+          *-beta.*) flags=(--prerelease --latest=false) ;;
+          esac
+          gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes "${flags[@]}"

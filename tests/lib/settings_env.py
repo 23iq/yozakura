@@ -146,6 +146,7 @@ UPDATE_STUB = """pragma Singleton
 QtObject {
     property string currentVersion: "1.3.9"
     property string lastDetectedVersion: ""
+    property bool updateAvailable: false
     property real lastCheckTime: 0
     property bool checking: false
     property string changelogUrl: "https://example.invalid/releases"

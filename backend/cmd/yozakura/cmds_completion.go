@@ -27,6 +27,8 @@ const (
 	extrasSubs   = "list install status help"
 	termSubs     = "list set preview status off greeting help"
 	greetSubs    = "on off preset logo presets preview help"
+	updateSubs   = "channel --channel --check --allow-downgrade --help"
+	channelNames = "stable beta git"
 )
 
 // Completion scripts complete config keys and values from the live catalog
@@ -83,6 +85,10 @@ _{bin}() {
         (( COMP_CWORD == 3 )) && [[ ${COMP_WORDS[2]} == greeting ]] && COMPREPLY=($(IFS=' ' compgen -W "{greetSubs}" -- "$cur")) ;;
     stopwatch)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{swSubs}" -- "$cur")) ;;
+    update)
+        if (( COMP_CWORD == 2 )); then COMPREPLY=($(IFS=' ' compgen -W "{updateSubs}" -- "$cur"))
+        elif [[ $sub == channel || ${COMP_WORDS[COMP_CWORD-1]} == --channel ]]; then COMPREPLY=($(IFS=' ' compgen -W "{channelNames}" -- "$cur"))
+        else COMPREPLY=($(IFS=' ' compgen -W "--channel --check --allow-downgrade" -- "$cur")); fi ;;
     remind)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{remindSubs}" -- "$cur")) ;;
     wallpaper|lockwall)
@@ -126,6 +132,10 @@ _{bin}() {
         (( CURRENT == 3 )) && compadd -- {termSubs}
         (( CURRENT == 4 )) && [[ $words[3] == greeting ]] && compadd -- {greetSubs} ;;
     stopwatch) (( CURRENT == 3 )) && compadd -- {swSubs} ;;
+    update)
+        if (( CURRENT == 3 )); then compadd -- {updateSubs}
+        elif [[ $words[3] == channel || $words[CURRENT-1] == --channel ]]; then compadd -- {channelNames}
+        else compadd -- --channel --check --allow-downgrade; fi ;;
     remind) (( CURRENT == 3 )) && compadd -- {remindSubs} ;;
     wallpaper|lockwall) _files ;;
     esac
@@ -170,6 +180,9 @@ complete -c {bin} -n '__{bin}_at extras "" 2' -a '{extrasSubs}'
 complete -c {bin} -n '__{bin}_at term "" 2' -a '{termSubs}'
 complete -c {bin} -n '__{bin}_at term greeting 3' -a '{greetSubs}'
 complete -c {bin} -n '__{bin}_at stopwatch "" 2' -a '{swSubs}'
+complete -c {bin} -n '__{bin}_at update "" 2' -a '{updateSubs}'
+complete -c {bin} -n '__{bin}_at update channel 3' -a '{channelNames}'
+complete -c {bin} -n '__fish_seen_subcommand_from update; and test (__{bin}_args)[-1] = --channel' -a '{channelNames}'
 complete -c {bin} -n '__{bin}_at remind "" 2' -a '{remindSubs}'
 complete -c {bin} -n '__{bin}_at cmd "" 2' -a '(begin; {bin} cmd __ids 2>/dev/null; echo list; end)'
 complete -c {bin} -n '__fish_seen_subcommand_from cmd; and test (count (__{bin}_args)) -eq 3' -a '({bin} cmd __args (__{bin}_args)[3] 2>/dev/null)'
@@ -203,6 +216,8 @@ func completionScript(shell string) (string, error) {
 		"{keyboardSubs}", keyboardSubs,
 		"{extrasSubs}", extrasSubs,
 		"{termSubs}", termSubs,
+		"{updateSubs}", updateSubs,
+		"{channelNames}", channelNames,
 		"{greetSubs}", greetSubs,
 	).Replace(tpl), nil
 }
