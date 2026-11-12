@@ -6,7 +6,8 @@ BackendService for the backend `convert` service:
   * convert.probe answers from PROBE (tests/fixtures/converter-probe.json,
     made by the real backend probe with ffmpeg, ImageMagick, LibreOffice
     and poppler but no pandoc), keyed by file name;
-  * convert.start answers queued jobs c1, c2, ... ;
+  * convert.start answers queued jobs c1, c2, ... (held until
+    flushStart() while `deferStart`: a job event can beat the reply);
   * convert.paste answers `pasteReply`;
   * every call is recorded in `calls`; `emit(service, data)` pushes a
     subscription event (convert.job).
@@ -31,6 +32,10 @@ QtObject {
     property string pasteError: ""
     property int seq: 0
     property var subs: []
+    // deferStart: hold the start reply until flushStart() (events may come first)
+    property bool deferStart: false
+    property var heldStart: null
+    function flushStart() { const h = heldStart; heldStart = null; if (h) h.cb(h.r, null); }
     function call(method, params, cb) {
         calls = calls.concat([{ method: method, params: params }]);
         let r = {};
@@ -49,6 +54,10 @@ QtObject {
             }) };
         } else if (method === "convert.paste") {
             if (pasteError !== "") err = pasteError; else r = pasteReply;
+        }
+        if (method === "convert.start" && deferStart && cb) {
+            heldStart = { cb: cb, r: r };
+            return;
         }
         if (cb) cb(err ? null : r, err);
     }

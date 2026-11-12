@@ -4575,5 +4575,6 @@
   "converter.kind.other": "Otros",
   "converter.error.missing": "Archivo no encontrado",
   "converter.error.folder": "Las carpetas no se pueden convertir",
-  "converter.error.unknown": "Formato desconocido"
+  "converter.error.unknown": "Formato desconocido",
+  "converter.error.special": "No es un archivo normal"
 }

@@ -62,7 +62,11 @@ test('start, pending, jobs, retry', () => {
     rows = M.markPending(rows, items);
     assert.ok(M.busy(rows));
     assert.strictEqual(M.startable(rows).length, 0);
-    // an event before the start reply finds its row by path and target
+    // an event of a job no row holds changes nothing (even same path and target)
+    assert.strictEqual(M.applyJob(rows, { id: 'old', path: '/p/a.jpg', to: 'png', state: 'done', output: '/p/a.png' }), rows);
+    // the start reply hands the pending rows their jobs
+    rows = M.attachJobs(rows, [{ id: 'c1', path: '/p/a.jpg', to: 'png', state: 'queued' },
+        { id: 'c2', path: '/p/b.png', to: 'jpg', state: 'queued' }]);
     rows = M.applyJob(rows, { id: 'c1', path: '/p/a.jpg', to: 'png', state: 'running', progress: 0.5 });
     assert.strictEqual(M.rowState(rows[0]), 'running');
     rows = M.applyJob(rows, { id: 'c1', path: '/p/a.jpg', to: 'png', state: 'done', progress: 1, output: '/p/a.png' });
@@ -104,4 +108,26 @@ test('every kind has an icon in Icons.qml and a translated label', () => {
             assert.ok(new RegExp(`property string ${k.icon}:`).test(icons), k.icon);
         }
     }
+});
+
+test('stale jobs never take over a row; failed starts clear pending', () => {
+    // convert, then the same file again: the old done job (replayed by the
+    // backend) must not claim the new pending row
+    let rows = M.addFiles([], [jpg]);
+    rows = M.markPending(rows, M.startItems(rows));
+    rows = M.applyJob(rows, { id: 'c7', path: '/p/a.jpg', to: 'png', state: 'done', output: '/p/a.png' });
+    assert.strictEqual(rows[0].job.state, 'pending');
+    rows = M.attachJobs(rows, [{ id: 'c9', path: '/p/a.jpg', to: 'png', state: 'queued' }]);
+    rows = M.applyJob(rows, { id: 'c9', path: '/p/a.jpg', to: 'png', state: 'done', output: '/p/a (1).png' });
+    assert.strictEqual(rows[0].job.output, '/p/a (1).png');
+    // remove then re-add: the removed row's job no longer applies
+    rows = M.addFiles(M.removeRow(rows, '/p/a.jpg'), [jpg]);
+    assert.strictEqual(M.applyJob(rows, { id: 'c9', state: 'done' }), rows);
+    assert.strictEqual(M.rowState(rows[0]), 'ready');
+    rows = M.clearPending(M.markPending(rows, M.startItems(rows)));
+    assert.strictEqual(M.rowState(rows[0]), 'ready');
+});
+
+test('file URIs are percent-encoded', () => {
+    assert.strictEqual(M.fileUri('/a b/#c,d.png'), 'file:///a%20b/%23c%2Cd.png');
 });

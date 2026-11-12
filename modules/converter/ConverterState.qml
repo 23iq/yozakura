@@ -27,6 +27,13 @@ QtObject {
     readonly property bool empty: root.rows.length === 0
 
     property var _sub: null
+    // Job ids this window's start replies returned: only their events
+    // touch rows (the backend replays every job it still knows, other
+    // windows' and earlier ones included).
+    property var _own: ({})
+    // Events of ids not (yet) returned by a start reply: the event can
+    // beat the reply. Applied when the reply names the id, else ignored.
+    property var _early: ({})
 
     function add(paths) {
         const list = (paths || []).filter(p => String(p).indexOf("/") === 0);
@@ -99,13 +106,38 @@ QtObject {
         }, (result, error) => {
             if (error || !result) {
                 root.notice = String(error || "");
-                root.rows = root.rows.map(r => r.job && r.job.state === "pending" ? Object.assign({}, r, {
-                        "job": null
-                    }) : r);
+                root.rows = Model.clearPending(root.rows);
                 return;
             }
-            (result.jobs || []).forEach(j => root.applyJob(j));
+            const jobs = result.jobs || [];
+            const own = Object.assign({}, root._own);
+            jobs.forEach(j => own[j.id] = true);
+            root._own = own;
+            root.rows = Model.attachJobs(root.rows, jobs);
+            const early = Object.assign({}, root._early);
+            jobs.forEach(j => {
+                if (early[j.id]) {
+                    root.applyJob(early[j.id]);
+                    delete early[j.id];
+                }
+            });
+            // replayed jobs of other windows never get a reply: drop them
+            // once nothing waits for one
+            root._early = root.rows.some(r => r.job && r.job.state === "pending") ? early : ({});
         });
+    }
+
+    // A job event from the subscription.
+    function onJobEvent(job) {
+        if (!job || !job.id)
+            return;
+        if (root._own[job.id]) {
+            root.applyJob(job);
+        } else if (root.rows.some(r => r.job && r.job.state === "pending")) {
+            const early = Object.assign({}, root._early);
+            early[job.id] = job;
+            root._early = early;
+        }
     }
 
     function applyJob(job) {
@@ -123,11 +155,12 @@ QtObject {
             }, null);
     }
 
-    // Select the file in the file manager (FileManager1), else open its folder.
+    // Select the file in the file manager (FileManager1), else open its
+    // folder. The URI is percent-encoded (spaces, #, commas).
     function reveal(path) {
         if (!path)
             return;
-        Quickshell.execDetached(["sh", "-c", "dbus-send --session --print-reply --dest=org.freedesktop.FileManager1 /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems array:string:\"file://$1\" string:\"\" >/dev/null 2>&1 || xdg-open \"$2\"", "sh", path, Model.dirOf(path)]);
+        Quickshell.execDetached(["sh", "-c", "dbus-send --session --print-reply --dest=org.freedesktop.FileManager1 /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems array:string:\"$1\" string:\"\" >/dev/null 2>&1 || xdg-open \"$2\"", "sh", Model.fileUri(path), Model.dirOf(path)]);
     }
 
     function copy(path) {
@@ -143,7 +176,7 @@ QtObject {
             return;
         root._sub = BackendService.addSubscription(["convert"], (service, data) => {
             if (service === "convert.job" && data)
-                Qt.callLater(() => root.applyJob(data));
+                Qt.callLater(() => root.onJobEvent(data));
         });
     }
 

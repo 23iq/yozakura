@@ -103,7 +103,7 @@ import qs.modules.converter
 Window {{
     width: 680; height: 700; visible: true; color: "black"
     Image {{ anchors.fill: parent; source: {json.dumps("file://" + wall)}; fillMode: Image.PreserveAspectCrop }}
-    ConverterView {{ objectName: "view"; anchors.centerIn: parent; width: 560; height: 580; focus: true }}
+    ConverterView {{ objectName: "view"; anchors.centerIn: parent; width: 576; height: 576; focus: true }}
 }}""")
     h = env.h
     view = h.find(win, "view")

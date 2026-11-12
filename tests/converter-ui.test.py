@@ -192,6 +192,32 @@ ev("converter.clearAll()")
 settle()
 check(ev("converter.empty") and item("dropZone").property("visible"), "clear all returns to the drop zone")
 
+# stale and early job events: re-add a converted file and convert it again
+# while the start reply is held back. Replays of older jobs (this window's
+# removed row, another window's job) never touch the row; the new job's
+# event that beats the reply is applied once the reply names it.
+ev("converter.add(['%s'])" % (D + "holiday-photo.jpg"))
+settle()
+ev("BackendService.deferStart = true")
+QTest.keyClick(win, Qt.Key_Return)
+settle()
+nxt = "c%d" % ev("BackendService.seq")
+check(h.eval(row(D + "holiday-photo.jpg"), "phase") == "pending", "row pending until the reply")
+emit({"id": "c1", "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "output": D + "holiday-photo.png"})
+emit({"id": "x5", "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "output": D + "other.png"})
+emit({"id": nxt, "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "progress": 1,
+      "output": D + "holiday-photo (1).png"})
+check(h.eval(row(D + "holiday-photo.jpg"), "phase") == "pending", "replayed or early events do not take the pending row")
+ev("BackendService.flushStart()")
+settle()
+check(h.eval(row(D + "holiday-photo.jpg"), "subtitle") == "Saved as holiday-photo (1).png",
+      "the early event of the new job applies after the reply: %s" % h.eval(row(D + "holiday-photo.jpg"), "subtitle"))
+# a reconnect replays the same job: still the same result
+emit({"id": nxt, "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "progress": 1,
+      "output": D + "holiday-photo (1).png"})
+check(h.eval(row(D + "holiday-photo.jpg"), "subtitle") == "Saved as holiday-photo (1).png", "replay of own job is harmless")
+ev("BackendService.deferStart = false")
+
 if failures:
     print(f"{len(failures)} failure(s)")
     sys.exit(1)

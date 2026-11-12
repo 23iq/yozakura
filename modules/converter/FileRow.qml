@@ -35,7 +35,7 @@ Item {
             return "";
         switch (root.phase) {
         case "invalid":
-            return r.error ? I18n.t("converter.error." + (r.error === "not found" ? "missing" : r.error === "a folder" ? "folder" : "unknown")) : "";
+            return r.error ? I18n.t("converter.error." + Model.errorKey(r.error)) : "";
         case "unavailable":
             return I18n.t("converter.needs", root.target ? root.target.needs : "");
         case "failed":

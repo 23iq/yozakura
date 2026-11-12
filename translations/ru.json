@@ -4605,5 +4605,6 @@
   "converter.kind.other": "Другое",
   "converter.error.missing": "Файл не найден",
   "converter.error.folder": "Папки нельзя конвертировать",
-  "converter.error.unknown": "Неизвестный формат"
+  "converter.error.unknown": "Неизвестный формат",
+  "converter.error.special": "Не обычный файл"
 }

@@ -235,34 +235,68 @@ function startItems(rows) {
     });
 }
 
-// Attach a job event to its row (by job id, else to the row of its path
-// that has no job yet, the reply of start). Returns the new rows.
+// Apply a job event to the row holding that job id (only): the backend
+// replays every job it still knows, and an old job of the same file must
+// never take over a row. Returns the new rows (the same array when no row
+// holds the id).
 function applyJob(rows, job) {
     if (!job || !job.id)
         return rows;
-    var hit = -1;
     for (var i = 0; i < rows.length; i++) {
         if (rows[i].job && rows[i].job.id === job.id) {
-            hit = i;
-            break;
+            var out = rows.slice();
+            out[i] = Object.assign({}, rows[i], {
+                "job": job
+            });
+            return out;
         }
     }
-    if (hit < 0) {
-        for (var j = 0; j < rows.length; j++) {
-            var s = rows[j].job ? rows[j].job.state : "";
-            if (rows[j].path === job.path && rows[j].target === job.to && (s === "" || s === "pending")) {
-                hit = j;
-                break;
+    return rows;
+}
+
+// The jobs of a start reply take over the pending rows they were started
+// for (same path and target), in order.
+function attachJobs(rows, jobs) {
+    var out = (rows || []).slice();
+    (jobs || []).forEach(function (job) {
+        for (var i = 0; i < out.length; i++) {
+            var r = out[i];
+            if (r.job && r.job.state === "pending" && r.path === job.path && r.target === job.to) {
+                out[i] = Object.assign({}, r, {
+                    "job": job
+                });
+                return;
             }
         }
-    }
-    if (hit < 0)
-        return rows;
-    var out = rows.slice();
-    out[hit] = Object.assign({}, rows[hit], {
-        "job": job
     });
     return out;
+}
+
+// Rows still waiting for a start reply go back to ready (the call failed).
+function clearPending(rows) {
+    return (rows || []).map(function (r) {
+        return r.job && r.job.state === "pending" ? Object.assign({}, r, {
+            "job": null
+        }) : r;
+    });
+}
+
+// The translation suffix (converter.error.<key>) of a probe error.
+function errorKey(error) {
+    switch (error) {
+    case "not found":
+        return "missing";
+    case "a folder":
+        return "folder";
+    case "not a regular file":
+        return "special";
+    }
+    return "unknown";
+}
+
+// "file:///a%20b/%23c.png" for a local path (each segment percent-encoded).
+function fileUri(path) {
+    return "file://" + String(path || "").split("/").map(encodeURIComponent).join("/");
 }
 
 // Mark the rows a start request covers as pending until the jobs arrive.
