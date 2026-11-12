@@ -33,43 +33,63 @@
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The sidebar is one flat list of `groups` (destinations: Bar, Island, ...,
-// each with an icon) in labelled blocks (SIDEBAR_SECTIONS). A destination
-// holds one or more categories, shown as tabs at its top (`categories`,
+// The window opens on a home screen (SettingsHome): a bento of tiles, one
+// per destination in HOME (big / wide / small), and a row of pills for the
+// plain system destinations (PILLS). A destination (`groups`) holds one or
+// more categories, shown as tabs at the top of its page (`categories`,
 // first = default tab). A category is one of:
 //   * schema-driven: has `sections` (see bar.js) - rendered by
-//     SettingsPage.qml, searchable entry by entry; entries flagged
-//     `advanced: true` are not in the window (SchemaUtil.inWindow);
-//     `stage` (Registry.STAGES name) is the live miniature at its top;
+//     SettingsPage.qml as a hero (its `stage`, Registry.STAGES) over a
+//     bento of cards (one per section); entries flagged `advanced: true`
+//     are not in the window (SchemaUtil.inWindow);
 //   * a page: has `page` - a hand-written page loaded by URL
 //     (Registry.PAGES).
 // Every category is listed in exactly one destination. `resolve(id)`
 // accepts a category id, a moved id (MOVED) or a destination id, so old
 // deep links (`<app> run settings <id>`, GlobalStates.settingsCategory)
-// and the new tree both work.
+// keep working.
 
 var groups = [
-    { "id": "bar", "icon": "squaresFour", "title": "prefs.dest.bar", "categories": ["bar", "layout"] },
-    { "id": "island", "icon": "dotsThree", "title": "prefs.dest.island", "categories": ["notch"] },
-    { "id": "dock", "icon": "dock", "title": "prefs.dest.dock", "categories": ["dock"] },
-    { "id": "launcher", "icon": "magnifyingGlass", "title": "prefs.dest.launcher", "categories": ["launcher"] },
-    { "id": "dashboard", "icon": "widgets", "title": "prefs.dest.dashboard", "categories": ["dashboard"] },
-    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications", "categories": ["notifications", "osd", "menus"] },
-    { "id": "lockscreen", "icon": "lock", "title": "prefs.dest.lockscreen", "categories": ["lockscreen"] },
-    { "id": "desktop", "icon": "monitor", "title": "prefs.dest.desktop", "categories": ["desktop", "overview"] },
+    { "id": "layout", "icon": "frameCorners", "title": "prefs.dest.layout", "categories": ["bar", "notch", "dock", "layout"] },
     { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "icons-type"] },
     { "id": "wallpaper", "icon": "image", "title": "prefs.dest.wallpaper", "categories": ["wallpapers"] },
     { "id": "presets", "icon": "magicWand", "title": "prefs.dest.presets", "categories": ["presets", "changes"] },
+    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications", "categories": ["notifications", "osd", "menus"] },
+    { "id": "lockscreen", "icon": "lock", "title": "prefs.dest.lockscreen", "categories": ["lockscreen"] },
     { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code"] },
-    { "id": "displays", "icon": "frameCorners", "title": "prefs.dest.displays", "categories": ["displays"] },
-    { "id": "input", "icon": "keyboard", "title": "prefs.dest.input", "categories": ["keyboard", "input"] },
+    { "id": "launcher", "icon": "magnifyingGlass", "title": "prefs.dest.launcher", "categories": ["launcher"] },
+    { "id": "dashboard", "icon": "widgets", "title": "prefs.dest.dashboard", "categories": ["dashboard"] },
+    { "id": "desktop", "icon": "monitor", "title": "prefs.dest.desktop", "categories": ["desktop", "overview"] },
+    { "id": "keys", "icon": "keyboard", "title": "prefs.dest.keys", "categories": ["keyboard", "input"] },
+    { "id": "displays", "icon": "screencast", "title": "prefs.dest.displays", "categories": ["displays"] },
     { "id": "windows", "icon": "appWindow", "title": "prefs.dest.windows", "categories": ["windows", "specials"] },
+    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "voice", "timers", "routines", "about"] },
     { "id": "network", "icon": "wifiHigh", "title": "prefs.dest.network", "categories": ["network", "bluetooth"] },
     { "id": "sound", "icon": "speakerHigh", "title": "prefs.dest.sound", "categories": ["sound", "effects"] },
     { "id": "power", "icon": "batteryHigh", "title": "prefs.dest.power", "categories": ["power"] },
-    { "id": "apps", "icon": "packageBox", "title": "prefs.dest.apps", "categories": ["terminal", "extras", "mods"] },
-    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "voice", "timers", "routines", "about"] }
+    { "id": "apps", "icon": "packageBox", "title": "prefs.dest.apps", "categories": ["terminal", "extras", "mods"] }
 ];
+
+// The home bento, in reading order: `size` big (2 x 2), wide (2 x 1) or
+// small (1 x 1); the grid packs them (HomeLayout.js).
+var HOME = [
+    { "id": "layout", "size": "big" },
+    { "id": "look", "size": "wide" },
+    { "id": "wallpaper", "size": "wide" },
+    { "id": "presets", "size": "small" },
+    { "id": "notifications", "size": "small" },
+    { "id": "lockscreen", "size": "small" },
+    { "id": "assistant", "size": "small" },
+    { "id": "launcher", "size": "small" },
+    { "id": "dashboard", "size": "small" },
+    { "id": "desktop", "size": "small" },
+    { "id": "keys", "size": "small" },
+    { "id": "displays", "size": "small" },
+    { "id": "windows", "size": "small" }
+];
+
+// The pills under the bento: plain system destinations.
+var PILLS = ["network", "sound", "power", "apps", "system"];
 
 // A hand-written page (Registry.PAGES[name]).
 function page(id, icon, name, keywords) {
@@ -89,7 +109,8 @@ var MOVED = {
     "surfaces": "appearance",
     "bar-classic": "bar",
     "sidebar": "ai",
-    "popups": "notifications"
+    "popups": "notifications",
+    "island": "notch"
 };
 
 // A copy of `cat` with `extra` sections appended.
@@ -214,20 +235,6 @@ function resolve(id) {
     return g ? byId(g.categories[0]) : null;
 }
 
-// Sidebar model: [{id, icon, title, categories: [category...]}] in order.
-function sidebar() {
-    return groups.map(function (g) {
-        return {
-            "id": g.id,
-            "icon": g.icon,
-            "title": g.title,
-            "categories": g.categories.map(byId).filter(function (c) {
-                return c !== null;
-            })
-        };
-    });
-}
-
 // The tabs of the destination holding `categoryId`: [category...] (one tab
 // = no tab strip).
 function tabsOf(categoryId) {
@@ -237,46 +244,18 @@ function tabsOf(categoryId) {
     }) : [];
 }
 
-// The sidebar's labelled blocks (SectionLabels): the shell's parts, its
-// style, the assistant, then the computer itself. Every destination sits in
-// exactly one block, in `groups` order (tests/settings-tree.test.cjs).
-var SIDEBAR_SECTIONS = [
-    {
-        "id": "shell",
-        "title": "prefs.sidebar.shell",
-        "groups": ["bar", "island", "dock", "launcher", "dashboard", "notifications", "lockscreen", "desktop"]
-    },
-    {
-        "id": "style",
-        "title": "prefs.sidebar.style",
-        "groups": ["look", "wallpaper", "presets"]
-    },
-    {
-        "id": "assistant",
-        "title": "prefs.sidebar.assistant",
-        "groups": ["assistant"]
-    },
-    {
-        "id": "computer",
-        "title": "prefs.sidebar.computer",
-        "groups": ["displays", "input", "windows", "network", "sound", "power", "apps", "system"]
-    }
-];
-
-function sidebarSections() {
-    var tree = sidebar();
-    return SIDEBAR_SECTIONS.map(function (sec) {
-        return {
-            "id": sec.id,
-            "title": sec.title,
-            "groups": tree.filter(function (g) {
-                return sec.groups.indexOf(g.id) >= 0;
-            })
-        };
+// Home model: the bento tiles and the pills as destinations.
+function home() {
+    return HOME.map(function (t) {
+        return Object.assign({ "size": t.size }, groupById(t.id));
     });
 }
 
-// Categories in sidebar order (keyboard navigation).
+function pills() {
+    return PILLS.map(groupById);
+}
+
+// Categories in destination order (Ctrl+Tab steps through them).
 function ordered() {
     var out = [];
     groups.forEach(function (g) {

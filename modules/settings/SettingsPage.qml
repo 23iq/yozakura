@@ -7,11 +7,16 @@ import qs.modules.settings.store
 import qs.modules.services
 import qs.modules.theme
 import "CompositorGate.js" as CompositorGate
+import "SchemaUtil.js" as SchemaUtil
+import "BentoLayout.js" as BentoLayout
 import "Registry.js" as Registry
 
-// Renders a schema-driven category: its stage (the live miniature of what
-// the page controls, `stage` in the schema) and one SettingsSection per
-// section that has a row in the window. Nothing here is category specific.
+// A schema-driven destination tab: a hero holding its stage (the live
+// miniature of what the tab controls, `stage` in the schema) over a bento
+// of cards, one per section (SettingsSection), packed in two or three
+// columns (BentoLayout.js: a card with picture cards or an editor takes two).
+// The hero recedes (scales down, fades) as the cards scroll up under it.
+// Nothing here is category specific.
 Flickable {
     id: page
 
@@ -25,10 +30,8 @@ Flickable {
     readonly property int sectionCount: (page.category.sections || []).length
     property int builtSections: 1
     readonly property bool complete: builtSections >= sectionCount
-    // The sections built so far fill the viewport (as laid out for the
-    // last frame): the page can be shown, the rest comes below the fold.
-    // SettingsPageHost keeps the page hidden until `enterReady`, so no
-    // section pops in on screen while the page enters.
+    // The sections built so far fill the viewport: the page can be shown.
+    // SettingsPageHost keeps the page hidden until `enterReady`.
     property bool filled: false
     readonly property bool enterReady: complete || filled
 
@@ -39,7 +42,7 @@ Flickable {
     FrameAnimation {
         running: !page.complete
         onTriggered: {
-            if (!page.filled && page.height > 0 && column.y + column.height >= page.height)
+            if (!page.filled && page.height > 0 && body.y + bento.height >= page.height)
                 page.filled = true;
             const start = Date.now();
             do {
@@ -49,7 +52,7 @@ Flickable {
     }
 
     contentWidth: width
-    contentHeight: column.implicitHeight + Space.xxl * 3
+    contentHeight: body.y + body.height + Space.xxl * 3
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -68,6 +71,9 @@ Flickable {
     // Scroll to an entry (or a section), flash it and give it focus.
     function reveal(sectionId, entryId) {
         buildAll();
+        // place the cards now (twice: a card's new width can rewrap it)
+        bento.relayout();
+        bento.relayout();
         let target = null;
         for (let i = 0; i < sections.count; i++) {
             const s = sections.itemAt(i) as SettingsSection;
@@ -86,7 +92,7 @@ Flickable {
         }
         if (!target)
             return;
-        const y = target.mapToItem(column, 0, 0).y + column.y;
+        const y = target.mapToItem(page.contentItem, 0, 0).y;
         scroller.to = Math.max(0, Math.min(y - (page.height - target.height) / 3, contentHeight - height));
         scroller.restart();
         if (entryId) {
@@ -96,12 +102,11 @@ Flickable {
         }
     }
 
-    // Scroll an item of the page (e.g. one row of a custom editor) into
-    // view: centered, or its top near the top when it is tall.
+    // Scroll an item of the page (e.g. one row of a custom editor) into view.
     function revealItem(item) {
         if (!item)
             return;
-        const y = item.mapToItem(column, 0, 0).y + column.y;
+        const y = item.mapToItem(page.contentItem, 0, 0).y;
         const top = item.height > height / 2 ? y - Space.xxl * 3 : y - (height - item.height) / 2;
         scroller.to = Math.max(0, Math.min(top, contentHeight - height));
         scroller.restart();
@@ -113,51 +118,94 @@ Flickable {
         onTriggered: SettingsStore.highlightedEntry = ""
     }
 
-    Column {
-        id: column
-        width: Math.min(page.width - Space.xxl * 2, Space.px(860))
+    // The hero: the stage, centred, receding as the page scrolls.
+    Loader {
+        id: stageLoader
+        objectName: "pageStage"
+        readonly property real recede: Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
+        width: Math.min(page.width - Space.xxl * 2, Space.px(760))
         x: (page.width - width) / 2
-        y: Space.l
-        spacing: Look.screenGap + Space.s
+        y: Space.s + page.contentY * 0.35
+        active: page.stageUrl !== ""
+        visible: active
+        source: page.stageUrl
+        scale: 1 - stageLoader.recede * 0.18
+        opacity: 1 - stageLoader.recede * 0.7
+        transformOrigin: Item.Top
+        z: 0
+    }
 
-        // The stage: built with the page, by URL (only this page's stage
-        // is compiled).
-        Loader {
-            id: stageLoader
-            objectName: "pageStage"
-            width: parent.width
-            active: page.stageUrl !== ""
-            visible: active
-            source: page.stageUrl
-        }
+    // The bento of cards.
+    Item {
+        id: body
+        z: 1
+        width: Math.min(page.width - Space.xxl * 2, Space.px(1180))
+        x: (page.width - width) / 2
+        y: stageLoader.active ? stageLoader.height + Space.xl : Space.s
+        height: bento.height + (note.visible ? note.height + Space.l : 0)
 
-        Column {
+        Item {
+            id: bento
+            objectName: "pageBento"
+            readonly property real gap: Space.l
+            readonly property int cols: BentoLayout.columns(width, Space.px(300))
+            readonly property real colW: (width - gap * (cols - 1)) / cols
+            // card heights and spans -> places (re-run when one changes)
+            property var places: []
             width: parent.width
-            spacing: Look.groupGap
+            height: 0
+
+            function relayout() {
+                const items = [];
+                for (let i = 0; i < sections.count; i++) {
+                    const s = sections.itemAt(i);
+                    items.push({
+                        "span": BentoLayout.spanOf(page.category.sections[i], SchemaUtil.inWindow),
+                        "height": s && s.visible ? s.implicitHeight : 0
+                    });
+                }
+                const r = BentoLayout.place(items, bento.cols, bento.gap);
+                bento.places = r.places;
+                bento.height = r.height;
+            }
+            onColsChanged: Qt.callLater(bento.relayout)
+            onWidthChanged: Qt.callLater(bento.relayout)
 
             Repeater {
                 id: sections
                 model: page.category.sections
 
                 delegate: SettingsSection {
+                    id: card
                     required property var modelData
                     required property int index
-                    width: column.width
+                    readonly property var place: bento.places[index] || ({
+                            "col": 0,
+                            "span": 1,
+                            "y": 0
+                        })
                     section: modelData
                     pending: index >= page.builtSections
+                    x: card.place.col * (bento.colW + bento.gap)
+                    y: card.place.y
+                    width: card.place.span * bento.colW + (card.place.span - 1) * bento.gap
+                    onImplicitHeightChanged: Qt.callLater(bento.relayout)
+                    onVisibleChanged: Qt.callLater(bento.relayout)
+                    Component.onCompleted: Qt.callLater(bento.relayout)
                 }
             }
+        }
 
-            KitText {
-                objectName: "compositorOnlyNote"
-                width: parent.width
-                leftPadding: Look.rowInset
-                visible: page.gated.count > 0
-                role: "caption"
-                color: Type.muted
-                wrapMode: Text.WordWrap
-                text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
-            }
+        KitText {
+            id: note
+            objectName: "compositorOnlyNote"
+            y: bento.height + Space.l
+            width: parent.width
+            visible: page.gated.count > 0
+            role: "caption"
+            color: Type.muted
+            wrapMode: Text.WordWrap
+            text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
         }
     }
 }

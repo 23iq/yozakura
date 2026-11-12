@@ -2,8 +2,9 @@
 
   * Bar -> Panels -> Add panel: the schematic redraws without TypeErrors when
     the panel list grows or shrinks (sketches lag panels for an evaluation).
-  * The compact settings window (< 860 px) still has a search: the rail's
-    search button and Ctrl+F open the wide sidebar, a pick closes it.
+  * A narrow settings window (700 px) still has its search: home shows the
+    field, the Ctrl+F path (openSearch) returns home from a page and focuses
+    it, a result opens its page.
 """
 import sys
 from pathlib import Path
@@ -72,22 +73,25 @@ for expr in (one, two, "[]", two, one):
 check(not errors, "schematic redraw errors:\n  " + "\n  ".join(errors))
 check(h.eval(sch, "sketches.length") == 1, "schematic follows the panel list")
 
-# Compact window: search stays reachable.
-check(h.eval(shell, "compact") is True, "700 px is compact")
-check(h.eval(shell, "railed") is True, "compact starts as the icon rail")
-rail_btn = h.find(win, "railSearch")
-check(rail_btn is not None and h.eval(rail_btn, "visible") is True, "rail has a search button")
-h.eval(rail_btn, "clicked()")
-QTest.qWait(150)
-check(h.eval(shell, "searchOpen") is True and h.eval(shell, "railed") is False, "search button opens the sidebar")
+# Narrow window: search stays reachable.
+win.requestActivate()
+QTest.qWaitForWindowActive(win, 3000)
+h.eval(shell, "goHome()")  # the harness opens on a page (settingsCategory)
+QTest.qWait(400)
 field = h.find(win, "settingsSearch")
-check(field is not None and h.eval(field, "visible") is True, "search field is visible when opened")
+check(field is not None and h.eval(field, "visible") is True, "home shows the search field")
+check(h.eval(shell, "home.columns") < 6, "a 700 px home has fewer columns")
 h.eval(shell, "select('bar')")
 QTest.qWait(100)
-check(h.eval(shell, "searchOpen") is False and h.eval(shell, "railed") is True, "picking a page closes it")
+check(h.eval(shell, "atHome") is False, "a page opens")
 h.eval(shell, "openSearch()")
 QTest.qWait(150)
-check(h.eval(shell, "searchOpen") is True, "Ctrl+F path opens the search when compact")
+check(h.eval(shell, "atHome") is True and h.eval(field, "field.activeFocus") is True, "Ctrl+F path returns home and focuses the search")
+h.eval(field, 'text = "clock face"')
+QTest.qWait(50)
+h.eval(shell, "home.activateResult(0)")
+check(env.wait_page(win) and h.eval(shell, "currentCategory") == "bar", "a result opens its page")
+h.eval(field, 'text = ""')
 
 # Service-backed pages build offscreen with the harness stubs (no QML errors).
 for cat in ("keyboard", "displays", "mods", "terminal", "extras", "system", "about"):

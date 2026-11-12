@@ -61,7 +61,7 @@
       ],
       "x-enumLabels": {
         "auto": "Auto",
-        "notch": "Notch",
+        "notch": "Island",
         "corner": "Corner",
         "strips": "Strips"
       }

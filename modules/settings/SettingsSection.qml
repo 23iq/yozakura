@@ -7,12 +7,12 @@ import qs.modules.settings.store
 import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
 
-// One schema section: a kit Group (its label is the section title) of
-// SettingRows, one per entry that is in the window (SchemaUtil.inWindow:
-// no row object exists for an out-of-window entry). The section shows only
-// while one of its rows does (SettingsStore.sectionShown: compositor gate,
-// visibleWhen), so a header never stands over nothing.
-Group {
+// One schema section as a bento card (kit Card): its title as the card's
+// label over one SettingRow per entry that is in the window
+// (SchemaUtil.inWindow: no row object exists for an out-of-window entry).
+// The card shows only while one of its rows does
+// (SettingsStore.sectionShown: compositor gate, visibleWhen).
+Card {
     id: sectionRoot
 
     required property var section
@@ -34,10 +34,12 @@ Group {
     objectName: "settingsSection:" + sectionId
     visible: sectionRoot.shown && !sectionRoot.pending
     label: section.title ? I18n.t(section.title) : ""
+    padding: Look.boxPadding
+    spacing: Space.s
 
     Column {
         id: rowsColumn
-        width: parent.width
+        width: sectionRoot.contentWidth
         spacing: 0
 
         Repeater {

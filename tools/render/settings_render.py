@@ -9,6 +9,7 @@ Uses tests/lib/settings_env.py with your real config (~/.config/yozakura),
 palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
+`home` renders the home screen (with `--search` a query in its field).
 `--set theme.surfaceEffect='"crt"'` overrides a config key for the render
 (value parsed as JSON, plain strings allowed). `--wallpaper PATH` uses that
 image as the wallpaper (e.g. assets/wallpapers_example/wallpaper-03.png on a
@@ -221,10 +222,13 @@ Window {{
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
     for cat in args.categories:
         cat = cat.lower()
-        env.h.eval(shell, 'currentCategory = ""')
-        env.h.eval(shell, f"select({json.dumps(cat)})")
-        if not env.h.eval(shell, "currentCategory"):
-            raise SystemExit(f"unknown settings category: {cat!r}")
+        if cat == "home":
+            env.h.eval(shell, "goHome()")
+        else:
+            env.h.eval(shell, 'currentCategory = ""')
+            env.h.eval(shell, f"select({json.dumps(cat)})")
+            if not env.h.eval(shell, "currentCategory"):
+                raise SystemExit(f"unknown settings category: {cat!r}")
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)

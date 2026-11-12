@@ -3,13 +3,14 @@
 * Live changes and undo: a row writes Config at once (nothing staged, no
   preview relay), the undo pill names the change, Ctrl+Z / the pill undo it,
   Ctrl+Shift+Z redoes it; a slider drag is one step; Reset page is one step.
-* Navigation: the flat sidebar of destinations, tabs inside a destination,
-  old ids still open their page.
+* Navigation: home tiles open their destination (the first tab), the tabs
+  inside a destination, Esc / back pill / Alt+Left return home, old ids
+  still open their page.
 * Pages: kept alive (a revisit is the same page, the oldest beyond the
   bound is destroyed), out-of-window entries have no row, a section with
   no row to show has no header (R1), a waiting row offers its switch
-  instead of a grey dead end, search finds window rows only and lands on
-  the row with focus and a flash.
+  instead of a grey dead end, the home search finds window rows only,
+  names their destination and lands on the row with focus and a flash.
 * Stage: the page's miniature is built; a hovered row lights its part.
 """
 import sys
@@ -77,7 +78,7 @@ def select(cat):
 
 # ---- live changes + undo ----------------------------------------------------
 select("bar")
-check(ev('w.findItem("destinationTitle").text') == "Bar", "the destination title")
+check(ev('w.findItem("destinationTitle").text') == "Desktop layout", "the destination title")
 ev("BackendService.calls = []")
 ev("SettingsStore.set('bar.compact', true)")
 check(ev("Config.bar.compact") is True, "a change applies at once")
@@ -164,10 +165,10 @@ ev("SettingsStore.selectedPanel = 0")
 
 # ---- navigation, tabs, keep-alive ---------------------------------------------
 tabs = ev('w.findItem("destinationTabs")')
-check(tabs is not None and h.eval(tabs, "count") == 2, "Bar has two tabs")
+check(tabs is not None and h.eval(tabs, "count") == 4, "Desktop layout has four tabs")
 bar_page = ev('w.findItem("settingsPage").item')
 h.eval(tabs, "activated(1)")
-check(env.wait_page(win) and sev("currentCategory") == "layout", "a tab opens its page")
+check(env.wait_page(win) and sev("currentCategory") == "notch", "a tab opens its page")
 check(ev('w.findItem("settingsPage").direction') == 1, "the tab to the right slides in from the right")
 select("look")
 check(sev("currentCategory") == "appearance", "a destination id opens its first tab")
@@ -178,9 +179,21 @@ for cat in ("dock", "notch", "launcher", "dashboard"):
 select("bar")
 check(ev('w.findItem("settingsPage").item') != bar_page, "past the bound the oldest page was rebuilt")
 check(ev('w.findItem("settingsPage")._pages.length') <= 4, "at most four pages are kept")
-for old in ("popups", "surfaces", "island"):
+for old in ("popups", "surfaces", "island", "input"):
     sev(f'select("{old}")')
     check(sev("currentCategory") != "", f"old id {old} still opens a page")
+
+# home: back and a tile
+QTest.keyClick(win, Qt.Key_Left, Qt.AltModifier)
+check(sev("atHome") is True, "Alt+Left returns home")
+tile = ev('w.findItem("homeTile:look")')
+check(tile is not None, "home has a Look tile")
+check(wait_until(lambda: sev("reveal") == 0), "home fully shown")
+h.eval(tile, "clicked()")
+check(env.wait_page(win) and sev("currentCategory") == "appearance" and sev("atHome") is False, "a tile opens its first tab")
+h.eval(ev('w.findItem("backPill")'), "clicked()")
+check(sev("atHome") is True, "the back pill returns home")
+check(wait_until(lambda: sev("reveal") == 0), "home shown again")
 
 # ---- what the window shows -----------------------------------------------------
 select("bar")
@@ -201,15 +214,16 @@ h.eval(fix, "clicked()")
 check(ev("Config.notch.disableHoverExpansion") is False, "...which turns it on")
 
 # ---- search ---------------------------------------------------------------------
+sev("openSearch()")
 field = ev('w.findItem("settingsSearch")')
 h.eval(field, 'text = "reveal strip"')
 QTest.qWait(50)
-check(ev('w.findItem("settingsSidebar").results.length') == 0, "search finds no out-of-window entry")
+check(ev('w.findItem("settingsHome").results.length') == 0, "search finds no out-of-window entry")
 h.eval(field, 'text = "clock face"')
 QTest.qWait(50)
-check(ev('w.findItem("settingsSidebar").results[0].entryId') == "bar.moduleOptions.clock.face", "search finds the row")
-check("Bar" in ev('w.findItem("settingsSidebar").results[0].context'), "results name the destination")
-ev('w.findItem("settingsSidebar").activateResult(0)')
+check(ev('w.findItem("settingsHome").results[0].entryId') == "bar.moduleOptions.clock.face", "search finds the row")
+check("Desktop layout" in ev('w.findItem("settingsHome").results[0].context'), "results name the destination")
+ev('w.findItem("settingsHome").activateResult(0)')
 check(wait_until(lambda: ev("SettingsStore.highlightedEntry") == "bar.moduleOptions.clock.face"), "the jump flashes the row")
 check(ev('w.findItem("settingRow:bar.moduleOptions.clock.face").activeFocus') is True, "...and gives it focus")
 h.eval(field, 'text = ""')

@@ -20,8 +20,10 @@ Item {
     property real stageHeight: Space.px(280)
     // Draw the wallpaper backdrop (false: the children draw their own).
     property bool backdrop: true
+    // The wallpaper's zoom (a home tile drifts it a little while hovered).
+    property real imageScale: 1
     default property alias content: area.data
-    readonly property real radius: Look.radius("surface", stage.height)
+    property real radius: Look.radius("surface", stage.height)
     // The wallpaper as a file URL ("" while there is none).
     readonly property string wallpaper: {
         const m = GlobalStates.wallpaperManager;
@@ -65,6 +67,14 @@ Item {
             asynchronous: true
             cache: true
             sourceSize.width: Math.max(1, stage.width * 1.5)
+            scale: stage.imageScale
+            Behavior on scale {
+                enabled: Motion.pan.duration > 0
+                NumberAnimation {
+                    duration: Motion.pan.duration
+                    easing.type: Motion.pan.easing
+                }
+            }
         }
         Item {
             id: area

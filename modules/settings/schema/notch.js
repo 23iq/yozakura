@@ -9,6 +9,7 @@ var category = {
     "title": "prefs.cat.notch",
     "description": "prefs.cat.notch.desc",
     "keywords": "notch island dynamic activities visualizer media panels",
+    "stage": "IslandStage",
     "sections": [
         {
             "id": "notch",

@@ -1,5 +1,5 @@
-// Settings navigation (modules/settings/schema/Categories.js): one flat
-// sidebar of destinations in four labelled blocks, each destination with its
+// Settings navigation (modules/settings/schema/Categories.js): the home
+// bento of destinations plus a row of pills, each destination with its
 // tabs, every category reachable, old ids (category, moved, former sidebar
 // group) still resolve.
 const { test } = require('node:test');
@@ -11,19 +11,28 @@ const Categories = loadLibrary(path.join(__dirname, '..', 'modules/settings/sche
 const tr = lang => require(`../translations/${lang}.json`);
 const plain = v => JSON.parse(JSON.stringify(v));
 
-const TREE = ['bar', 'island', 'dock', 'launcher', 'dashboard', 'notifications', 'lockscreen', 'desktop',
-    'look', 'wallpaper', 'presets', 'assistant',
-    'displays', 'input', 'windows', 'network', 'sound', 'power', 'apps', 'system'];
+const TILES = ['layout', 'look', 'wallpaper', 'presets', 'notifications', 'lockscreen', 'assistant',
+    'launcher', 'dashboard', 'desktop', 'keys', 'displays', 'windows'];
+const PILLS = ['network', 'sound', 'power', 'apps', 'system'];
 
-test('the sidebar is the destinations, in order, each titled (en, es, ru) and with an icon', () => {
-    const side = Categories.sidebar();
-    assert.deepEqual(plain(side.map(g => g.id)), TREE);
-    for (const g of side) {
+test('home is the destinations as tiles then pills, each titled (en, es, ru) and with an icon', () => {
+    const home = Categories.home();
+    assert.deepEqual(plain(home.map(g => g.id)), TILES);
+    assert.deepEqual(plain(Categories.pills().map(g => g.id)), PILLS);
+    assert.equal(home[0].size, 'big');
+    for (const g of home)
+        assert.ok(['big', 'wide', 'small'].includes(g.size), g.id);
+    for (const g of home.concat(Categories.pills())) {
         for (const lang of ['en', 'es', 'ru'])
             assert.ok(tr(lang)[g.title], `${lang} ${g.title}`);
         assert.ok(g.icon, g.id);
         assert.ok(g.categories.length > 0, g.id);
     }
+});
+
+test('home and pills hold every destination exactly once', () => {
+    const all = TILES.concat(PILLS);
+    assert.deepEqual(plain(Categories.groups.map(g => g.id)).sort(), all.slice().sort());
 });
 
 test('every category is one tab of exactly one destination', () => {
@@ -39,7 +48,8 @@ test('a destination has a few tabs at most, each with a short title', () => {
         for (const c of Categories.tabsOf(g.categories[0]))
             assert.ok(tr('en')[c.title].split(/\s+/).length <= 3, `${g.id}: tab ${tr('en')[c.title]}`);
     }
-    assert.deepEqual(plain(Categories.tabsOf('layout').map(c => c.id)), ['bar', 'layout']);
+    // Desktop layout: Bar, Island, Dock, Where things open
+    assert.deepEqual(plain(Categories.tabsOf('layout').map(c => c.id)), ['bar', 'notch', 'dock', 'layout']);
     assert.deepEqual(plain(Categories.tabsOf('icons-type').map(c => c.id)), ['appearance', 'icons-type']);
 });
 
@@ -58,14 +68,4 @@ test('destination ids and former sidebar groups open a page', () => {
     assert.equal(Categories.resolve('power').id, 'power');
     assert.equal(Categories.resolve('system').id, 'system');
     assert.equal(Categories.resolve('nope'), null);
-});
-
-test('the sidebar blocks hold every destination once, in order, each titled', () => {
-    const secs = Categories.sidebarSections();
-    assert.deepEqual(plain(secs.map(s => s.id)), ['shell', 'style', 'assistant', 'computer']);
-    assert.deepEqual(plain(secs.flatMap(s => s.groups.map(g => g.id))), TREE);
-    for (const s of secs) {
-        assert.ok(tr('en')[s.title], s.title);
-        assert.ok(s.groups.length > 0, s.id);
-    }
 });

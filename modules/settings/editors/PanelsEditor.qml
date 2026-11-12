@@ -23,7 +23,7 @@ Item {
     // The panel being edited: the Bar stage picks it too.
     readonly property int selected: SettingsStore.selectedPanel
     readonly property int current: Math.max(0, Math.min(selected, panels.length - 1))
-    readonly property var panel: panels.length > 0 ? panels[current] : null
+    readonly property var panel: panels[current] || null
     readonly property bool wide: width >= 640
 
     implicitHeight: column.implicitHeight

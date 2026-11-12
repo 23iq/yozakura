@@ -7858,7 +7858,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "corner": "Corner",
             "strips": "Strips"
           }
@@ -18220,63 +18220,13 @@
   ],
   "x-groups": [
     {
-      "id": "bar",
-      "title": "Bar",
+      "id": "layout",
+      "title": "Desktop layout",
       "categories": [
         "bar",
+        "notch",
+        "dock",
         "layout"
-      ]
-    },
-    {
-      "id": "island",
-      "title": "Island",
-      "categories": [
-        "notch"
-      ]
-    },
-    {
-      "id": "dock",
-      "title": "Dock",
-      "categories": [
-        "dock"
-      ]
-    },
-    {
-      "id": "launcher",
-      "title": "Launcher",
-      "categories": [
-        "launcher"
-      ]
-    },
-    {
-      "id": "dashboard",
-      "title": "Dashboard",
-      "categories": [
-        "dashboard"
-      ]
-    },
-    {
-      "id": "notifications",
-      "title": "Notifications",
-      "categories": [
-        "notifications",
-        "osd",
-        "menus"
-      ]
-    },
-    {
-      "id": "lockscreen",
-      "title": "Lock screen",
-      "categories": [
-        "lockscreen"
-      ]
-    },
-    {
-      "id": "desktop",
-      "title": "Desktop",
-      "categories": [
-        "desktop",
-        "overview"
       ]
     },
     {
@@ -18303,12 +18253,58 @@
       ]
     },
     {
+      "id": "notifications",
+      "title": "Notifications",
+      "categories": [
+        "notifications",
+        "osd",
+        "menus"
+      ]
+    },
+    {
+      "id": "lockscreen",
+      "title": "Lock screen",
+      "categories": [
+        "lockscreen"
+      ]
+    },
+    {
       "id": "assistant",
       "title": "Assistant",
       "categories": [
         "ai",
         "ai-providers",
         "ai-code"
+      ]
+    },
+    {
+      "id": "launcher",
+      "title": "Launcher",
+      "categories": [
+        "launcher"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard",
+      "categories": [
+        "dashboard"
+      ]
+    },
+    {
+      "id": "desktop",
+      "title": "Desktop",
+      "categories": [
+        "desktop",
+        "overview"
+      ]
+    },
+    {
+      "id": "keys",
+      "title": "Keys",
+      "categories": [
+        "keyboard",
+        "input"
       ]
     },
     {
@@ -18319,19 +18315,23 @@
       ]
     },
     {
-      "id": "input",
-      "title": "Keyboard & input",
-      "categories": [
-        "keyboard",
-        "input"
-      ]
-    },
-    {
       "id": "windows",
       "title": "Windows",
       "categories": [
         "windows",
         "specials"
+      ]
+    },
+    {
+      "id": "system",
+      "title": "System",
+      "categories": [
+        "system",
+        "updates",
+        "voice",
+        "timers",
+        "routines",
+        "about"
       ]
     },
     {
@@ -18364,18 +18364,6 @@
         "terminal",
         "extras",
         "mods"
-      ]
-    },
-    {
-      "id": "system",
-      "title": "System",
-      "categories": [
-        "system",
-        "updates",
-        "voice",
-        "timers",
-        "routines",
-        "about"
       ]
     }
   ]

@@ -775,5 +775,5 @@ Singleton {
     // Legacy numeric tab (old SettingsTab order); the settings window maps
     // it to a category and resets it to 0.
     // Category shown by the settings window (modules/settings/schema/Categories.js)
-    property string settingsCategory: "appearance"
+    property string settingsCategory: ""
 }

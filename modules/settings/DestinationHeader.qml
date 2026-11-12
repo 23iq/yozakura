@@ -7,9 +7,10 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import "schema/Categories.js" as Categories
 
-// The top of the settings content: the destination's icon and title, its
-// tabs (a kit Segmented, only when it has several) and a quiet "Reset page"
-// while a row of the current tab differs from its default (one undo step).
+// The only chrome of a destination page: a back pill and the destination
+// title on the left, its tabs (the kit Segmented, when it has several)
+// centred, and a quiet "Reset page" on the right while a control of the
+// current tab differs from its default (one undo step).
 Item {
     id: header
 
@@ -20,23 +21,26 @@ Item {
     readonly property int modifiedCount: header.category && header.category.sections ? SettingsStore.modifiedCount(header.category) : 0
 
     signal tabSelected(string id)
+    signal back
 
-    implicitHeight: titleRow.height + (header.tabs.length > 1 ? tabsLoader.height + Space.l : 0)
+    implicitHeight: Space.controlM
 
     Row {
         id: titleRow
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Space.m
-        height: Math.max(titleText.implicitHeight, glyph.implicitHeight)
 
-        Icon {
-            id: glyph
+        IconButton {
+            objectName: "backPill"
             anchors.verticalCenter: parent.verticalCenter
-            icon: header.destination ? (Icons[header.destination.icon] ?? "") : ""
-            role: "title"
-            tone: "accent"
+            icon: Icons.arrowLeft
+            size: "s"
+            focusable: true
+            tooltip: I18n.t("prefs.home.back")
+            onClicked: header.back()
+            Accessible.name: I18n.t("prefs.home.back")
         }
         KitText {
-            id: titleText
             objectName: "destinationTitle"
             anchors.verticalCenter: parent.verticalCenter
             role: "title"
@@ -44,19 +48,11 @@ Item {
         }
     }
 
-    SectionLabel {
-        objectName: "pageReset"
-        anchors.right: parent.right
-        anchors.verticalCenter: titleRow.verticalCenter
-        inset: 0
-        visible: header.modifiedCount > 0
-        action: I18n.t("prefs.common.reset_page")
-        onTriggered: SettingsStore.resetCategory(header.category)
-    }
-
     Loader {
         id: tabsLoader
-        y: titleRow.height + Space.l
+        anchors.centerIn: parent
+        // centred, clear of the title when the window is narrow
+        anchors.horizontalCenterOffset: Math.max(0, titleRow.width + Space.l - (header.width - tabsLoader.implicitWidth) / 2)
         active: header.tabs.length > 1
         visible: active
         sourceComponent: Segmented {
@@ -70,5 +66,15 @@ Item {
             currentIndex: header.tabs.findIndex(c => header.category && c.id === header.category.id)
             onActivated: i => header.tabSelected(header.tabs[i].id)
         }
+    }
+
+    SectionLabel {
+        objectName: "pageReset"
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        inset: 0
+        visible: header.modifiedCount > 0
+        action: I18n.t("prefs.common.reset_page")
+        onTriggered: SettingsStore.resetCategory(header.category)
     }
 }

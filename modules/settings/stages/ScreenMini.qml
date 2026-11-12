@@ -35,6 +35,9 @@ Item {
     // The bar surface is drawn at least this opaque (see Stage.barOpacity).
     property real barOpacity: 0.82
     property real cornerRadius: Space.surfaceRadius
+    // A part ringed in the accent: "island" | "dock" | "" (the page that
+    // controls it).
+    property string emphasis: ""
     default property alias overlay: overlayLayer.data
     signal panelPicked(int index)
 
@@ -417,6 +420,15 @@ Item {
             keys: ["dock"]
             cornerRadius: dockBox.radius
         }
+        Mark {
+            anchors.fill: parent
+            anchors.margins: -Space.xs
+            visible: screen.emphasis === "dock"
+            radius: dockBox.radius + Space.xs
+            color: "transparent"
+            border.width: Space.stroke - 1
+            border.color: Type.accent
+        }
     }
 
     // The island.
@@ -444,6 +456,15 @@ Item {
         StageSpot {
             keys: ["notch"]
             cornerRadius: island.radius
+        }
+        Mark {
+            anchors.fill: parent
+            anchors.margins: -Space.xs
+            visible: screen.emphasis === "island"
+            radius: island.radius + Space.xs
+            color: "transparent"
+            border.width: Space.stroke - 1
+            border.color: Type.accent
         }
     }
 

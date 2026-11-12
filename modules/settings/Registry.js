@@ -96,6 +96,8 @@ var THUMBS = {
 // stages/<Name>.qml whose root is a Stage (see stages/Stage.qml).
 var STAGES = {
     "BarStage": "stages/BarStage.qml",
+    "IslandStage": "stages/IslandStage.qml",
+    "DockStage": "stages/DockStage.qml",
     "OpensStage": "stages/OpensStage.qml",
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml"
