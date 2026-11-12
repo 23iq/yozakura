@@ -197,11 +197,7 @@ Singleton {
             const n = root.list.find(x => x.id === id);
             if (n) {
                 n.popup = false;
-                if (n.timer) {
-                    n.timer.stop();
-                    n.timer.destroy();
-                    n.timer = null;
-                }
+                root.dropTimer(n);
             }
         });
         const drop = Policy.trimHistory(root.list, root.cfg ? root.cfg.historySize : 100);
@@ -233,6 +229,27 @@ Singleton {
         // QUICKSHELL-GIT: path: Quickshell.cachePath("notifications.json")
         path: Brand.cacheDir + "/notifications.json"
         onLoaded: loadNotifications()
+    }
+
+    // A popup's hide step after its timeout animation (one deadline per id)
+    NotificationHideQueue {
+        id: hideQueue
+        onExpired: id => {
+            const n = root.list.find(notif => notif.id === id);
+            if (n) {
+                n.popup = false;
+                root.dropTimer(n);
+            }
+            root.timeout(id);
+        }
+    }
+
+    function dropTimer(n) {
+        if (n && n.timer) {
+            n.timer.stop();
+            n.timer.destroy();
+            n.timer = null;
+        }
     }
 
     function stringifyList(list) {
@@ -529,24 +546,9 @@ Singleton {
 
     signal timeoutWithAnimation(id: var)
 
-    Timer {
-        id: timeoutAnimationTimer
-        interval: 350
-        running: false
-        repeat: false
-        property int notificationId: -1
-        onTriggered: {
-            const index = root.list.findIndex(notif => notif.id === notificationId);
-            if (index !== -1 && root.list[index] != null)
-                root.list[index].popup = false;
-            root.timeout(notificationId);
-        }
-    }
-
     function timeoutNotification(id) {
         root.timeoutWithAnimation(id);
-        timeoutAnimationTimer.notificationId = id;
-        timeoutAnimationTimer.restart();
+        hideQueue.schedule(id);
     }
 
     function timeoutAll() {
@@ -555,6 +557,7 @@ Singleton {
         });
         root.popupList.forEach(notif => {
             notif.popup = false;
+            root.dropTimer(notif);
         });
     }
 
@@ -650,11 +653,7 @@ Singleton {
     function hideAllPopups() {
         root.popupList.forEach(notif => {
             notif.popup = false;
-            if (notif.timer) {
-                notif.timer.stop();
-                notif.timer.destroy();
-                notif.timer = null;
-            }
+            root.dropTimer(notif);
         });
     }
 
