@@ -87,8 +87,8 @@ in {
         Start hyprpolkitagent with every graphical session. By default the
         shell asks for passwords with its own polkit agent (the
         system.polkitAgent setting) and hyprpolkitagent is only the
-        fallback: `yozakura polkit-fallback` starts it at login when that
-        setting is off or Quickshell lacks its Polkit module. Only one agent
+        fallback: `yozakura polkit-fallback` starts it at login unless the
+        shell reports its own agent registered within a few seconds. Only one agent
         can register per session and the first one wins, so with this on
         the shell's own agent stays idle.
       '';
@@ -141,7 +141,7 @@ in {
       # with hyprpolkitagent's user unit as the fallback. Whichever agent
       # registers first wins, so the unit starts with the graphical session
       # only with polkit.externalAgent; otherwise `yozakura polkit-fallback`
-      # starts it at login while the shell's agent is off or unavailable
+      # starts it at login unless the shell reports its agent registered
       # (on niri/Mango the generated config does the same).
       security.polkit.enable = lib.mkDefault true;
       environment.systemPackages = [ cfg.finalPackage pkgs.hyprpolkitagent ];

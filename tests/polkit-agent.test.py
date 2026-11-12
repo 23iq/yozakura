@@ -110,8 +110,22 @@ def windows():
 check(wait_until(lambda: agent() is not None), "the host loads the agent (setting on, module present)")
 check(ev("PolkitService.available") is True, "PolkitService.available once the agent loaded")
 a = agent()
+
+
+def reported():
+    """The last agent state the host sent the daemon, with its pid."""
+    return ev("(() => { const s = BackendService.sent.filter(m => m.method === 'compositor.setPolkitState');"
+              " return s.length ? s[s.length - 1].params.state + '@' + s[s.length - 1].params.pid : '' })()")
+
+
+check(reported() == "pending@4242", f"loaded, not registered yet: the daemon is told pending, got {reported()!r}")
 h.eval(a, "isRegistered = true")
 check(ev("PolkitService.registered") is True, "registration is reported to PolkitService")
+check(reported() == "registered@4242", f"registration is reported to the daemon, got {reported()!r}")
+ev("BackendService.sent = []")
+ev("BackendService.socketAvailable = false")
+ev("BackendService.socketAvailable = true")
+check(reported() == "registered@4242", "a reconnected daemon is told again")
 
 
 def start(expr="scene.makeFlow()"):
@@ -214,6 +228,7 @@ settle()
 check(h.eval(f6, "isCancelled") is True and ev("PolkitLog.cancels") == 1, "unloading the agent cancels the pending request")
 check(agent() is None and ev("PolkitService.available") is False and ev("PolkitService.registered") is False,
       "setting off: no agent, nothing registered")
+check(reported() == "off@4242", f"setting off: the daemon is told off at once, got {reported()!r}")
 pump(1200)
 check(ev("Quickshell.detached.some(c => c[c.length - 1] === 'polkit-fallback')") is True,
       "turned off at runtime: the external agent is started (polkit-fallback)")
@@ -222,6 +237,7 @@ check(ev("Quickshell.detached.some(c => c[c.length - 1] === 'polkit-fallback')")
 ev("Config.system.polkitAgent = true")
 check(wait_until(lambda: agent() is not None), "setting on again: agent loaded")
 a = agent()
+check(reported() == "pending@4242", "setting on again: pending until registered")
 timer_logs = lambda: [m for m in logs if "in-shell agent is not registered" in m]  # noqa: E731
 check(len(timer_logs()) == 0, "nothing logged before the registration had its time")
 scene.findChild(QObject, "registrationCheck").setProperty("interval", 50)

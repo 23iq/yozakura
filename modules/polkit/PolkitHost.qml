@@ -23,6 +23,29 @@ Scope {
     // Our listener was registered: turned off at runtime, nothing else
     // would answer prompts until the next login.
     property bool _hadListener: false
+    // What the daemon is told (compositor.setPolkitState): `<app>
+    // polkit-fallback` starts the external agent unless this says
+    // "registered". Empty until the config is read, and in an instance
+    // that holds no agent.
+    readonly property string agentState: {
+        if (!root.enabled || !Config.systemReady)
+            return "";
+        if (!root.wanted)
+            return "off";
+        if (agent.status === Loader.Error)
+            return "unavailable";
+        return PolkitService.registered ? "registered" : "pending";
+    }
+
+    function report() {
+        if (root.agentState !== "")
+            BackendService.notify("compositor.setPolkitState", {
+                state: root.agentState,
+                pid: Quickshell.processId
+            });
+    }
+    onAgentStateChanged: root.report()
+    Component.onCompleted: root.report()
 
     Loader {
         id: agent
@@ -38,6 +61,15 @@ Scope {
         target: PolkitService
         property: "available"
         value: root.loaded
+    }
+
+    // A restarted daemon starts without a report.
+    Connections {
+        target: BackendService
+        function onSocketAvailableChanged() {
+            if (BackendService.socketAvailable)
+                root.report();
+        }
     }
 
     Connections {

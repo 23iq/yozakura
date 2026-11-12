@@ -124,7 +124,7 @@ const polkitDep = "polkit-agent"
 
 // doctorShellPolkit reports the shell's own polkit agent (system.polkitAgent
 // on and a Quickshell with the Polkit module); faked in tests.
-var doctorShellPolkit = func() bool { return compositor.ShellAgent(paths.New().Config("system")) }
+var doctorShellPolkit = func() bool { return compositor.ShellAgentEnabled(paths.New().Config("system")) }
 
 func doctorInstall(distro, compositor string) []doctorItem {
 	src := paths.FindBaseShellSource()

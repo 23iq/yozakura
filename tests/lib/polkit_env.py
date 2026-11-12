@@ -11,6 +11,7 @@ KitEnv (real kit, Config from config/defaults, Colors, I18n en) plus:
     singleton, never to members of its own.
   * Quickshell: Scope, Variants (an Instantiator), ShellScreen.
   * GlobalStates with lockscreenVisible and focusedScreenName().
+  * BackendService: records notify() calls (`sent`), socketAvailable.
   * modules/polkit mirrored as qs.modules.polkit, the real PolkitService.
 
 Used by tests/polkit-agent.test.py and tools/render/polkit_render.py.
@@ -139,6 +140,16 @@ QUICKSHELL_EXTRA = {
     "ShellScreen": "QtObject { property string name; property int width: 1920; property int height: 1080 }",
 }
 
+# The daemon client: what the host reports is recorded.
+BACKEND_SERVICE = """pragma Singleton
+import QtQuick
+QtObject {
+    property bool socketAvailable: true
+    property var sent: []
+    function notify(method, params) { sent = sent.concat([{ method: method, params: params }]) }
+    function call(method, params, cb) { notify(method, params) }
+}"""
+
 # Stand-in for the layer window: what the agent scope hands it is recorded.
 WINDOW_STUB = """import QtQuick
 import Quickshell
@@ -154,7 +165,8 @@ class PolkitEnv(KitEnv):
         super().__init__(name, **kw)
         h = self.h
         qs = self.root / "qs"
-        h.module("Quickshell", {**QUICKSHELL, **QUICKSHELL_EXTRA})
+        qs_single = QUICKSHELL["Quickshell"].replace("QtObject { ", "QtObject { property int processId: 4242; ", 1)
+        h.module("Quickshell", {**QUICKSHELL, **QUICKSHELL_EXTRA, "Quickshell": qs_single})
         h.module("Quickshell.Services.Polkit", {"AuthFlow": AUTH_FLOW, "PolkitAgent": POLKIT_AGENT})
         h.module("qs.polkittest", {"PolkitLog": POLKIT_LOG})
         gs = global_states_qml({}).replace(
@@ -162,7 +174,8 @@ class PolkitEnv(KitEnv):
             "    id: gs\n    property bool lockscreenVisible: false\n    property string focused: \"\"\n"
             "    function focusedScreenName() { return focused }\n", 1)
         h.module("qs.modules.globals", {"GlobalStates": gs})
-        h.module("qs.modules.services", {"PolkitService": (REPO / "modules/services/PolkitService.qml").read_text()})
+        h.module("qs.modules.services", {"PolkitService": (REPO / "modules/services/PolkitService.qml").read_text(),
+                                         "BackendService": BACKEND_SERVICE})
         cfg = qs / "config" / "Config.qml"
         cfg.write_text(cfg.read_text().replace("    property bool keyboardReady: true\n",
                                                "    property bool keyboardReady: true\n    property bool systemReady: true\n", 1))

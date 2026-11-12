@@ -88,8 +88,10 @@ DDC/CI and `services.locate` for the launcher's file search.
 agent (Settings, `system.polkitAgent`, on by default). Only one agent can
 register per session and the first one wins, so `hyprpolkitagent` is not
 started with the session: the user unit `yozakura-polkit-fallback` runs
-`yozakura polkit-fallback` at login, which starts it only when that setting
-is off or the Quickshell build lacks its Polkit module. Turning the setting
+`yozakura polkit-fallback` at login, which starts it unless the shell
+reports its own agent registered within about 12 seconds (the setting off,
+a Quickshell build without its Polkit module, or a shell that does not come
+up all start it). Turning the setting
 off in a running session starts it at once. Set
 `programs.yozakura.polkit.externalAgent = true;` to always start
 `hyprpolkitagent` instead (the previous behaviour; the shell's own agent

@@ -117,28 +117,31 @@ func TestShellAgentEnabledReadsSystemConfig(t *testing.T) {
 	}
 }
 
-func TestPolkitModuleNeedsTheQmldir(t *testing.T) {
-	a, b := t.TempDir(), t.TempDir()
-	if polkitModule([]string{"", a, b}) {
-		t.Fatal("no module reported")
+func TestPolkitStateKeepsTheShellsLastReport(t *testing.T) {
+	s := NewService(nil)
+	get := func() PolkitReport {
+		t.Helper()
+		v, err := s.polkit.get(nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v.(PolkitReport)
 	}
-	if err := os.MkdirAll(filepath.Join(a, polkitModuleDir), 0o755); err != nil {
+	if got := get(); got != (PolkitReport{}) {
+		t.Fatalf("before any report: %+v", got)
+	}
+	if _, err := s.polkit.set(json.RawMessage(`{"state":"registered","pid":42}`)); err != nil {
 		t.Fatal(err)
 	}
-	if polkitModule([]string{a}) {
-		t.Fatal("a directory without qmldir is not the module")
+	if got := get(); got != (PolkitReport{State: PolkitRegistered, PID: 42}) {
+		t.Fatalf("after a report: %+v", got)
 	}
-	touch(t, b, filepath.Join(polkitModuleDir, "qmldir"))
-	if !polkitModule([]string{a, b}) {
-		t.Fatal("module in the second dir not found")
-	}
-}
-
-func TestPrefixQMLDirsCoverPackagesAndSourceBuilds(t *testing.T) {
-	got := strings.Join(prefixQMLDirs("/usr/local"), " ")
-	for _, want := range []string{"/usr/local/lib/qt6/qml", "/usr/local/lib/qt-6/qml", "/usr/local/lib64/qt-6/qml"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("%s missing from %s", want, got)
+	for _, bad := range []string{`{"state":"maybe","pid":1}`, `not json`} {
+		if _, err := s.polkit.set(json.RawMessage(bad)); err == nil {
+			t.Errorf("%s accepted", bad)
 		}
+	}
+	if got := get(); got.State != PolkitRegistered {
+		t.Fatalf("a rejected report replaced the state: %+v", got)
 	}
 }
