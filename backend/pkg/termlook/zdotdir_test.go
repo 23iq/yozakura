@@ -97,3 +97,17 @@ func TestGreetingFollowsZshsOwnZDotDir(t *testing.T) {
 		}
 	}
 }
+
+// An uninstall from a terminal with another ZDOTDIR still finds the
+// daemon's answer (zsh asked without that ZDOTDIR).
+func TestZshDotDirsCoverEveryEnvironment(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("ZDOTDIR", "/elsewhere")
+	look := fakeZsh(t, `if [ -n "$ZDOTDIR" ]; then echo "zdotdir=$ZDOTDIR"; else echo "zdotdir=$HOME/.config/zsh"; fi
+`)
+	got := ZshDotDirs(home, look)
+	want := []string{"/elsewhere", filepath.Join(home, ".config", "zsh"), home}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}

@@ -81,7 +81,27 @@ func cleanupFishHook(env CleanupEnv) ([]string, error) {
 // cleanupGreeting removes the fastfetch greeting: its files, the fish
 // conf.d file and the marked line in ~/.bashrc / ~/.zshrc.
 func cleanupGreeting(env CleanupEnv) ([]string, error) {
-	return removeGreeting(greetingEnv(env.Home))
+	removed, err := removeGreeting(greetingEnv(env.Home))
+	if err != nil {
+		return removed, err
+	}
+	// this terminal's ZDOTDIR may not be the daemon's: every .zshrc the
+	// line may be in
+	tenv := greetingEnv(env.Home)
+	for _, dir := range termlook.ZshDotDirs(env.Home, greetingLook) {
+		tenv.ZDotDir = dir
+		more, err := removeGreeting(tenv)
+		removed = append(removed, more...)
+		if err != nil {
+			return removed, err
+		}
+	}
+	return removed, nil
+}
+
+func greetingLook(bin string) (string, bool) {
+	p, err := exec.LookPath(bin)
+	return p, err == nil
 }
 
 func greetingEnv(home string) termlook.Env {
@@ -89,15 +109,11 @@ func greetingEnv(home string) termlook.Env {
 	if data == "" {
 		data = filepath.Join(home, ".local", "share")
 	}
-	look := func(bin string) (string, bool) {
-		p, err := exec.LookPath(bin)
-		return p, err == nil
-	}
 	// zsh's real startup dir, found the way the daemon finds it (this
 	// terminal's ZDOTDIR may differ from the daemon's); ~/.zshrc is
 	// cleaned as well
 	return termlook.Env{Home: home, ConfigHome: filepath.Dir(paths.New().ConfigDir), AppID: brand.AppID,
-		DataHome: data, ResolveZDotDir: func() string { return termlook.ZshDotDir(home, look) }}
+		DataHome: data, ResolveZDotDir: func() string { return termlook.ZshDotDir(home, greetingLook) }}
 }
 
 func removeGreeting(tenv termlook.Env) ([]string, error) {

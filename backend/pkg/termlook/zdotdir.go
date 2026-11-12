@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"syscall"
@@ -48,7 +49,7 @@ func ZshDotDir(home string, look func(string) (string, bool)) string {
 	if d, ok := zdotdirCache.dirs[home]; ok {
 		return d
 	}
-	d := askZsh(zsh, home)
+	d := askZsh(zsh, home, false)
 	if d == "" {
 		return fallback()
 	}
@@ -59,15 +60,38 @@ func ZshDotDir(home string, look func(string) (string, bool)) string {
 	return d
 }
 
+// ZshDotDirs are every directory a .zshrc of the greeting may be in, for
+// an uninstall run from any terminal: zsh's answer in this environment
+// and in one without ZDOTDIR (the daemon's), $ZDOTDIR and home.
+func ZshDotDirs(home string, look func(string) (string, bool)) []string {
+	dirs := []string{ZshDotDir(home, look)}
+	if look != nil {
+		if zsh, ok := look("zsh"); ok {
+			dirs = append(dirs, askZsh(zsh, home, true))
+		}
+	}
+	if d := os.Getenv("ZDOTDIR"); filepath.IsAbs(d) {
+		dirs = append(dirs, filepath.Clean(d))
+	}
+	dirs = append(dirs, home)
+	var out []string
+	for _, d := range dirs {
+		if d != "" && !slices.Contains(out, d) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
 // askZsh runs zsh -c and reads the ZDOTDIR it ends up with ("" when it
-// does not answer).
-func askZsh(zsh, home string) string {
+// does not answer); clean: without the ZDOTDIR of this process.
+func askZsh(zsh, home string, clean bool) string {
 	ctx, cancel := context.WithTimeout(context.Background(), zdotdirBudget)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, zsh, "-c", `print -r -- "`+zdotdirPrefix+`${ZDOTDIR:-$HOME}"`)
 	var env []string
 	for _, kv := range os.Environ() {
-		if !strings.HasPrefix(kv, "HOME=") {
+		if !strings.HasPrefix(kv, "HOME=") && !(clean && strings.HasPrefix(kv, "ZDOTDIR=")) {
 			env = append(env, kv)
 		}
 	}
