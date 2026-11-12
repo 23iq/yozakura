@@ -7,12 +7,14 @@ import qs.modules.widgets.launcher
 import qs.modules.widgets.dashboard
 import qs.modules.components
 import qs.modules.services
+import qs.config
 import "WarmUp.js" as WarmUp
 
 // Keep an already-open module routed when its host changes in Config.layout.
 // The visibility flags describe the module, so routing must also observe Config.
 // Views load asynchronously (WarmLoader) and are pushed once ready; a notch
-// launcher is pre-created hidden `warmDelay` ms after startup (WarmUp.js).
+// launcher is pre-created hidden `warmDelay` ms after startup (WarmUp.js)
+// unless performance.warmViews is off.
 Item {
     id: root
 
@@ -66,6 +68,8 @@ Item {
     property int warmDelay: 3000
 
     function warmLauncher() {
+        if (!WarmUp.enabled(Config.performance))
+            return;
         const names = [];
         for (let i = 0; i < Quickshell.screens.length; i++)
             names.push(Quickshell.screens[i].name);

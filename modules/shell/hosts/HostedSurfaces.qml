@@ -9,6 +9,7 @@ import qs.modules.keybinds
 import qs.modules.aicenter.quickask
 import qs.modules.components
 import qs.modules.components.kit
+import qs.config
 import "WarmUp.js" as WarmUp
 
 // Per-screen owner of the spotlight, sheet and card hosts (launcher,
@@ -18,7 +19,9 @@ import "WarmUp.js" as WarmUp
 // Views load asynchronously (WarmLoader): the host opens once its view is
 // ready, so a first open never freezes the shell, and the launcher view is
 // pre-created hidden `warmDelay` ms after startup on the screen it will
-// most likely open on (WarmUp.js).
+// most likely open on (WarmUp.js). Later, CompileWarmUp compiles the heavy
+// rarely opened views without creating them. performance.warmViews = false
+// turns both off.
 Scope {
     id: root
 
@@ -41,6 +44,8 @@ Scope {
         root.route(spotlightLoader, root.spotlightModule);
         root.route(sheetLoader, root.sheetModule);
         root.route(cardLoader, root.cardModule);
+        // Once per shell: later screens' calls are no-ops.
+        CompileWarmUp.start();
     }
 
     property int warmDelay: 3000
@@ -70,6 +75,8 @@ Scope {
     }
 
     function warmLauncher() {
+        if (!WarmUp.enabled(Config.performance))
+            return;
         const names = [];
         for (let i = 0; i < Quickshell.screens.length; i++)
             names.push(Quickshell.screens[i].name);

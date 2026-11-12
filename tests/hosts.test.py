@@ -33,6 +33,7 @@ h.singleton("qs.config", "Config", """QtObject {
     property QtObject bar: QtObject { property string position: "top"; property bool frameEnabled: false }
     property QtObject dock: QtObject { property string position: "bottom"; property int height: 64; property bool enabled: true }
     property QtObject notch: QtObject { property string position: "top" }
+    property QtObject performance: QtObject { property bool warmViews: true }
 }""")
 h.module("qs.modules.globals", {})
 h.module("qs.modules.theme", {
@@ -98,7 +99,7 @@ HOSTS = "qs/modules/shell/hosts"
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
 for f in ("HostFrame", "CardHost", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
-h.module("qs.modules.shell.hosts", {})
+h.module("qs.modules.shell.hosts", {"CompileWarmUp": "pragma Singleton\nQtObject { property int starts: 0; function start() { starts++ } }"})
 h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
 h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
 h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
@@ -190,6 +191,13 @@ def overlaps(a, b):
 # Views load asynchronously (WarmLoader). The warm-up pre-creates the
 # launcher on the focused screen only, hidden, without opening a host.
 assert not ev(hsA, "launcherReady") and not ev(hsB, "launcherReady")
+assert ev(root, "CompileWarmUp.starts") == 2, "every screen asks the (once per shell) compile warm-up to start"
+# performance.warmViews = false: no launcher pre-creation.
+h.eval(root, "Config.performance.warmViews = false")
+h.eval(hsA, "warmLauncher()")
+pump(50)
+assert not ev(hsA, "launcherReady"), "warmViews off still pre-created the launcher"
+h.eval(root, "Config.performance.warmViews = true")
 h.eval(hsA, "warmLauncher()")
 h.eval(hsB, "warmLauncher()")
 pump(50)
