@@ -4,7 +4,8 @@ import qs.modules.services
 import qs.modules.components.kit
 
 // Right side of the notes tab: the editor of the open note (rich text or
-// markdown), a hint when none is open and a spinner while it loads.
+// markdown), a hint when none is open, a spinner while it loads and the
+// save-failure notice under the editor.
 Item {
     id: pane
 
@@ -31,7 +32,10 @@ Item {
 
     RichTextEditor {
         id: richEditor
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: saveNotice.visible ? saveNotice.top : parent.bottom
         visible: pane.tab.currentNoteId !== "" && !pane.tab.currentNoteIsMarkdown
         content: pane.tab.currentNoteContent
         onEdited: pane.tab.noteEdited(false)
@@ -40,11 +44,25 @@ Item {
 
     MarkdownEditor {
         id: markdownEditor
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: saveNotice.visible ? saveNotice.top : parent.bottom
         visible: pane.tab.currentNoteId !== "" && pane.tab.currentNoteIsMarkdown
         content: pane.tab.currentNoteContent
         onEdited: pane.tab.noteEdited(true)
         onEscapePressed: pane.tab.focusSearchInput()
+    }
+
+    // The open note could not be saved: retry or discard (NotesTab)
+    NoteSaveNotice {
+        id: saveNotice
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        visible: pane.tab.currentNoteId !== "" && pane.tab.saveFailed
+        onRetry: pane.tab.retrySave()
+        onDiscard: pane.tab.discardChanges()
     }
 
     KitText {

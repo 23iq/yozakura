@@ -9,7 +9,11 @@ markdown formatting shortcuts, reorder, rename, delete, keyboard navigation
 and Escape. Then the storage edge cases: a long note is saved (content never
 goes through argv), writes are atomic, a failed save is kept dirty, a slow
 read of the previous note never lands in the open one, back-to-back writes
-all land, and index rewrites keep notes added by other writers.
+all land, and index rewrites keep notes added by other writers. A failed
+save is shown under the editor (retry / discard) and keeps the note open:
+switching never drops its text, and the pending auto-save of the last
+keystroke never writes it into the next note; nothing is saved while a note
+loads.
 """
 import json
 import os
@@ -23,7 +27,7 @@ from settings_env import SettingsEnv  # noqa: E402
 
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
-from waits import settle, wait_until  # noqa: E402
+from waits import pump, settle, wait_until  # noqa: E402
 
 from qmlharness import REPO  # noqa: E402
 
@@ -406,6 +410,101 @@ ev("editorDirty = true")
 ev("saveCurrentNote()")
 check(fs()[f"{notes_path}/ext1.md"] == "external",
       f"the open note keeps its own content when saved: {fs()[f'{notes_path}/ext1.md'][:40]!r}")
+
+# --- Save failures -------------------------------------------------------------
+en = json.loads((REPO / "translations/en.json").read_text())
+notice = h.find(win, "noteSaveNotice")
+failed_chip = h.find(win, "noteSaveFailed")
+ext1_file = f"{notes_path}/ext1.md"
+alpha_file = f"{notes_path}/{alpha}.html"
+
+
+def open_note(note_id, text):
+    """Select the note in the list (as a click does) and wait for its content."""
+    ids = js("filteredNotes.map(n => n.id)")
+    if note_id in ids and ev("selectedIndex") != ids.index(note_id):
+        ev(f"selectedIndex = {ids.index(note_id)}")
+    else:
+        ev(f'loadNoteContent("{note_id}")')
+    wait_until(lambda: ev("currentNoteId") == note_id and not ev("loadingNote") and text in ev("currentNoteContent"))
+
+
+# A second rich text note: a switch target with the same editor as Alpha.
+ev('createNewNote("Delta", false)')
+wait_until(lambda: "Delta" in js("allNotes.map(n => n.title)") and not ev("loadingNote") and "Delta" in ev("currentNoteContent"))
+delta = next(n["id"] for n in js("allNotes") if n["title"] == "Delta")
+delta_file = f"{notes_path}/{delta}.html"
+delta_text = fs()[delta_file]
+
+# A failed save is visible in the tab, with a translated message.
+open_note(alpha, "")
+check(not notice.property("visible"), "no notice while saves work")
+ev("Fs.failWrites = true")
+ev("focusEditor()")
+settle()
+type_text("k")
+wait_until(lambda: ev("saveFailed"))
+check(notice.property("visible") and failed_chip.property("text") == en["notes.save_failed"],
+      "a failed save is shown under the editor")
+
+# Switching notes after a failed save keeps the note open with its text;
+# the auto-save of the last keystroke does not follow into the next note.
+debounce = next(c for c in tab.children() if c.property("interval") == 80 and c.property("repeat") is False)
+debounce.setProperty("interval", 400)  # the switch comes well before it fires
+ev(f"Fs.holdPaths = [{json.dumps(delta_file)}]")
+type_text("w")  # a keystroke: the auto-save is pending
+check(debounce.property("running"), "auto-save pending after a keystroke")
+alpha_text = st("editorPane.text(false)")
+ev(f"selectedIndex = {js('filteredNotes.map(n => n.id)').index(delta)}")
+settle()
+ev("Fs.failWrites = false")  # the disk works again before the debounce would fire
+check(not debounce.property("running"), "the switch stops the pending auto-save")
+pump(600)  # the debounce time passes while the other note would still load
+ev("Fs.release(); Fs.holdPaths = []")
+settle()
+debounce.setProperty("interval", 80)
+check(ev("currentNoteId") == alpha, "a failed save keeps the note open on a switch")
+check(st("editorPane.text(false)") == alpha_text and ev("editorDirty"), "its unsaved text stays in the editor")
+check(fs()[delta_file] == delta_text, f"the other note is not overwritten: {fs()[delta_file][:60]!r}")
+check(ev("selectedIndex") == js("filteredNotes.map(n => n.id)").index(alpha), "the selection stays on the open note")
+check(notice.property("visible"), "the failure stays visible")
+
+# Retry: saved, the notice goes, switching works again.
+h.eval(notice, "retry()")
+check(not ev("saveFailed") and not ev("editorDirty") and not notice.property("visible"), "retry saves and hides the notice")
+check("w" in fs()[alpha_file], "the retried save wrote the text")
+open_note(delta, "Delta")
+check(fs()[delta_file] == delta_text, "switching after the retry leaves the other note alone")
+
+# Discard: the note reloads from disk and can be left.
+open_note(alpha, "")
+# (the file differs from the editor, so the save has something to write)
+on_disk = "<p>on disk</p>"
+ev(f"Fs.files[{json.dumps(alpha_file)}] = {json.dumps(on_disk)}")
+ev("Fs.failWrites = true")
+ev("editorDirty = true")
+ev("saveCurrentNote()")
+check(notice.property("visible"), "failure shown again")
+ev("Fs.failWrites = false")
+h.eval(notice, "discard()")
+wait_until(lambda: not ev("loadingNote") and not ev("editorDirty"))
+check(not ev("saveFailed") and not notice.property("visible"), "discard clears the failure")
+check(ev("currentNoteContent") == on_disk and fs()[alpha_file] == on_disk, "discard reloads the note from disk")
+open_note("ext1", "external")
+check(ev("currentNoteId") == "ext1", "after a discard the switch goes through")
+
+# Nothing is saved while a note loads (the editor still shows the previous one).
+open_note(alpha, "")
+ev(f"Fs.holdPaths = [{json.dumps(ext1_file)}]")
+ev('loadNoteContent("ext1")')
+check(ev("loadingNote"), "ext1 is loading")
+n_writes = len(js("Fs.writes"))
+ev("editorDirty = true")
+ev("saveCurrentNote()")
+check(len(js("Fs.writes")) == n_writes, "no save while a note loads")
+ev("Fs.release(); Fs.holdPaths = []")
+wait_until(lambda: not ev("loadingNote"))
+check(fs()[ext1_file] == "external" and ev("currentNoteContent") == "external", "the loading note is intact")
 
 # Escape (no mode active) closes the module.
 ev("focusSearchInput()")
