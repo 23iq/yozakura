@@ -219,7 +219,7 @@ func openDB(path, hexKey string) (*sql.DB, error) {
 // openDatabases opens (or reopens) both stores. The unpinned store lives
 // in tmpfs when tmpMode is on.
 func (s *store) openDatabases(tmpMode bool) error {
-	pinned, err := openDB(s.paths.ClipboardPinnedDB(), s.hexKey)
+	pinned, err := openStoreDB(s.paths.ClipboardPinnedDB(), s.hexKey)
 	if err != nil {
 		return fmt.Errorf("pinned db: %w", err)
 	}
@@ -227,7 +227,7 @@ func (s *store) openDatabases(tmpMode bool) error {
 	if tmpMode {
 		unpinnedPath = s.paths.ClipboardTmpDB()
 	}
-	unpinned, err := openDB(unpinnedPath, s.hexKey)
+	unpinned, err := openStoreDB(unpinnedPath, s.hexKey)
 	if err != nil {
 		pinned.Close()
 		return fmt.Errorf("unpinned db: %w", err)
@@ -286,7 +286,7 @@ func (s *store) setTmpMode(enabled bool) error {
 // moveRowsTo copies every row of src into the store at dstPath (existing
 // rows win) and empties src.
 func (s *store) moveRowsTo(src *sql.DB, dstPath string) error {
-	dst, err := openDB(dstPath, s.hexKey)
+	dst, err := openStoreDB(dstPath, s.hexKey)
 	if err != nil {
 		return err
 	}
