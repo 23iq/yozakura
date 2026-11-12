@@ -242,12 +242,17 @@ ui_box_bottom() {
   printf '  %s%s%s%s%s\n' "$C_LINE" "$B_BL" "$UI_OUT" "$B_BR" "$C_OFF" >&2
 }
 
+# ui_box_row TEXT [HANG]: a folded row's next lines are indented by HANG.
 ui_box_row() {
-  local text="$1" w vis
+  local text="$1" hang="${2:-0}" w vis pad="" first=1
   ui_box_width && w=$((UI_OUT - 4))
   ui_strip "$text" && vis="$UI_OUT"
   if ((${#vis} > w)); then
-    while IFS= read -r text; do ui_box_row "$text"; done < <(fold -s -w "$w" <<<"$vis")
+    ((hang > 0)) && printf -v pad '%*s' "$hang" ""
+    while IFS= read -r text; do
+      if [[ "$first" == 1 ]]; then ui_box_row "$text"; else ui_box_row "$pad$text"; fi
+      first=0
+    done < <(fold -s -w $((w - hang)) <<<"$vis")
     return
   fi
   printf '  %s%s%s %s%*s %s%s%s\n' "$C_LINE" "$B_V" "$C_OFF" "$1" $((w - ${#vis})) "" "$C_LINE" "$B_V" "$C_OFF" >&2
@@ -642,8 +647,12 @@ Compositor:
 Optional features (or later, from the setup wizard):
   --with-voice      local speech-to-text (builds whisper.cpp, ~1 GB)
   --with-depth      depth clock behind the wallpaper subject (uv venv, ~0.7 GB)
-  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme (default when
-                    no display manager is installed)
+  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme. Default when
+                    there is no login manager, or SDDM is installed but not
+                    enabled. Another login manager installed but not enabled
+                    gets a menu (enable it, SDDM instead, leave it); with
+                    --with-sddm SDDM takes its place, and --yes never
+                    enables it. One already enabled is left alone.
   --no-voice, --no-depth, --no-sddm
 
 Install:
@@ -2228,7 +2237,7 @@ failed() {
 }
 
 # numbered N TEXT: one line of the next steps.
-numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")"; }
+numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")" $((${#1} + 2)); }
 command_row() { ui_box_row "$(printf '%s%-18s%s %s%s%s' "$C_PINK" "$1" "$C_OFF" "$C_DIM" "$2" "$C_OFF")"; }
 
 # in_session: whether this terminal runs inside the chosen compositor.

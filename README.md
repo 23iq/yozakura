@@ -133,7 +133,7 @@ curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bas
 | --- | --- |
 | `--with-voice` | Local speech-to-text: builds whisper.cpp (CUDA when available) and downloads the model, ~1 GB (`scripts/voice_setup.sh`) |
 | `--with-depth` | Depth clock behind the wallpaper subject: uv venv with rembg plus a model, ~0.7 GB (`scripts/depth_setup.sh`) |
-| `--with-sddm` | SDDM with the Yozakura login theme. On by default when no login manager is installed; SDDM is enabled for the next boot |
+| `--with-sddm` | SDDM with the Yozakura login theme, enabled for the next boot. On by default when no login manager is installed or SDDM is installed but not enabled. Another login manager that is installed but not enabled gets a menu (enable it, SDDM instead, leave it); `--with-sddm` puts SDDM in its place, and `--yes` never enables it. An enabled login manager is left alone |
 | `--no-voice` / `--no-depth` / `--no-sddm` | Turn a feature off |
 | `-y`, `--yes` | Do not ask; go with the plan (unattended installs) |
 | `--dry-run` | Walk the whole install (questions, plan, every step) showing what would run; changes nothing, no sudo |

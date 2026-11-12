@@ -842,6 +842,8 @@ def test_other_login_manager_installed_but_disabled():
         check("sddm" not in " ".join(c for call in pacman_upgrades(sb) for c in call).split(), "--yes installed SDDM next to gdm")
         check("niri-session" in err and "new login screen" not in err, "next steps promise a login screen", err)
         check("sudo systemctl enable gdm.service" in err, "next steps lack how to enable gdm", err)
+        # A folded next-steps row keeps its hanging indent.
+        check(re.search(r"for a login screen: sudo\s*│\n\s*│ {4}systemctl enable gdm.service", err), "folded row lost its indent", err)
 
         # Interactive: 1 = enable gdm (Proceed: y, Reboot: n).
         rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
