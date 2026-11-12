@@ -169,7 +169,7 @@ func (s *Service) Discard(owner string) bool { return s.end(owner, "preview.disc
 // Commit ends the staging (every owner's: it is one); the other processes
 // keep the values and the main shell writes them. It does not wait.
 func (s *Service) Commit(owner string) bool {
-	had, _ := s.commit(owner)
+	had, _, _ := s.commit(owner)
 	return had
 }
 
@@ -183,12 +183,9 @@ func (s *Service) CommitAndWait(owner string) (had, written bool) {
 // startCommit ends the staging and broadcasts the commit now; wait then
 // waits up to AckWait for the main shell's answer.
 func (s *Service) startCommit(owner string) (had bool, wait func() bool) {
-	had, id := s.commit(owner)
-	s.mu.Lock()
-	ch, ok := s.acks[id]
-	s.mu.Unlock()
+	had, id, ch := s.commit(owner)
 	return had, func() bool {
-		if !ok {
+		if ch == nil {
 			return false
 		}
 		t := time.NewTimer(AckWait)
@@ -218,18 +215,23 @@ func (s *Service) Ack(id uint64) bool {
 	return ok
 }
 
-func (s *Service) commit(owner string) (bool, uint64) {
+// commit returns the channel preview.written closes (nil: no main shell
+// to wait for), taken under the lock that registers it: the main shell may
+// answer before the caller starts waiting.
+func (s *Service) commit(owner string) (bool, uint64, chan struct{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	had := len(s.staged) > 0
 	s.staged = nil
 	s.nextID++
 	id := s.nextID
+	var ch chan struct{}
 	if len(s.subs) > 0 {
-		s.acks[id] = make(chan struct{})
+		ch = make(chan struct{})
+		s.acks[id] = ch
 	}
 	s.sendLocked("preview.commit", Done{Owner: owner, ID: id})
-	return had, id
+	return had, id, ch
 }
 
 // OwnerGone is called when the window process of owner exited. With
