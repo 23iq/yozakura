@@ -45,6 +45,17 @@ func writeGreetingRecord(env Env, r greetingRecord) error {
 	return writeAtomic(greetingRecordFile(env), append(data, '\n'))
 }
 
+// ForgetGreeting removes the greeting's record (goodbye, after
+// RemoveGreeting: the record lists the directories that removes); true
+// when there was one.
+func ForgetGreeting(env Env) (bool, error) {
+	err := os.Remove(greetingRecordFile(env))
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
 // greetingRecorded: the record exists (the greeting was let into bash and
 // zsh, or created directories, at some point).
 func greetingRecorded(env Env) bool {

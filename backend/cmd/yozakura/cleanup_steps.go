@@ -96,7 +96,12 @@ func cleanupGreeting(env CleanupEnv) ([]string, error) {
 			return removed, err
 		}
 	}
-	return removed, nil
+	// last: the record lists the directories removed above
+	forgot, err := termlook.ForgetGreeting(greetingEnv(env.Home))
+	if forgot {
+		removed = append(removed, "fastfetch greeting record")
+	}
+	return removed, err
 }
 
 func greetingLook(bin string) (string, bool) {
