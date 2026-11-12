@@ -116,14 +116,14 @@ check(ev("wizard.choices.fishDefault") is True, "the login-shell request is reme
 
 # The summary: pending while the chsh runs, never 'on' before fish is the
 # login shell.
-ev("ExtrasService.jobs = ({'login-1': {job: 'login-1', kind: 'login', entries: [], state: 'running'}})")
+ev("ExtrasService.jobs = ({'login-1': {job: 'login-1', kind: 'loginshell', entries: [], state: 'running'}})")
 ev(f"wizard.go({STEPS.index('finish')})")
 QTest.qWait(50)
 card = vfind("summary:terminal")
 check(card is not None and "setting fish" in h.eval(card, "value"), f"summary while it runs: {h.eval(card, 'value') if card else None}")
 
 # ---- the password is cancelled: said on the step and the summary -----------
-ev("ExtrasService.jobs = ({'login-1': {job: 'login-1', kind: 'login', entries: [], state: 'failed', reason: 'auth_cancelled'}})")
+ev("ExtrasService.jobs = ({'login-1': {job: 'login-1', kind: 'loginshell', entries: [], state: 'failed', reason: 'auth_cancelled'}})")
 QTest.qWait(30)
 card = vfind("summary:terminal")
 value = h.eval(card, "value") if card else ""

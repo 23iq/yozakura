@@ -57,12 +57,23 @@ function actions(choice, ctx) {
     return out;
 }
 
+// The extras jobs that change the login shell (backend KindLogin, a
+// privileged chsh), from ExtrasService.jobs (job id -> progress).
+var LOGIN_KIND = "loginshell";
+function loginJobs(jobs) {
+    return Object.keys(jobs || {}).map(function (k) {
+        return jobs[k];
+    }).filter(function (j) {
+        return j && j.kind === LOGIN_KIND;
+    });
+}
+
 // How far fish as the login shell got: "ok" (it is the login shell),
 // "pending" (the fish install or the chsh is queued / running), "failed"
 // (asked, and the install or the chsh failed or the password was
-// cancelled), "none" (not asked), "unknown" (no status yet). asked: the
-// step applied it; fishCard: cardState("fish"); loginJobs: the extras jobs
-// of kind "login".
+// cancelled), "none" (not asked), "unknown" (not asked, no status yet).
+// asked: the step applied it; fishCard: cardState("fish"); loginJobs:
+// loginJobs().
 function loginState(status, asked, fishCard, loginJobs) {
     if (status && status.fishIsLoginShell)
         return "ok";
@@ -72,10 +83,8 @@ function loginState(status, asked, fishCard, loginJobs) {
     });
     if (fishCard === "installing" || running)
         return "pending";
-    if (!status)
-        return "unknown";
     if (!asked)
-        return "none";
+        return status ? "none" : "unknown";
     var failed = jobs.some(function (j) {
         return j && j.state === "failed";
     });

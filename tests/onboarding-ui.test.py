@@ -256,7 +256,7 @@ check(h.find(win, "fishDefault") is not None, "Make fish my default shell row")
 # the toggle shows what happened: a failed fish install / chsh unchecks it
 ev('wizard.remember("fishDefault", true)')
 check(h.eval(h.find(win, "fishDefault"), "checked") is True, "a requested fish default shows checked while it runs")
-ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "login", entries: [], state: "failed", reason: "auth_cancelled"}})')
+ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "loginshell", entries: [], state: "failed", reason: "auth_cancelled"}})')
 check(h.eval(h.find(win, "fishDefault"), "checked") is False, "a failed chsh shows unchecked")
 ev('ExtrasService.jobs = ({})')
 check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == ["plain"], "the gallery turns the prompt on through enablePrompt")

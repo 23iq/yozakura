@@ -27,7 +27,7 @@ Column {
     readonly property string fishCard: ExtrasService.cardState("fish")
     // fish is missing and nothing here can install it: the user does
     readonly property bool fishManual: !!root.status && !root.fishInstalled && root.fishCard === "unavailable"
-    readonly property var loginJobs: Object.values(ExtrasService.jobs || {}).filter(j => j && j.kind === "login")
+    readonly property var loginJobs: Choice.loginJobs(ExtrasService.jobs)
     readonly property string login: Choice.loginState(root.status, root.choices.fishDefault === true, root.fishCard, root.loginJobs)
     readonly property bool tickPrompt: root.choices.termPrompt === true
     readonly property bool tickFish: root.choices.termFish === true && root.login !== "failed"

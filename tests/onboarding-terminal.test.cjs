@@ -51,12 +51,19 @@ test("Continue applies what is ticked and still to do", () => {
 
 test("login state: pending while it runs, failed after a cancelled password", () => {
     assert.strictEqual(C.loginState(fresh, false, "selectable", []), "none");
-    assert.strictEqual(C.loginState(null, true, "selectable", []), "unknown");
+    assert.strictEqual(C.loginState(null, false, "selectable", []), "unknown");
+    assert.strictEqual(C.loginState(null, true, "selectable", []), "pending");
     assert.strictEqual(C.loginState(fresh, true, "installing", []), "pending");
     assert.strictEqual(C.loginState(fresh, true, "installed", [{ kind: "login", state: "running" }]), "pending");
     assert.strictEqual(C.loginState(fresh, true, "installed", [{ kind: "login", state: "failed", reason: "auth_cancelled" }]), "failed");
     assert.strictEqual(C.loginState(fresh, true, "failed", []), "failed");
     assert.strictEqual(C.loginState({ ...fresh, fishIsLoginShell: true }, true, "installed", [{ state: "failed" }]), "ok");
+});
+
+test("login jobs are the chsh jobs of the extras queue", () => {
+    const jobs = { a: { kind: "loginshell", state: "failed" }, b: { kind: "system", state: "failed" }, c: null };
+    assert.deepStrictEqual(C.loginJobs(jobs), [{ kind: "loginshell", state: "failed" }]);
+    assert.deepStrictEqual(C.loginJobs(null), []);
 });
 
 test("the summary never claims the prompt for a shell that does not load it", () => {
