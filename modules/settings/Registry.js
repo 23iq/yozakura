@@ -52,6 +52,7 @@ var EDITORS = {
     "OcrLanguages": "editors/OcrLanguages.qml",
     "TerminalGlassLink": "editors/TerminalGlassLink.qml",
     "TerminalLookEditor": "editors/TerminalLookEditor.qml",
+    "FastfetchEditor": "editors/FastfetchEditor.qml",
     "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
     "NotificationsStatus": "editors/NotificationsStatus.qml",

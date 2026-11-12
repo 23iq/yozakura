@@ -32,6 +32,8 @@ pkg/yozd/
 │   ├── mock/        test compositor (call tracking, error injection)
 │   └── wayland/     generated protocol bindings (see wayland/AGENTS.md)
 ├── config/          TOML loader (imports), types -> ipc.Config, apply, watcher
+│                    (LoadAndWatch: watches the directories, so a TOML
+│                    created after the start is applied)
 ├── server/          socket server + method dispatch (server.go), idle
 │                    monitors/inhibitors (idle.go; flips are broadcast with
 │                    a seq, idle_events.go, and reach the shell's

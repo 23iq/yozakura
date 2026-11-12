@@ -13,6 +13,7 @@ func runStartupMigrations(shellStart bool) {
 	markExistingInstallOnboarded()
 	markLegacyKeyboard()
 	migrateNotchStyle()
+	migrateTerminalGreeting()
 	markLegacyAppHooks()
 	shiftDefaults()
 	ensureConfigFiles()

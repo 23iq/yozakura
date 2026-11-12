@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -24,6 +25,9 @@ type terminalEnv struct {
 	config func() termrun.Config
 	home   func() string
 	start  func(argv []string) error
+	// The $SHELL a new terminal gets after a chsh during this session,
+	// as the daemon reports it ("" or nil: argv as it is).
+	sessionShell func() string
 }
 
 func defaultTerminalEnv() terminalEnv {
@@ -31,6 +35,8 @@ func defaultTerminalEnv() terminalEnv {
 		config: storedTerminalConfig,
 		home:   func() string { h, _ := os.UserHomeDir(); return h },
 		start:  startDetached,
+
+		sessionShell: daemonTerminalShell,
 	}
 }
 
@@ -90,9 +96,39 @@ func runTerminal(args []string, env terminalEnv, errOut io.Writer) int {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
 	}
+	argv = withSessionShell(argv, env.sessionShell)
 	if err := env.start(argv); err != nil {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
 	}
 	return 0
+}
+
+// withSessionShell is termrun.WithShell with the lookup of an env (nil:
+// argv as it is).
+func withSessionShell(argv []string, shell func() string) []string {
+	if shell == nil {
+		return argv
+	}
+	return termrun.WithShell(argv, shell())
+}
+
+// daemonTerminalShell asks the running daemon for term.status
+// terminalShell: only it knows the passwd shell the session started with
+// ("" when it is not running or no chsh happened).
+func daemonTerminalShell() string {
+	if !isAlive() {
+		return ""
+	}
+	raw, err := newClient().Call("term.status", nil)
+	if err != nil {
+		return ""
+	}
+	var st struct {
+		TerminalShell string `json:"terminalShell"`
+	}
+	if json.Unmarshal(raw, &st) != nil {
+		return ""
+	}
+	return st.TerminalShell
 }

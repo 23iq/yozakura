@@ -31,7 +31,7 @@ var category = {
     "icon": "circuitry",
     "title": "prefs.cat.system",
     "description": "prefs.cat.system.desc",
-    "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard",
+    "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard polkit password",
     "sections": [
         {
             "id": "language",
@@ -246,6 +246,20 @@ var category = {
             "entries": [
                 command("system.idle.general.before_sleep_cmd", "settings.system.before_sleep", "prefs.sys.before_sleep.desc", "idle.before_sleep", "suspend sleep before lock command power"),
                 command("system.idle.general.after_sleep_cmd", "settings.system.after_sleep", "prefs.sys.after_sleep.desc", "idle.after_sleep", "resume wake after sleep command power screen on")
+            ]
+        },
+        {
+            "id": "auth",
+            "title": "prefs.sys.section.auth",
+            "entries": [
+                {
+                    "key": "system.polkitAgent",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "prefs.sys.polkit_agent",
+                    "description": "prefs.sys.polkit_agent.desc",
+                    "keywords": "polkit password prompt authentication agent pkexec sudo admin root hyprpolkitagent dialog"
+                }
             ]
         },
         {

@@ -286,11 +286,16 @@ Singleton {
     }
 
     // What a separate wizard cannot see itself: whether one of this shell's
-    // panels is open (the keybind tour waits for it to close) and the
-    // bottom bar of its screen (the peek pill sits above it).
+    // panels is open (the keybind tour waits for it to close), the bottom
+    // bar of its screen (the peek pill sits above it) and this shell's
+    // polkit agent (only this process holds one): registered, the wizard
+    // stays up during an install's password wait; its dialog open, the
+    // wizard gives the keyboard to it.
     readonly property var _shellState: root.wizardRunning && !root._wizardInProcess ? ({
             "panelOpen": Visibilities.currentActiveModule !== "" || GlobalStates.assistantVisible === true || GlobalStates.settingsWindowVisible === true,
-            "bottomZone": (Visibilities.reservations[OnboardingService.screenName] || {}).bottomZone || 0
+            "bottomZone": (Visibilities.reservations[OnboardingService.screenName] || {}).bottomZone || 0,
+            "polkitRegistered": PolkitService.registered === true,
+            "polkitDialogOpen": PolkitService.dialogOpen === true
         }) : null
     on_ShellStateChanged: root._sendShellState()
     function _sendShellState() {

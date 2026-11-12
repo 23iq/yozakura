@@ -209,6 +209,7 @@ def wizard_scene(name: str, role: str):
         "OnboardingService": ONBOARDING,
         "StateService": "pragma Singleton\nQtObject { property bool initialized: false }",
         "ExclusiveService": "pragma Singleton\nQtObject { property bool busy: false }",
+        "PolkitService": "pragma Singleton\nQtObject { property bool registered: false; property bool dialogOpen: false }",
         "Visibilities": "pragma Singleton\nQtObject { property var reservations: ({}); "
                         "function registerReservation(n, r) { const m = Object.assign({}, reservations); m[n] = r; reservations = m } }",
     })
@@ -239,6 +240,15 @@ check(ew("PreviewSink.links") == 1, "it links the shared staging")
 ew("BackendService.emit('windows.relay', { to: 'onboarding', topic: 'shell.state', data: { panelOpen: true, bottomZone: 48 } })")
 check(ew("OnboardingService.shellPanelOpen") is True, "takes the main shell's panel state (keybind tour)")
 check(ew("Visibilities.reservations['HDMI-A-1'].bottomZone") == 48, "...and its bottom bar (peek pill)")
+check(ew("PolkitService.registered") is False and ew("PolkitService.dialogOpen") is False,
+      "no agent here: PolkitService stays off until the main shell says otherwise")
+ew("BackendService.emit('windows.relay', { to: 'onboarding', topic: 'shell.state', "
+   "data: { panelOpen: false, bottomZone: 48, polkitRegistered: true, polkitDialogOpen: true } })")
+check(ew("PolkitService.registered") is True and ew("PolkitService.dialogOpen") is True,
+      "...the main shell's polkit agent state (the wizard stays for its dialog and yields the keyboard)")
+ew("BackendService.emit('windows.relay', { to: 'onboarding', topic: 'shell.state', "
+   "data: { panelOpen: true, bottomZone: 48, polkitRegistered: true, polkitDialogOpen: false } })")
+check(ew("PolkitService.dialogOpen") is False, "...and takes the keyboard back when the dialog closes")
 ew("BackendService.emit('windows.relay', { to: 'settings', topic: 'shell.state', data: { panelOpen: false } })")
 check(ew("OnboardingService.shellPanelOpen") is True, "a relay for another window is ignored")
 ew("OnboardingService.peek = true")

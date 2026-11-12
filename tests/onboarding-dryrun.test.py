@@ -43,7 +43,13 @@ OK_ID, FAIL_ID = ids[0], ids[1]
 READS = {"displays.list": OUTPUTS, "displays.conflicts": [],
          "extras.catalog": {**CATALOG, "platform": PLATFORM}, "extras.status": STATUS,
          "keyboard.catalog": {"layouts": [], "options": [], "groups": []},
-         "exclusive.status": {"active": False, "compositor": "hyprland", "reason": ""}}
+         "exclusive.status": {"active": False, "compositor": "hyprland", "reason": ""},
+         # the terminal step's defaults (a fresh bash user, fish installed)
+         "term.presets": [{"id": "sakura-powerline", "name": "Sakura Powerline", "description": "x",
+                           "nerdFont": False, "lines": 1}],
+         "term.status": {"enabled": False, "engine": "starship", "fishInstalled": True, "fishPath": "/usr/bin/fish",
+                         "fishIsLoginShell": False, "loginShell": "/bin/bash", "foreignPromptInit": False,
+                         "engineInstalled": {"starship": True, "ohmyposh": False}}}
 
 # Socket stub: one shared wire records every request line and answers from READS.
 WIRE = """pragma Singleton
@@ -87,7 +93,9 @@ assert "var INSTALL_MS = 4000;\nvar INSTALL_STEP_MS = 500;" in dry
 (services / "DryRunBackend.js").write_text(dry.replace("var INSTALL_MS = 4000;\nvar INSTALL_STEP_MS = 500;",
                                                          "var INSTALL_MS = 1000;\nvar INSTALL_STEP_MS = 125;"))
 backend = (REPO / "modules/services/BackendService.qml").read_text().replace("pragma Singleton\n", "")
-h.module("qs.modules.services", {"BackendService": "pragma Singleton\n" + backend})
+h.module("qs.modules.services", {"BackendService": "pragma Singleton\n" + backend,
+                                 # the real one: the terminal step's Continue goes through it
+                                 "TerminalLookService": (REPO / "modules/services/TerminalLookService.qml").read_text()})
 
 win = h.load("""
 import QtQuick
@@ -198,6 +206,21 @@ wait_until(lambda: "weather.get" in sent() and "unmocked call nightlight.set" in
 check("nightlight.set" not in sent(), f"an unknown method never reaches the backend: {sent()}")
 check("unmocked call nightlight.set" in journal(), f"it is journaled, got {journal()}")
 check("weather.get" in sent(), "a known read still does")
+
+# Terminal step on a first run: the preselected prompt + login shell are
+# applied by Continue as journal lines; nothing reaches the socket.
+ev("Config.general.onboardingDone = false")
+ev(f"wizard.go({STEPS.index('terminal')})")
+wait_until(lambda: ev("TerminalLookService.status !== null") and vfind("fishDefault") is not None
+           and h.eval(vfind("fishDefault"), "checked") is True)
+check(h.eval(vfind("fishDefault"), "checked") is True and h.eval(vfind("promptOn"), "checked") is True,
+      "dry run: the first-run defaults are shown")
+ev("wizard.next()")
+wait_until(lambda: "set login shell /usr/bin/fish" in journal())
+check("enable prompt sakura-powerline (starship)" in journal(), f"the prompt is journaled, got {journal()}")
+check("set login shell /usr/bin/fish" in journal(), f"the login shell change is journaled, got {journal()}")
+settle()
+check(not {"extras.setLoginShell", "term.apply"} & set(sent()), f"no terminal change reached the backend: {sent()}")
 
 if h.type_errors:
     failures.append("type errors: " + "; ".join(h.type_errors))

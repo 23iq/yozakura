@@ -29,6 +29,13 @@ type fakeShell struct {
 	alerts   chan string
 	tick     chan time.Time
 	gone     bool // the compositor exited
+	lost     int  // shellLost calls
+}
+
+func (f *fakeShell) lostCalls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.lost
 }
 
 func newFakeShell(t *testing.T) (*Daemon, *fakeShell) {
@@ -73,6 +80,11 @@ func newFakeShell(t *testing.T) (*Daemon, *fakeShell) {
 			f.mu.Lock()
 			defer f.mu.Unlock()
 			return f.gone
+		},
+		shellLost: func() {
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			f.lost++
 		},
 	}
 	return d, f
@@ -160,6 +172,9 @@ func TestSuperviseRestartsWithBackoffThenGivesUp(t *testing.T) {
 	if d.qsPid.Load() != 0 {
 		t.Fatal("a dead shell is still tracked")
 	}
+	if n := f.lostCalls(); n != 1 {
+		t.Fatalf("shellLost ran %d times on a crash loop, want 1 (the polkit fallback)", n)
+	}
 }
 
 // A failed start counts as an exit and is retried.
@@ -184,6 +199,9 @@ func TestSuperviseRetriesFailedStart(t *testing.T) {
 	sig <- syscall.SIGTERM
 	if err := waitResult(t, res); err != nil {
 		t.Fatalf("signal shutdown: %v", err)
+	}
+	if n := f.lostCalls(); n != 0 {
+		t.Fatalf("shellLost ran on restarts and a requested shutdown (%d)", n)
 	}
 }
 

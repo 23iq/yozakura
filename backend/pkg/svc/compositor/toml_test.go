@@ -1,8 +1,13 @@
 package compositor
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"yozakura/backend/pkg/yozd/config"
+	"yozakura/backend/pkg/yozd/ipc/niri"
 )
 
 func sampleInput() Input {
@@ -418,5 +423,48 @@ func TestRenderWindowRules(t *testing.T) {
 	}
 	if strings.Count(out, "[[window_rules]]") != 2 {
 		t.Fatalf("want 2 rules:\n%s", out)
+	}
+}
+
+// The startup line names the command that starts the shell (the launcher,
+// else the installed binary by path), not a bare name the compositor's PATH
+// may not resolve; quoted for the shell when the path needs it.
+func TestRenderStartsTheShellByPath(t *testing.T) {
+	old := shellBinary
+	defer func() { shellBinary = old }()
+	for bin, want := range map[string]string{
+		"/home/u/.local/bin/yozakura": `exec-once = "/home/u/.local/bin/yozakura"`,
+		"/home/a b/bin/yozakura":      `exec-once = "'/home/a b/bin/yozakura'"`,
+		"/home/it's/bin/yozakura":     `exec-once = "'/home/it'\\''s/bin/yozakura'"`,
+		"yozakura":                    `exec-once = "yozakura"`,
+	} {
+		shellBinary = func() string { return bin }
+		if out := Render(Input{}, false); !strings.Contains(out, "[startup]\n"+want+"\n") {
+			t.Errorf("%q: startup section\n%s", bin, out[:strings.Index(out, "[startup]")+80])
+		}
+	}
+}
+
+// What yozd makes of it: niri spawns the path itself, a quoted one through sh.
+func TestRenderedStartupReachesNiri(t *testing.T) {
+	old := shellBinary
+	defer func() { shellBinary = old }()
+	for bin, want := range map[string]string{
+		"/opt/bin/yozakura":      `spawn-at-startup "/opt/bin/yozakura"`,
+		"/home/a b/bin/yozakura": `spawn-at-startup "sh" "-c" "'/home/a b/bin/yozakura'"`,
+	} {
+		shellBinary = func() string { return bin }
+		path := filepath.Join(t.TempDir(), "yozd.toml")
+		if err := os.WriteFile(path, []byte(Render(Input{}, false)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		cfg, err := config.LoadConfig(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ic := cfg.ToIPCConfig()
+		if out := niri.NewGenerator().GenerateStartup(ic.Exec, ic.ExecOnce); !strings.Contains(out, want+"\n") {
+			t.Errorf("%q: niri startup\n%s", bin, out)
+		}
 	}
 }

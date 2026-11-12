@@ -237,14 +237,26 @@ h.eval(other, 'text = "  wezterm "; accepted()')
 check(ev("Config.general.terminal") == "wezterm", "Other… writes any terminal command")
 card = vfind(win, "promptCard:plain")
 check(card is not None, "prompt gallery shows the presets")
+# The prompt is off: no card looks picked (one that does is never clicked,
+# and nothing would be applied).
+ev("Config.terminal.prompt = 'sakura-powerline'; Config.terminal.enabled = false")
+sakura = vfind(win, "promptCard:sakura-powerline")
+check(sakura is not None and h.eval(sakura, "selected") is False, "no card is marked while the prompt is off")
+# Ticking "use this prompt" marks the card it switches on; nothing is applied
+# before Continue (tests/onboarding-terminal-ui.test.py).
+h.eval(vfind(win, "promptOn"), "toggled(true)")
+check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == [], "a tick applies nothing before Continue")
+check(h.eval(sakura, "selected") is True, "the ticked prompt is marked")
+h.eval(vfind(win, "promptOn"), "toggled(false)")
 if card is not None:
     h.eval(card, "clicked()")
+check(h.eval(card, "selected") is True, "the picked card is marked")
 check(ev("Config.terminal.prompt") == "plain" and ev("wizard.choices.prompt") == "plain", "picking a prompt writes terminal.prompt and is remembered")
 check(h.find(win, "fishDefault") is not None, "Make fish my default shell row")
 # the toggle shows what happened: a failed fish install / chsh unchecks it
 ev('wizard.remember("fishDefault", true)')
 check(h.eval(h.find(win, "fishDefault"), "checked") is True, "a requested fish default shows checked while it runs")
-ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "login", entries: [], state: "failed", reason: "auth_cancelled"}})')
+ev('ExtrasService.jobs = ({"login-1": {job: "login-1", kind: "loginshell", entries: [], state: "failed", reason: "auth_cancelled"}})')
 check(h.eval(h.find(win, "fishDefault"), "checked") is False, "a failed chsh shows unchecked")
 ev('ExtrasService.jobs = ({})')
 check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == ["plain"], "the gallery turns the prompt on through enablePrompt")
@@ -368,6 +380,32 @@ ev("OnboardingService.peek = true")
 check(h.eval(vprobe, "vis") is False, "wizard window is unmapped while peeking")
 h.eval(h.find(pwin, "peekBack"), "clicked()")
 check(h.eval(vprobe, "vis") is True, "wizard window is mapped again after Back to setup")
+# An install at the password prompt: the polkit dialog is a normal window
+# under the wizard's Overlay layer, so the wizard steps aside until it is
+# answered.
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running", auth: true})')
+check(h.eval(vprobe, "vis") is False, "wizard window is unmapped while an install waits for the password")
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running"})')
+check(h.eval(vprobe, "vis") is True, "wizard window comes back once the password was given")
+# The shell's own agent is registered: its dialog comes up above the
+# wizard, which stays mapped and only hands it the keyboard while open.
+ev("PolkitService.registered = true")
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running", auth: true})')
+check(h.eval(vprobe, "vis") is True, "with the in-shell polkit agent the wizard stays mapped during the password prompt")
+kbd = re.search(r"^\s*WlrLayershell\.keyboardFocus: (.+)$", winsrc, re.M).group(1)
+kprobe = h.load("import QtQuick\nimport qs.modules.services\nQtObject {\n"
+                "    readonly property int none: 0\n    readonly property int exclusive: 1\n"
+                "    property int focus: " + kbd.replace("WlrKeyboardFocus.None", "none").replace("WlrKeyboardFocus.Exclusive", "exclusive")
+                + "\n}", auto_stub=False)
+check(h.eval(kprobe, "focus") == 1, "wizard keeps the exclusive keyboard focus until the dialog opens")
+ev("PolkitService.dialogOpen = true")
+check(h.eval(kprobe, "focus") == 0, "the wizard gives the keyboard to the open password dialog")
+ev("PolkitService.dialogOpen = false")
+check(h.eval(kprobe, "focus") == 1, "and takes it back when the dialog closes")
+ev("PolkitService.registered = false")
+check(h.eval(vprobe, "vis") is False, "an external agent (ours not registered): the wizard steps aside as before")
+ev('ExtrasService.jobs = ({})')
+ev('ExtrasService.progress = ({})')
 check("mask: Region" in (Path(__file__).resolve().parents[1] / "modules/onboarding/OnboardingPeekPill.qml").read_text(), "pill window masks input to the pill")
 # open() while visible neither resets nor overwrites progress
 ev("wizard.go(2)")

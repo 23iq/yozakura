@@ -38,19 +38,6 @@ func startServer(t *testing.T, svcs ...*Service) (net.Conn, *bufio.Reader) {
 	return conn, bufio.NewReader(conn)
 }
 
-func readResponse(t *testing.T, r *bufio.Reader) Response {
-	t.Helper()
-	line, err := r.ReadBytes('\n')
-	if err != nil {
-		t.Fatalf("read: %v", err)
-	}
-	var resp Response
-	if err := json.Unmarshal(line, &resp); err != nil {
-		t.Fatalf("decode %q: %v", line, err)
-	}
-	return resp
-}
-
 // panicChildEnv selects the panic case a re-executed test binary runs.
 const panicChildEnv = "YOZAKURA_IPC_PANIC_CHILD"
 

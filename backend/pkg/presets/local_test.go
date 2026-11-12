@@ -333,3 +333,30 @@ func TestPresetsNeverTouchThePamService(t *testing.T) {
 	assert.NoError(t, err)
 	pam("revert")
 }
+
+// The greeting edits ~/.bashrc / ~/.zshrc: a preset never switches it on
+// or off, while it can carry the look.
+func TestPresetNeverSwitchesTheGreeting(t *testing.T) {
+	m := newManager(t)
+	assert.True(t, m.Cat.MachineLocal("terminal.greeting"))
+	assert.True(t, m.Cat.MachineLocal("terminal.fastfetchLogoPath"))
+	for _, k := range []string{"terminal.fastfetchPreset", "terminal.fastfetchLogo"} {
+		assert.False(t, m.Cat.MachineLocal(k), k)
+	}
+	writeLive(t, m, "terminal", `{"greeting": "none", "fastfetchPreset": "own"}`)
+	saved, err := m.Save("Mine", nil, false)
+	assert.NoError(t, err)
+	data, _ := os.ReadFile(filepath.Join(saved.Path, "terminal.json"))
+	assert.NotContains(t, string(data), "greeting")
+	if assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "terminal.json"),
+		[]byte(`{"greeting": "fastfetch", "fastfetchPreset": "boxed", "fastfetchLogo": "none"}`), 0o644)) {
+		_, _, err = m.Apply("Mine")
+		assert.NoError(t, err)
+		var got map[string]any
+		data, _ := os.ReadFile(m.Store.File("terminal"))
+		assert.NoError(t, json.Unmarshal(data, &got))
+		assert.Equal(t, "none", got["greeting"])
+		assert.Equal(t, "boxed", got["fastfetchPreset"])
+		assert.Equal(t, "none", got["fastfetchLogo"])
+	}
+}

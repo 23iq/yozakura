@@ -40,6 +40,9 @@ type Progress struct {
 	// PostError: the job succeeded but a post action (app theming hook)
 	// failed; the entry is installed, its integration is not.
 	PostError string `json:"postError,omitempty"`
+	// Auth: the running job waits for the user's password (a polkit
+	// dialog is up, or about to be).
+	Auth bool `json:"auth,omitempty"`
 }
 
 const maxPhase = 120

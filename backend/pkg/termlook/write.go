@@ -27,7 +27,12 @@ type Config struct {
 // installed (nil means "not installed"). CacheHome defaults to Home/.cache.
 type Env struct {
 	Home, ConfigHome, CacheHome, AppID string
-	LookPath                           func(string) (string, bool)
+	// DataHome holds the record of rc files the greeting created
+	// (default Home/.local/share); ZDotDir is where zsh reads .zshrc
+	// (default: ResolveZDotDir, then Home; see ZshDotDir).
+	DataHome, ZDotDir string
+	ResolveZDotDir    func() string
+	LookPath          func(string) (string, bool)
 }
 
 func (e Env) look(bin string) (string, bool) {

@@ -66,6 +66,7 @@ h.singleton('qs.modules.services', 'BackendService', '''QtObject {
         cb(error ? null : { ok: true }, error || undefined);
     }
 }''')
+h.singleton('qs.modules.services', 'PolkitService', 'QtObject { property bool available: false }')
 
 # gatherInput() reads the whole config tree; the test only needs a payload
 # that says which revision of the state was sent.
@@ -210,6 +211,19 @@ check('a late answer does not end the write in flight', backend('starts') == n +
 h.eval(writer, 'BackendService.answer(null)')
 wait_until(lambda: backend('starts') == n + 2)
 check('the answer of the write in flight sends the queued one', '"revision":54' in last_payload())
+
+# The shell's own polkit agent comes up (or goes): the config is rewritten so
+# the next login starts no external agent next to it (shellPolkit).
+h.eval(writer, 'BackendService.answer(null)')
+pump(DEBOUNCE + 50)
+n = backend('starts')
+h.eval(writer, 'revision = 60; PolkitService.available = true')
+wait_until(lambda: backend('starts') == n + 1)
+check('the in-shell polkit agent becoming available rewrites the config', '"revision":60' in last_payload(),
+      f'(starts={backend("starts")})')
+h.eval(writer, 'BackendService.answer(null)')
+src = (Path(__file__).resolve().parents[1] / 'modules/services/CompositorTomlWriter.qml').read_text()
+check('the payload tells the backend about the shell agent', 'shellPolkit: PolkitService.available,' in src)
 
 shutil.rmtree(tmp, ignore_errors=True)
 sys.exit(0 if ok_all else 1)

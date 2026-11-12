@@ -1,11 +1,26 @@
 package ipc
 
 import (
+	"bufio"
 	"encoding/json"
 	"sync"
 	"testing"
 	"time"
 )
+
+// readResponse reads the next answer on a test connection.
+func readResponse(t *testing.T, r *bufio.Reader) Response {
+	t.Helper()
+	line, err := r.ReadBytes('\n')
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	var resp Response
+	if err := json.Unmarshal(line, &resp); err != nil {
+		t.Fatalf("decode %q: %v", line, err)
+	}
+	return resp
+}
 
 // A Deferred result: the handler runs in order with the connection's
 // ordered requests, its answer comes when the Deferred returns, and the

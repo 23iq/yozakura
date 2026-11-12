@@ -19,7 +19,7 @@ Singleton {
     property var platform: ({})
     // entry id -> {state, source, version, reason}
     property var status: ({})
-    // job id -> Progress {job, kind, entries, state, percent, phase, reason}
+    // job id -> Progress {job, kind, entries, state, percent, phase, reason, auth}
     property var jobs: ({})
     // entry id -> latest Progress of the job that installs it
     property var progress: ({})
@@ -47,6 +47,9 @@ Singleton {
 
     readonly property var activeJobs: ExtrasModel.activeJobs(root.jobs)
     readonly property bool busy: root.activeJobs.length > 0
+    // A job waits for the password: the polkit dialog is a normal window,
+    // so full-screen overlay surfaces (the setup wizard) step aside.
+    readonly property bool awaitingAuth: ExtrasModel.awaitingAuth(root.jobs)
 
     property bool _catalogRequested: false
     property bool _subscribed: false
@@ -291,6 +294,24 @@ Singleton {
             root.offline = true;
         else if (p.state === "done" || p.state === "cancelled")
             detectAfterDone.restart();
+    }
+
+    // The install queue lives in the daemon: a lost connection (a daemon
+    // restart) must not leave a running job, or its password wait
+    // (awaitingAuth), behind. Reconnecting resubscribes, and the
+    // subscription's snapshot brings back the jobs still there.
+    function _connectionLost() {
+        root.jobs = ExtrasModel.withoutActive(root.jobs);
+        root.progress = ExtrasModel.withoutActive(root.progress);
+    }
+
+    property Connections backendWatch: Connections {
+        target: BackendService
+        ignoreUnknownSignals: true
+        function onSocketAvailableChanged() {
+            if (!BackendService.socketAvailable)
+                root._connectionLost();
+        }
     }
 
     function _subscribe() {

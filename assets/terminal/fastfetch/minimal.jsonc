@@ -1,0 +1,16 @@
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "type": "none"
+    },
+    "display": {
+        "key": {"type": "none"},
+        "color": {"title": "bold_magenta"},
+        "duration": {"abbreviation": true, "spaceBeforeUnit": "never"}
+    },
+    "modules": [
+        {"type": "title", "format": "{#magenta}✿ {user-name-colored}{#light_black}@{host-name-colored}"},
+        {"type": "os", "format": "{#light_black}  {#}{pretty-name} {#light_black}· {#}{kernel-release}"},
+        {"type": "uptime", "format": "{#light_black}  up {#}{?days}{days}d {?}{hours}h {minutes}m"}
+    ]
+}

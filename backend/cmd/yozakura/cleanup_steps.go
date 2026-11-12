@@ -25,6 +25,7 @@ func init() {
 	RegisterCleanup("exclusive", cleanupExclusive)
 	RegisterCleanup("apphooks", cleanupAppHooks)
 	RegisterCleanup("fish prompt", cleanupFishHook)
+	RegisterCleanup("terminal greeting", cleanupGreeting)
 	RegisterCleanup("monitor rules", cleanupMovedMonitors)
 	RegisterCleanup("polkit autostart", cleanupPolkitLines)
 	RegisterCleanup("bin links", cleanupBinLinks)
@@ -75,6 +76,64 @@ func cleanupFishHook(env CleanupEnv) ([]string, error) {
 		return []string{"fish prompt file"}, nil
 	}
 	return nil, nil
+}
+
+// cleanupGreeting removes the fastfetch greeting: its files, the fish
+// conf.d file and the marked line in ~/.bashrc / ~/.zshrc.
+func cleanupGreeting(env CleanupEnv) ([]string, error) {
+	removed, err := removeGreeting(greetingEnv(env.Home))
+	if err != nil {
+		return removed, err
+	}
+	// this terminal's ZDOTDIR may not be the daemon's: every .zshrc the
+	// line may be in
+	tenv := greetingEnv(env.Home)
+	for _, dir := range termlook.ZshDotDirs(env.Home, greetingLook) {
+		tenv.ZDotDir = dir
+		more, err := removeGreeting(tenv)
+		removed = append(removed, more...)
+		if err != nil {
+			return removed, err
+		}
+	}
+	// last: the record lists the directories removed above
+	forgot, err := termlook.ForgetGreeting(greetingEnv(env.Home))
+	if forgot {
+		removed = append(removed, "fastfetch greeting record")
+	}
+	return removed, err
+}
+
+func greetingLook(bin string) (string, bool) {
+	p, err := exec.LookPath(bin)
+	return p, err == nil
+}
+
+func greetingEnv(home string) termlook.Env {
+	data := os.Getenv("XDG_DATA_HOME")
+	if data == "" {
+		data = filepath.Join(home, ".local", "share")
+	}
+	// zsh's real startup dir, found the way the daemon finds it (this
+	// terminal's ZDOTDIR may differ from the daemon's); ~/.zshrc is
+	// cleaned as well
+	return termlook.Env{Home: home, ConfigHome: filepath.Dir(paths.New().ConfigDir), AppID: brand.AppID,
+		DataHome: data, ResolveZDotDir: func() string { return termlook.ZshDotDir(home, greetingLook) }}
+}
+
+func removeGreeting(tenv termlook.Env) ([]string, error) {
+	before := termlook.GreetingState(termlook.GreetingConfig{}, tenv)
+	if err := termlook.RemoveGreeting(tenv); err != nil {
+		return nil, err
+	}
+	after := termlook.GreetingState(termlook.GreetingConfig{}, tenv)
+	var removed []string
+	for i, sh := range before.Shells {
+		if sh.State == termlook.ShellOn && after.Shells[i].State != termlook.ShellOn {
+			removed = append(removed, "fastfetch greeting in "+sh.File)
+		}
+	}
+	return removed, nil
 }
 
 func cleanupMovedMonitors(env CleanupEnv) ([]string, error) {

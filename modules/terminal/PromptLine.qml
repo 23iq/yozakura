@@ -76,7 +76,45 @@ Item {
                 visible: run.modelData.bg !== ""
                 color: run.modelData.bg || "transparent"
             }
+            // block elements: boxes per cell, the rest of the run's
+            // characters in the font (TermModel.blockBoxes)
+            readonly property bool blocks: TermModel.hasBlocks(run.modelData.text)
+            readonly property var chars: run.blocks ? Array.from(run.modelData.text) : []
+            Repeater {
+                model: run.chars
+                delegate: Item {
+                    id: cellItem
+                    required property string modelData
+                    required property int index
+                    readonly property var boxes: TermModel.blockBoxes(modelData)
+                    x: Math.round(cellItem.index * run.width / run.chars.length)
+                    width: Math.round((cellItem.index + 1) * run.width / run.chars.length) - x
+                    height: root.lineHeight
+                    Repeater {
+                        model: cellItem.boxes || []
+                        delegate: Mark {
+                            required property var modelData
+                            radius: 0
+                            x: Math.round(modelData[0] * cellItem.width)
+                            y: Math.round(modelData[1] * cellItem.height)
+                            width: Math.round(modelData[2] * cellItem.width) - x
+                            height: Math.round(modelData[3] * cellItem.height) - y
+                            color: run.modelData.fg || root.foreground
+                        }
+                    }
+                    KitText {
+                        visible: !cellItem.boxes
+                        y: Math.round((root.lineHeight - regular.height) / 2)
+                        text: cellItem.modelData
+                        color: run.modelData.fg || root.foreground
+                        font.family: root.fontFamily
+                        font.pixelSize: root.pixelSize
+                        font.weight: run.modelData.bold ? Font.Bold : Font.Normal
+                    }
+                }
+            }
             KitText {
+                visible: !run.blocks
                 y: Math.round((root.lineHeight - regular.height) / 2)
                 text: run.modelData.text
                 color: run.modelData.fg || root.foreground

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/binds"
+	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/catalog"
 	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/mcp/yozakura"
@@ -25,7 +26,9 @@ func Store() (*catalog.Store, error) {
 }
 
 // Host returns the real environment: the running compositor, systemctl,
-// the config store for the import and a reload through yozd.
+// the config store for the import and a reload through yozd. The minimal
+// entry starts `<app> polkit-fallback`: the external polkit agent only
+// while the shell does not register its own (decided at login).
 func Host() exclusive.Options {
 	home, _ := os.UserHomeDir()
 	return exclusive.Options{
@@ -33,7 +36,7 @@ func Host() exclusive.Options {
 		HyprDir:    paths.HyprDir(),
 		DataDir:    paths.New().DataDir,
 		Compositor: binds.DetectCompositor(),
-		Polkit:     compositor.PolkitCommand(),
+		Polkit:     compositor.FallbackCommand(paths.Launcher(brand.AppID)),
 		Systemd:    exclusive.ExecSystemd{},
 		Import:     importSettings,
 		Unimport:   unimportSettings,

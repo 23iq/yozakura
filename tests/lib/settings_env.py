@@ -659,7 +659,15 @@ QtObject {
     property bool fishInstalled: true
     property string fontFamily: "monospace"
     property real fontPixelSize: 15
+    property var fetchPresets: []
+    property var fetchPreviews: ({})
+    property var greeting: null
+    property bool fastfetchInstalled: true
     function load() {}
+    function ensureFetch(preset, logo, path) {}
+    function installFastfetch() {}
+    function enableGreeting(preset, logo) {}
+    function allowGreetingShells() {}
     function refreshStatus() {}
     function previewOf(id, engine) { return undefined }
     function ensure(id, engine) {}

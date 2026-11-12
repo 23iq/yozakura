@@ -98,6 +98,7 @@ h.module("qs.modules.services", {
     "Visibilities": "pragma Singleton\nQtObject { property string currentActiveModule: \"\"; property var reservations: ({}); "
                     "function getForActive() { return null } }",
     "LockscreenService": "pragma Singleton\nQtObject { property bool locked: false; property bool visible: false }",
+    "PolkitService": (REPO / "modules/services/PolkitService.qml").read_text(),
     "OnboardingService": """pragma Singleton
 QtObject {
     property bool visible: false
@@ -414,8 +415,20 @@ check(json.loads(ev("JSON.stringify(BackendService.last('windows.open'))")) == {
       "the wizard opens as its own process on its screen")
 emit("windows.state", {"kind": "onboarding", "state": "open", "pid": 9})
 relay = json.loads(ev("JSON.stringify(BackendService.last('windows.relay'))"))
-check(relay and relay["to"] == "onboarding" and relay["data"] == {"panelOpen": False, "bottomZone": 0},
+check(relay and relay["to"] == "onboarding" and relay["data"] == {"panelOpen": False, "bottomZone": 0,
+                                                                  "polkitRegistered": False, "polkitDialogOpen": False},
       f"it is told the main shell's panel state, got {relay}")
+# the polkit agent lives only here: the wizard learns its state
+ev("PolkitService.registered = true")
+settle()
+relay = json.loads(ev("JSON.stringify(BackendService.last('windows.relay'))"))
+check(relay["data"]["polkitRegistered"] is True, f"...and that this shell's polkit agent is registered, got {relay}")
+ev("PolkitService.dialogOpen = true")
+settle()
+relay = json.loads(ev("JSON.stringify(BackendService.last('windows.relay'))"))
+check(relay["data"]["polkitDialogOpen"] is True, "...and when its password dialog opens (the wizard yields the keyboard)")
+ev("PolkitService.dialogOpen = false; PolkitService.registered = false")
+settle()
 ev("Visibilities.currentActiveModule = 'launcher'")
 settle()
 relay = json.loads(ev("JSON.stringify(BackendService.last('windows.relay'))"))

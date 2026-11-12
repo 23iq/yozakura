@@ -57,3 +57,28 @@ func TestTerminalRunDefaultsAndErrors(t *testing.T) {
 		t.Errorf("no terminal: exit %d", code)
 	}
 }
+
+func TestTerminalRunStartsTheLoginShell(t *testing.T) {
+	env, got := termTestEnv(termrun.Config{Terminal: "foot"})
+	env.sessionShell = func() string { return "/usr/bin/fish" }
+	if code := runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{}); code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+	if !reflect.DeepEqual((*got)[:3], []string{"env", "SHELL=/usr/bin/fish", "foot"}) {
+		t.Fatalf("argv %q", *got)
+	}
+	// An advanced command naming its own shell keeps it; only $SHELL changes.
+	env.config = func() termrun.Config {
+		return termrun.Config{Terminal: "kitty", Advanced: true, Template: "$TERMINAL zsh -c $COMMAND"}
+	}
+	runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{})
+	if (*got)[2] != "kitty" || (*got)[3] != "zsh" {
+		t.Fatalf("template argv changed: %q", *got)
+	}
+	// No chsh this session: the session's $SHELL stays.
+	env.sessionShell = func() string { return "" }
+	runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{})
+	if (*got)[0] != "kitty" {
+		t.Fatalf("wrapped without a chsh: %q", *got)
+	}
+}

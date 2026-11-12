@@ -15,6 +15,14 @@ Item {
     id: root
 
     readonly property string current: Config.terminal ? Config.terminal.prompt : ""
+    // Mark the configured preset only while the prompt is on (onboarding:
+    // nothing tells there that a marked card is not in use yet, and a card
+    // that looks picked is never clicked). Settings marks it either way and
+    // says the prompt is off.
+    property bool markOnlyWhenOn: false
+    // Onboarding: the prompt is ticked to be switched on (marks it too).
+    property bool chosen: false
+    readonly property bool marking: !root.markOnlyWhenOn || root.chosen || !!(Config.terminal && Config.terminal.enabled)
     readonly property string engine: TerminalLookService.engine
     readonly property int columns: width < 520 ? 1 : (width < 860 ? 2 : 3)
 
@@ -39,7 +47,7 @@ Item {
                 objectName: "promptCard:" + modelData.id
                 width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
                 previewHeight: 64
-                selected: root.current === modelData.id
+                selected: root.marking && root.current === modelData.id
                 title: modelData.name
                 subtitle: I18n.t(modelData.description)
                 onClicked: TerminalLookService.enablePrompt(modelData.id)

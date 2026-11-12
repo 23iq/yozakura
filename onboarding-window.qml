@@ -23,7 +23,8 @@ import qs.config
 // the daemon, wallpapers through the main shell (RemoteWallpapers). The
 // keybind tour hears the commands on the daemon's `ui` stream
 // (GlobalShortcuts) and the main shell tells it whether one of its panels
-// is open and where its bottom bar ends (windows.relay "shell.state").
+// is open, where its bottom bar ends and the state of its polkit agent
+// (windows.relay "shell.state"; no agent is registered here).
 // Quits when the wizard closes; the daemon reaps it.
 ShellRoot {
     id: root
@@ -113,6 +114,9 @@ ShellRoot {
         } else if (service === "windows.relay" && data.to === ProcessRole.role && data.topic === "shell.state") {
             const s = data.data || {};
             OnboardingService.shellPanelOpen = s.panelOpen === true;
+            // the main shell's polkit agent (this process holds none)
+            PolkitService.registered = s.polkitRegistered === true;
+            PolkitService.dialogOpen = s.polkitDialogOpen === true;
             Visibilities.registerReservation(OnboardingService.screenName, {
                 "bottomZone": Number(s.bottomZone) || 0
             });

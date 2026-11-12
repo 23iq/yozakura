@@ -36,6 +36,7 @@ h.singleton("qs.modules.services", "YozdService", """QtObject {
     }
 }""")
 h.copy("modules/services/Visibilities.qml", "qs/modules/services")
+h.copy("modules/services/PolkitService.qml", "qs/modules/services")
 h.module("qs.modules.services", {})
 root = h.load("""import QtQuick
 import qs.modules.services
