@@ -677,8 +677,57 @@ def test_suse_force_upgrades_and_resolves():
         sb.cleanup()
 
 
+def no_phosphor(sb):
+    """No Phosphor font yet: it is planned from the AUR."""
+    Sandbox._script(sb.bin / "fc-list", "#!/bin/bash\nexit 0\n")
+
+
+def test_aur_failure_does_not_abort():
+    sb = Sandbox("arch")
+    try:
+        no_phosphor(sb)
+        Sandbox._script(sb.bin / "paru", "#!/bin/bash\n" + LOGGER + 'echo "error: target not found: ttf-phosphor-icons"\nexit 1\n')
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"install with a failing AUR exit {rc}", err)
+        check(any("-S" in c and "ttf-phosphor-icons" in c for c in sb.calls("paru")), "AUR install not tried", sb.log.read_text())
+        check(re.search(r"AUR: ttf-phosphor-icons: failed", err), "summary lacks the AUR failure", err)
+        fonts = [c for c in sb.calls("curl") if any("phosphor-icons/web" in a for a in c)]
+        check(fonts, "no per-user Phosphor font after the AUR failed", sb.log.read_text())
+        check(["install", "niri"] in sb.calls("yozakura"), "install stopped at the AUR", sb.log.read_text())
+        # Each failure shows its own output, not an earlier step's error.
+        font_fail = err[err.find("Installing the Phosphor icon font"):]
+        check("target not found" not in font_fail.split("continuing")[0], "font failure shows the AUR's error", err)
+    finally:
+        sb.cleanup()
+
+
+def test_yay_bootstrap_failure_does_not_abort():
+    sb = Sandbox("arch")
+    try:
+        no_phosphor(sb)
+        (sb.bin / "paru").unlink()  # no helper: yay is bootstrapped (no makepkg here: it fails)
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"install with a failing yay bootstrap exit {rc}", err)
+        ups = pacman_upgrades(sb)
+        check(ups and "base-devel" in ups[0] and "git" in ups[0], f"bootstrap needs not planned: {ups}")
+        check(re.search(r"AUR helper \(yay\): failed", err), "summary lacks the helper failure", err)
+        check("left out: ttf-phosphor-icons" in err, "no note about the AUR packages left out", err)
+        check(any(any("phosphor-icons/web" in a for a in c) for c in sb.calls("curl")), "no per-user Phosphor font fallback")
+        check(["install", "niri"] in sb.calls("yozakura"), "install stopped at the yay bootstrap", sb.log.read_text())
+    finally:
+        sb.cleanup()
+
+
+
+
+
+
+
+
 def main():
     for test in (
+        test_aur_failure_does_not_abort,
+        test_yay_bootstrap_failure_does_not_abort,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
         test_arch_package_missing_from_repos,

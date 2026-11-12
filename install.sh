@@ -542,6 +542,10 @@ run() {
     return 0
   fi
   log "" "### $label: $*"
+  # Where this step's output starts: a failure shows its own lines, not an
+  # earlier step's error.
+  local from
+  from=$(($(wc -l <"$LOG_FILE" 2>/dev/null || echo 0) + 1))
   if [[ "$VERBOSE" == 1 ]]; then
     printf '  %s%s%s %s\n' "$C_ROSE" "$G_STEP" "$C_OFF" "$label" >&2
     "$@" 2>&1 | tee -a "$LOG_FILE" || rc=$?
@@ -562,7 +566,8 @@ run() {
     printf '  %s%s%s %s\n' "$C_RED" "$G_FAIL" "$C_OFF" "$label" >&2
     printf '%s' "$C_DIM" >&2
     # The error lines when there are any (download progress is noise).
-    { grep -iE 'error|fail|conflict|not found|denied|cannot|unable' "$LOG_FILE" | tail -n 12 || tail -n 15 "$LOG_FILE"; } | sed "s/^/    $G_PIPE /" >&2
+    { tail -n "+$from" "$LOG_FILE" | grep -iE 'error|fail|conflict|not found|denied|cannot|unable' | tail -n 12 ||
+      tail -n "+$from" "$LOG_FILE" | tail -n 15; } | sed "s/^/    $G_PIPE /" >&2
     printf '%s' "$C_OFF" >&2
     if [[ "${RUN_SOFT:-0}" == 1 ]]; then
       warn "$label failed (exit $rc); continuing.${hint:+ $hint}"
@@ -1379,15 +1384,7 @@ install_packages() {
     elif [[ "$FORCE" == 1 ]]; then
       run "Upgrading the system (pacman)" "$hint" retry sudo pacman -Syu --noconfirm "${force[@]}"
     fi
-    if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
-      if [[ "$AUR_HELPER" == yay* ]] && ! has_cmd yay; then
-        run "Bootstrapping yay (AUR helper)" "Re-run with --no-aur to skip the AUR." bootstrap_yay
-      fi
-      local helper=paru
-      has_cmd paru || helper=yay
-      run "Installing from the AUR: ${AUR_PKGS[*]}" "Re-run with --no-aur to skip the AUR." \
-        retry "$helper" -S --needed --noconfirm "${AUR_PKGS[@]}"
-    fi
+    install_aur
     ;;
   fedora)
     hint="Fix the dnf error above, $CONFLICT_HINT"
@@ -1486,6 +1483,27 @@ install_flatpaks() {
     flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   run_optional "flatpak apps" "Installing from Flathub: ${FLATPAKS[*]}" "Retry later: flatpak install --user flathub ${FLATPAKS[*]}" \
     retry flatpak install --user -y --noninteractive flathub "${FLATPAKS[@]}"
+}
+
+# install_aur: the AUR part of the plan. The AUR (or the sources its
+# packages download) can be down and a build can fail: that never ends the
+# install. What the AUR would have given has fallbacks further on: the
+# Phosphor font per user (install_phosphor), Quickshell and matugen from
+# source (verify_core); the summary names what failed.
+install_aur() {
+  [[ ${#AUR_PKGS[@]} -gt 0 ]] || return 0
+  local hint="Retry later: re-run the installer (or --no-aur to leave the AUR out)."
+  if [[ "$AUR_HELPER" == yay* ]] && ! has_cmd yay && ! has_cmd paru; then
+    if ! RUN_SOFT=1 run "Bootstrapping yay (AUR helper)" "$hint" bootstrap_yay; then
+      FAILED+=("AUR helper (yay)")
+      warn "Without an AUR helper these are left out: ${AUR_PKGS[*]}"
+      return 0
+    fi
+  fi
+  local helper=paru
+  has_cmd paru || helper=yay
+  run_optional "AUR: ${AUR_PKGS[*]}" "Installing from the AUR: ${AUR_PKGS[*]}" "$hint" \
+    retry "$helper" -S --needed --noconfirm "${AUR_PKGS[@]}"
 }
 
 bootstrap_yay() {
