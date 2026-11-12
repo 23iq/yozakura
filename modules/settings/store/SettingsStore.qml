@@ -44,6 +44,9 @@ Singleton {
     // The row under the pointer or keyboard focus: its keys light up the
     // part of the page's stage they change (StageSpot). [] = none.
     property var focusKeys: []
+    // The bar panel being edited (several bars): the Bar stage picks it
+    // with a click, the bars editor edits it.
+    property int selectedPanel: 0
     property var _focusOwner: null
 
     // A row is pointed at (hovered / focused) or no longer: the last one

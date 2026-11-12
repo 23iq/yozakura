@@ -6,13 +6,13 @@ import qs.modules.services
 import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.controls
-import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../PanelsModel.js" as PanelsModel
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 
-// bar.panels editor: a live schematic of the whole screen, the panel list
-// (add / remove), and for the selected panel its edge, style (visual cards),
+// bar.panels editor: the panel list (add / remove) and, for the panel
+// picked here or on the Bar stage (SettingsStore.selectedPanel, the stage
+// shows the whole screen), its edge, style (visual cards),
 // behaviour and modules (drag & drop between the style's groups). The first
 // edit of a legacy single bar turns it into bar.panels.
 Item {
@@ -20,7 +20,8 @@ Item {
 
     property var entry
     readonly property var panels: PanelsModel.panelsOf(Config.bar)
-    property int selected: 0
+    // The panel being edited: the Bar stage picks it too.
+    readonly property int selected: SettingsStore.selectedPanel
     readonly property int current: Math.max(0, Math.min(selected, panels.length - 1))
     readonly property var panel: panels.length > 0 ? panels[current] : null
     readonly property bool wide: width >= 640
@@ -39,24 +40,6 @@ Item {
         width: parent.width
         spacing: Space.l
 
-        // ── Whole-screen schematic ──
-        PreviewStage {
-            id: stage
-            width: parent.width
-            readonly property real screenH: Math.min(Math.round((parent.width - 32) * 9 / 16), 380)
-            stageHeight: screenH + 46
-
-            PanelsSchematic {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 32
-                width: Math.round(stage.screenH * 16 / 9)
-                height: Math.round(width * 9 / 16)
-                panels: root.panels
-                selected: root.current
-                onPicked: index => root.selected = index
-            }
-        }
-
         // ── Panel list ──
         Flow {
             width: parent.width
@@ -70,7 +53,7 @@ Item {
                     active: index === root.current
                     icon: Icons[PanelStyles.get(modelData.style).icon] ?? ""
                     text: modelData.id + " · " + I18n.t("common." + modelData.edge)
-                    onClicked: root.selected = index
+                    onClicked: SettingsStore.selectedPanel = index
                 }
             }
             Chip {
@@ -78,7 +61,7 @@ Item {
                 text: I18n.t("prefs.bar.panels.add")
                 onClicked: {
                     root.commit(PanelsModel.addPanel(root.panels, "classic"));
-                    root.selected = root.panels.length;
+                    SettingsStore.selectedPanel = root.panels.length;
                 }
             }
             Chip {
@@ -87,7 +70,7 @@ Item {
                 enabled: root.panels.length > 0 && !PanelsModel.isLegacy(Config.bar)
                 onClicked: {
                     PanelsModel.toSingleBar(root.panels, root.current).forEach(w => SettingsStore.set(w.key, w.value));
-                    root.selected = 0;
+                    SettingsStore.selectedPanel = 0;
                 }
             }
             Chip {
@@ -96,7 +79,7 @@ Item {
                 enabled: root.panels.length > 1
                 onClicked: {
                     root.commit(PanelsModel.removePanel(root.panels, root.current));
-                    root.selected = Math.max(0, root.current - 1);
+                    SettingsStore.selectedPanel = Math.max(0, root.current - 1);
                 }
             }
         }

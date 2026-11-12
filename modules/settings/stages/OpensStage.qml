@@ -8,39 +8,86 @@ import qs.modules.services
 import qs.modules.settings.store
 import "../../shell/hosts/HostResolve.js" as HostResolve
 
-// Stage of Bar > Where things open: your screen with the bar and the
-// island, and one surface open where it opens now (HostResolve, the same
-// rules as the shell): the one whose row is under the pointer or focus,
-// else the launcher. The surface glides to its new place when its host
-// changes; its name sits in it so the picture never needs a caption.
+// Stage of Bar > Where things open: your whole screen (ScreenMini) with
+// everything that opens drawn where it opens now (HostResolve, the same
+// rules as the shell): the launcher, dashboard, quick ask, voice and timer
+// panels, shortcut sheet, notifications, on-screen display, power menu and
+// the overview. Each is a ghost outline with its icon in its corner; the
+// one whose row is under the pointer (or that just changed) is drawn solid,
+// named and ringed, and glides to its new place. Surfaces that share a
+// place share one ghost (their icons side by side), so no label is ever
+// drawn over another.
 Stage {
     id: stage
 
-    stageHeight: Space.px(280)
+    stageHeight: Space.px(300)
 
-    // layout.<surface>.host keys -> surface ids (SurfaceRegistry.js)
+    // surface id -> {key: the setting that places it, icon, name}
     readonly property var surfaces: ({
-            "layout.launcher.host": "launcher",
-            "layout.dashboard.host": "dashboard",
-            "layout.aiquick.host": "aiquick",
-            "layout.panels.host": "panels",
-            "layout.cheatsheet.host": "cheatsheet"
+            "launcher": {
+                "key": "layout.launcher.host",
+                "icon": "magnifyingGlass",
+                "name": "prefs.dest.launcher"
+            },
+            "dashboard": {
+                "key": "layout.dashboard.host",
+                "icon": "widgets",
+                "name": "prefs.dest.dashboard"
+            },
+            "aiquick": {
+                "key": "layout.aiquick.host",
+                "icon": "sparkle",
+                "name": "prefs.layout.aiquick_host"
+            },
+            "panels": {
+                "key": "layout.panels.host",
+                "icon": "timer",
+                "name": "prefs.layout.panels_host"
+            },
+            "cheatsheet": {
+                "key": "layout.cheatsheet.host",
+                "icon": "keyboard",
+                "name": "prefs.layout.cheatsheet_host"
+            },
+            "notifications": {
+                "key": "notifications.position",
+                "icon": "bell",
+                "name": "prefs.dest.notifications"
+            },
+            "osd": {
+                "key": "layout.osd.position",
+                "icon": "speakerHigh",
+                "name": "prefs.cat.osd"
+            },
+            "powermenu": {
+                "key": "layout.powermenu.style",
+                "icon": "power",
+                "name": "prefs.cat.menus"
+            },
+            "overview": {
+                "key": "overview.style",
+                "icon": "squaresFour",
+                "name": "prefs.cat.overview"
+            }
         })
-    readonly property var names: ({
-            "launcher": "prefs.dest.launcher",
-            "dashboard": "prefs.dest.dashboard",
-            "aiquick": "prefs.layout.aiquick_host",
-            "panels": "prefs.layout.panels_host",
-            "cheatsheet": "prefs.layout.cheatsheet_host"
-        })
-    // The surface shown: the hovered row's, else the last one, else the
-    // launcher.
-    property string surface: "launcher"
+    // The surface in focus: the hovered row's, else the last one changed.
+    property string active: "launcher"
     readonly property var focusKeys: SettingsStore.focusKeys
+    function surfaceOf(key) {
+        return Object.keys(stage.surfaces).find(id => stage.surfaces[id].key === key) || "";
+    }
     onFocusKeysChanged: {
-        const hit = stage.focusKeys.map(k => stage.surfaces[k]).find(s => !!s);
+        const hit = stage.focusKeys.map(k => stage.surfaceOf(k)).find(id => id !== "");
         if (hit)
-            stage.surface = hit;
+            stage.active = hit;
+    }
+    Connections {
+        target: SettingsStore
+        function onValueSet(key) {
+            const hit = stage.surfaceOf(key);
+            if (hit)
+                stage.active = hit;
+        }
     }
 
     readonly property bool notchOn: SettingsStore.get("notch.enabled") !== false
@@ -59,162 +106,195 @@ Stage {
             },
             "cheatsheet": {
                 "host": SettingsStore.get("layout.cheatsheet.host")
+            },
+            "powermenu": {
+                "style": SettingsStore.get("layout.powermenu.style")
             }
         })
-    readonly property string host: HostResolve.resolve(stage.layout, stage.surface, {
-        "notchEnabled": stage.notchOn
-    })
     readonly property bool leftSheet: SettingsStore.get("layout.sheet.side") === "left"
-    readonly property bool dim: SettingsStore.get("layout.backdrop") !== false && (stage.host === "sheet" || stage.host === "spotlight")
-    readonly property real u: stage.width / 100
-    readonly property real barH: Math.round(Space.px(30))
-    readonly property real islandW: stage.u * 15
-    // [x, y, w, h] of the surface (px).
-    readonly property var box: {
-        const u = stage.u;
-        const h = stage.height;
-        const small = stage.surface === "aiquick" || stage.surface === "panels";
-        switch (stage.host) {
+    readonly property string notifPosition: String(SettingsStore.get("notifications.position") || "auto")
+    readonly property string osdPosition: String(SettingsStore.get("layout.osd.position") || "auto")
+
+    // [x, y, w, h] of a surface on the screen miniature.
+    function rectOf(id) {
+        const f = screen.freeRect;
+        const isl = screen.islandRect;
+        const u = Math.max(1, screen.unit);
+        const small = id === "aiquick" || id === "panels";
+        if (id === "notifications") {
+            const pos = stage.notifPosition;
+            const w = f.w * 0.24, h = f.h * 0.2;
+            const left = pos.indexOf("left") >= 0, center = pos === "top" || pos === "bottom";
+            const bottom = pos.indexOf("bottom") === 0;
+            return [center ? f.x + (f.w - w) / 2 : (left ? f.x + u * 0.5 : f.x + f.w - w - u * 0.5), bottom ? f.y + f.h - h - u * 0.5 : f.y + u * 0.5, w, h];
+        }
+        if (id === "osd") {
+            const pos = stage.osdPosition;
+            const w = f.w * 0.2, h = u * 1.4;
+            if (pos === "left" || pos === "right")
+                return [pos === "left" ? f.x + u * 0.5 : f.x + f.w - h - u * 0.5, f.y + (f.h - w) / 2, h, w];
+            return [f.x + (f.w - w) / 2, pos === "top" ? f.y + u * 0.5 : f.y + f.h - h - u * 0.8, w, h];
+        }
+        if (id === "overview")
+            return [f.x + f.w * 0.05, f.y + f.h * 0.06, f.w * 0.9, f.h * 0.88];
+        const host = HostResolve.resolve(stage.layout, id, {
+            "notchEnabled": stage.notchOn
+        });
+        switch (host) {
         case "notch":
-            return small ? [u * 37, 0, u * 26, h * 0.42] : [u * 28, 0, u * 44, h * 0.66];
+            return small ? [isl.x - u, isl.y, isl.w + u * 2, f.h * 0.34] : [isl.x - isl.w * 0.7, isl.y, isl.w * 2.4, f.h * 0.6];
         case "sheet":
-            return [stage.leftSheet ? u * 1.5 : u * 70.5, stage.barH + u * 1.5, u * 28, h - stage.barH - u * 3];
+            return [stage.leftSheet ? f.x : f.x + f.w * 0.7, f.y, f.w * 0.3, f.h];
         case "card":
-            return [u * 70, stage.barH + u * 1.5, u * 28, h * 0.42];
+            return [f.x + f.w * 0.72, f.y + u * 0.5, f.w * 0.26, f.h * 0.36];
         case "fullscreen":
-            return [u * 4, stage.barH + u * 2, u * 92, h - stage.barH - u * 4];
+            return [f.x + u, f.y + u, f.w - u * 2, f.h - u * 2];
+        case "radial":
+            return [f.x + (f.w - f.h * 0.5) / 2, f.y + f.h * 0.25, f.h * 0.5, f.h * 0.5];
         default:
-            return small ? [u * 34, h * 0.22, u * 32, h * 0.4] : [u * 25, h * 0.2, u * 50, h * 0.56];
+            return small ? [f.x + f.w * 0.36, f.y + f.h * 0.22, f.w * 0.28, f.h * 0.3] : [f.x + f.w * 0.3, f.y + f.h * 0.16, f.w * 0.4, f.h * 0.5];
         }
     }
 
-    // The bar.
-    StyledRect {
-        width: stage.width
-        height: stage.barH
-        variant: "barbg"
-        backgroundOpacity: stage.barOpacity
-        enableShadow: false
-        radius: 0
-
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            x: Space.m
-            spacing: Space.m
-            Repeater {
-                model: ["launch", "squaresFour", "dotsNine"]
-                delegate: Icon {
-                    required property string modelData
-                    required property int index
-                    icon: Icons[modelData] ?? Icons.circle
-                    role: "secondary"
-                    tone: index === 0 ? "accent" : "text"
-                }
-            }
-        }
-        KitText {
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.right: parent.right
-            anchors.rightMargin: Space.m
-            role: "secondary"
-            text: "21:47"
-            tabular: true
-        }
+    // Ghosts: surfaces grouped by the place they open in.
+    readonly property var places: {
+        const out = [];
+        Object.keys(stage.surfaces).forEach(id => {
+            const r = stage.rectOf(id).map(v => Math.round(v));
+            const key = r.join(",");
+            const at = out.find(p => p.key === key);
+            if (at)
+                at.ids.push(id);
+            else
+                out.push({
+                    "key": key,
+                    "rect": r,
+                    "ids": [id]
+                });
+        });
+        // icons of two places never sit on each other: a later one moves
+        // right until it is clear
+        const step = Math.max(1, screen.unit) * 1.4;
+        const taken = [];
+        out.forEach(p => {
+            let ax = p.rect[0];
+            const ay = p.rect[1];
+            while (taken.some(t => Math.abs(t[0] - ax) < step * t[2] && Math.abs(t[1] - ay) < step))
+                ax += step;
+            p.iconX = ax - p.rect[0];
+            taken.push([ax, ay, p.ids.length]);
+        });
+        return out;
     }
+    readonly property var activeRect: stage.rectOf(stage.active)
 
-    // The screen behind a sheet or spotlight dims (layout.backdrop).
-    Mark {
+    ScreenMini {
+        id: screen
         anchors.fill: parent
-        radius: 0
-        color: Colors.shadow
-        opacity: stage.dim ? 0.32 : 0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-    }
+        barOpacity: stage.barOpacity
+        cornerRadius: stage.radius
+        // no windows: the outlines are the picture
+        showWindows: false
 
-    // The island (it grows into the surface when the surface opens there).
-    Mark {
-        visible: stage.notchOn && stage.host !== "notch"
-        width: stage.islandW
-        height: Math.round(stage.barH * 0.8)
-        x: (stage.width - width) / 2
-        y: Math.round(stage.barH * 0.1)
-        color: Colors.surfaceContainerLowest
-    }
+        // the ghosts
+        Repeater {
+            model: stage.places
+            delegate: Item {
+                id: place
+                required property var modelData
+                x: place.modelData.rect[0]
+                y: place.modelData.rect[1]
+                width: place.modelData.rect[2]
+                height: place.modelData.rect[3]
+                z: 1
 
-    // The surface.
-    StyledRect {
-        id: surfaceBox
-        readonly property bool island: stage.host === "notch"
-        x: stage.box[0]
-        y: stage.box[1]
-        width: stage.box[2]
-        height: stage.box[3]
-        variant: island ? "bg" : "popup"
-        enableShadow: true
-        radius: Look.radius("surface", height)
-
-        Behavior on x {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        Behavior on y {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        Behavior on width {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        Behavior on height {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-
-        Column {
-            x: Space.l
-            y: (surfaceBox.island ? stage.barH * 0.6 : 0) + Space.l
-            width: parent.width - Space.l * 2
-            spacing: Space.m
-
-            KitText {
-                width: parent.width
-                role: "title"
-                text: I18n.t(stage.names[stage.surface] || "")
-                elide: Text.ElideRight
-            }
-            Mark {
-                width: parent.width
-                height: Space.controlXS
-                radius: Look.radius("control", height)
-                color: Qt.alpha(Colors.overBackground, 0.08)
-            }
-            Repeater {
-                model: 3
-                delegate: Mark {
-                    required property int index
-                    width: parent.width * (0.82 - index * 0.16)
-                    height: Space.s
-                    color: Qt.alpha(Colors.overBackground, 0.16)
+                Mark {
+                    anchors.fill: parent
+                    radius: Look.radius("small", height)
+                    color: Qt.alpha(Colors.background, 0.16)
+                    border.width: Space.hairline
+                    border.color: Qt.alpha(Colors.overBackground, 0.5)
+                }
+                Row {
+                    x: Space.xs + place.modelData.iconX
+                    y: Space.xs
+                    spacing: Space.xs
+                    Repeater {
+                        model: place.modelData.ids
+                        delegate: Icon {
+                            required property string modelData
+                            icon: Icons[stage.surfaces[modelData].icon] ?? ""
+                            role: "caption"
+                            tone: "text"
+                        }
+                    }
                 }
             }
         }
-    }
-    StageSpot {
-        anchors.fill: surfaceBox
-        keys: Object.keys(stage.surfaces).concat(["layout.sheet.side", "layout.backdrop"])
-        cornerRadius: surfaceBox.radius
+
+        // the surface in focus: solid, named, gliding to its place
+        StyledRect {
+            id: focusBox
+            z: 3
+            x: stage.activeRect[0]
+            y: stage.activeRect[1]
+            width: stage.activeRect[2]
+            height: stage.activeRect[3]
+            variant: "popup"
+            enableShadow: true
+            radius: Look.radius("small", height)
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+            Behavior on y {
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+            Behavior on width {
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+            Behavior on height {
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+
+            Row {
+                x: Space.s
+                y: Math.max(0, Math.min(Space.s, (focusBox.height - height) / 2))
+                width: parent.width - Space.s * 2
+                spacing: Space.xs
+                Icon {
+                    id: focusIcon
+                    icon: Icons[stage.surfaces[stage.active].icon] ?? ""
+                    role: "secondary"
+                    tone: "accent"
+                }
+                KitText {
+                    visible: focusBox.width > Space.px(96) && focusBox.height > Space.px(22)
+                    width: Math.max(0, parent.width - focusIcon.width - parent.spacing)
+                    role: "secondary"
+                    color: Type.text
+                    text: I18n.t(stage.surfaces[stage.active].name)
+                    elide: Text.ElideRight
+                }
+            }
+        }
+        StageSpot {
+            anchors.fill: focusBox
+            z: 4
+            keys: Object.keys(stage.surfaces).map(id => stage.surfaces[id].key).concat(["layout.sheet.side", "layout.backdrop"])
+            cornerRadius: focusBox.radius
+        }
     }
 }

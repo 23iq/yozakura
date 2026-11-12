@@ -46,7 +46,8 @@ modules/settings/
 ├── ResetModel.js           pure: which entries Reset page and the counters touch
 ├── DisabledReason.js       pure: the failing condition -> reason text / the one switch that fixes it
 ├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES
-├── stages/                 Stage.qml (frame), StageSpot.qml (highlight), <Page>Stage.qml
+├── stages/                 Stage.qml (frame), ScreenMini.qml (the whole screen, in layers),
+│                           StageSpot.qml (highlight), <Page>Stage.qml
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
@@ -243,7 +244,21 @@ Reference pages: Bar (`schema/bar.js`, `layout.js`, `stages/BarStage.qml`,
    component where it is self-contained, e.g. the bar clock face; register
    it in `Registry.THUMBS`). Options of a registry (styles, numerals) ->
    a small editor that feeds `CardSelector` (editors/IndicatorCards.qml).
-6. The stage: `stages/<Page>Stage.qml` with a `Stage` root
+6. The stage: anything that sits somewhere on the screen (Island, Dock,
+   Notifications, OSD, Desktop widgets, Lock screen, menus, overview) is
+   shown in its real position on the screen miniature, never described:
+   put a `ScreenMini` in the stage (it already draws every bar panel, the
+   island, the dock, the frame, rounded corners and the space they reserve,
+   to one scale, from the live config) and draw the page's element in its
+   `overlay` with its geometry (`freeRect`, `islandRect`, `edgeDepth(edge)`,
+   `unit`); turn layers off that only distract (`showWindows`, `showDock`,
+   `showIsland`). `selectable` + `selectedPanel` / `panelPicked(i)` make
+   the panels clickable (BarStage: SettingsStore.selectedPanel is shared
+   with the bars editor). OpensStage shows the pattern for surfaces: ghost
+   outlines with an icon for every place, the hovered / just-changed one
+   solid and named, places that coincide share one ghost (no label is ever
+   drawn over another). The stage file is `stages/<Page>Stage.qml` with a
+   `Stage` root
    (`stageHeight`), registered in `Registry.STAGES`, named by the category's
    `"stage"`. Draw the real thing: the theme's own surfaces (`StyledRect`
    variants "barbg", "popup", "bg"), kit components (they follow the look
@@ -264,6 +279,24 @@ Reference pages: Bar (`schema/bar.js`, `layout.js`, `stages/BarStage.qml`,
 11. Render the page in the five languages, dark and light, and look at it:
     clipping, overlap, alignment, blank thumbs, contrast.
 12. `make schema`, `make check`.
+
+## STAGE COMPONENTS (frame-independent)
+- `Stage` (stages/Stage.qml): `stageHeight`, default children = the
+  miniature, `wallpaper` (URL), `barOpacity`, `radius`, `backdrop`. Only
+  needs SettingsStore and the kit; any window frame can host it.
+- `ScreenMini` (stages/ScreenMini.qml): fills its parent; `showWindows`,
+  `showDock`, `showIsland`, `selectable`, `selectedPanel`, signal
+  `panelPicked(index)`, `barOpacity`, `cornerRadius`, default `overlay`
+  children in screen coordinates; read-only geometry `unit`, `freeRect`,
+  `islandRect`, `depths`, `edgeDepth(edge)`, `panels`, `sketches`.
+- `StageSpot`: `keys`, `spread`, `cornerRadius`; lit while
+  `SettingsStore.focusKeys` (set by `SettingsStore.point(owner, keys)` /
+  `unpoint(owner)`) matches a key by prefix.
+- Picture cards: `ChoiceCard` (`selected`, `title`, `subtitle`, `icon`,
+  `previewHeight`, default = picture, `clicked()`), `CardSelector`
+  (`entry` with `thumb`, `options`, `value`, `selected(value)`; pictures
+  built asynchronously), thumbs (`entry`, `value`) on `MiniScreen` (`u`,
+  `barOpacity`).
 
 ## MACROS
 Look > Feel (`schema/macros.js`): Motion, Density, Roundness, Depth, Glass.

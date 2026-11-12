@@ -141,6 +141,27 @@ QTest.mouseMove(win, QPoint(4, 4))
 QTest.qWait(80)
 check(ev("SettingsStore.focusKeys.length") == 0, "leaving the row clears it")
 
+# several bars: the stage draws them all; a click on one picks it for the editor
+PANELS = ('[{id: "top", edge: "top", style: "classic", groups: {start: ["launcher"], end: ["clock"]}},'
+          ' {id: "rail", edge: "left", style: "rail", groups: {start: ["launcher"], end: ["power"]}}]')
+ev(f"SettingsStore.set('bar.panels', {PANELS})")
+QTest.qWait(150)
+mini = ev("""(function() {
+    var found = null;
+    (function walk(it) { if (!found && it.panelPicked !== undefined) found = it; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("pageStage", w.findItem("settingsPage").item));
+    return found;
+})()""")
+check(mini is not None and h.eval(mini, "sketches.length") == 2, "the stage draws every bar")
+check(h.eval(mini, "depths.left") > 0 and h.eval(mini, "freeRect.x") >= h.eval(mini, "depths.left"),
+      "the rail's reserved space is left free")
+h.eval(mini, "panelPicked(1)")
+check(ev("SettingsStore.selectedPanel") == 1, "a click on the rail picks it")
+QTest.qWait(100)
+editor = ev('w.findItem("settingRow:bar.panels.editor")')
+check(editor is not None and h.eval(editor, "shown") is True, "the bars editor shows while several bars are set")
+ev("SettingsStore.set('bar.panels', [])")
+ev("SettingsStore.selectedPanel = 0")
+
 # ---- navigation, tabs, keep-alive ---------------------------------------------
 tabs = ev('w.findItem("destinationTabs")')
 check(tabs is not None and h.eval(tabs, "count") == 2, "Bar has two tabs")
