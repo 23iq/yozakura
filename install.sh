@@ -764,16 +764,11 @@ sudo_setup_lines() {
   local who="${1:-yourname}" wheel
   wheel="$(wheel_line)"
   case "$DISTRO" in
-  arch) printf '%s
-' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
-  fedora) printf '%s
-' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
-  suse) printf '%s
-' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
-  debian) printf '%s
-' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
-  *) printf '%s
-' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  arch) printf '%s\n' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  fedora) printf '%s\n' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
+  suse) printf '%s\n' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  debian) printf '%s\n' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
+  *) printf '%s\n' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
   esac
 }
 
