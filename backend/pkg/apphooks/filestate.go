@@ -131,7 +131,14 @@ func UpsertMarkedBlock(env Env, id, marker, path, body string) (bool, error) {
 			return false, err
 		}
 	}
-	if err := writeBlockFile(env, id, path, existed, out); err != nil {
+	// a file we created that still holds nothing but our block stays ours
+	// when the block changes (a new path in it)
+	ours := !existed
+	if existed && hasMark(env, createdKey(id, path)) {
+		rest, _ := RemoveBlock(content, marker)
+		ours = strings.TrimSpace(rest) == ""
+	}
+	if err := writeBlockFile(env, id, path, !ours, out); err != nil {
 		return false, err
 	}
 	return true, nil

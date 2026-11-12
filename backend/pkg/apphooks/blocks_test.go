@@ -147,3 +147,39 @@ func TestMarkedBlockRefusesEditedMarkers(t *testing.T) {
 		}
 	}
 }
+
+// A file we created keeps that mark when our block changes (and only while
+// it holds nothing else): off then removes it.
+func TestMarkedBlockFileCreatedSurvivesABodyChange(t *testing.T) {
+	home := t.TempDir()
+	env := Env{Home: home, ConfigHome: filepath.Join(home, ".config"), DataDir: filepath.Join(home, "data"), AppID: "app"}
+	rc := filepath.Join(home, ".zshrc")
+	for _, body := range []string{". /x", ". /y"} {
+		if _, err := UpsertMarkedBlock(env, "greet", "app fetch", rc, body); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := RevertMarkedBlock(env, "greet", "app fetch", rc); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(rc); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("created file left after a body change: %v", err)
+	}
+	// the user wrote into it: theirs from then on
+	if _, err := UpsertMarkedBlock(env, "greet", "app fetch", rc, ". /x"); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(rc)
+	if err := os.WriteFile(rc, append(data, "alias mine=1\n"...), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := UpsertMarkedBlock(env, "greet", "app fetch", rc, ". /y"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := RevertMarkedBlock(env, "greet", "app fetch", rc); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(rc); string(data) != "alias mine=1\n" {
+		t.Errorf("user content: %q", data)
+	}
+}

@@ -428,3 +428,19 @@ func TestGreetingLeavesEditedMarkersAlone(t *testing.T) {
 		t.Errorf("uninstall changed it: %q", readFile(t, rc))
 	}
 }
+
+// An rc file the greeting created goes on off even after its line changed
+// (another config dir).
+func TestGreetingRemovesItsRCAfterTheLineChanged(t *testing.T) {
+	env := greetEnv(t)
+	rc := filepath.Join(env.Home, ".bashrc")
+	cfg := GreetingConfig{On: true, Preset: "sakura", Logo: LogoSakura, LoginShell: "/bin/bash"}
+	applyGreeting(t, cfg, env)
+	env.ConfigHome = filepath.Join(env.Home, "cfg2")
+	applyGreeting(t, cfg, env)
+	cfg.On = false
+	applyGreeting(t, cfg, env)
+	if _, err := os.Stat(rc); err == nil {
+		t.Errorf("created rc left: %q", readFile(t, rc))
+	}
+}
