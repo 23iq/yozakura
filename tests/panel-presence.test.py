@@ -52,6 +52,8 @@ h.singleton("qs.config", "Config", """QtObject {
     property int animDuration: 0
     property var dock: ({ enabled: true, availableOnFullscreen: false, hoverToReveal: true })
     property var bar: ({ frameEnabled: true, availableOnFullscreen: false })
+    property int roundness: 16
+    property var theme: ({ enableCorners: true })
     property QtObject performance: QtObject {
         property bool hidePanelInFullscreen: false
         property bool splitFrame: false
@@ -123,6 +125,7 @@ h.module("qs.modules.dock", {
         property Item dockHitbox: null
     }""",
 })
+h.module("qs.modules.corners", {"ScreenCornersContent": "Item { property bool hasFullscreenWindow }"})
 h.module("qs.modules.frame", {"ScreenFrameContent": """Item {
     objectName: "frameContent"
     property var targetScreen; property bool hasFullscreenWindow
