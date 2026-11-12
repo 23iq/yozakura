@@ -159,6 +159,7 @@ OS_RELEASE = {
     "fedora": 'ID=fedora\nPRETTY_NAME="Fedora Linux 42"\n',
     "suse": 'ID="opensuse-tumbleweed"\nID_LIKE="opensuse suse"\nPRETTY_NAME="openSUSE Tumbleweed"\n',
     "debian": 'ID=debian\nPRETTY_NAME="Debian GNU/Linux 13 (trixie)"\n',
+    "nixos": 'ID=nixos\nPRETTY_NAME="NixOS 25.05 (Warbler)"\n',
 }
 FAMILY_STUBS = {"arch": ARCH_STUBS, "fedora": FEDORA_STUBS, "suse": SUSE_STUBS, "debian": DEBIAN_STUBS}
 
@@ -966,6 +967,30 @@ def test_root_and_missing_sudo_give_guidance():
         sb.cleanup()
 
 
+def test_root_guidance_per_distribution():
+    """Run as root (an unprivileged user namespace maps us to uid 0): how to
+    create a user with sudo rights; on NixOS through the configuration."""
+    unshare = shutil.which("unshare")
+    if not unshare or subprocess.run([unshare, "-r", "true"], capture_output=True).returncode != 0:
+        print("skip  test_root_guidance_per_distribution (no unprivileged user namespaces)")
+        return
+    sb = Sandbox("arch")
+    try:
+
+        def as_root():
+            p = subprocess.run([unshare, "-r", "bash", str(INSTALL), "-y"], env=sb.env(), capture_output=True, text=True, timeout=60)
+            return p.returncode, p.stderr
+
+        rc, err = as_root()
+        check(rc == 1 and "not root" in err and "useradd -m -G wheel yourname" in err, f"arch root guidance (exit {rc})", err)
+        sb.os_release.write_text(OS_RELEASE["nixos"])
+        rc, err = as_root()
+        check(rc == 1 and 'extraGroups = [ "wheel" ]' in err and "nixos-rebuild switch" in err, f"nixos root guidance (exit {rc})", err)
+        check("useradd" not in err and "sudoers.d" not in err, "nixos root guidance suggests useradd/sudoers.d", err)
+    finally:
+        sb.cleanup()
+
+
 def test_refused_sudo_password_guidance():
     sb = Sandbox("arch")
     try:
@@ -1009,6 +1034,7 @@ def main():
         test_dangling_display_manager_link,
         test_suse_display_manager_unit_is_left_alone,
         test_root_and_missing_sudo_give_guidance,
+        test_root_guidance_per_distribution,
         test_refused_sudo_password_guidance,
         test_missing_required_component_exits_2,
         test_dry_run_without_git,

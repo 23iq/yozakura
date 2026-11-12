@@ -768,6 +768,11 @@ sudo_setup_lines() {
   fedora) printf '%s\n' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
   suse) printf '%s\n' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
   debian) printf '%s\n' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
+  # Users and sudo are declared in the system configuration; wheel may use
+  # sudo out of the box.
+  nixos) printf '%s\n' "# in /etc/nixos/configuration.nix:" \
+    "users.users.$who = { isNormalUser = true; extraGroups = [ \"wheel\" ]; };" \
+    "nixos-rebuild switch" "passwd $who" ;;
   *) printf '%s\n' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
   esac
 }
@@ -785,6 +790,7 @@ admin_group() { if [[ "$DISTRO" == debian ]]; then echo sudo; else echo wheel; f
 sudo_grant_lines() {
   case "$DISTRO" in
   debian | fedora) printf '%s\n' "usermod -aG $(admin_group) $1" ;;
+  nixos) printf '%s\n' "users.users.$1.extraGroups = [ \"wheel\" ];" "nixos-rebuild switch" ;;
   *) printf '%s\n' "usermod -aG wheel $1" "$(wheel_line)" ;;
   esac
 }
