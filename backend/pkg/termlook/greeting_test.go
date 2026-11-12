@@ -495,3 +495,59 @@ func TestGreetingFishOnlyWhereFishIs(t *testing.T) {
 		t.Error("fish file left after fish went")
 	}
 }
+
+// In a real terminal (a pty): editors' terminals stay quiet, the picture
+// config is used in kitty only (TERM=xterm-kitty, not an inherited
+// KITTY_WINDOW_ID).
+func TestGreetingScriptInATerminal(t *testing.T) {
+	bash, err := exec.LookPath("bash")
+	if err != nil {
+		t.Skip("bash not installed")
+	}
+	script, err := exec.LookPath("script")
+	if err != nil {
+		t.Skip("script(1) not installed")
+	}
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "bin")
+	writeFile(t, filepath.Join(bin, "fastfetch"), "#!/bin/sh\necho \"FETCH $*\"\n")
+	if err := os.Chmod(filepath.Join(bin, "fastfetch"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfg, kitty := filepath.Join(dir, "f.jsonc"), filepath.Join(dir, "k.jsonc")
+	writeFile(t, cfg, "{}")
+	writeFile(t, kitty, "{}")
+	sh, _ := greetingScript(fetchCmd{cfg: cfg, kitty: kitty})
+	file := filepath.Join(dir, "greeting.sh")
+	writeFile(t, file, sh)
+	run := func(extra ...string) string {
+		t.Helper()
+		cmd := exec.Command(script, "-qec", bash+" --norc --noprofile -i -c '. "+file+"'", "/dev/null")
+		cmd.Env = append([]string{"PATH=" + bin + ":/usr/bin:/bin", "HOME=" + dir}, extra...)
+		out, _ := cmd.Output()
+		return string(out)
+	}
+	if out := run("TERM=xterm-256color"); !strings.Contains(out, "FETCH --config "+cfg) {
+		t.Fatalf("plain terminal: %q", out)
+	}
+	for _, ide := range []string{"TERM_PROGRAM=vscode", "TERMINAL_EMULATOR=JetBrains-JediTerm", "INSIDE_EMACS=29.1,vterm"} {
+		if out := run("TERM=xterm-256color", ide); strings.Contains(out, "FETCH") {
+			t.Errorf("%s: %q", ide, out)
+		}
+	}
+	if out := run("TERM=xterm-256color", "KITTY_WINDOW_ID=3"); !strings.Contains(out, "FETCH --config "+cfg) {
+		t.Errorf("inherited KITTY_WINDOW_ID: %q", out)
+	}
+	if out := run("TERM=xterm-kitty", "KITTY_WINDOW_ID=3"); !strings.Contains(out, "FETCH --config "+kitty) {
+		t.Errorf("kitty: %q", out)
+	}
+	if out := run("TERM=xterm-kitty", "KITTY_WINDOW_ID=3", "SSH_TTY=/dev/pts/1"); !strings.Contains(out, "FETCH --config "+cfg) {
+		t.Errorf("kitty over ssh: %q", out)
+	}
+	fish, _ := fishGreeting(fetchCmd{cfg: cfg, kitty: kitty})
+	for _, want := range []string{"set -q INSIDE_EMACS", `test "$TERM_PROGRAM" = vscode`, `test "$TERMINAL_EMULATOR" = JetBrains-JediTerm`, `test "$TERM" = xterm-kitty; and set -q KITTY_WINDOW_ID`} {
+		if !strings.Contains(fish, want) {
+			t.Errorf("fish misses %q:\n%s", want, fish)
+		}
+	}
+}

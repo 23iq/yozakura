@@ -141,10 +141,13 @@ type fetchCmd struct{ cfg, kitty string }
 
 // GreetingScript is greeting.sh for bash and zsh. It prints only in an
 // interactive shell on a terminal (never for scp/rsync/ssh commands or
-// IDE probes, which have no tty or are not interactive), once per
-// terminal (the tty is remembered in the environment, so a shell started
-// inside it stays quiet while a new window greets), never in tmux or
-// screen panes, and costs nothing when fastfetch is missing.
+// IDE probes, which have no tty or are not interactive), not in the
+// terminals of editors (VS Code, JetBrains, Emacs), once per terminal (the
+// tty is remembered in the environment, so a shell started inside it
+// stays quiet while a new window greets), never in tmux or screen panes,
+// and costs nothing when fastfetch is missing. The picture logo is used
+// in kitty only: TERM=xterm-kitty as well as KITTY_WINDOW_ID (which other
+// terminals started from a kitty shell inherit), not over ssh.
 //
 // fastfetch runs in the foreground with no time limit: a hung fastfetch
 // delays the prompt until it is interrupted (Ctrl-C). timeout(1) is not
@@ -164,6 +167,8 @@ func greetingScript(c fetchCmd) (string, error) {
 	b.WriteString("    case $- in *i*) ;; *) return 0 ;; esac\n")
 	b.WriteString("    [ -t 0 ] && [ -t 1 ] || return 0\n")
 	b.WriteString("    [ -z \"${TMUX-}\" ] && [ -z \"${STY-}\" ] || return 0\n")
+	b.WriteString("    [ -z \"${INSIDE_EMACS-}\" ] || return 0\n")
+	b.WriteString("    [ \"${TERM_PROGRAM-}\" != vscode ] && [ \"${TERMINAL_EMULATOR-}\" != JetBrains-JediTerm ] || return 0\n")
 	b.WriteString("    case \"${TERM-}\" in '' | dumb) return 0 ;; esac\n")
 	b.WriteString("    command -v fastfetch >/dev/null 2>&1 || return 0\n")
 	b.WriteString("    local t\n")
@@ -175,7 +180,7 @@ func greetingScript(c fetchCmd) (string, error) {
 	} else {
 		b.WriteString("    local c=" + q + "\n")
 		if c.kitty != "" {
-			b.WriteString("    if [ -n \"${KITTY_WINDOW_ID-}\" ] && [ -z \"${SSH_TTY-}${SSH_CONNECTION-}\" ]; then\n")
+			b.WriteString("    if [ \"${TERM-}\" = xterm-kitty ] && [ -n \"${KITTY_WINDOW_ID-}\" ] && [ -z \"${SSH_TTY-}${SSH_CONNECTION-}\" ]; then\n")
 			b.WriteString("        c=" + k + "\n")
 			b.WriteString("    fi\n")
 		}
@@ -203,6 +208,9 @@ func fishGreeting(c fetchCmd) (string, error) {
 	b.WriteString("        if not test -t 0; or not test -t 1; or set -q TMUX; or set -q STY; or contains -- \"$TERM\" '' dumb\n")
 	b.WriteString("            return\n")
 	b.WriteString("        end\n")
+	b.WriteString("        if set -q INSIDE_EMACS; or test \"$TERM_PROGRAM\" = vscode; or test \"$TERMINAL_EMULATOR\" = JetBrains-JediTerm\n")
+	b.WriteString("            return\n")
+	b.WriteString("        end\n")
 	b.WriteString("        type -q fastfetch; or return\n")
 	b.WriteString("        set -l t (tty 2>/dev/null); or return\n")
 	b.WriteString("        test \"$" + greetingVar + "\" = \"$t\"; and return\n")
@@ -212,7 +220,7 @@ func fishGreeting(c fetchCmd) (string, error) {
 	} else {
 		b.WriteString("        set -l c " + fishQuote(c.cfg) + "\n")
 		if c.kitty != "" {
-			b.WriteString("        if set -q KITTY_WINDOW_ID; and not set -q SSH_TTY; and not set -q SSH_CONNECTION\n")
+			b.WriteString("        if test \"$TERM\" = xterm-kitty; and set -q KITTY_WINDOW_ID; and not set -q SSH_TTY; and not set -q SSH_CONNECTION\n")
 			b.WriteString("            set c " + fishQuote(c.kitty) + "\n")
 			b.WriteString("        end\n")
 		}
