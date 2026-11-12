@@ -48,7 +48,9 @@ COMPOSITORS=(hyprland niri mango)
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
-TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
+# DM: the login manager found; DM_STATE: enabled, disabled or unknown;
+# DM_ENABLE: its unit when this run enables it (choose_login).
+TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
 # UNAVAILABLE: planned packages this distribution release does not carry;
@@ -831,25 +833,69 @@ detect_system() {
   GPU="$(printf '%s\n' "${vendors[@]:-}" | sort -u | paste -sd/ -)"
   GPU="${YOZAKURA_GPU:-${GPU:-unknown}}"
 
-  DM=""
-  if [[ -L "$SYSROOT/etc/systemd/system/display-manager.service" ]]; then
-    DM="$(basename "$(readlink -f "$SYSROOT/etc/systemd/system/display-manager.service")" .service)"
-  else
-    for v in sddm gdm lightdm greetd ly; do
-      has_cmd "$v" || continue
-      # systemd starts SDDM only through display-manager.service: one that
-      # is installed but not enabled (an earlier run that stopped before
-      # its services step) shows no login screen, so it counts as none and
-      # is set up again.
-      [[ "$v" == sddm ]] && has_systemd && continue
-      DM="$v"
-      break
-    done
-  fi
+  detect_login
   return 0
 }
 
 has_systemd() { [[ -d "$SYSROOT/run/systemd/system" ]]; }
+
+# The login managers looked for, in this order.
+LOGIN_MANAGERS=(sddm gdm gdm3 lightdm greetd ly lxdm)
+
+# dm_unit_file NAME: NAME's systemd unit file (ly: the ly@ template of 1.1+).
+dm_unit_file() {
+  local d u
+  for d in "$SYSROOT/usr/lib/systemd/system" "$SYSROOT/lib/systemd/system" "$SYSROOT/etc/systemd/system"; do
+    for u in "$1.service" "$1@.service"; do
+      [[ -f "$d/$u" ]] && printf '%s\n' "$d/$u" && return 0
+    done
+  done
+  return 1
+}
+
+# dm_installed NAME: its unit file or its command is there (gdm may live
+# in an sbin directory outside the user's PATH).
+dm_installed() { dm_unit_file "$1" >/dev/null || has_cmd "$1"; }
+
+# dm_unit NAME: the unit `systemctl enable` takes. ly 1.1+ runs as
+# ly@ttyN on the second console; older ly has a plain ly.service.
+dm_unit() {
+  if [[ "$1" == ly && "$(dm_unit_file ly)" == *@.service ]]; then echo "ly@tty2.service"; else echo "$1.service"; fi
+}
+
+# detect_login: DM = the login manager found, DM_STATE = enabled (it starts
+# at boot), disabled (installed, nothing starts it) or unknown (no systemd:
+# whether an init script starts it is not guessed). systemd starts every one
+# of them through the display-manager.service link but ly, whose ly@ttyN
+# (or ly.service) is wanted by a target directly.
+detect_login() {
+  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w
+  DM="" DM_STATE=""
+  if has_systemd; then
+    if [[ -L "$link" ]]; then
+      DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
+      return 0
+    fi
+    for w in "$SYSROOT"/etc/systemd/system/*.wants/ly.service "$SYSROOT"/etc/systemd/system/*.wants/ly@*.service; do
+      [[ -e "$w" || -L "$w" ]] && DM=ly DM_STATE=enabled && return 0
+    done
+    for v in "${LOGIN_MANAGERS[@]}"; do
+      dm_installed "$v" && DM="$v" DM_STATE=disabled && return 0
+    done
+    return 0
+  fi
+  for v in "${LOGIN_MANAGERS[@]}"; do
+    has_cmd "$v" && DM="$v" DM_STATE=unknown && return 0
+  done
+  return 0
+}
+
+# login_ready: a login screen comes up at boot after this install.
+login_ready() {
+  [[ "$DM_STATE" == enabled ]] && return 0
+  [[ -n "$DM_ENABLE" && " ${SERVICES[*]} " == *" $DM_ENABLE "* ]] && ! failed "$DM_ENABLE" && return 0
+  [[ " ${SERVICES[*]} " == *" sddm "* ]] && ! failed sddm
+}
 
 # === Compositor ===
 comp_name() {
@@ -966,14 +1012,82 @@ compositor_menu() {
   echo >&2
 }
 
-# choose_login: offer SDDM only where there is no display manager.
+# choose_login: what shows the login screen. SDDM is offered only where no
+# login manager starts at boot. One that is installed but not enabled is
+# reported: SDDM's own question, or for another one a choice between
+# enabling it, SDDM instead, or leaving it (then the console). --yes and a
+# run without a terminal never enable somebody else's login manager.
 choose_login() {
-  [[ -z "$WITH_SDDM" ]] || return 0
-  WITH_SDDM=0
-  [[ -z "$DM" && "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
-  local question="No login screen found. Set up SDDM with the $DISPLAY_NAME theme?"
-  has_cmd sddm && question="SDDM is installed but not enabled (no login screen at boot). Enable it with the $DISPLAY_NAME theme?"
-  if ask "$question" y; then WITH_SDDM=1; fi
+  local explicit="$WITH_SDDM"
+  WITH_SDDM="${WITH_SDDM:-0}"
+  if [[ "$DM_STATE" == unknown ]]; then
+    info "Login manager: $DM found; without systemd whether it starts at boot is not checked."
+    return 0
+  fi
+  [[ "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
+  [[ "$DM_STATE" == enabled ]] && return 0
+  if [[ -z "$DM" ]]; then
+    [[ -n "$explicit" ]] && return 0
+    ask "No login screen found. Set up SDDM with the $DISPLAY_NAME theme?" y && WITH_SDDM=1
+    return 0
+  fi
+  if [[ "$DM" == sddm ]]; then
+    [[ -n "$explicit" ]] && return 0
+    ask "SDDM is installed but not enabled (no login screen at boot). Enable it with the $DISPLAY_NAME theme?" y && WITH_SDDM=1
+    return 0
+  fi
+  if [[ "$explicit" == 1 ]]; then
+    info "$DM is installed but not enabled; SDDM takes its place (--with-sddm), $DM stays as it is."
+    return 0
+  fi
+  if [[ -z "$TTY" || "$ASSUME_YES" == 1 ]]; then
+    warn "$DM is installed but not enabled: no login screen comes up at boot."
+    info "Left as it is (another login manager is only enabled when you choose it). Start the session from a console, or enable it: sudo systemctl enable $(dm_unit "$DM")"
+    return 0
+  fi
+  local opts=(enable) reply
+  [[ "$explicit" == 0 ]] || opts+=(sddm)
+  opts+=(leave)
+  login_menu "${opts[@]}"
+  while true; do
+    printf '  %s%s%s Login screen [1-%d, Enter = 1] ' "$C_PINK" "$G_ASK" "$C_OFF" "${#opts[@]}" >"$TTY"
+    read -r reply <"$TTY" || reply=""
+    reply="${reply:-1}"
+    [[ "$reply" =~ ^[0-9]+$ ]] && ((reply >= 1 && reply <= ${#opts[@]})) && break
+  done
+  case "${opts[reply - 1]}" in
+  enable)
+    DM_ENABLE="$(dm_unit "$DM")"
+    ok "Login screen: $DM (enabled from the next boot)"
+    ;;
+  sddm)
+    WITH_SDDM=1
+    ok "Login screen: SDDM with the $DISPLAY_NAME theme"
+    ;;
+  *) info "Login screen: none; the closing steps say how to start from a console." ;;
+  esac
+}
+
+# login_menu CHOICE...: the choices for an installed login manager that is
+# not enabled.
+login_menu() {
+  local i=0 c
+  echo >&2
+  ui_box_top "Login screen"
+  ui_box_row ""
+  ui_box_row "$DM is installed but not enabled: nothing shows a login screen at boot."
+  for c in "$@"; do
+    i=$((i + 1))
+    ui_box_row ""
+    case "$c" in
+    enable) ui_box_row "$(printf '%s%d%s  %sEnable %s%s  %s(sudo systemctl enable %s)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DM" "$C_OFF" "$C_DIM" "$(dm_unit "$DM")" "$C_OFF")" ;;
+    sddm) ui_box_row "$(printf '%s%d%s  %sInstall SDDM with the %s theme instead%s  %s(%s stays installed, not enabled)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DISPLAY_NAME" "$C_OFF" "$C_DIM" "$DM" "$C_OFF")" ;;
+    leave) ui_box_row "$(printf '%s%d%s  %sLeave it%s  %s(log in on a console and start %s there)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$C_OFF" "$C_DIM" "$(comp_name "${COMPOSITOR:-hyprland}")" "$C_OFF")" ;;
+    esac
+  done
+  ui_box_row ""
+  ui_box_bottom
+  echo >&2
 }
 
 # === Package list (backend/pkg/deps/packages.tsv) ===
@@ -1212,7 +1326,8 @@ plan_services() {
   done
   [[ -z "$other" ]] && ! systemctl is-enabled --quiet NetworkManager 2>/dev/null && SERVICES+=(NetworkManager)
   systemctl is-enabled --quiet bluetooth 2>/dev/null || SERVICES+=(bluetooth)
-  [[ "$WITH_SDDM" == 1 && -z "$DM" ]] && SERVICES+=(sddm)
+  [[ "$WITH_SDDM" == 1 && "$DM_STATE" != enabled ]] && SERVICES+=(sddm)
+  [[ -n "$DM_ENABLE" ]] && SERVICES+=("$DM_ENABLE")
   return 0
 }
 
@@ -1232,6 +1347,28 @@ make_plan() {
   LINK_BINS=0
   if [[ "$BIN_DIR" != "$SYS_BIN" ]] && { ! on_path || [[ -e "$SYS_BIN/$APP_ID" ]]; }; then LINK_BINS=1; fi
   if [[ -d "$SRC_DIR/.git" || -f "$SRC_DIR/.git" ]]; then REPO_ACTION="update"; else REPO_ACTION="clone"; fi
+}
+
+# login_plan: the Login row of the plan, what is there and what happens.
+login_plan() {
+  local unit
+  case "$DM_STATE" in
+  enabled) echo "$DM" ;;
+  unknown) echo "$DM found (no systemd: whether it starts at boot is not checked)" ;;
+  disabled)
+    unit="$(dm_unit "$DM")"
+    if [[ " ${SERVICES[*]} " == *" ${DM_ENABLE:-none} "* || ("$DM" == sddm && " ${SERVICES[*]} " == *" sddm "*) ]]; then
+      echo "$DM is installed but not enabled: enable it (from the next boot)"
+    elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
+      echo "$DM is installed but not enabled: SDDM with the theme instead ($DM stays as it is)"
+    else
+      echo "$DM is installed but not enabled: left as it is, start from a console (or: sudo systemctl enable $unit)"
+    fi
+    ;;
+  *)
+    if [[ " ${SERVICES[*]} " == *" sddm "* ]]; then echo "none: SDDM with the theme (from the next boot)"; else echo "none (console)"; fi
+    ;;
+  esac
 }
 
 feature_box() { [[ "$1" == 1 ]] && printf '%s%s%s' "$C_PINK" "$G_ON" "$C_OFF" || printf '%s%s%s' "$C_DIM" "$G_OFF" "$C_OFF"; }
@@ -1255,11 +1392,7 @@ show_plan() {
   ui_box_head "THIS MACHINE"
   ui_box_kv "System" "$DISTRO_NAME$s$(uname -m)"
   ui_box_kv "Graphics" "$GPU"
-  if [[ -z "$DM" ]] && has_systemd && has_cmd sddm; then
-    ui_box_kv "Login" "none (sddm is installed but not enabled)"
-  else
-    ui_box_kv "Login" "${DM:-none (console)}"
-  fi
+  ui_box_kv "Login" "$(login_plan)"
   ui_box_head "INSTALL"
   ui_box_kv "Compositor" "$C_BOLD$(comp_name "$COMPOSITOR")$C_OFF"
   ui_box_kv "Sources" "$REPO_ACTION $(tilde "$SRC_DIR")"
@@ -1554,9 +1687,9 @@ configure_system() {
   # One service that cannot start (no adapter, a unit renamed upstream)
   # must not keep the others, the login screen among them, disabled.
   for svc in "${SERVICES[@]}"; do
-    if [[ "$svc" == sddm ]]; then
+    if [[ "$svc" == sddm || "$svc" == "$DM_ENABLE" ]]; then
       # Starting a display manager now would take over the screen mid-install.
-      run_optional sddm "Enabling sddm (from the next boot)" "Enable it later: sudo systemctl enable sddm" sudo systemctl enable sddm
+      run_optional "$svc" "Enabling ${svc%.service} (from the next boot)" "Enable it later: sudo systemctl enable $svc" sudo systemctl enable "$svc"
     else
       run_optional "$svc" "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
     fi
@@ -2001,15 +2134,21 @@ next_steps() {
   if in_session; then
     numbered 1 "You are in $name already: run $C_PINK$APP_ID$C_OFF now."
     numbered 2 "From the next login on it starts with $name."
-  elif [[ " ${SERVICES[*]} " == *" sddm "* ]] && ! failed sddm; then
+  elif [[ "$DM_STATE" != enabled ]] && login_ready; then
     numbered 1 "Reboot and pick $name on the new login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
-  elif [[ -n "$DM" ]] || { [[ "$WITH_SDDM" == 1 ]] && ! failed sddm; }; then
+  elif [[ "$DM_STATE" == enabled ]]; then
     numbered 1 "Log out (or reboot) and pick $name on the login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
+  elif [[ "$DM_STATE" == unknown ]]; then
+    numbered 1 "Reboot; if $DM shows a login screen, pick $name there."
+    numbered 2 "Otherwise log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
+    numbered 3 "The setup wizard greets you there. Super opens the launcher."
   else
-    numbered 1 "Log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
-    numbered 2 "The setup wizard greets you there. Super opens the launcher."
+    numbered 1 "Log in on a text console (after a reboot, or Ctrl+Alt+F2 now)."
+    numbered 2 "Run ${C_PINK}$(console_cmd)${C_OFF} there to start $name."
+    numbered 3 "The setup wizard greets you there. Super opens the launcher."
+    [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo systemctl enable $(dm_unit "$DM")"
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
   if [[ ${#FAILED[@]} -gt 0 ]]; then
@@ -2039,7 +2178,7 @@ offer_reboot() {
   if [[ "$REBOOT" != 1 ]]; then
     [[ "$PREV_INSTALL" == 1 || "$ASSUME_YES" == 1 ]] && return 0
     in_session && return 0
-    [[ " ${SERVICES[*]} " == *" sddm "* ]] && default=y
+    [[ "$DM_STATE" != enabled ]] && login_ready && default=y
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   [[ "$DRY_RUN" == 1 ]] || info "Rebooting..."
