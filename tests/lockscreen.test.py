@@ -99,14 +99,14 @@ def check_style(style: str) -> None:
     assert lev("lockView.styleEntry.id") == style
     assert lev("startAnim"), "lock starts its entry animation"
     assert lev("passwordInput !== null")
-    lev('passwordInput.text = "   "; passwordInput.accepted()')
+    lev('passwordInput.text = ""; passwordInput.accepted()')
     pump(50)  # nothing may start: give a deferred PAM start the chance to show
-    assert lev("pamAuth.starts") == 0, f"{style}: blank submit must not start PAM"
-    lev('passwordInput.text = "wrong"; passwordInput.accepted()')
+    assert lev("pamAuth.starts") == 0, f"{style}: empty submit must not start PAM"
+    lev('passwordInput.text = " wrong  "; passwordInput.accepted()')
     assert lev("passwordInput.text") == "", "field clears immediately on submit"
     assert lev("authenticating"), "submit marks authenticating"
     wait_until(lambda: lev("pamAuth.starts") == 1 and lev("errorMessage") != "")
-    assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == "wrong", "PAM receives the typed password"
+    assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == " wrong  ", "PAM receives the typed password verbatim"
     assert lev("authPasswordHolder.password") == "", "holder cleared after PAM completes"
     assert lev("errorMessage") == "Authentication failed"
     assert lev("passwordInputBox.showError"), f"{style}: failure shakes the field"
@@ -124,6 +124,31 @@ def check_style(style: str) -> None:
 
 for s in STYLES:
     check_style(s)
+
+# Spaces are legal in a password: a whitespace-only one reaches PAM as typed.
+lock = env.lock_screen()
+
+
+def lev(expr):
+    return h.eval(lock, expr)
+
+
+lev("GlobalStates.lockscreenVisible = true")  # the last style's check unlocked
+
+
+def submit(text: str) -> None:
+    """Submit a (wrong) password and wait for the shake to end."""
+    before = lev("pamAuth.starts")
+    lev(f"passwordInput.text = {json.dumps(text)}; passwordInput.accepted()")
+    wait_until(lambda: lev("pamAuth.starts") == before + 1 and lev("errorMessage") != "")
+    assert lev("pamAuth.received") == text, f"PAM must receive {text!r} verbatim"
+    wait_until(lambda: not lev("authenticating"))
+    assert lev("GlobalStates.lockscreenVisible"), "a wrong password keeps the session locked"
+
+
+submit("   ")
+submit("\t")
+print("whitespace-only passwords reach PAM verbatim")
 
 # Unknown ids fall back to the default style instead of an empty screen.
 root = env.load('import QtQuick\nimport qs.modules.lockscreen\nItem { width: 640; height: 360\n LockView { objectName: "lv"; anchors.fill: parent; styleId: "nope" } }')

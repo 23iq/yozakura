@@ -134,7 +134,9 @@ WlSessionLockSurface {
     Connections {
         target: root.passwordInput
         function onAccepted() {
-            if (passwordInput.text.trim() === "")
+            // Only an empty field is ignored: spaces are legal in a password
+            // and the text reaches PAM exactly as typed.
+            if (passwordInput.text === "")
                 return;
 
             // Guardar contraseña y limpiar campo inmediatamente
