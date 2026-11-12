@@ -12,9 +12,9 @@ import "../SchemaUtil.js" as SchemaUtil
 import "../schema/Categories.js" as Categories
 
 // "Changes": every setting that differs from its default (or, with a preset
-// applied, from that preset), grouped by page. A row resets that one
-// setting (through SettingsStore: staged like any edit, Discard undoes it)
-// or opens it on its page.
+// applied, from that preset), grouped by page, settings kept out of the
+// window included. A row resets that one setting (through SettingsStore:
+// live, one undo step) or opens it on its page (window rows only).
 Flickable {
     id: page
 

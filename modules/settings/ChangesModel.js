@@ -9,8 +9,9 @@
 //
 // Group: {categoryId, title, icon, rows: [row]}, in destination order.
 // Row:   {id, categoryId, sectionId, entryId, label, now, was, entry?, key?,
-//         target?}  label is display text; now / was are short value texts
-//         ("" for a composite editor); `target` = the preset's raw value.
+//         target?, jump?}  label is display text; now / was are short value
+//         texts ("" for a composite editor); `target` = the preset's raw
+//         value; `jump: false` = not a row of the window (nothing to open).
 
 // A value as the row shows it: an option's label, on/off, a short JSON.
 function describe(entry, value, tr) {
@@ -57,8 +58,10 @@ function count(groups) {
     }, 0);
 }
 
-// Since defaults: the entries a page reset would touch (ResetModel: shown,
-// on the running compositor) whose value differs from the default.
+// Since defaults: every entry of a page (ResetModel.changedItems: shown, on
+// the running compositor, a window row or not) whose value differs from the
+// default. An out-of-window entry's row has `jump: false` (no row to open;
+// its reset still works).
 // ctx = {compositor, get}; isModified(entry); def(key) = the default.
 function fromDefaults(categories, ctx, isModified, def, tr) {
     var t = tr || function (k) {
@@ -68,7 +71,7 @@ function fromDefaults(categories, ctx, isModified, def, tr) {
     (categories || []).forEach(function (cat) {
         if (!cat.sections)
             return;
-        ResetModel.activeItems(cat, ctx).forEach(function (it) {
+        ResetModel.changedItems(cat, ctx).forEach(function (it) {
             if (!isModified(it.entry))
                 return;
             var single = !!it.entry.key && !(it.entry.keys && it.entry.keys.length > 1);
@@ -80,7 +83,8 @@ function fromDefaults(categories, ctx, isModified, def, tr) {
                 "label": t(it.entry.label || ""),
                 "now": single ? describe(it.entry, ctx.get(it.entry.key), t) : "",
                 "was": single ? describe(it.entry, def(it.entry.key), t) : "",
-                "entry": it.entry
+                "entry": it.entry,
+                "jump": it.inWindow
             }, t);
         });
     });

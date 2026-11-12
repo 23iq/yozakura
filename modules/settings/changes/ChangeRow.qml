@@ -14,7 +14,8 @@ ListRow {
     property var change
     // "%1 · default %2" style string: %1 = now, %2 = default / preset value
     property string valuesKey: "prefs.changes.vs_default"
-    readonly property bool canJump: !!(change && change.categoryId)
+    // an out-of-window setting (`jump: false`) has no row to open
+    readonly property bool canJump: !!(change && change.categoryId && change.jump !== false)
 
     signal resetRequested
     signal jumpRequested

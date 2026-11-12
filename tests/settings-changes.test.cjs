@@ -36,11 +36,15 @@ test('changed settings are grouped by page with now / default values', () => {
     const shown = groups.find(g => g.categoryId === 'bar').rows.find(r => r.entryId === 'workspaces.shown');
     assert.equal(shown.now, '4');
     assert.equal(shown.label, tr('prefs.bar.ws_shown'));
-    // theme.roundness is not a window row (the Roundness macro is): not listed
-    assert.ok(!groups.some(g => g.rows.some(r => r.entryId === 'theme.roundness')));
+    // theme.roundness is not a window row (the Roundness macro is): listed,
+    // with nothing to open
+    const round = groups.flatMap(g => g.rows).find(r => r.entryId === 'theme.roundness');
+    assert.ok(round, 'an out-of-window setting that differs is listed');
+    assert.equal(round.jump, false);
+    assert.equal(shown.jump, true);
     const dock = groups.find(g => g.categoryId === 'dock').rows[0];
     assert.equal(dock.now, tr('common.left'));
-    assert.equal(Changes.count(groups), 3);
+    assert.equal(Changes.count(groups), 4);
 });
 
 test('hidden or other-compositor entries are not listed', () => {
