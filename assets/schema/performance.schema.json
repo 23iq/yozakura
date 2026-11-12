@@ -204,6 +204,53 @@
       },
       "minimum": 0,
       "maximum": 120
+    },
+    "visualizerFps": {
+      "title": "Visualizer Frame Rate",
+      "type": "number",
+      "default": 30,
+      "description": "Frames per second of the audio visualizer; lower uses less CPU",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.visualizer_fps",
+        "control": "number",
+        "step": 5,
+        "unit": "fps",
+        "keywords": "visualizer cava audio bars frame rate fps cpu",
+        "advanced": true,
+        "min": 15,
+        "max": 60
+      },
+      "minimum": 15,
+      "maximum": 60
+    },
+    "batterySaver": {
+      "title": "Battery Saver",
+      "type": "boolean",
+      "default": false,
+      "description": "On battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.battery_saver",
+        "control": "toggle",
+        "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper"
+      }
+    },
+    "warmViews": {
+      "title": "Prepare Views in Background",
+      "type": "boolean",
+      "default": true,
+      "description": "After startup, prepare the launcher and the dashboard, overview, settings and presets so they open faster the first time (uses some memory)",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.warm_views",
+        "control": "toggle",
+        "keywords": "warm preload prepare compile startup launcher dashboard overview settings memory",
+        "advanced": true
+      }
     }
   },
   "additionalProperties": false

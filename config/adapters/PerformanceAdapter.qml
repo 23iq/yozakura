@@ -16,4 +16,7 @@ JsonAdapter {
     property int dashboardMaxPersistentTabs: 2
     property bool unloadIdleViews: true
     property int settingsKeepAliveMinutes: 5
+    property int visualizerFps: 30
+    property bool batterySaver: false
+    property bool warmViews: true
 }

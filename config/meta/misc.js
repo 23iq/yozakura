@@ -147,6 +147,17 @@ var performance = {
             "min": 0,
             "max": 120,
             "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close."
+        },
+        "visualizerFps": {
+            "min": 15,
+            "max": 60,
+            "description": "Frames per second of the audio visualizer (cava); lower uses less CPU."
+        },
+        "batterySaver": {
+            "description": "While on battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers."
+        },
+        "warmViews": {
+            "description": "Prepare the launcher and compile the dashboard, overview, settings and presets in the background after startup so their first open is faster (uses some memory)."
         }
     }
 };
