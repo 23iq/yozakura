@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/extras/ExtrasModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, awaitingAuth, cancellable, accentIndex, toggled, phaseText, unavailableKey};')();
+const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, awaitingAuth, withoutActive, cancellable, accentIndex, toggled, phaseText, unavailableKey};')();
 
 const catalog = {
     categories: [
@@ -167,4 +167,16 @@ test('unavailableKey follows the status reason', () => {
     assert.strictEqual(M.unavailableKey('needs_aur_helper'), 'extras.ui.unavailable.needs_aur_helper');
     assert.strictEqual(M.unavailableKey(undefined), 'extras.ui.unavailable.only_distro');
     assert.strictEqual(M.unavailableKey('weird'), 'extras.ui.unavailable.only_distro');
+});
+
+test('withoutActive drops running and queued jobs only', () => {
+    const jobs = {
+        a: { job: 'a', state: 'running', auth: true },
+        b: { job: 'b', state: 'queued' },
+        c: { job: 'c', state: 'done' },
+        d: { job: 'd', state: 'failed' },
+    };
+    assert.deepStrictEqual(Object.keys(M.withoutActive(jobs)), ['c', 'd']);
+    assert.strictEqual(M.awaitingAuth(M.withoutActive(jobs)), false);
+    assert.deepStrictEqual(M.withoutActive(null), {});
 });
