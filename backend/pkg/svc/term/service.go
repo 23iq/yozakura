@@ -14,7 +14,8 @@
 //	fetch.preview {preset?, logo?, logoPath?, ansi?} -> {lines: [[span]], exact, reason, imageLogo}
 //	                                    (fastfetch run with that look in a temp dir; the
 //	                                    config's values by default; ansi: the terminal's 16
-//	                                    colours as #rrggbb; reason fastfetch_missing | timeout | error)
+//	                                    colours as #rrggbb; reason fastfetch_missing | timeout | error;
+//	                                    one run at a time, a newer palette cancels an older run)
 //
 // Status is {enabled, engine, fishInstalled, fishIsLoginShell, loginShell,
 // terminalShell, loginFiles, greeting, engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
@@ -78,6 +79,8 @@ type Service struct {
 	// startShell is the passwd login shell when the daemon started; a
 	// different one later means a chsh during this session.
 	startShell string
+	// fetchRuns runs the greeting previews one at a time.
+	fetchRuns *fetchRunner
 
 	stop chan struct{}
 	done chan struct{}
@@ -117,7 +120,7 @@ func New(o Options) *Service {
 	if o.Executable == nil {
 		o.Executable = termrun.IsExecutable
 	}
-	s := &Service{o: o}
+	s := &Service{o: o, fetchRuns: newFetchRunner()}
 	s.startShell = s.loginShell()
 	return s
 }

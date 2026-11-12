@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -43,8 +44,9 @@ func (c *cappedBuffer) Write(p []byte) (int, error) {
 
 func (c *cappedBuffer) String() string { return c.buf.String() }
 
-// fetchBudget bounds one fastfetch run (it probes the GPU, packages, ...).
-const fetchBudget = 6 * time.Second
+// fetchBudget bounds one fastfetch run (it probes the GPU, packages, ...);
+// fetchWaitDelay is how long its output may stay open after that.
+var fetchBudget, fetchWaitDelay = 6 * time.Second, time.Second
 
 // FetchPreview runs fastfetch with the config cfg would write (in a temp
 // dir; nothing of the user's changes) and renders its output with table as
@@ -117,6 +119,12 @@ func runFetch(ctx context.Context, bin string, args []string, shell string) (str
 	defer cancel()
 	argv := fetchArgv(bin, args, shell)
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
+	// The login shell forks fastfetch, which may fork helpers: all run in a
+	// process group of their own, killed as a whole on timeout, and Wait
+	// gives up on a pipe a leftover keeps open.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error { return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) }
+	cmd.WaitDelay = fetchWaitDelay
 	// the user's own environment (their fastfetch config for "own", the
 	// detection of shell / terminal / WM), with colours on and no terminal
 	// graphics

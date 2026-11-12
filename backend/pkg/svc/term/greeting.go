@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"yozakura/backend/pkg/paths"
@@ -133,10 +134,11 @@ func (s *Service) fetchPreview(params json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	pal, _ := s.palette() // nil: the terminal's own colours
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-	res, err := termlook.FetchPreview(ctx, g, ps, pal, s.fetchDir(), s.o.Env, table)
+	look := g.Preset + "|" + g.Logo + "|" + g.LogoPath
+	res, err := s.fetchRuns.do(look, strings.Join(table[:], ","), 20*time.Second, func(ctx context.Context) (termlook.FetchPreviewResult, error) {
+		pal, _ := s.palette() // nil: the terminal's own colours
+		return termlook.FetchPreview(ctx, g, ps, pal, s.fetchDir(), s.o.Env, table)
+	})
 	if err != nil {
 		return nil, err
 	}
