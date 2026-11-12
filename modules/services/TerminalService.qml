@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.globals
 
 Singleton {
     id: root
@@ -17,7 +18,7 @@ Singleton {
             console.warn("TerminalService: no terminal configured. Set Config.general.terminal.");
             return;
         }
-        Quickshell.execDetached([binary]);
+        Quickshell.execDetached(ProcessRole.detached([binary]));
     }
 
     function execDetached(shellCmd) {
@@ -30,9 +31,9 @@ Singleton {
             const rendered = commandTemplate
                 .replace(/\$TERMINAL/g, binary)
                 .replace(/\$COMMAND/g, shellCmd);
-            Quickshell.execDetached(rendered);
+            Quickshell.execDetached(ProcessRole.detached(rendered));
         } else {
-            Quickshell.execDetached([binary, "-e", "bash", "-c", shellCmd]);
+            Quickshell.execDetached(ProcessRole.detached([binary, "-e", "bash", "-c", shellCmd]));
         }
     }
 }

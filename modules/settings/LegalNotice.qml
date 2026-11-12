@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.globals
 
 // One small legal row ("AGPL-3.0 · Licenses & credits"). Clicking it shows
 // NOTICE inline (in the language's control box); the full license text
@@ -76,6 +77,6 @@ Column {
         kind: "ghost"
         icon: "fileText"
         text: I18n.t("prefs.about.full_license")
-        onClicked: Quickshell.execDetached(["xdg-open", root.licensePath])
+        onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", root.licensePath]))
     }
 }

@@ -222,7 +222,12 @@ window reopens at once). Off, everything is as before.
   (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).
 - Role: `ProcessRole` (modules/globals) keeps every session-wide service to
   the main shell (see modules/services/AGENTS.md); a notification raised in
-  the window goes to the daemon (`notify.send`).
+  the window goes to the daemon (`notify.send`). The role variable is
+  trusted only in a window entry file (its `ShellId` pragma): `shell.qml` is
+  always the main shell. The daemon drops `<PREFIX>ROLE` / `WINDOW_*` from
+  its own environment and every other child (`envclean.WindowVars`), and a
+  window starts detached programs through `ProcessRole.detached(argv)`
+  (xdg-open, terminals), which removes them.
 - Staged changes (one preview, not two stores): the window stages in its own
   Config exactly as in-process (`SettingsStore.set` -> GlobalStates snapshot,
   auto-save paused) and, for a staged domain only, relays `preview.set

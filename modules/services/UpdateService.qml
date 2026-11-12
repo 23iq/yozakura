@@ -159,7 +159,7 @@ Singleton {
             ],
             actionHandlers: {
                 "changelog": function () {
-                    Quickshell.execDetached(["xdg-open", root.changelogUrl]);
+                    Quickshell.execDetached(ProcessRole.detached(["xdg-open", root.changelogUrl]));
                 },
                 "later": function () {
                     root.nextCheckTime = Date.now() + 8 * 3600000;

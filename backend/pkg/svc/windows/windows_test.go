@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/ipc"
 
 	"github.com/stretchr/testify/assert"
@@ -392,6 +393,16 @@ func TestCloseKillsEveryHungWindowAndIsBounded(t *testing.T) {
 		assert.Equal(t, []syscall.Signal{syscall.SIGTERM, syscall.SIGKILL}, p.sigs())
 		p.exit(nil)
 	}
+}
+
+// The names a window gets are the ones every other child loses
+// (envclean.WindowVars): the main shell and yozd never inherit a role.
+func TestWindowEnvNamesAreStrippedElsewhere(t *testing.T) {
+	var names []string
+	for _, n := range []string{EnvRole, EnvPage, EnvScreen, EnvWorkspace} {
+		names = append(names, brand.EnvPrefix+n)
+	}
+	assert.ElementsMatch(t, envclean.WindowVars, names)
 }
 
 func TestStartFailureIsReturned(t *testing.T) {

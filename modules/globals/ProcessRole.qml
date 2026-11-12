@@ -23,10 +23,16 @@ import "BrandActions.js" as BrandActions
 Singleton {
     id: root
 
-    readonly property string role: {
+    // What the environment says. Trusted only in the matching window entry
+    // file (its ShellId pragma, <app>-settings / <app>-onboarding): the
+    // variable is inherited by whatever a window launches, and a main
+    // shell.qml started from such an environment (a terminal opened from
+    // Settings) must stay the main shell.
+    readonly property string _claimed: {
         const r = String(Quickshell.env(BrandActions.envPrefix + "ROLE") || "");
-        return r === "settings" || r === "onboarding" ? r : "shell";
+        return r === "settings" || r === "onboarding" ? r : "";
     }
+    readonly property string role: root._claimed !== "" && Quickshell.shellId === BrandActions.appId + "-" + root._claimed ? root._claimed : "shell"
     // The main shell: owns the session-wide services.
     readonly property bool primary: root.role === "shell"
     // A separate window process (Settings or the setup wizard).
@@ -38,4 +44,21 @@ Singleton {
     readonly property string initialPage: root.secondary ? String(Quickshell.env(BrandActions.envPrefix + "WINDOW_PAGE") || "") : ""
     readonly property string initialScreen: root.secondary ? String(Quickshell.env(BrandActions.envPrefix + "WINDOW_SCREEN") || "") : ""
     readonly property int initialWorkspace: root.secondary ? (parseInt(Quickshell.env(BrandActions.envPrefix + "WINDOW_WORKSPACE") || "0") || 0) : 0
+
+    // The variables the daemon sets for a window process only.
+    readonly property var windowVars: ["ROLE", "WINDOW_PAGE", "WINDOW_SCREEN", "WINDOW_WORKSPACE"].map(n => BrandActions.envPrefix + n)
+
+    // What Quickshell.execDetached gets for argv: in a window process the
+    // program is started without the window variables (null removes one),
+    // so nothing it starts in turn comes up as a window. Argv only.
+    function detached(argv) {
+        if (root.primary)
+            return argv;
+        const env = {};
+        root.windowVars.forEach(n => env[n] = null);
+        return {
+            "command": argv,
+            "environment": env
+        };
+    }
 }

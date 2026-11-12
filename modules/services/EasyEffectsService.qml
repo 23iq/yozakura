@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.services
+import qs.modules.globals
 
 Singleton {
     id: root
@@ -83,7 +84,7 @@ Singleton {
 
     // Open EasyEffects app
     function openApp() {
-        Quickshell.execDetached(["easyeffects"]);
+        Quickshell.execDetached(ProcessRole.detached(["easyeffects"]));
     }
 
     property bool _initialized: false

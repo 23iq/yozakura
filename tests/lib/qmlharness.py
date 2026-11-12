@@ -129,14 +129,19 @@ def dryrun_qml(env: dict[str, str] | None = None) -> str:
     return text
 
 
-def process_role_qml(role: str = "", env: dict[str, str] | None = None) -> str:
+def process_role_qml(role: str = "", env: dict[str, str] | None = None, entry: str | None = None) -> str:
     """The real modules/globals/ProcessRole.qml without Quickshell: <PREFIX>ROLE
     is `role` ("" = the main shell) and the other <PREFIX>NAME lookups come
-    from `env` ({"WINDOW_PAGE": "network", ...})."""
+    from `env` ({"WINDOW_PAGE": "network", ...}). `entry` is the kind of root
+    file running ("settings", "onboarding", "" = shell.qml; default: the one
+    `role` names), i.e. its ShellId pragma."""
     env = {"ROLE": role, **(env or {})}
+    entry = role if entry is None else entry
     text = (REPO / "modules/globals/ProcessRole.qml").read_text()
     text = re.sub(r"^import Quickshell\s*$", "", text, flags=re.M)
     text = text.replace("Singleton {", "QtObject {", 1)
+    shell_id = "BrandActions.appId" + (f' + "-{entry}"' if entry else "")
+    text = text.replace("Quickshell.shellId", f"({shell_id})")
     return re.sub(r'Quickshell\.env\(BrandActions\.envPrefix \+ "(\w+)"\)',
                   lambda m: json.dumps(env.get(m.group(1), "")), text)
 

@@ -225,6 +225,34 @@ check("update-check" not in after["started"], f"settings window: no scheduled up
 h2.eval(root2, "shortcuts.run('config')")
 check(h2.eval(root2, "GlobalStates.settingsWindowVisible") is False, "settings window: a heard command is not run")
 
+
+# The role is trusted only in the matching window entry file: the variable
+# is inherited by what a window launches (a terminal), and a shell.qml
+# started from there is the main shell whatever it says. What a window
+# launches detached loses the window variables.
+def role_only(name: str, role: str, entry: str):
+    hr = Harness(name)
+    hr.module("qs.modules.globals", {"ProcessRole": process_role_qml(role, {"WINDOW_PAGE": "about"}, entry=entry)})
+    return hr, hr.load("import QtQuick\nimport qs.modules.globals\nItem {}", auto_stub=False)
+
+
+h3, r3 = role_only("process-role-leak", "settings", "")
+check(h3.eval(r3, "ProcessRole.primary") is True and h3.eval(r3, "ProcessRole.role") == "shell",
+      "ROLE=settings in shell.qml: still the main shell")
+check(h3.eval(r3, "ProcessRole.initialPage") == "", "...with no window target")
+check(json.loads(h3.eval(r3, "JSON.stringify(ProcessRole.detached(['xdg-open', 'x']))")) == ["xdg-open", "x"],
+      "main shell: a detached program gets argv unchanged")
+h4, r4 = role_only("process-role-wrong-entry", "settings", "onboarding")
+check(h4.eval(r4, "ProcessRole.primary") is True, "ROLE=settings in the wizard's entry file: not trusted")
+h5, r5 = role_only("process-role-window", "settings", "settings")
+check(h5.eval(r5, "ProcessRole.settings") is True and h5.eval(r5, "ProcessRole.initialPage") == "about",
+      "ROLE=settings in settings-window.qml: the Settings window")
+ctx = json.loads(h5.eval(r5, "JSON.stringify(ProcessRole.detached(['xdg-open', 'x']))"))
+check(ctx.get("command") == ["xdg-open", "x"] and len(ctx.get("environment", {})) == 4
+      and all(v is None and k.endswith(("ROLE", "WINDOW_PAGE", "WINDOW_SCREEN", "WINDOW_WORKSPACE"))
+              for k, v in ctx["environment"].items()),
+      f"window: a detached program is started without the window variables, got {ctx}")
+
 if failures:
     print(f"{len(failures)} failure(s)")
     hard_exit(1)

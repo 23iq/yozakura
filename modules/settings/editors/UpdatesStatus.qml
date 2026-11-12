@@ -47,7 +47,7 @@ Item {
                 kind: "ghost"
                 icon: "fileText"
                 text: I18n.t("prefs.updates.changelog")
-                onClicked: Quickshell.execDetached(["xdg-open", UpdateService.changelogUrl ?? Brand.repoUrl])
+                onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", UpdateService.changelogUrl ?? Brand.repoUrl]))
             }
         }
     }
