@@ -1,13 +1,16 @@
 .pragma library
 
-// Look > Icons & type: icon font weight, UI/mono fonts and the heading
-// role (font + letter case). Entry format: see modules/settings/AGENTS.md.
+// Look > Icons & type: icon font weight (picture cards), the UI / mono /
+// heading / editorial fonts (the font picker) and the heading case, over a
+// type specimen (stages/TypeStage.qml). Entry format: see
+// modules/settings/AGENTS.md.
 
 var category = {
     "id": "icons-type",
     "icon": "textAa",
     "title": "prefs.cat.icons_type",
     "description": "prefs.cat.icons_type.desc",
+    "stage": "TypeStage",
     "keywords": "icons weight phosphor regular bold fill fonts typography heading title case uppercase typeface",
     "sections": [
         {
@@ -17,6 +20,8 @@ var category = {
                 {
                     "key": "theme.icons.weight",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "WeightThumb",
                     "label": "prefs.icons_type.weight",
                     "description": "prefs.icons_type.weight.desc",
                     "keywords": "icon weight stroke thin solid filled phosphor",
@@ -59,7 +64,7 @@ var category = {
             "entries": [
                 {
                     "key": "theme.type.heading",
-                    "type": "text",
+                    "type": "font",
                     "placeholder": "prefs.icons_type.heading_font.placeholder",
                     "label": "prefs.icons_type.heading_font",
                     "description": "prefs.icons_type.heading_font.desc",
@@ -80,7 +85,7 @@ var category = {
                 },
                 {
                     "key": "theme.type.editorial",
-                    "type": "text",
+                    "type": "font",
                     "placeholder": "prefs.icons_type.editorial_font.placeholder",
                     "label": "prefs.icons_type.editorial_font",
                     "description": "prefs.icons_type.editorial_font.desc",

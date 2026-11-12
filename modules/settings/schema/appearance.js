@@ -14,6 +14,7 @@ var category = {
     "icon": "paintBrush",
     "title": "prefs.cat.appearance",
     "description": "prefs.cat.appearance.desc",
+    "stage": "LookStage",
     "keywords": "theme look style colors fonts dark light",
     "sections": [
         {
@@ -87,18 +88,19 @@ var category = {
             "entries": [
                 {
                     "key": "theme.roundness",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 24,
                     "step": 1,
                     "unit": "px",
-                    "preview": "RoundnessPreview",
                     "label": "settings.theme.roundness",
                     "description": "prefs.appearance.roundness.desc",
                     "keywords": "radius corners rounded square shape"
                 },
                 {
                     "key": "theme.enableCorners",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "settings.theme.enable_corners",
                     "description": "prefs.appearance.corners.desc",
@@ -121,6 +123,7 @@ var category = {
                 },
                 {
                     "key": "theme.shape.popupCorners",
+                    "advanced": true,
                     "type": "selector",
                     "label": "prefs.appearance.popup_corners",
                     "description": "prefs.appearance.popup_corners.desc",
@@ -285,8 +288,8 @@ var category = {
     ]
 };
 
-// Quick tune (schema/macros.js: the macro sliders) right after "mode".
-category.sections.splice(1, 0, ...Macros.sections);
+// Feel (schema/macros.js: the macro sliders) right after "palette".
+category.sections.splice(category.sections.findIndex(s => s.id === "palette") + 1, 0, ...Macros.sections);
 
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
@@ -301,3 +304,22 @@ category.sections.splice(category.sections.findIndex(s => s.id === "effects") + 
 // (schema/motion.js: profile, speed, shell timing) close the page.
 category.sections.push(...Surfaces.sections);
 category.sections.push(...Motion.sections);
+
+// The window's "Details" block: the shape, signature, effect and light
+// rows (each a few rows) are one section, in that order, so the page reads
+// Theme / Colors / Feel / Details. Their out-of-window entries go with them.
+(function () {
+    var ids = ["shape", "signatures", "effects", "lighting"];
+    var at = category.sections.findIndex(s => s.id === "shape");
+    var merged = {
+        "id": "details",
+        "title": "prefs.appearance.section.details",
+        "entries": []
+    };
+    ids.forEach(function (id) {
+        var i = category.sections.findIndex(s => s.id === id);
+        merged.entries = merged.entries.concat(category.sections[i].entries);
+        category.sections.splice(i, 1);
+    });
+    category.sections.splice(at, 0, merged);
+})();
