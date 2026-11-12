@@ -15,6 +15,7 @@ func greetFake() *fakeTerm {
 	f.results["term.fetch.presets"] = `[{"id":"sakura","name":"Sakura","description":"term.fetch.preset.sakura.desc","logo":true},{"id":"own","name":"","description":"term.fetch.preset.own.desc","own":true}]`
 	f.results["term.apply"] = `{"greeting":{"on":true,"fastfetchInstalled":false,"shells":[{"shell":"bash","state":"on"}],"logoError":"logo_missing"}}`
 	f.results["term.status"] = `{"greeting":{"on":true,"fastfetchInstalled":true,"shells":[{"shell":"fish","state":"on"},{"shell":"bash","state":"foreign","file":"/h/.bashrc"},{"shell":"zsh","state":"absent"}]}}`
+	f.results["term.fetch.allow"] = f.results["term.status"]
 	f.results["term.fetch.preview"] = `{"lines":[[{"text":"user","fg":"#ff0000"}]],"exact":true}`
 	return f
 }
@@ -25,6 +26,7 @@ func TestTermGreetingOnOffAndLook(t *testing.T) {
 	assert.Equal(t, 0, code, errOut)
 	assert.Equal(t, [][2]any{{"terminal.greeting", "fastfetch"}}, f.sets)
 	assert.Equal(t, "term.apply", f.calls[len(f.calls)-1])
+	assert.Contains(t, f.calls, "term.fetch.allow", "switched on by the user: every shell")
 	assert.Contains(t, out, "extras install fastfetch")
 	assert.Contains(t, out, "cannot be read")
 
@@ -32,6 +34,7 @@ func TestTermGreetingOnOffAndLook(t *testing.T) {
 	code, _, _ = termRun(t, f, "greeting", "off")
 	assert.Equal(t, 0, code)
 	assert.Equal(t, [][2]any{{"terminal.greeting", "none"}}, f.sets)
+	assert.NotContains(t, f.calls, "term.fetch.allow")
 
 	f = greetFake()
 	code, _, errOut = termRun(t, f, "greeting", "preset", "sakura")
@@ -120,4 +123,14 @@ func TestGoodbyeRemovesTheGreeting(t *testing.T) {
 	removed, err = removeGreeting(env)
 	assert.NoError(t, err)
 	assert.Empty(t, removed)
+}
+
+// On from before the update: the status says how to let it into bash too.
+func TestTermGreetingShowsHeldShells(t *testing.T) {
+	f := greetFake()
+	f.results["term.status"] = `{"greeting":{"on":true,"fastfetchInstalled":true,"shells":[{"shell":"fish","state":"on"},{"shell":"bash","state":"held","file":"/h/.bashrc"}]}}`
+	code, out, errOut := termRun(t, f, "greeting")
+	assert.Equal(t, 0, code, errOut)
+	assert.Contains(t, out, "bash: off (on from before the update, fish only")
+	assert.Contains(t, out, "term greeting on` adds the line to /h/.bashrc")
 }

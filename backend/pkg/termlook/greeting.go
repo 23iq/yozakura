@@ -33,6 +33,10 @@ type GreetingConfig struct {
 	// LoginShell is the user's shell (passwd): its rc file is created when
 	// missing; other shells' rc files are only edited when they exist.
 	LoginShell string
+	// FishOnly keeps the greeting out of bash and zsh (no rc file is
+	// edited; a line of ours goes): the user has not let it in there yet
+	// (GreetingAllShells).
+	FishOnly bool
 }
 
 // Shell greeting states.
@@ -42,6 +46,7 @@ const (
 	ShellForeign = "foreign" // the user's own files run a fetch tool already
 	ShellManaged = "managed" // the rc file is read-only / in the Nix store
 	ShellAbsent  = "absent"  // the shell is not installed (or no rc file)
+	ShellHeld    = "held"    // on in fish only: bash / zsh wait for the user's go (FishOnly)
 	ShellError   = "error"
 )
 
@@ -354,7 +359,7 @@ func applyRC(shell string, cfg GreetingConfig, env Env) error {
 			}
 		}
 	}
-	if foreignFetch(shell, env) != "" || !shellInstalled(shell, env) {
+	if cfg.FishOnly || foreignFetch(shell, env) != "" || !shellInstalled(shell, env) {
 		_, err := apphooks.RevertMarkedBlock(henv, "greeting-"+shell, rcMarker(env), rc)
 		return ignoreManaged(err)
 	}
@@ -448,6 +453,8 @@ func shellState(shell string, cfg GreetingConfig, env Env) ShellGreeting {
 		out.State = ShellOn
 	case !shellInstalled(shell, env) || (err != nil && filepath.Base(cfg.LoginShell) != shell):
 		out.State = ShellAbsent
+	case cfg.On && cfg.FishOnly:
+		out.State = ShellHeld
 	case cfg.On && apphooks.WriteCheck(rc) != nil:
 		out.State = ShellManaged
 	}

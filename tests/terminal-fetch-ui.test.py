@@ -139,6 +139,7 @@ check(not visible(find("fetchLogoPath")), "no logo path field unless custom")
 # fastfetch is queued
 click(find("fetchSwitch"))
 check(ev("Config.terminal.greeting") == "fastfetch", "the switch turns the greeting on")
+check(len(calls("term.fetch.allow")) == 1, "switched on by the user: every shell (term.fetch.allow)")
 check(ev("Config.terminal.fastfetchPreset") == "sakura", "plain fastfetch without an own config: the sakura look")
 inst = calls("extras.install")
 check(inst and inst[-1]["params"]["ids"] == ["fastfetch"], "turning it on with fastfetch missing queues it: %s" % inst)
@@ -179,12 +180,33 @@ check(visible(foreign) and "~/.bashrc" in ev("title", foreign), "a shell running
 check(visible(find("fetchShellNotice:zsh")), "a read-only rc file is named")
 check("fish" in ev("subtitle", find("fetchSwitchRow")), "the switch row says where it shows")
 
+# on from before the update: fish only until the user lets it into bash / zsh
+check(not visible(find("fetchHeldNotice")), "no held shells: no notice")
+held = {**STATUS, "greeting": {**GREETING, "on": True, "fastfetchInstalled": True,
+                               "shells": [{"shell": "fish", "state": "on"},
+                                          {"shell": "bash", "state": "held", "file": "/home/user/.bashrc"},
+                                          {"shell": "zsh", "state": "held", "file": "/home/user/.zshrc"}]}}
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s})" % json.dumps(held))
+ev("TerminalLookService.refreshStatus()")
+wait_until(lambda: visible(find("fetchHeldNotice")))
+check(visible(find("fetchHeldNotice")), "held shells are named")
+check("bash, zsh" in ev("message", find("fetchHeldNotice")), "it names them: %r" % ev("message", find("fetchHeldNotice")))
+allows = len(calls("term.fetch.allow"))
+click(find("fetchAllowButton"))
+check(len(calls("term.fetch.allow")) == allows + 1, "the button lets the greeting into them")
+
 # off
 click(find("fetchSwitch"))
 check(ev("Config.terminal.greeting") == "none", "the switch turns it off")
 check(not visible(find("fetchShellNotice:bash")), "shell notices only while on")
 pump(500)
 check(len(calls("term.apply")) >= 1, "changes reach the backend (term.apply)")
+
+# the setup wizard switches it on: every shell as well
+allows = len(calls("term.fetch.allow"))
+ev("TerminalLookService.enableGreeting('sakura', 'sakura')")
+check(ev("Config.terminal.greeting") == "fastfetch", "the wizard turns the greeting on")
+check(len(calls("term.fetch.allow")) == allows + 1, "the wizard lets it into every shell")
 
 if failures:
     print(f"{len(failures)} failure(s)")

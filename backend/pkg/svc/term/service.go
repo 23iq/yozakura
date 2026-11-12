@@ -11,6 +11,9 @@
 //	                                    when terminal.enabled, else removes the hook)
 //	status {}                        -> Status
 //	fetch.presets {}                 -> [{id, name, description, logo, own}] (greeting looks)
+//	fetch.allow {}                   -> Status  (the user switched the greeting on: it may
+//	                                    edit ~/.bashrc / ~/.zshrc from now on; without it a
+//	                                    greeting on from before stays in fish, shells "held")
 //	fetch.preview {preset?, logo?, logoPath?, ansi?} -> {lines: [[span]], exact, reason, imageLogo}
 //	                                    (fastfetch run with that look in a temp dir; the
 //	                                    config's values by default; ansi: the terminal's 16
@@ -141,9 +144,9 @@ func (s *Service) Register(srv *ipc.Server) {
 		Name: "term",
 		Methods: map[string]ipc.HandlerFunc{
 			"presets": s.presets, "preview": s.preview, "apply": s.apply, "status": s.status,
-			"fetch.presets": s.fetchPresets, "fetch.preview": s.fetchPreview,
+			"fetch.presets": s.fetchPresets, "fetch.preview": s.fetchPreview, "fetch.allow": s.fetchAllow,
 		},
-		Async: map[string]bool{"preview": true, "apply": true, "status": true, "fetch.preview": true},
+		Async: map[string]bool{"preview": true, "apply": true, "status": true, "fetch.preview": true, "fetch.allow": true},
 	})
 }
 

@@ -52,8 +52,14 @@ func runTermGreeting(env termEnv, pos []string, asJSON bool, logo string, out io
 	switch {
 	case sub == "" && len(pos) == 0:
 		return termGreetingShow(env, asJSON, out)
-	case (sub == "on" || sub == "off") && len(pos) == 0:
-		return termGreetingSet(env, out, "greeting "+sub, kv{"terminal.greeting", map[bool]string{true: "fastfetch", false: "none"}[sub == "on"]})
+	case sub == "on" && len(pos) == 0:
+		// switched on by the user: bash and zsh too (term.fetch.allow)
+		if _, err := env.Call("term.fetch.allow", nil); err != nil {
+			return err
+		}
+		return termGreetingSet(env, out, "greeting on", kv{"terminal.greeting", "fastfetch"})
+	case sub == "off" && len(pos) == 0:
+		return termGreetingSet(env, out, "greeting off", kv{"terminal.greeting", "none"})
 	case sub == "preset" && len(pos) == 1:
 		if _, err := termFetchPresetByID(env, pos[0]); err != nil {
 			return err
@@ -251,6 +257,8 @@ func shellNote(sh termlook.ShellGreeting) string {
 		return sh.File + " is read-only: add the line of greeting.sh yourself"
 	case termlook.ShellAbsent:
 		return "not installed (or no rc file)"
+	case termlook.ShellHeld:
+		return "off (on from before the update, fish only: `" + branded("{bin}") + " term greeting on` adds the line to " + sh.File + ")"
 	}
 	return sh.State
 }

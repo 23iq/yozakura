@@ -37,6 +37,7 @@ Column {
     readonly property bool installing: ExtrasService.cardState("fastfetch") === "installing"
     readonly property bool installable: ExtrasService.cardState("fastfetch") === "selectable"
     readonly property var shells: FetchModel.shellsOn(root.greeting)
+    readonly property var held: FetchModel.shellsIn(root.greeting, "held").map(s => s.shell)
     readonly property string home: Quickshell.env("HOME") || ""
     // The prompt above when it is on, else a plain one.
     readonly property var promptPreview: root.term && root.term.enabled ? TerminalLookService.previews[TermModel.previewKey(TerminalLookService.engine, TerminalLookService.prompt)] : ({
@@ -75,6 +76,7 @@ Column {
         const look = FetchModel.presetOnTurnOn(root.preset, !!(root.greeting && root.greeting.ownConfig));
         if (look !== root.preset)
             SettingsStore.set("terminal.fastfetchPreset", look);
+        TerminalLookService.allowGreetingShells();
         SettingsStore.set("terminal.greeting", "fastfetch");
         if (!TerminalLookService.fastfetchInstalled)
             TerminalLookService.installFastfetch();
@@ -148,6 +150,24 @@ Column {
         icon: "image"
         title: I18n.t("prefs.term.fetch.image.title")
         message: I18n.t("prefs.term.fetch.image.desc")
+    }
+
+    // On from before the update: still in fish only, until the user lets
+    // it add its line to the other shells' startup files.
+    LookNotice {
+        objectName: "fetchHeldNotice"
+        width: root.width
+        visible: root.on && root.held.length > 0
+        icon: "info"
+        title: I18n.t("prefs.term.fetch.held.title")
+        message: I18n.t("prefs.term.fetch.held.desc", root.held.join(", "))
+
+        PillButton {
+            objectName: "fetchAllowButton"
+            kind: "filled"
+            text: I18n.t("prefs.term.fetch.held.allow", root.held.join(", "))
+            onClicked: TerminalLookService.allowGreetingShells()
+        }
     }
 
     Repeater {

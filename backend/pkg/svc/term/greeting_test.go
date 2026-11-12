@@ -25,6 +25,9 @@ func greetFixture(t *testing.T, terminalJSON string) *fixture {
 // The greeting is written without the prompt; the prompt hook stays away.
 func TestApplyWritesTheGreetingWithoutThePrompt(t *testing.T) {
 	f := greetFixture(t, greetingOn)
+	if _, err := f.s.fetchAllow(nil); err != nil { // switched on in this version
+		t.Fatal(err)
+	}
 	if err := f.s.Apply(); err != nil {
 		t.Fatal(err)
 	}
@@ -123,4 +126,88 @@ func TestWatcherReappliesTheGreetingOnColorChange(t *testing.T) {
 		a, _ := os.ReadFile(conf)
 		return strings.Contains(string(a), "#123456") && string(a) != string(before)
 	}, "greeting re-rendered")
+}
+
+func shellIn(st Status, shell string) termlook.ShellGreeting {
+	for _, sh := range st.Greeting.Shells {
+		if sh.Shell == shell {
+			return sh
+		}
+	}
+	return termlook.ShellGreeting{}
+}
+
+// A greeting that was on before the update (fish only, plain fastfetch)
+// stays exactly there: no rc file is edited until the user switches it on
+// in this version; then bash and zsh get it too.
+func TestGreetingFromBeforeTheUpdateStaysInFish(t *testing.T) {
+	f := greetFixture(t, `{"enabled":true,"greeting":"fastfetch"}`)
+	f.installed["fish"] = true
+	f.installed["zsh"] = true
+	zshrc := filepath.Join(f.home, ".zshrc")
+	f.write(zshrc, "# my zshrc\n")
+	if err := f.s.Apply(); err != nil {
+		t.Fatal(err)
+	}
+	env := f.s.o.Env
+	if rc, _ := os.ReadFile(filepath.Join(f.home, ".bashrc")); string(rc) != "# mine\n" {
+		t.Errorf(".bashrc edited: %q", rc)
+	}
+	if rc, _ := os.ReadFile(zshrc); string(rc) != "# my zshrc\n" {
+		t.Errorf(".zshrc edited: %q", rc)
+	}
+	if _, err := os.Stat(termlook.FetchConfigFile(env)); err == nil {
+		t.Error("a look was written: the greeting was plain fastfetch")
+	}
+	fish, err := os.ReadFile(termlook.FishGreetingFile(env))
+	if err != nil || !strings.Contains(string(fish), "        fastfetch\n") {
+		t.Errorf("fish greeting: %q %v", fish, err)
+	}
+	st := f.s.currentStatus()
+	if shellIn(st, "fish").State != termlook.ShellOn || shellIn(st, "bash").State != termlook.ShellHeld || shellIn(st, "zsh").State != termlook.ShellHeld {
+		t.Errorf("status %+v", st.Greeting.Shells)
+	}
+	// a restart changes nothing either
+	if err := f.s.Apply(); err != nil {
+		t.Fatal(err)
+	}
+	if rc, _ := os.ReadFile(filepath.Join(f.home, ".bashrc")); string(rc) != "# mine\n" {
+		t.Errorf(".bashrc edited on the next apply: %q", rc)
+	}
+
+	// the user switches it on (Settings, wizard, CLI): every shell
+	res, err := f.s.fetchAllow(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st = res.(Status)
+	if shellIn(st, "bash").State != termlook.ShellOn || shellIn(st, "zsh").State != termlook.ShellOn {
+		t.Errorf("after allow %+v", st.Greeting.Shells)
+	}
+	if !termlook.GreetingAllShells(env) {
+		t.Error("the choice is not recorded")
+	}
+	// recorded on this machine only: a later apply keeps every shell
+	if err := f.s.Apply(); err != nil {
+		t.Fatal(err)
+	}
+	if rc, _ := os.ReadFile(zshrc); !strings.Contains(string(rc), "greeting.sh") {
+		t.Errorf(".zshrc after allow: %q", rc)
+	}
+}
+
+// A fresh install: the wizard switches the greeting on (allow): every
+// shell from the start.
+func TestGreetingSwitchedOnByTheWizardRunsEverywhere(t *testing.T) {
+	f := greetFixture(t, `{"greeting":"none","fastfetchPreset":"own"}`)
+	if _, err := f.s.fetchAllow(nil); err != nil {
+		t.Fatal(err)
+	}
+	f.write(f.cfg, greetingOn)
+	if err := f.s.Apply(); err != nil {
+		t.Fatal(err)
+	}
+	if rc, _ := os.ReadFile(filepath.Join(f.home, ".bashrc")); !strings.Contains(string(rc), "greeting.sh") {
+		t.Errorf(".bashrc: %q", rc)
+	}
 }

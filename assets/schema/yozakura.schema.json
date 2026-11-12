@@ -10042,7 +10042,7 @@
             "entryTitle": "System info greeting",
             "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
           },
-          "description": "What a new terminal prints: fastfetch runs once per terminal in fish, bash and zsh (interactive shells on a terminal only; not in tmux/screen panes or nested shells), whether or not the prompt is on. bash/zsh get one marked line in ~/.bashrc / ~/.zshrc that sources <config>/<app>/greeting.sh; turning it off removes it. Machine-local: presets never switch the greeting on or off (they can carry its look).",
+          "description": "What a new terminal prints: fastfetch runs once per terminal in fish, bash and zsh (interactive shells on a terminal only; not in tmux/screen panes or nested shells), whether or not the prompt is on. bash/zsh get one marked line in ~/.bashrc / ~/.zshrc that sources <config>/<app>/greeting.sh; turning it off removes it. The rc lines are only written once the user switched the greeting on in this version (`yozakura term greeting on`, Settings, the setup wizard); set otherwise, or on from before the update, it runs in fish only. Machine-local: presets never switch the greeting on or off (they can carry its look).",
           "enum": [
             "none",
             "fastfetch"

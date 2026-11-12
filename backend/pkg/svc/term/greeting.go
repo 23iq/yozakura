@@ -54,7 +54,25 @@ func (s *Service) greeting() termlook.GreetingConfig {
 		}
 	}
 	g.LoginShell = s.loginShell()
+	g.FishOnly = !termlook.GreetingAllShells(s.o.Env)
 	return g
+}
+
+// fetchAllow is the user switching the greeting on in this version
+// (Settings, the setup wizard, `term greeting on`): from now on it may
+// edit ~/.bashrc and ~/.zshrc. Until then a greeting that was on before
+// the update stays in fish, where it was.
+func (s *Service) fetchAllow(json.RawMessage) (any, error) {
+	s.mu.Lock()
+	err := termlook.AllowGreetingShells(s.o.Env)
+	if err == nil {
+		err = s.applyGreeting()
+	}
+	s.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return s.currentStatus(), nil
 }
 
 // applyGreeting writes or removes the greeting (under s.mu).

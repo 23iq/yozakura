@@ -653,6 +653,7 @@ QtObject {
     function ensureFetch(preset, logo, path) {}
     function installFastfetch() {}
     function enableGreeting(preset, logo) {}
+    function allowGreetingShells() {}
     function refreshStatus() {}
     function previewOf(id, engine) { return undefined }
     function ensure(id, engine) {}

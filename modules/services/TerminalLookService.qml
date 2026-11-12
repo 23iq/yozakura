@@ -236,12 +236,23 @@ Singleton {
             ExtrasService.install(["fastfetch"]);
     }
 
+    // The user switched the greeting on in this version (Settings, the
+    // wizard): it may add its line to ~/.bashrc / ~/.zshrc from now on. A
+    // greeting on from before the update stays in fish until then.
+    function allowGreetingShells() {
+        BackendService.call("term.fetch.allow", {}, (result, error) => {
+            if (!error && result)
+                root._setStatus(result);
+        });
+    }
+
     // The wizard turns the greeting on with a look: written like
     // enablePrompt, fastfetch queued when it is missing.
     function enableGreeting(preset, logo) {
         if (!Config.terminal)
             return;
         DryRun.journal("enable the fastfetch greeting (" + preset + ", " + logo + ")");
+        root.allowGreetingShells();
         Config.terminal.fastfetchPreset = preset;
         Config.terminal.fastfetchLogo = logo;
         Config.terminal.greeting = "fastfetch";

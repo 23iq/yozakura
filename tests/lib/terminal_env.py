@@ -101,6 +101,7 @@ class TerminalEnv(ExtrasEnv):
         replies = {"term.presets": PRESETS if presets is None else presets,
                    "term.status": STATUS if status is None else status,
                    "term.apply": STATUS if status is None else status,
+                   "term.fetch.allow": STATUS if status is None else status,
                    "extras.setLoginShell": {"jobs": []},
                    **(replies or {})}
         super().__init__(name, replies=replies, **kw)

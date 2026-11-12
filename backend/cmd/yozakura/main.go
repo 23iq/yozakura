@@ -134,6 +134,7 @@ func main() {
 	markExistingInstallOnboarded()
 	markLegacyKeyboard()
 	migrateNotchStyle()
+	migrateTerminalGreeting()
 	markLegacyAppHooks()
 	shiftDefaults()
 	ensureConfigFiles()
@@ -295,6 +296,14 @@ func markLegacyKeyboard() {
 func migrateNotchStyle() {
 	if _, err := migrate.EnsureNotchStyle(*paths.New()); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: cannot update notch.json: %v\n", err)
+	}
+}
+
+// migrateTerminalGreeting keeps an update from starting the fastfetch
+// greeting where it showed nothing before.
+func migrateTerminalGreeting() {
+	if _, err := migrate.EnsureTerminalGreeting(*paths.New()); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cannot update terminal.json: %v\n", err)
 	}
 }
 
