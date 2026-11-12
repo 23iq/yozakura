@@ -95,6 +95,29 @@ h.eval(ev('w.find("deviceRow:08:EB:ED:AA:BB:CC")'), "children[children.length - 
 QTest.qWait(50)
 check(ev('w.find("btAction").text') == "Pair" and ev('w.find("btForget").visible') is False, "a new device offers Pair, nothing to forget")
 
+# ---- Sound
+open_page("sound")
+slider = ev('w.find("soundOutputSlider")')
+check(abs(h.eval(slider, "value") - 0.62) < 0.001, "the band's output slider shows the volume")
+check(h.eval(slider, "level") > 0, "...with a live meter while shown")
+check(ev("CavaService.consumers.settingsSound") is True, "the meter asks for the visualizer's levels only while shown")
+h.eval(slider, "moved(0.4)")
+check(["volume", 0.4] in calls("Audio"), "moving it sets the volume")
+h.eval(ev('w.find("deviceRow:42")'), "children[children.length - 1].clicked(null)")
+check(["sink", 42] in calls("Audio"), "a click on an output makes it the one in use")
+check(ev('w.find("appVolumes") !== null') and ev('w.find("appVolume:Spotify") !== null'), "the apps playing have their own volume")
+
+# ---- Effects
+open_page("effects")
+h.eval(ev('w.find("deviceRow:Podcast")'), "children[children.length - 1].clicked(null)")
+check(ev("EasyEffectsService.activeOutputPreset") == "Podcast", "a click on a preset runs it")
+h.eval(ev('w.find("effectsTile")'), "clicked()")
+check(ev("EasyEffectsService.bypassed") is True, "the band's tile bypasses the effects")
+h.eval(shell, 'select("network")')
+env.wait_page(win)
+QTest.qWait(100)
+check(ev("CavaService.consumers.settingsSound") is False, "leaving Sound stops the meter")
+
 if failures:
     print(f"settings-connect: {len(failures)} failure(s)")
     h.exit(1)

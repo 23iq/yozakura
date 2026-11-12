@@ -31,6 +31,8 @@
 .import "power.js" as Power
 .import "network.js" as Network
 .import "bluetooth.js" as Bluetooth
+.import "sound.js" as Sound
+.import "effects.js" as Effects
 
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
@@ -154,8 +156,8 @@ var categories = [
     Power.category,
     Network.category,
     Bluetooth.category,
-    page("sound", "speakerHigh", "Sound", "sound audio volume mixer output input microphone speaker"),
-    page("effects", "waveform", "Effects", "equalizer easyeffects bass audio effects"),
+    Sound.category,
+    Effects.category,
     withSections(Ai.category, Sidebar.sections),
     AiProviders.category,
     AiCode.category,

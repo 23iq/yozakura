@@ -160,7 +160,71 @@ QtObject {
     function removeDevice(a) { calls = calls.concat([["remove", a]]) }
 }""" % json.dumps(DEVICES)
 
+# Audio (PipeWire): laptop speakers in use at 62 %, HDMI and headphones;
+# the built-in microphone at 80 %; Spotify and Firefox playing.
+AUDIO = """pragma Singleton
+import QtQuick
+import qs.modules.theme
+QtObject {
+    id: audio
+    property var calls: []
+    function node(id, name, desc, vol, extra) {
+        return Object.assign({ "id": id, "name": name, "description": desc, "nickname": "", "ready": true,
+                               "isStream": false, "properties": {}, "audio": { "volume": vol, "muted": false } }, extra || {})
+    }
+    property var outputDevices: [node(41, "alsa_output.speaker", "Speakers", 0.62),
+                                 node(42, "alsa_output.hdmi", "HDMI · LG 27GL850", 1),
+                                 node(43, "bluez_output.buds", "Sakura Buds headphones", 0.5)]
+    property var inputDevices: [node(51, "alsa_input.mic", "Built-in microphone", 0.8),
+                                node(52, "bluez_input.buds", "Sakura Buds headset", 0.7)]
+    property var outputAppNodes: [node(61, "spotify", "Spotify", 0.9, { "isStream": true, "properties": { "application.name": "Spotify" } }),
+                                  node(62, "firefox", "Firefox", 0.55, { "isStream": true, "properties": { "application.name": "Firefox" } })]
+    property var inputAppNodes: []
+    property var sink: outputDevices[0]
+    property var source: inputDevices[0]
+    function friendlyDeviceName(n) { return (n && (n.nickname || n.description)) || "Unknown" }
+    function appNodeDisplayName(n) { return (n && n.properties && n.properties["application.name"]) || (n && n.description) || "Unknown" }
+    function setVolume(v) { calls = calls.concat([["volume", v]]); sink = Object.assign({}, sink, { "audio": { "volume": v, "muted": sink.audio.muted } }) }
+    function setMicVolume(v) { calls = calls.concat([["mic", v]]); source = Object.assign({}, source, { "audio": { "volume": v, "muted": source.audio.muted } }) }
+    function setNodeVolume(n, v) { calls = calls.concat([["node", n.id, v]]) }
+    function setDefaultSink(n) { calls = calls.concat([["sink", n.id]]); sink = n }
+    function setDefaultSource(n) { calls = calls.concat([["source", n.id]]); source = n }
+    function toggleMute() { calls = calls.concat([["mute"]]); sink = Object.assign({}, sink, { "audio": { "volume": sink.audio.volume, "muted": !sink.audio.muted } }) }
+    function toggleMicMute() { calls = calls.concat([["micmute"]]) }
+    function volumeIcon(volume, muted) { return muted ? Icons.speakerX : volume <= 0 ? Icons.speakerNone : volume < 0.33 ? Icons.speakerLow : Icons.speakerHigh }
+}"""
+
+# The visualizer's levels (CavaService): a song mid-chorus.
+CAVA = """pragma Singleton
+import QtQuick
+QtObject {
+    property bool available: true
+    property var values: [0.42, 0.66, 0.71, 0.58, 0.49, 0.38, 0.31, 0.27]
+    property var consumers: ({})
+    function setConsumer(k, on) { var c = Object.assign({}, consumers); c[k] = on; consumers = c }
+    function levels(n) { var o = []; for (var i = 0; i < n; i++) o.push(values[i % values.length]); return o }
+}"""
+
+EASY_EFFECTS = """pragma Singleton
+import QtQuick
+QtObject {
+    property bool available: true
+    property bool bypassed: false
+    property var outputPresets: ["Loudness", "Bass boost", "Podcast", "Late night", "Flat"]
+    property var inputPresets: ["Noise gate", "Voice", "Broadcast"]
+    property string activeOutputPreset: "Loudness"
+    property string activeInputPreset: "Noise gate"
+    property var calls: []
+    function setConsumer(k, on) {}
+    function setBypass(v) { calls = calls.concat([["bypass", v]]); bypassed = v }
+    function loadOutputPreset(n) { calls = calls.concat([["output", n]]); activeOutputPreset = n }
+    function loadInputPreset(n) { calls = calls.concat([["input", n]]); activeInputPreset = n }
+}"""
+
 SERVICES = {
+    "Audio": AUDIO,
+    "CavaService": CAVA,
+    "EasyEffectsService": EASY_EFFECTS,
     "NetworkService": NETWORK,
     "BluetoothService": BLUETOOTH,
     "Battery": BATTERY,

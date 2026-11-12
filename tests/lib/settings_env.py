@@ -615,6 +615,20 @@ QtObject {
     function pairDevice(a) {}
     function removeDevice(a) {}
 }"""
+# Effects page: EasyEffects not running; tests/lib/device_fixtures.py has a live one.
+EASY_EFFECTS_STUB = """pragma Singleton
+QtObject {
+    property bool available: false
+    property bool bypassed: false
+    property var outputPresets: []
+    property var inputPresets: []
+    property string activeOutputPreset: ""
+    property string activeInputPreset: ""
+    function setConsumer(k, on) {}
+    function setBypass(v) {}
+    function loadOutputPreset(n) {}
+    function loadInputPreset(n) {}
+}"""
 # Keyboard page (modules/settings/keyboard): idle stand-in; tests/lib/keyboard_env.py swaps in the real one.
 KEYBOARD_STUB = """pragma Singleton
 QtObject {
@@ -864,7 +878,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "BluetoothService": BLUETOOTH_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "BluetoothService": BLUETOOTH_STUB, "EasyEffectsService": EASY_EFFECTS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
                                               "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
@@ -879,6 +893,8 @@ class SettingsEnv:
         self.h.module("Quickshell", QUICKSHELL)
         self.h.module("Quickshell.Io", QUICKSHELL_IO)
         self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)
+        # the Sound page tracks app streams (PwObjectTracker)
+        self.h.module("Quickshell.Services.Pipewire", {"PwObjectTracker": "import QtQuick\nQtObject { property var objects: [] }"})
         # Legacy panel components reused by editors (heavy service deps).
         self.h.module("qs.modules.widgets.dashboard.controls", {
             "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120; property var write: null }"})

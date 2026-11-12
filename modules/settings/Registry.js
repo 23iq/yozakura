@@ -69,6 +69,9 @@ var EDITORS = {
     "WifiDetails": "connect/WifiDetails.qml",
     "BluetoothList": "connect/BluetoothList.qml",
     "BluetoothDetails": "connect/BluetoothDetails.qml",
+    "AudioDevices": "connect/AudioDevices.qml",
+    "AppVolumes": "connect/AppVolumes.qml",
+    "EffectPresets": "connect/EffectPresets.qml",
     "SleepSwitches": "editors/SleepSwitches.qml"
 };
 
@@ -118,7 +121,9 @@ var STAGES = {
     "WindowsStage": "stages/WindowsStage.qml",
     "PowerStage": "stages/PowerStage.qml",
     "NetworkBand": "stages/NetworkBand.qml",
-    "BluetoothBand": "stages/BluetoothBand.qml"
+    "BluetoothBand": "stages/BluetoothBand.qml",
+    "SoundBand": "stages/SoundBand.qml",
+    "EffectsBand": "stages/EffectsBand.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
@@ -128,12 +133,10 @@ var PAGES = {
     "AboutPage": { "file": "AboutPage.qml" },
     "Changes": { "file": "changes/ChangesPage.qml" },
     "Displays": { "file": "displays/DisplaysPage.qml" },
-    "Effects": { "file": "connect/ConnectPage.qml", "props": { "panel": "EasyEffectsPanel.qml" } },
     "Extras": { "file": "extras/ExtrasPage.qml" },
     "Keyboard": { "file": "keyboard/KeyboardPage.qml" },
     "Mods": { "file": "mods/ModsEditor.qml" },
-    "PresetStudio": { "file": "presets/PresetStudioPage.qml" },
-    "Sound": { "file": "connect/ConnectPage.qml", "props": { "panel": "AudioMixerPanel.qml" } }
+    "PresetStudio": { "file": "presets/PresetStudioPage.qml" }
 };
 
 // Home tile scenes (HomeTile, loaded by URL once home has shown), by
