@@ -77,6 +77,14 @@ def readers(fifo):
     return found
 
 
+def gone(pid):
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except OSError:
+        return True
+    return state == "Z"
+
+
 def wait_for(cond, what, timeout=5.0):
     deadline = time.monotonic() + timeout
     while not cond():
@@ -141,8 +149,11 @@ def blocked_writer_released_by_next_reader(parent, fifo, out):
     """The restart window: the reader is gone, a keybind writes, the next
     Quickshell starts its reader on the same FIFO."""
     send(fifo, out, "launcher")
+    old = readers(fifo)
     kill_parent(parent)
-    wait_for(lambda: not readers(fifo), "the old reader to exit")
+    # wait until the old tail is gone for good: an exiting process drops
+    # its argv and fd list before the FIFO is actually released
+    wait_for(lambda: all(gone(pid) for pid in old), "the old reader to exit")
     writer = subprocess.Popen(["sh", "-c", 'echo brightness-up > "$1"', "writer", str(fifo)])
     time.sleep(0.3)
     assert writer.poll() is None, "the writer should block while no reader runs"
@@ -176,14 +187,6 @@ def leftover_file(path):
 def foreign_fifo(path):
     os.mkfifo(path, 0o622)
     os.chown(path, 65534, 65534)
-
-
-def gone(pid):
-    try:
-        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
-    except OSError:
-        return True
-    return state == "Z"
 
 
 def orphaned_before_start(subreaper, parent_stays=False):
