@@ -7,19 +7,25 @@ import (
 	"io"
 	"os"
 	"strings"
+	"syscall"
 )
 
 // sniffLen is how much of a file the content sniff reads.
 const sniffLen = 4096
 
-// Detect returns the format of a file: by content when the bytes identify
-// a format the extension does not match (a PNG named .jpg), by extension
-// otherwise, by content when there is no known extension. ok is false when
-// neither tells.
+// Detect returns the format of a regular file: by content when the bytes
+// strongly identify a format the extension does not match (a PNG named
+// .jpg), by extension otherwise, by content when there is no known
+// extension. ok is false when neither tells, and for anything that is not
+// a regular file after following symlinks (a FIFO, a device, a folder:
+// reading those could block or never end).
 func Detect(path string) (Format, bool) {
+	if !IsRegular(path) {
+		return Format{}, false
+	}
 	byName, named := ByExtension(path)
-	sniffed, ok := sniffFile(path)
-	if ok && (!named || !compatible(byName.ID, sniffed.ID)) {
+	sniffed, strong, ok := sniffFile(path)
+	if ok && (!named || (strong && !compatible(byName.ID, sniffed.ID))) {
 		return sniffed, true
 	}
 	if named {
@@ -27,6 +33,17 @@ func Detect(path string) (Format, bool) {
 	}
 	return Format{}, false
 }
+
+// IsRegular reports whether path is a regular file (symlinks followed).
+func IsRegular(path string) bool {
+	st, err := os.Stat(path)
+	return err == nil && st.Mode().IsRegular()
+}
+
+// weakSniffs are content guesses too loose to override an extension: bare
+// audio frame syncs, the ico header, text heuristics.
+var weakSniffs = map[string]bool{"mp3": true, "aac": true, "ico": true, "mpeg": true,
+	"txt": true, "json": true, "html": true, "svg": true}
 
 // compatible: an extension the sniff cannot tell apart from what it saw
 // (containers sharing a signature, text formats) is trusted.
@@ -50,12 +67,18 @@ func compatible(named, sniffed string) bool {
 	return false
 }
 
-func sniffFile(path string) (Format, bool) {
-	f, err := os.Open(path)
+// sniffFile: the sniffed format and whether the evidence is strong. The
+// file is opened non-blocking and checked again after opening, so a path
+// swapped for a FIFO is never read.
+func sniffFile(path string) (Format, bool, bool) {
+	f, err := os.OpenFile(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if err != nil {
-		return Format{}, false
+		return Format{}, false, false
 	}
 	defer f.Close()
+	if st, err := f.Stat(); err != nil || !st.Mode().IsRegular() {
+		return Format{}, false, false
+	}
 	head := make([]byte, sniffLen)
 	n, _ := io.ReadFull(f, head)
 	head = head[:n]
@@ -64,9 +87,19 @@ func sniffFile(path string) (Format, bool) {
 		id = sniffZip(path)
 	}
 	if fm, ok := byID[id]; ok {
-		return fm, true
+		return fm, !weakSniffs[id] && !hasTextBOM(head), true
 	}
-	return Format{}, false
+	return Format{}, false, false
+}
+
+// hasTextBOM: a UTF-8 / UTF-16 / UTF-32 byte order mark starts the file.
+func hasTextBOM(b []byte) bool {
+	for _, bom := range []string{"\xef\xbb\xbf", "\xff\xfe", "\xfe\xff", "\x00\x00\xfe\xff"} {
+		if bytes.HasPrefix(b, []byte(bom)) {
+			return true
+		}
+	}
+	return false
 }
 
 // Sniff names the format of a file's first bytes ("" when unknown; "zip"
@@ -74,6 +107,9 @@ func sniffFile(path string) (Format, bool) {
 func Sniff(b []byte) string {
 	has := func(off int, sig string) bool {
 		return len(b) >= off+len(sig) && string(b[off:off+len(sig)]) == sig
+	}
+	if hasTextBOM(b) {
+		return "txt"
 	}
 	switch {
 	case has(0, "\x89PNG\r\n\x1a\n"):
