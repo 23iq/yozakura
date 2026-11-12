@@ -20,6 +20,7 @@ QtObject {
     property var calls: []
     property var replies: ({})
     property var previews: ({})
+    property var fetchPreviews: ({})
     property var subs: []
     function call(method, params, cb) {
         calls = calls.concat([{method: method, params: params}]);
@@ -28,7 +29,12 @@ QtObject {
             const p = params || {};
             r = previews[p.engine + ":" + p.prompt] || previews[p.prompt] || previews["*"];
         }
-        if (Array.isArray(r) && method !== "term.presets") {
+        if (method === "term.fetch.preview") {
+            const p = params || {};
+            const k = p.preset + "|" + p.logo + "|" + (p.logo === "custom" ? p.logoPath : "");
+            r = fetchPreviews[k] || r;
+        }
+        if (Array.isArray(r) && method !== "term.presets" && method !== "term.fetch.presets") {
             const rest = r.slice(1);
             const next = Object.assign({}, replies);
             next[method] = rest.length > 0 ? rest : r[0];
@@ -90,7 +96,8 @@ def sample_previews(exact: bool = True, engine: str = "starship") -> dict:
 
 
 class TerminalEnv(ExtrasEnv):
-    def __init__(self, name: str = "terminal", *, presets=None, previews=None, status=None, replies=None, **kw):
+    def __init__(self, name: str = "terminal", *, presets=None, previews=None, status=None, replies=None,
+                 fetch_previews=None, **kw):
         replies = {"term.presets": PRESETS if presets is None else presets,
                    "term.status": STATUS if status is None else status,
                    "term.apply": STATUS if status is None else status,
@@ -104,7 +111,9 @@ class TerminalEnv(ExtrasEnv):
         all_replies = baked[start:baked.index(")\n", start)]
         backend = (BACKEND.replace("property var replies: ({})", "property var replies: (" + all_replies + ")", 1)
                    .replace("property var previews: ({})",
-                            "property var previews: (" + json.dumps(previews if previews is not None else sample_previews()) + ")", 1))
+                            "property var previews: (" + json.dumps(previews if previews is not None else sample_previews()) + ")", 1)
+                   .replace("property var fetchPreviews: ({})",
+                            "property var fetchPreviews: (" + json.dumps(fetch_previews or {}) + ")", 1))
         self.h.module("qs.modules.services", {
             "BackendService": backend,
             "TerminalLookService": (REPO / "modules/services/TerminalLookService.qml").read_text()})
