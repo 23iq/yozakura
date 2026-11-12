@@ -101,10 +101,14 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 			it.ok = daemonFound()
 		}
 		// The shell's own agent takes the password prompts: an external
-		// one is only the fallback.
-		if d.ID == polkitDep && doctorShellPolkit() {
-			it.ok = true
-			it.purpose += " (" + brand.DisplayName + "'s own agent)"
+		// one is only the fallback (setting off, or no Polkit module).
+		if d.ID == polkitDep {
+			if doctorShellPolkit() {
+				it.ok = true
+				it.purpose = "fallback only: " + brand.DisplayName + "'s own agent takes the password prompts"
+			} else {
+				it.purpose += " (" + brand.DisplayName + "'s own agent is off or unavailable)"
+			}
 		}
 		if len(it.pkgs) == 0 {
 			// Built from this repository (yozd) or installed per user.

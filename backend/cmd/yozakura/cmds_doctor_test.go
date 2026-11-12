@@ -106,11 +106,11 @@ func TestDoctorPolkitAgentInShell(t *testing.T) {
 		return doctorItem{}
 	}
 	doctorShellPolkit = func() bool { return false }
-	if it := find(); it.ok {
+	if it := find(); it.ok || !strings.Contains(it.purpose, "off or unavailable") {
 		t.Errorf("external agent missing, shell agent off: %+v", it)
 	}
 	doctorShellPolkit = func() bool { return true }
-	if it := find(); !it.ok || !strings.Contains(it.purpose, "own agent") {
+	if it := find(); !it.ok || !strings.HasPrefix(it.purpose, "fallback only") {
 		t.Errorf("shell agent on: %+v", it)
 	}
 }
