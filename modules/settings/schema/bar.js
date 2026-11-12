@@ -185,6 +185,8 @@ var category = {
                     },
                     "type": "custom",
                     "component": "BarLayoutEditor",
+                    // built once the page shows (SettingRow `lazy`)
+                    "lazy": true,
                     "keys": ["bar.layout.left", "bar.layout.right", "bar.layout.drawer"],
                     "label": "prefs.label.bar_modules",
                     "description": "prefs.bar.layout.desc",
@@ -194,6 +196,7 @@ var category = {
                     "id": "bar.panels.modules",
                     "type": "custom",
                     "component": "PanelModulesCard",
+                    "lazy": true,
                     "keys": ["bar.panels"],
                     "part": true,
                     "visibleWhen": {

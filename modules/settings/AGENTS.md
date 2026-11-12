@@ -303,7 +303,9 @@ under-row preview, unconverted pages only), `component` (custom editor),
 (font), `resettable: false`, `compositor`, `id`, `target` (PageLink),
 `invert` (a toggle shown on for false), `surface` (a host picker's surface
 id: the row notes "Island is off - shown as X"; the stage draws it).
-`part: true` (an editor of one part of a composite value that another entry
+`lazy: true` (a heavy custom editor in a card of the page row: compiled and
+built on the frame after the page shows, asynchronously; the card height is
+fixed, so nothing moves). `part: true` (an editor of one part of a composite value that another entry
 also edits, e.g. the bars list beside the stage and the selected bar's
 fields; exempt from the one-control check).
 Section fields: `id`, `title`, `entries`, `advanced: true` (the whole section

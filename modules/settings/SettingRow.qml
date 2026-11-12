@@ -457,7 +457,20 @@ FocusScope {
     Component {
         id: customComponent
         Loader {
-            source: Qt.resolvedUrl(Registry.editor(row.entry.component))
+            id: editorLoader
+            // `lazy` (a heavy editor in a card of the page row, whose height
+            // is fixed): compiled and built once the page shows, not
+            // before its first frame
+            readonly property bool waits: row.entry.lazy === true && row.fillHeight > 0
+            property bool shown: false
+            asynchronous: waits
+            Connections {
+                target: editorLoader.waits && !editorLoader.shown && editorLoader.visible ? editorLoader.Window.window : null
+                function onFrameSwapped() {
+                    editorLoader.shown = true;
+                }
+            }
+            source: !waits || shown ? Qt.resolvedUrl(Registry.editor(row.entry.component)) : ""
             height: row.fillHeight > 0 ? Math.max(row.fillHeight, implicitHeight) : implicitHeight
             onLoaded: {
                 Ui.setIfPresent(item, "entry", row.entry);

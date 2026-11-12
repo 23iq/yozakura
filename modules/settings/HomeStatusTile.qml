@@ -50,41 +50,50 @@ Card {
     padding: Space.l
     Accessible.name: I18n.t(destination.title)
 
-    Item {
+    // the content comes on the frame after home's first (`live`): the
+    // first frame draws the tiles' boxes only
+    Loader {
         width: tile.contentWidth
         height: tile.height - tile.padding * 2
+        active: tile.live
+        sourceComponent: Component {
+            Item {
+                width: tile.contentWidth
+                height: tile.height - tile.padding * 2
 
-        Icon {
-            id: glyph
-            anchors.verticalCenter: parent.verticalCenter
-            icon: Icons[tile.destination.icon] ?? ""
-            role: "title"
-            tone: "text"
-        }
-        Column {
-            anchors.verticalCenter: parent.verticalCenter
-            x: glyph.width + Space.m
-            width: parent.width - x
-            spacing: Space.xs
+                Icon {
+                    id: glyph
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: Icons[tile.destination.icon] ?? ""
+                    role: "title"
+                    tone: "text"
+                }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: glyph.width + Space.m
+                    width: parent.width - x
+                    spacing: Space.xs
 
-            KitText {
-                width: parent.width
-                role: "body"
-                font.weight: Font.DemiBold
-                text: tile.value
-                elide: Text.ElideRight
-            }
-            KitText {
-                width: parent.width
-                visible: tile.caption !== ""
-                role: "secondary"
-                text: tile.caption
-                elide: Text.ElideRight
-            }
-            ProgressLine {
-                visible: tile.kind === "sound"
-                width: parent.width
-                value: tile.volume
+                    KitText {
+                        width: parent.width
+                        role: "body"
+                        font.weight: Font.DemiBold
+                        text: tile.value
+                        elide: Text.ElideRight
+                    }
+                    KitText {
+                        width: parent.width
+                        visible: tile.caption !== ""
+                        role: "secondary"
+                        text: tile.caption
+                        elide: Text.ElideRight
+                    }
+                    ProgressLine {
+                        visible: tile.kind === "sound"
+                        width: parent.width
+                        value: tile.volume
+                    }
+                }
             }
         }
     }
