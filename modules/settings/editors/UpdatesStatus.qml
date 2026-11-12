@@ -13,7 +13,8 @@ Item {
     property var entry
     readonly property string current: UpdateService.currentVersion ?? ""
     readonly property string latest: UpdateService.lastDetectedVersion ?? ""
-    readonly property bool newer: latest !== "" && typeof UpdateService.isNewer === "function" && UpdateService.isNewer(latest, current)
+    // the update channel decides what "newer" means (UpdateService)
+    readonly property bool newer: latest !== "" && UpdateService.updateAvailable === true
     readonly property real lastCheck: UpdateService.lastCheckTime ?? 0
 
     implicitHeight: column.implicitHeight
