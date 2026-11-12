@@ -19,7 +19,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: PanelStyles.STYLES.filter(s => !s.hidden).length
-    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(110))) + 0.4) - Space.m
+    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(4, Math.floor(width / 180)))
     signal picked(string style)
 

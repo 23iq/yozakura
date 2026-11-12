@@ -25,7 +25,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: PanelStyles.barStyles().length
-    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(110))) + 0.4) - Space.m
+    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : width < 300 ? 2 : 3
     readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
@@ -79,16 +79,27 @@ Item {
                         anchors.fill: parent
                         asynchronous: true
                         sourceComponent: Component {
-                            MiniScreen {
-                                id: screen
-                                PanelsSchematic {
-                                    anchors.fill: parent
-                                    backdrop: false
-                                    barOpacity: screen.barOpacity
-                                    panels: root.previewOf(card.modelData.id)
-                                    showWindows: false
-                                    selected: -1
-                                    unit: Math.round(width * 0.075)
+                            // In a strip: a close crop of the bar's own edge of a
+                            // bigger screen, so the bar's shape is the subject.
+                            Item {
+                                id: crop
+                                readonly property string edge: Config.bar.position || "top"
+                                clip: true
+                                MiniScreen {
+                                    id: screen
+                                    width: root.strip ? crop.width * 2.6 : crop.width
+                                    height: root.strip ? width * 9 / 16 : crop.height
+                                    x: !root.strip ? 0 : (crop.edge === "right" ? crop.width - width : (crop.edge === "left" ? 0 : (crop.width - width) / 2))
+                                    y: !root.strip ? 0 : (crop.edge === "bottom" ? crop.height - height : (crop.edge === "top" ? 0 : (crop.height - height) / 2))
+                                    PanelsSchematic {
+                                        anchors.fill: parent
+                                        backdrop: false
+                                        barOpacity: screen.barOpacity
+                                        panels: root.previewOf(card.modelData.id)
+                                        showWindows: false
+                                        selected: -1
+                                        unit: Math.round(width * 0.075)
+                                    }
                                 }
                             }
                         }

@@ -126,6 +126,7 @@ Card {
                         width: rowsColumn.width
                         entry: modelData
                         bare: sectionRoot.single !== null
+                        dense: sectionRoot.fixed
                         // a single picture / editor fills the card
                         fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : 0
                         previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null

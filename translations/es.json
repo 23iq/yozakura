@@ -4544,10 +4544,13 @@
   "prefs.page.more": "Más · %1",
   "prefs.lockscreen.section.tone": "Tono",
   "prefs.notif.section.where": "Dónde",
-  "prefs.layout.section.more_panels": "Paneles y hojas",
+  "prefs.layout.section.more_panels": "Paneles rápidos",
   "prefs.bar.add_module": "Añadir",
   "prefs.notch.enabled": "Mostrar la isla",
   "prefs.notch.enabled.desc": "La isla arriba o abajo de la pantalla; apagada, sus paneles se abren en otro lugar.",
   "prefs.page.card_off": "Apagado · actívalo junto a la pantalla",
-  "prefs.bar.add_bar_full": "Cada borde ya tiene barra"
+  "prefs.bar.add_bar_full": "Cada borde ya tiene barra",
+  "prefs.bar.size.compact": "Compacta",
+  "prefs.bar.size.regular": "Normal",
+  "prefs.layout.section.sheets": "Hojas"
 }

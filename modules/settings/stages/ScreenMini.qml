@@ -260,6 +260,13 @@ Item {
                         width: modelData.w
                         height: modelData.h
 
+                        // under the bar surface: a floor of the theme background, so
+                        // every bar (a thin rail too) reads as clearly as the top one
+                        Mark {
+                            anchors.fill: parent
+                            radius: shape.radius
+                            color: Qt.alpha(Colors.background, 0.7)
+                        }
                         StyledRect {
                             id: shape
                             anchors.fill: parent

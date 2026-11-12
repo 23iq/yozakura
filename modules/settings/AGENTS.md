@@ -337,7 +337,8 @@ Schema fields (category):
   bar"). With one side column the stage and the column are centred as one
   group. `hero.hint`: one line under the stage saying what a click on it
   does (i18n key).
-- `row`: two to four section ids, the cards of the row, equal widths, one
+- `row`: two to four section ids (or `{ "id", "weight" }` for a card
+  wider or narrower than the others, weight 1 by default), the cards of the row, one
   fixed height (`Look.cardRowHeight`, 216 px). Sections not in `row` open in
   the "More · N" sheet (end of the hint line), never under the fold; search
   results inside it open the sheet and scroll to the row.

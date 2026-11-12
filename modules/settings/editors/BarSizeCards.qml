@@ -15,12 +15,12 @@ FocusScope {
     readonly property bool compact: SettingsStore.get("bar.compact") === true
     readonly property var sizes: [
         {
-            "label": "S",
+            "label": "prefs.bar.size.compact",
             "compact": true,
-            "h": 0.62
+            "h": 0.72
         },
         {
-            "label": "M",
+            "label": "prefs.bar.size.regular",
             "compact": false,
             "h": 1
         }
@@ -34,33 +34,55 @@ FocusScope {
     Keys.onRightPressed: SettingsStore.set("bar.compact", false)
 
     Row {
-        anchors.bottom: parent.bottom
         width: parent.width
         spacing: Space.m
 
         Repeater {
             model: root.sizes
+            // a tile per size: a mini bar at its real relative thickness
+            // over a strip of desktop, the name under it; the chosen one ringed
             delegate: Mark {
                 id: size
                 required property var modelData
                 readonly property bool chosen: modelData.compact === root.compact
-                objectName: "barSize:" + modelData.label
+                objectName: "barSize:" + (modelData.compact ? "compact" : "regular")
                 width: (root.width - Space.m * (root.sizes.length - 1)) / root.sizes.length
-                height: root.implicitHeight * modelData.h
-                anchors.bottom: parent.bottom
+                height: root.implicitHeight
                 radius: Look.radius("box", height)
-                color: size.chosen ? Type.accent : Look.raisedFill(area.containsMouse)
-                Behavior on color {
-                    enabled: Motion.micro.duration > 0
-                    ColorAnimation {
-                        duration: Motion.micro.duration
+                color: Look.raisedFill(area.containsMouse)
+                border.width: size.chosen ? Space.stroke - 1 : Space.hairline
+                border.color: size.chosen ? Type.accent : Type.hairline
+
+                Mark {
+                    id: miniBar
+                    x: Space.s
+                    y: Space.s
+                    width: parent.width - Space.s * 2
+                    height: Math.round(Space.controlM * size.modelData.h)
+                    radius: Look.radius("small", height)
+                    color: size.chosen ? Qt.alpha(Type.accent, 0.85) : Colors.surfaceContainerHighest
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: Space.s
+                        spacing: Space.xs
+                        Repeater {
+                            model: 3
+                            delegate: Mark {
+                                width: Math.round(miniBar.height * 0.4)
+                                height: width
+                                color: size.chosen ? Colors.overPrimary : Type.secondary
+                            }
+                        }
                     }
                 }
                 KitText {
-                    anchors.centerIn: parent
-                    role: "title"
-                    color: size.chosen ? Colors.overPrimary : Type.secondary
-                    text: size.modelData.label
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Space.s
+                    role: "body"
+                    font.weight: size.chosen ? Font.DemiBold : Font.Normal
+                    color: size.chosen ? Type.text : Type.secondary
+                    text: I18n.t(size.modelData.label)
                 }
                 MouseArea {
                     id: area

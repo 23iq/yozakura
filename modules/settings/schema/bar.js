@@ -32,7 +32,7 @@ var category = {
         "hint": "prefs.bar.hero_hint"
     },
     // One row of cards under the stage.
-    "row": ["shape", "size", "layout"],
+    "row": [{ "id": "shape", "weight": 1.5 }, { "id": "size", "weight": 0.8 }, { "id": "layout", "weight": 1.25 }],
     "sections": [
         {
             "id": "panels",

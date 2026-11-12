@@ -4572,10 +4572,13 @@
   "prefs.page.more": "Ещё · %1",
   "prefs.lockscreen.section.tone": "Тон",
   "prefs.notif.section.where": "Где",
-  "prefs.layout.section.more_panels": "Панели и листы",
+  "prefs.layout.section.more_panels": "Быстрые панели",
   "prefs.bar.add_module": "Добавить",
   "prefs.notch.enabled": "Показывать остров",
   "prefs.notch.enabled.desc": "Остров сверху или снизу экрана; когда он выключен, его панели открываются в другом месте.",
   "prefs.page.card_off": "Выключено · включите рядом с экраном",
-  "prefs.bar.add_bar_full": "На каждом краю уже есть панель"
+  "prefs.bar.add_bar_full": "На каждом краю уже есть панель",
+  "prefs.bar.size.compact": "Компактная",
+  "prefs.bar.size.regular": "Обычная",
+  "prefs.layout.section.sheets": "Листы"
 }

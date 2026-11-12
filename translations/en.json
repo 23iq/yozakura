@@ -4544,10 +4544,13 @@
   "prefs.page.more": "More · %1",
   "prefs.lockscreen.section.tone": "Tone",
   "prefs.notif.section.where": "Where",
-  "prefs.layout.section.more_panels": "Panels and sheets",
+  "prefs.layout.section.more_panels": "Quick panels",
   "prefs.bar.add_module": "Add",
   "prefs.notch.enabled": "Show the island",
   "prefs.notch.enabled.desc": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
   "prefs.page.card_off": "Off · turn it on beside the screen",
-  "prefs.bar.add_bar_full": "Every edge has a bar"
+  "prefs.bar.add_bar_full": "Every edge has a bar",
+  "prefs.bar.size.compact": "Compact",
+  "prefs.bar.size.regular": "Regular",
+  "prefs.layout.section.sheets": "Sheets"
 }

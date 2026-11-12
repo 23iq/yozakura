@@ -53,6 +53,8 @@ FocusScope {
     // The height a stacked control gets (a card of the page row): picture
     // editors become one horizontal strip of it (their `fillHeight`).
     property real fillHeight: 0
+    // in a card of the page row: tighter vertical rhythm
+    property bool dense: false
     readonly property bool labelHidden: row.bare && row.stacked
     readonly property bool noteRepeats: {
         if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
@@ -66,7 +68,10 @@ FocusScope {
     // about how wide an inline segmented of this selector is (stack it when
     // it would not fit beside the label)
     readonly property real selectorWidth: type === "selector" ? (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0) : 0
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "macro" || type === "text")) || (type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    // a dense row (a card of the page row) keeps a selector inline: a
+    // dropdown when its segmented would not fit beside the label
+    readonly property bool selectorAsDropdown: row.dense && type === "selector" && row.selectorWidth > width - Space.px(170)
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
@@ -163,9 +168,9 @@ FocusScope {
         id: body
         x: row.labelHidden ? 0 : Look.rowInset
         width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
-        topPadding: Space.s
-        bottomPadding: Space.s
-        spacing: Space.m
+        topPadding: row.dense ? Space.xs : Space.s
+        bottomPadding: row.dense ? Space.xs : Space.s
+        spacing: row.dense ? Space.xs : Space.m
 
         RowLayout {
             width: parent.width
@@ -344,6 +349,7 @@ FocusScope {
     Component {
         id: selectorComponent
         SelectorControl {
+            segmentLimit: row.selectorAsDropdown ? 0 : 4
             options: row.entry.options
             value: row.value
             onSelected: v => SettingsStore.set(row.entry.key, v)

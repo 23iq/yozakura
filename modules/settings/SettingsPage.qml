@@ -36,7 +36,10 @@ Flickable {
     readonly property var hero: page.category.hero || ({})
     // entries shown beside the stage (by key or id), not in their card
     readonly property var heroIds: (page.hero.left || []).concat(page.hero.right || [])
-    readonly property var rowIds: page.category.row || []
+    // `row`: section ids, or {id, weight} for a card wider or narrower than
+    // the others (weight 1 by default)
+    readonly property var rowIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
+    readonly property var rowWeights: (page.category.row || []).map(r => typeof r === "string" ? 1 : (r.weight || 1))
     // the row is laid out only once all its cards exist (equal heights)
     readonly property int lastRowIndex: (page.category.sections || []).reduce((m, sec, i) => page.rowIds.indexOf(sec.id) >= 0 ? i : m, -1)
     // Build order: a fitted page builds its row cards first (in row order),
@@ -339,7 +342,14 @@ Flickable {
                         rowH = page.fitted ? page.rowH : Math.max(rowH, s.implicitHeight);
                     }
                 }
-                const rowW = inRow.length > 0 ? (bento.width - bento.gap * (inRow.length - 1)) / inRow.length : 0;
+                const weightOf = i => page.rowWeights[page.rowIds.indexOf((page.category.sections[i] || {}).id)] || 1;
+                const totalWeight = inRow.reduce((t, i) => t + weightOf(i), 0);
+                const unitW = inRow.length > 0 ? (bento.width - bento.gap * (inRow.length - 1)) / totalWeight : 0;
+                const rowX = [];
+                inRow.reduce((x, i, k) => {
+                    rowX[k] = x;
+                    return x + unitW * weightOf(i) + bento.gap;
+                }, 0);
                 const top = inRow.length > 0 ? rowH + bento.gap : 0;
                 // the rest: masonry
                 const items = [];
@@ -357,9 +367,9 @@ Flickable {
                 const r = BentoLayout.place(items, bento.cols, bento.gap);
                 const out = [];
                 inRow.forEach((i, k) => out[i] = {
-                        "x": k * (rowW + bento.gap),
+                        "x": rowX[k],
                         "y": 0,
-                        "w": rowW,
+                        "w": unitW * weightOf(i),
                         "h": rowH
                     });
                 rest.forEach((i, k) => {

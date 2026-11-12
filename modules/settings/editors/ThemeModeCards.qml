@@ -26,7 +26,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: 3
-    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(110))) + 0.4) - Space.m
+    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : width < 520 ? 1 : 3
 
     // beside the stage (a narrow place): a compact icon segmented
@@ -48,20 +48,53 @@ Item {
             "title": "prefs.appearance.mode.light"
         }
     ]
-    implicitHeight: root.strip ? root.fillHeight : (root.compact ? modeSegmented.implicitHeight : grid.implicitHeight)
+    implicitHeight: root.strip ? root.fillHeight : (root.compact ? modeSegmented.height : grid.implicitHeight)
 
-    Segmented {
+    // beside the stage: three stacked chips, each a swatch of the mode
+    // (dark, black, light) and its name; the chosen one ringed
+    Column {
         id: modeSegmented
-        objectName: "themeModeSegmented"
+        objectName: "themeModeChips"
         visible: root.compact
-        focusable: true
-        model: root.modes.map(m => ({
-                    "name": "mode:" + m.id,
-                    "icon": m.icon,
-                    "text": I18n.t(m.title)
-                }))
-        currentIndex: root.modes.findIndex(m => m.id === root.mode)
-        onActivated: i => root.choose(root.modes[i].id)
+        width: parent.width
+        spacing: Space.s
+        Repeater {
+            model: root.compact ? root.modes : []
+            delegate: Card {
+                id: chip
+                required property var modelData
+                readonly property bool chosen: modelData.id === root.mode
+                objectName: "themeMode:" + modelData.id
+                width: modeSegmented.width
+                padding: Space.s
+                interactive: true
+                accented: chip.chosen
+                onClicked: root.choose(chip.modelData.id)
+                Row {
+                    spacing: Space.m
+                    Mark {
+                        width: Space.controlS
+                        height: width
+                        radius: Look.radius("small", height)
+                        color: chip.modelData.id === "light" ? Qt.rgba(0.96, 0.94, 0.94, 1) : (chip.modelData.id === "oled" ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(0.12, 0.09, 0.1, 1))
+                        border.width: Space.hairline
+                        border.color: Type.hairline
+                        Mark {
+                            anchors.centerIn: parent
+                            width: parent.width * 0.4
+                            height: width
+                            color: Type.accent
+                        }
+                    }
+                    KitText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "body"
+                        font.weight: chip.chosen ? Font.DemiBold : Font.Normal
+                        text: I18n.t(chip.modelData.title)
+                    }
+                }
+            }
+        }
     }
 
     Component.onCompleted: SchemePreviews.refresh()

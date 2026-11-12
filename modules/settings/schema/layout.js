@@ -79,7 +79,7 @@ var category = {
     "description": "prefs.cat.layout.desc",
     "stage": "OpensStage",
     "hero": { "hint": "prefs.layout.hero_hint" },
-    "row": ["hosts", "hosts2"],
+    "row": ["hosts", "hosts2", "hosts3"],
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
         {
@@ -123,15 +123,6 @@ var category = {
                     "label": "prefs.layout.dashboard_host",
                     "description": "prefs.layout.dashboard_host.desc",
                     "keywords": "dashboard host spotlight sheet notch side panel"
-                },
-                {
-                    "key": "layout.aiquick.host",
-                    "type": "selector",
-                    "options": HOSTS.slice(0, 2).concat([CARD, HOSTS[2]]),
-                    "surface": "aiquick",
-                    "label": "prefs.layout.aiquick_host",
-                    "description": "prefs.layout.aiquick_host.desc",
-                    "keywords": "ai quick ask host card floating spotlight notch island"
                 }
             ]
         },
@@ -140,6 +131,15 @@ var category = {
             "title": "prefs.layout.section.more_panels",
             "entries": [
                 {
+                    "key": "layout.aiquick.host",
+                    "type": "selector",
+                    "options": HOSTS.slice(0, 2).concat([CARD, HOSTS[2]]),
+                    "surface": "aiquick",
+                    "label": "prefs.layout.aiquick_host",
+                    "description": "prefs.layout.aiquick_host.desc",
+                    "keywords": "ai quick ask host card floating spotlight notch island"
+                },
+                {
                     "key": "layout.panels.host",
                     "type": "selector",
                     "options": HOSTS.slice(0, 2).concat([CARD]),
@@ -147,7 +147,13 @@ var category = {
                     "label": "prefs.layout.panels_host",
                     "description": "prefs.layout.panels_host.desc",
                     "keywords": "voice dictation timer hub alarm panels host card floating notch island"
-                },
+                }
+            ]
+        },
+        {
+            "id": "hosts3",
+            "title": "prefs.layout.section.sheets",
+            "entries": [
                 {
                     "key": "layout.sheet.side",
                     "type": "selector",
