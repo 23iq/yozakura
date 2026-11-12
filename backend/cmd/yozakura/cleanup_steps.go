@@ -89,8 +89,15 @@ func greetingEnv(home string) termlook.Env {
 	if data == "" {
 		data = filepath.Join(home, ".local", "share")
 	}
+	look := func(bin string) (string, bool) {
+		p, err := exec.LookPath(bin)
+		return p, err == nil
+	}
+	// zsh's real startup dir, found the way the daemon finds it (this
+	// terminal's ZDOTDIR may differ from the daemon's); ~/.zshrc is
+	// cleaned as well
 	return termlook.Env{Home: home, ConfigHome: filepath.Dir(paths.New().ConfigDir), AppID: brand.AppID,
-		DataHome: data, ZDotDir: os.Getenv("ZDOTDIR")}
+		DataHome: data, ResolveZDotDir: func() string { return termlook.ZshDotDir(home, look) }}
 }
 
 func removeGreeting(tenv termlook.Env) ([]string, error) {

@@ -87,6 +87,11 @@ func (e Env) zdotdir() string {
 	if e.ZDotDir != "" {
 		return e.ZDotDir
 	}
+	if e.ResolveZDotDir != nil {
+		if d := e.ResolveZDotDir(); d != "" {
+			return d
+		}
+	}
 	return e.Home
 }
 
@@ -342,6 +347,13 @@ func applyFish(content string, env Env) error {
 func applyRC(shell string, cfg GreetingConfig, env Env) error {
 	rc, _ := rcFiles(shell, env)
 	henv := env.hooksEnv()
+	if shell == "zsh" {
+		for _, stale := range zshRCs(env)[1:] {
+			if _, err := apphooks.RevertMarkedBlock(henv, "greeting-zsh", rcMarker(env), stale); ignoreManaged(err) != nil {
+				return err
+			}
+		}
+	}
 	if foreignFetch(shell, env) != "" || !shellInstalled(shell, env) {
 		_, err := apphooks.RevertMarkedBlock(henv, "greeting-"+shell, rcMarker(env), rc)
 		return ignoreManaged(err)
@@ -376,9 +388,13 @@ func RemoveGreeting(env Env) error {
 		errs = append(errs, os.Remove(FishGreetingFile(env)))
 	}
 	henv := env.hooksEnv()
-	for _, sh := range []string{"bash", "zsh"} {
-		rc, _ := rcFiles(sh, env)
-		if _, err := apphooks.RevertMarkedBlock(henv, "greeting-"+sh, rcMarker(env), rc); err != nil {
+	bashrc, _ := rcFiles("bash", env)
+	for _, rc := range append([]string{bashrc}, zshRCs(env)...) {
+		id := "greeting-bash"
+		if rc != bashrc {
+			id = "greeting-zsh"
+		}
+		if _, err := apphooks.RevertMarkedBlock(henv, id, rcMarker(env), rc); err != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", rc, err))
 		}
 	}

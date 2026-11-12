@@ -28,8 +28,10 @@ type Config struct {
 type Env struct {
 	Home, ConfigHome, CacheHome, AppID string
 	// DataHome holds the record of rc files the greeting created
-	// (default Home/.local/share); ZDotDir is $ZDOTDIR (default Home).
+	// (default Home/.local/share); ZDotDir is where zsh reads .zshrc
+	// (default: ResolveZDotDir, then Home; see ZshDotDir).
 	DataHome, ZDotDir string
+	ResolveZDotDir    func() string
 	LookPath          func(string) (string, bool)
 }
 

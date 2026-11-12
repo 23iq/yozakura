@@ -90,17 +90,20 @@ type Service struct {
 // NewService uses the real host.
 func NewService(p *paths.Paths) *Service {
 	home, _ := os.UserHomeDir()
+	look := func(bin string) (string, bool) {
+		path, err := exec.LookPath(bin)
+		return path, err == nil
+	}
 	return New(Options{
 		ConfigFile: p.Config("terminal"),
 		ColorsFile: p.ColorsFile(),
 		Env: termlook.Env{
 			Home: home, ConfigHome: xdgDir("XDG_CONFIG_HOME", home, ".config"),
 			CacheHome: xdgDir("XDG_CACHE_HOME", home, ".cache"), AppID: brand.AppID,
-			DataHome: xdgDir("XDG_DATA_HOME", home, ".local/share"), ZDotDir: os.Getenv("ZDOTDIR"),
-			LookPath: func(bin string) (string, bool) {
-				path, err := exec.LookPath(bin)
-				return path, err == nil
-			},
+			DataHome: xdgDir("XDG_DATA_HOME", home, ".local/share"),
+			// the daemon has not read ~/.zshenv: zsh is asked
+			ResolveZDotDir: func() string { return termlook.ZshDotDir(home, look) },
+			LookPath:       look,
 		},
 		Passwd: func() ([]byte, error) { return os.ReadFile("/etc/passwd") },
 		User: func() string {
