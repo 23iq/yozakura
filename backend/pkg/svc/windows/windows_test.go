@@ -25,6 +25,7 @@ type fakeProc struct {
 	mu       sync.Mutex
 	signals  []syscall.Signal
 	ignoreTM bool // ignores SIGTERM (only SIGKILL ends it)
+	unkill   bool // ignores every signal (stuck in the kernel)
 }
 
 func (p *fakeProc) Pid() int    { return p.pid }
@@ -36,6 +37,9 @@ func (p *fakeProc) Signal(sig syscall.Signal) error {
 	p.mu.Lock()
 	p.signals = append(p.signals, sig)
 	p.mu.Unlock()
+	if p.unkill {
+		return nil
+	}
 	if sig == syscall.SIGKILL || !p.ignoreTM {
 		p.exit(errors.New("signal: " + sig.String()))
 	}
@@ -267,6 +271,57 @@ func TestCloseStopsEveryWindowAndRefusesNewOnes(t *testing.T) {
 	_, err = r.svc.Open(Request{Kind: KindSettings})
 	assert.Error(t, err, "no window starts during shutdown")
 	assert.Equal(t, 2, r.st.count())
+}
+
+// Every window ignoring SIGTERM gets SIGKILL after the one StopWait (the
+// deadline is not used up by the first), and Close is bounded even when a
+// process does not die at all.
+func TestCloseKillsEveryHungWindowAndIsBounded(t *testing.T) {
+	old := StopWait
+	StopWait = 50 * time.Millisecond
+	t.Cleanup(func() { StopWait = old })
+
+	r := newRig(t, shellTree(t, "settings-window.qml", "onboarding-window.qml"), "")
+	r.st.ignore = true
+	_, err := r.svc.Open(Request{Kind: KindSettings})
+	must(t, assert.NoError(t, err))
+	_, err = r.svc.Open(Request{Kind: KindOnboarding})
+	must(t, assert.NoError(t, err))
+
+	start := time.Now()
+	done := make(chan struct{})
+	go func() { r.svc.Close(); close(done) }()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close did not return")
+	}
+	assert.Less(t, time.Since(start), time.Second)
+	for i, p := range r.st.procs {
+		assert.Equal(t, []syscall.Signal{syscall.SIGTERM, syscall.SIGKILL}, p.sigs(), "window %d", i)
+	}
+
+	// a process that survives SIGKILL does not hold the daemon's shutdown
+	r2 := newRig(t, shellTree(t, "settings-window.qml", "onboarding-window.qml"), "")
+	_, err = r2.svc.Open(Request{Kind: KindSettings})
+	must(t, assert.NoError(t, err))
+	r2.st.procs[0].unkill = true
+	_, err = r2.svc.Open(Request{Kind: KindOnboarding})
+	must(t, assert.NoError(t, err))
+	r2.st.procs[1].unkill = true
+	start = time.Now()
+	done2 := make(chan struct{})
+	go func() { r2.svc.Close(); close(done2) }()
+	select {
+	case <-done2:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close waited for an unkillable process")
+	}
+	assert.Less(t, time.Since(start), time.Second)
+	for _, p := range r2.st.procs {
+		assert.Equal(t, []syscall.Signal{syscall.SIGTERM, syscall.SIGKILL}, p.sigs())
+		p.exit(nil)
+	}
 }
 
 func TestStartFailureIsReturned(t *testing.T) {

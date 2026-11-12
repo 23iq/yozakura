@@ -344,7 +344,9 @@ func (s *Service) Statuses() []Status {
 }
 
 // Close stops every window (daemon shutdown): SIGTERM to each group, then
-// SIGKILL after StopWait. No window starts afterwards.
+// SIGKILL of every group still there after StopWait. It returns after at
+// most twice StopWait, even if a process does not die (it is logged).
+// No window starts afterwards.
 func (s *Service) Close() {
 	s.mu.Lock()
 	s.closed = true
@@ -356,15 +358,37 @@ func (s *Service) Close() {
 	for _, inst := range insts {
 		_ = inst.proc.Signal(syscall.SIGTERM)
 	}
-	deadline := time.After(StopWait)
+	left := waitExited(insts, StopWait)
+	for _, inst := range left {
+		_ = inst.proc.Signal(syscall.SIGKILL)
+	}
+	for _, inst := range waitExited(left, StopWait) {
+		log.Printf("[windows] pid %d still running after SIGKILL", inst.proc.Pid())
+	}
+}
+
+// waitExited waits up to d, in total, for every instance to exit and
+// returns the ones still running.
+func waitExited(insts []*instance, d time.Duration) []*instance {
+	if len(insts) == 0 {
+		return nil
+	}
+	expired := make(chan struct{})
+	t := time.AfterFunc(d, func() { close(expired) })
+	defer t.Stop()
+	var left []*instance
 	for _, inst := range insts {
 		select {
 		case <-inst.done:
-		case <-deadline:
-			_ = inst.proc.Signal(syscall.SIGKILL)
-			<-inst.done
+		case <-expired:
+			select {
+			case <-inst.done:
+			default:
+				left = append(left, inst)
+			}
 		}
 	}
+	return left
 }
 
 // EntryPath resolves the root QML file of kind: next to the shell the
