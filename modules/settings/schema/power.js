@@ -16,6 +16,16 @@ function command(key, label, description, placeholder, keywords) {
     };
 }
 
+function toggle(key, label, description, keywords) {
+    return {
+        "key": key,
+        "type": "toggle",
+        "label": label,
+        "description": description,
+        "keywords": keywords
+    };
+}
+
 var category = {
     "id": "power",
     "icon": "batteryHigh",
@@ -23,6 +33,13 @@ var category = {
     "description": "prefs.cat.power.desc",
     "keywords": "power idle sleep suspend lock screen off dim timeout battery hypridle",
     "sections": [
+        {
+            "id": "battery",
+            "title": "prefs.power.section.battery",
+            "entries": [
+                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse")
+            ]
+        },
         {
             "id": "idle",
             "title": "settings.system.idle",

@@ -1,7 +1,8 @@
 .pragma library
 
 // System: language, weather, performance, authentication, monitored disks
-// and clipboard storage (idle and sleep live on Power, power.js).
+// and clipboard storage (idle, sleep and the battery saver live on Power,
+// power.js). Performance and storage are plumbing: out of the window.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -85,6 +86,8 @@ var category = {
         {
             "id": "performance",
             "title": "settings.system.performance",
+            // performance plumbing: out of the window (yozakura config)
+            "advanced": true,
             "entries": [
                 toggle("performance.blurTransition", "performance.blur_transition", "system.performance.blur_transition_desc", "blur transition animation panels"),
                 toggle("performance.windowPreview", "performance.window_preview", "system.performance.window_preview_desc", "window preview thumbnails overview dock"),
@@ -109,7 +112,6 @@ var category = {
                 },
                 toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
                 toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
-                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
                 {
                     "key": "performance.visualizerFps",
                     "type": "number",
@@ -196,6 +198,8 @@ var category = {
         {
             "id": "storage",
             "title": "prefs.sys.section.storage",
+            // mount points and tmpfs: out of the window (yozakura config)
+            "advanced": true,
             "entries": [
                 {
                     "key": "system.disks",
