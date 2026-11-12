@@ -137,6 +137,18 @@ check(cards is not None, "system: the language as picture cards")
 check(ev('w.findItem("settingRow:system.exclusive") === null || !w.findItem("settingRow:system.exclusive").visible'),
       "system: the only-shell card waits in More")
 
+# ---- Updates: one action; a lane follows its channel -----------------------
+select("updates")
+before = ev("UpdateService.checks")
+h.eval(ev('w.findItem("updatesAction")'), "clicked()")
+check(ev("UpdateService.checks") == before + 1, "updates: the action checks now")
+n = steps()
+check(click("updatesLane:beta"), "updates: the beta lane is clickable")
+check(ev("Config.system.updateChannel") == "beta", "updates: a click follows the beta channel")
+check(steps() == n + 1, "updates: one undo step")
+ev("SettingsStore.undo()")
+check(ev("Config.system.updateChannel") == "stable", "updates: undo goes back to stable")
+
 if failures:
     print(f"settings-system-pages: {len(failures)} failure(s)")
     h.exit(1)

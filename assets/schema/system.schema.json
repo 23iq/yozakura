@@ -52,20 +52,20 @@
       }
     },
     "updateServiceEnabled": {
-      "title": "Update Service",
+      "title": "Check in the background",
       "type": "boolean",
       "default": true,
       "description": "Look for new releases in the background (about once an hour) and notify you.",
       "x-settings": {
         "category": "updates",
         "section": "updates",
-        "label": "shell.system.update_service",
+        "label": "prefs.updates.service",
         "control": "toggle",
         "keywords": "updates check background notify new version"
       }
     },
     "updateChannel": {
-      "title": "Update channel",
+      "title": "Channel",
       "type": "string",
       "default": "stable",
       "description": "Which versions updates and the update notice follow. Stable: tested releases. Beta: pre-releases to try what comes next, plus every newer stable release. Git: every commit on main, the least stable. Nix installs update through their flake instead.",
