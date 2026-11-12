@@ -5,7 +5,10 @@ The real BackendService over a fake socket: once connected it sends
 system.heartbeat with the Quickshell pid right away and then every few
 seconds (the daemon's watchdog, backend/pkg/daemon/qsguard.go, kills a
 shell that stops); a dry-run shell or a separate Settings window process
-(ProcessRole), not the supervised one, sends none.
+(ProcessRole), not the supervised one, sends none. A subscription names
+the process in its subscribe request (clientId = the role: "shell" for the
+main shell, the window kind for a window), which the daemon's preview relay
+uses to wait only for a main shell (backend/pkg/svc/preview).
 """
 from __future__ import annotations
 
@@ -75,6 +78,10 @@ import Quickshell.Io
 import qs.modules.services
 Item {
     readonly property bool up: BackendService.socketAvailable
+    function subscribe() { BackendService.addSubscription(["preview"], (service, data) => {}) }
+    function subscribes() {
+        return JSON.stringify(Wire.sent.filter(m => m.method === "subscribe").map(m => m.params));
+    }
     function beats() {
         return JSON.stringify(Wire.sent.filter(m => m.method === "system.heartbeat").map(m => m.params));
     }
@@ -90,6 +97,10 @@ check(beats == [{"pid": 4242}], f"first heartbeat on connect with the pid, got {
 wait_until(lambda: len(json.loads(h.eval(root, "beats()"))) >= 2)
 beats = json.loads(h.eval(root, "beats()"))
 check(len(beats) >= 2, f"heartbeat repeats (every 3 s; 300 ms here), got {len(beats)}")
+h.eval(root, "subscribe()")
+wait_until(lambda: json.loads(h.eval(root, "subscribes()")) != [])
+subs = json.loads(h.eval(root, "subscribes()"))
+check(subs == [{"clientId": "shell", "services": ["preview"]}], f"the main shell subscribes as \"shell\", got {subs}")
 
 h2, root2 = scene("backend-heartbeat-dry", dry=True)
 wait_until(lambda: h2.eval(root2, "up") is True)
@@ -102,6 +113,10 @@ wait_until(lambda: h3.eval(root3, "up") is True)
 pump(100)
 check(h3.eval(root3, "up") is True, "settings-window socket connected")
 check(json.loads(h3.eval(root3, "beats()")) == [], "a separate Settings window sends no heartbeat")
+h3.eval(root3, "subscribe()")
+wait_until(lambda: json.loads(h3.eval(root3, "subscribes()")) != [])
+subs = json.loads(h3.eval(root3, "subscribes()"))
+check(subs == [{"clientId": "settings", "services": ["preview"]}], f"a Settings window subscribes as \"settings\", got {subs}")
 
 if failures:
     print(f"{len(failures)} failure(s)")

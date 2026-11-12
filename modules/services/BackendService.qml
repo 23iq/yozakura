@@ -10,7 +10,8 @@ pragma Singleton
 // Protocol: line-delimited JSON-RPC (see backend/pkg/ipc).
 // - reqSocket: shared request/response socket, id -> callback map.
 // - Subscriptions: one dedicated Socket per consumer group; each sends
-//   {"id":1,"method":"subscribe","params":{"services":[...]}} on connect
+//   {"id":1,"method":"subscribe","params":{"clientId":<role>,"services":[...]}}
+//   on connect
 //   and streams {"id":1,"result":{"service":"x","data":...}} lines.
 //
 // Usage:
@@ -267,7 +268,9 @@ Singleton {
 
             onConnectionStateChanged: {
                 if (sub.connected) {
-                    sub.write(JSON.stringify({id: 1, method: "subscribe", params: {services: sub.services}}) + "\n");
+                    // clientId: this process's role ("shell" = the main
+                    // shell, the only one that writes a preview commit)
+                    sub.write(JSON.stringify({id: 1, method: "subscribe", params: {clientId: ProcessRole.role, services: sub.services}}) + "\n");
                     sub.flush();
                 }
             }

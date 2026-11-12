@@ -54,6 +54,11 @@ type Written struct {
 	ID uint64 `json:"id"`
 }
 
+// ShellClient is the subscribe clientId of the main shell (its process
+// role, modules/globals/ProcessRole.qml); only such a subscriber writes a
+// commit, so only one makes preview.commit wait for preview.written.
+const ShellClient = "shell"
+
 // AckWait is how long preview.commit waits for the main shell to write.
 var AckWait = 2 * time.Second
 
@@ -174,7 +179,8 @@ func (s *Service) Commit(owner string) bool {
 }
 
 // CommitAndWait is Commit, then waits up to AckWait for the main shell to
-// report it wrote the files (written). Nobody subscribed: false at once.
+// report it wrote the files (written). No main shell subscribed (only
+// windows, or nobody): false at once, the window writes.
 func (s *Service) CommitAndWait(owner string) (had, written bool) {
 	had, wait := s.startCommit(owner)
 	return had, wait()
@@ -226,9 +232,12 @@ func (s *Service) commit(owner string) (bool, uint64, chan struct{}) {
 	s.nextID++
 	id := s.nextID
 	var ch chan struct{}
-	if len(s.subs) > 0 {
-		ch = make(chan struct{})
-		s.acks[id] = ch
+	for sub := range s.subs {
+		if sub.ClientID == ShellClient {
+			ch = make(chan struct{})
+			s.acks[id] = ch
+			break
+		}
 	}
 	s.sendLocked("preview.commit", Done{Owner: owner, ID: id})
 	return had, id, ch

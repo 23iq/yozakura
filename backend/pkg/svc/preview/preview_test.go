@@ -40,15 +40,25 @@ func noMore(t *testing.T, sub *ipc.Subscriber) {
 	}
 }
 
+// subscribed is the main shell's stream.
 func subscribed(t *testing.T, s *Service) *ipc.Subscriber {
 	t.Helper()
+	return subscribedAs(t, s, ShellClient)
+}
+
+func subscribedAs(t *testing.T, s *Service, client string) *ipc.Subscriber {
+	t.Helper()
 	sub := ipc.NewSubscriber(64)
+	sub.ClientID = client
+	s.mu.Lock()
+	n := len(s.subs)
+	s.mu.Unlock()
 	go s.subscribe(sub)
 	t.Cleanup(sub.Stop)
 	must(t, assert.Eventually(t, func() bool {
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		return len(s.subs) == 1
+		return len(s.subs) == n+1
 	}, time.Second, 5*time.Millisecond))
 	return sub
 }
@@ -215,6 +225,37 @@ func TestCommitWaitsForTheMainShellToWrite(t *testing.T) {
 	assert.False(t, written)
 	drain(t, sub, 1)
 	assert.False(t, s.Ack(99), "an unknown or late answer is ignored")
+}
+
+// Only the main shell writes a commit: with the applying window (and the
+// other one) subscribed but no main shell, commit answers "not written" at
+// once instead of waiting AckWait, and the window writes.
+func TestCommitWithoutMainShellDoesNotWait(t *testing.T) {
+	old := AckWait
+	AckWait = time.Second
+	t.Cleanup(func() { AckWait = old })
+
+	s := NewService()
+	win := subscribedAs(t, s, "settings")
+	subscribedAs(t, s, "onboarding")
+	subscribedAs(t, s, "") // an unnamed client (the CLI) writes nothing either
+	s.Set(Entry{Owner: "settings", Key: "bar.position", Value: json.RawMessage(`"top"`)})
+	drain(t, win, 1)
+	start := time.Now()
+	had, written := s.CommitAndWait("settings")
+	assert.True(t, had)
+	assert.False(t, written)
+	assert.Less(t, time.Since(start), 200*time.Millisecond, "no main shell: no wait")
+	drain(t, win, 1) // the commit is still broadcast
+
+	// a main shell subscribes: the next commit waits for its answer
+	shell := subscribed(t, s)
+	done := make(chan bool, 1)
+	go func() { _, w := s.CommitAndWait("settings"); done <- w }()
+	var d Done
+	must(t, assert.NoError(t, json.Unmarshal([]byte(drain(t, shell, 1)[0].data), &d)))
+	assert.True(t, s.Ack(d.ID))
+	assert.True(t, <-done)
 }
 
 func TestSubscribeReplaysStagedValues(t *testing.T) {

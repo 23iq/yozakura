@@ -57,9 +57,13 @@ type Service struct {
 
 // Subscriber is a per-client subscription context.
 type Subscriber struct {
-	Events chan ServiceEvent
-	stop   chan struct{}
-	once   sync.Once
+	// ClientID is what the client named itself in its subscribe request
+	// (params.clientId; the shell sends its process role: "shell" for the
+	// main shell, the window kind for a separate window), "" when unnamed.
+	ClientID string
+	Events   chan ServiceEvent
+	stop     chan struct{}
+	once     sync.Once
 }
 
 // NewSubscriber returns a subscriber with an event buffer of size buf, as
