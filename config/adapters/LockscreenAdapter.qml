@@ -10,4 +10,5 @@ JsonAdapter {
     property bool showMedia: true
     property bool showVisualizer: true
     property bool showStatus: true
+    property string pamService: ""
 }

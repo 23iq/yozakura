@@ -20,7 +20,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from qmlharness import HARNESS_HOME, REPO, Harness, brand_qml
+from qmlharness import BATTERY_SAVER_STUB, HARNESS_HOME, REPO, Harness, brand_qml
 
 DEFAULT_PALETTE = {
     "background": "#120c0d", "surface": "#1a1112", "surfaceDim": "#1a1112", "surfaceBright": "#413737",
@@ -162,6 +162,18 @@ QtObject {
     property bool silent: false
     property var sent: []
     function notifyInternal(o) { sent = sent.concat([o]); return null }
+}"""
+
+# performance.separateWindows, main shell side (DesktopWidgets listens to it).
+# A separate window's Apply in flight (PresetStudio.afterFlush waits for it).
+PREVIEW_SINK_STUB = """pragma Singleton
+QtObject { property bool applying: false }"""
+
+SEPARATE_WINDOWS_STUB = """pragma Singleton
+QtObject {
+    property bool settingsRunning: false
+    property string settingsState: "closed"
+    signal relayed(string topic, var data)
 }"""
 
 # Keybind edits ask the compositor TOML to be rewritten.
@@ -520,8 +532,10 @@ QUICKSHELL_IO = {
     "Process": "QtObject { property var command: []; property bool running: false; property var stdout; property var stderr; "
                "signal exited(int exitCode, int exitStatus) }",
     "StdioCollector": "QtObject { property string text: ''; property bool waitForEnd: false; signal streamFinished() }",
-    "FileView": "QtObject { property string path; property bool blockLoading; signal loaded(); function reload() {} "
-                "function text() { return '' } }",
+    "FileView": "QtObject { property string path; property bool blockLoading; property bool blockAllReads; "
+                "property bool blockWrites; property bool atomicWrites; property bool preload: true; "
+                "property bool printErrors: true; signal loaded(); signal saved(); signal saveFailed(var error); "
+                "function reload() {} function text() { return '' } function setText(t) {} }",
 }
 QUICKSHELL_WIDGETS = {
     "ClippingRectangle": "Rectangle { clip: true; property bool contentUnderBorder: false }",
@@ -646,7 +660,15 @@ QtObject {
     property bool fishInstalled: true
     property string fontFamily: "monospace"
     property real fontPixelSize: 15
+    property var fetchPresets: []
+    property var fetchPreviews: ({})
+    property var greeting: null
+    property bool fastfetchInstalled: true
     function load() {}
+    function ensureFetch(preset, logo, path) {}
+    function installFastfetch() {}
+    function enableGreeting(preset, logo) {}
+    function allowGreetingShells() {}
     function refreshStatus() {}
     function previewOf(id, engine) { return undefined }
     function ensure(id, engine) {}
@@ -800,12 +822,13 @@ class SettingsEnv:
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
+                                              "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
-                                             "Brand": brand_qml()})
+                                             "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})
         self.h.module("Quickshell", QUICKSHELL)
         self.h.module("Quickshell.Io", QUICKSHELL_IO)
         self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)

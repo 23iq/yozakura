@@ -17,15 +17,13 @@ type Paths struct {
 	CacheDir  string
 }
 
+// xdg is brand.XDGBase, except that a relative value is used as it is, as
+// this package always did, so no app dir moves for such a setup.
 func xdg(base, env, def string) string {
 	if v := os.Getenv(env); v != "" {
 		return v
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "/tmp"
-	}
-	return filepath.Join(home, def)
+	return brand.XDGBase(brand.UserHome(), env, def)
 }
 
 // New resolves the standard dirs for the app (see package brand).

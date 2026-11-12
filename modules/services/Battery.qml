@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 import Quickshell.Services.UPower
+import qs.modules.globals
 import qs.modules.theme
 
 Singleton {
@@ -11,14 +12,14 @@ Singleton {
 
     readonly property UPowerDevice primaryDevice: UPower.displayDevice
 
-    readonly property bool available: primaryDevice !== null && primaryDevice.type === UPowerDevice.Battery
+    readonly property bool available: primaryDevice !== null && primaryDevice.type === UPowerDeviceType.Battery
     readonly property real percentage: available ? (primaryDevice.percentage * 100) : 0
-    readonly property bool isCharging: available && primaryDevice.state === UPowerDevice.Charging
-    readonly property bool isPluggedIn: available && (primaryDevice.state === UPowerDevice.Charging || primaryDevice.state === UPowerDevice.FullyCharged)
+    readonly property bool isCharging: available && primaryDevice.state === UPowerDeviceState.Charging
+    readonly property bool isPluggedIn: available && (primaryDevice.state === UPowerDeviceState.Charging || primaryDevice.state === UPowerDeviceState.FullyCharged)
     // Running from the battery (UPower OnBattery): false on AC even while a
     // charge threshold holds the battery at "pending charge".
     readonly property bool onBattery: available && UPower.onBattery
-    readonly property int chargeState: available ? primaryDevice.state : UPowerDevice.Unknown
+    readonly property int chargeState: available ? primaryDevice.state : UPowerDeviceState.Unknown
     property int lastBatteryAlertThreshold: 0
 
     // Add some helpful descriptive properties if needed
@@ -45,6 +46,8 @@ Singleton {
     }
 
     function evaluateBatteryAlert() {
+        if (!ProcessRole.primary)
+            return;
         if (!available || isPluggedIn) {
             lastBatteryAlertThreshold = 0;
             return;

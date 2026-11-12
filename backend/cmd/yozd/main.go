@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +14,9 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/gotune"
 	"yozakura/backend/pkg/instancelock"
+	"yozakura/backend/pkg/yozd/client"
 	"yozakura/backend/pkg/yozd/config"
 	"yozakura/backend/pkg/yozd/ipc"
 	"yozakura/backend/pkg/yozd/ipc/hyprland"
@@ -58,6 +61,7 @@ func main() {
 	remainingArgs := os.Args[i:]
 	switch remainingArgs[0] {
 	case "daemon":
+		gotune.Apply(gotune.CompositorDaemon, os.Getenv)
 		runDaemon(customConfigPath)
 	case "subscribe":
 		runSubscribe()
@@ -215,8 +219,13 @@ func runDaemon(customConfigPath string) {
 			if err == nil {
 				fmt.Println("Detected compositor:", comp)
 			} else {
-				fmt.Println("Error: no supported compositor detected")
-				os.Exit(1)
+				status := detectFailureStatus()
+				if status == client.ExitNoCompositor {
+					fmt.Println("Error: no supported compositor detected")
+				} else {
+					fmt.Println("Error: compositor not reachable:", err)
+				}
+				os.Exit(status)
 			}
 		}
 	}
@@ -246,45 +255,24 @@ func runDaemon(customConfigPath string) {
 
 	fmt.Printf("Starting %s daemon on %s\n", brand.Daemon, socketPath)
 
-	// Load TOML config if it exists
-	var cfgWatcher *config.ConfigWatcher
+	// Load the TOML config and follow it. On a first run it does not exist
+	// yet (the shell writes it after yozd starts): the watcher applies it
+	// once it is created.
 	configPath := customConfigPath
 	if configPath == "" {
 		configPath = config.DefaultConfigPath()
 	}
-	if _, statErr := os.Stat(configPath); statErr == nil {
-		cfg, cfgErr := config.LoadConfig(configPath)
-		if cfgErr != nil {
-			fmt.Printf("%s Error loading config: %v\n", cfgLog, cfgErr)
-		} else {
-			fmt.Printf("%s Loaded config from %s\n", cfgLog, configPath)
-			configDir := filepath.Dir(configPath)
-			if applyErr := config.ApplyConfig(cfg, comp, configDir); applyErr != nil {
-				fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
-			} else {
-				srv.SeedConfigState(cfg.ToIPCConfig())
-			}
-		}
-
-		// Watch for config changes
-		watcher, watchErr := config.NewConfigWatcher()
-		if watchErr != nil {
-			fmt.Printf("%s Warning: could not start watcher: %v\n", cfgLog, watchErr)
-		} else {
-			configDir := filepath.Dir(configPath)
-			watcher.Start(configPath, func(newCfg *config.TOMLConfig) {
-				fmt.Println(cfgLog, "Config changed, reloading...")
-				if applyErr := config.ApplyConfig(newCfg, comp, configDir); applyErr != nil {
-					fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
-				} else {
-					srv.SeedConfigState(newCfg.ToIPCConfig())
-				}
-			})
-			cfgWatcher = watcher
-		}
-	} else {
-		fmt.Printf("%s No config file at %s, skipping\n", cfgLog, configPath)
+	configDir := filepath.Dir(configPath)
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		fmt.Printf("%s Warning: %v\n", cfgLog, err)
 	}
+	cfgWatcher := config.LoadAndWatch(configPath, func(cfg *config.TOMLConfig) {
+		if applyErr := config.ApplyConfig(cfg, comp, configDir); applyErr != nil {
+			fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
+		} else {
+			srv.SeedConfigState(cfg.ToIPCConfig())
+		}
+	})
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
@@ -304,35 +292,21 @@ func runDaemon(customConfigPath string) {
 }
 
 func runSubscribe() {
-	socketPath := defaultSocketPath()
-	conn, err := net.Dial("unix", socketPath)
-	if err != nil {
-		fmt.Printf("Error connecting to daemon: %v\n", err)
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	req := map[string]interface{}{
-		"id":     1,
-		"method": "System.Subscribe",
-		"params": map[string]interface{}{},
-	}
-	json.NewEncoder(conn).Encode(req)
-
-	dec := json.NewDecoder(conn)
-	for {
-		var msg json.RawMessage
-		if err := dec.Decode(&msg); err != nil {
-			fmt.Printf("Connection closed or error: %v\n", err)
-			os.Exit(1)
-		}
+	err := client.Subscribe(context.Background(), defaultSocketPath(), 0, func(msg []byte) {
 		var notif struct {
 			JSONRPC string `json:"jsonrpc"`
 		}
 		if err := json.Unmarshal(msg, &notif); err == nil && notif.JSONRPC == "2.0" {
 			fmt.Println(string(msg))
 		}
+	})
+	var opErr *net.OpError
+	if errors.As(err, &opErr) && opErr.Op == "dial" {
+		fmt.Printf("Error connecting to daemon: %v\n", err)
+	} else {
+		fmt.Printf("Connection closed or error: %v\n", err)
 	}
+	os.Exit(1)
 }
 
 func handleRPC(category string, args []string) {

@@ -18,6 +18,7 @@ onboarding/
 ├── FinishModel.js         pure helpers of the summary: install split/counts, display/keyboard lines
 ├── Step*.qml              one file per step (get `wizard`, the OnboardingState)
 ├── MonitorUpgradeCard / KeyboardSetupCard   parts of StepDisplays
+├── TerminalShellChoice    StepTerminal: "use this prompt" + "fish as login shell" (TerminalChoice.js)
 ├── LookPresetGrid / LookWallpaperStrip / OnboardingTabs   parts of StepLook
 ├── OllamaPullRow          StepAi: "pull a model" chips under Ollama (ExtrasService.ollamaPull)
 ├── SummaryCard / ExclusiveChoice / UpdateChannelChoice   parts of StepFinish
@@ -52,6 +53,12 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   running after the wizard closes; queued ids are remembered (`installs`)
   for the summary. Apps preselects the recommended missing apps on the
   first visit only (`apps` remembers the selection).
+- Terminal step: on a first run (`general.onboardingDone` false) the prompt
+  and fish as the login shell are preselected unless the user has a prompt
+  (foreignPromptInit) or a login shell other than bash/sh of their own
+  (`TerminalChoice.defaults`); the ticks are applied by Continue (the step's
+  `leaveGuard`), never on skip / close; a failed or cancelled chsh is said on
+  the step and the summary.
 - Update channel (`UpdateChannelChoice`, summary step): stable / beta / git
   rows; only a click writes `system.updateChannel` (through `wizard.set`,
   staged like the other steps), so leaving stable or skipping changes nothing.
@@ -59,6 +66,13 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   remembers `exclusive`; `finish()` on the last step enables it.
 - Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);
   OnboardingWindow unmaps while a live change is pending so the prompt is on top.
+- Password prompts of app installs: with the shell's own polkit agent
+  (`PolkitService.registered`, modules/polkit) its dialog maps above the wizard and
+  the wizard hands it the keyboard while `PolkitService.dialogOpen`; with an external
+  agent OnboardingWindow unmaps while any extras task awaits the pkexec password
+  (`ExtrasService.awaitingAuth`, the backend sees a pkexec still running in the
+  task's process group), so the agent's dialog (a normal window) is not hidden
+  behind the Overlay card; it comes back once the password is given or cancelled.
 
 ## DRY RUN
 `<app> onboarding --dry-run [--keep]` (`backend/cmd/yozakura/cmds_onboarding_dryrun.go`)
@@ -76,7 +90,32 @@ CLI call that changes the system on the wizard path checks `DryRun.active`
 and journals instead (see PresetsService, CompositorTomlWriter, Colors
 generators, GlobalShortcuts). `DryRunBadge` marks the card and the pill.
 
+## SEPARATE PROCESS
+With `performance.separateWindows` the wizard runs as its own Quickshell
+process (`onboarding-window.qml`, `<PREFIX>ROLE=onboarding`, started by the
+daemon like Settings, see modules/settings/AGENTS.md SEPARATE PROCESS).
+`OnboardingService.visible` in the main shell mirrors the process
+(`SeparateWindows`): the first-run auto-show, `<app> run onboarding` and
+Settings > About open it there; when it closes (finished, skipped, Esc or
+crashed) the main shell marks it dismissed for the session. In the window,
+`OnboardingService.open()` resumes from the saved progress, on the screen the
+main shell chose. Real changes as in-process: settings through
+`SettingsStore` (staged ones preview through the daemon's `preview` relay and
+are applied by `finish()`), `general.onboardingDone` written by `complete()`
+in the window (the main shell follows general.json), displays through the
+daemon (the wizard unmaps while a live change waits; the keep/revert prompt
+is the main shell's), installs through the daemon queue, wallpapers through
+the main shell (RemoteWallpapers). Keybind tour: `GlobalShortcuts` in the
+window listens to the daemon's `ui` stream (commandRan only, never runs a
+command, as the dry run), "Try" sends `ui.run` (`tryCommand`), and the main
+shell relays whether one of its panels is open (`shellPanelOpen`) and its
+bottom bar height (`shell.state`, for the peek pill). The summary's Settings
+links finish the wizard first and ask the main shell to open Settings
+(`settings.open`). The window quits once the wizard closed and no
+exclusive-mode switch is pending (its failure is notified through the
+daemon).
+
 ## VERIFY
-`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
+`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-terminal.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-terminal-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
 (`tests/lib/onboarding_env.py`), renders:
 `tools/render/onboarding_render.py [--mode dark|light|both] [--lang ru] --out DIR`.

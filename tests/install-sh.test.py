@@ -34,7 +34,18 @@ LOGGER = 'l="${0##*/}"; for a in "$@"; do l+=$\'\\t\'"$a"; done; printf "%s\\n" 
 
 STUBS = {
     # STUB_SUDO_DENY: no cached credentials and no password accepted.
-    "sudo": '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\nexit 0\n',
+    # STUB_SUDO_FAIL: a command line (e.g. "systemctl enable sddm") that fails.
+    # Like systemd, a plain enable of a login manager fails while
+    # display-manager.service (under YOZAKURA_SYSROOT) links to another unit,
+    # even a removed one; --force replaces the link.
+    "sudo": (
+        '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\n'
+        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\n'
+        'dml="${YOZAKURA_SYSROOT:-/nonexistent}/etc/systemd/system/display-manager.service"\n'
+        'if [[ "$1 $2" == "systemctl enable" && "$3" =~ ^(sddm|gdm|lightdm|lxdm|greetd) && -L "$dml" ]]; then\n'
+        '  t="$(readlink "$dml")"; [[ "${t##*/}" == "${3%.service}.service" ]] || exit 1\n'
+        'fi\nexit 0\n'
+    ),
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
     "make": (
@@ -97,7 +108,7 @@ SUSE_STUBS = {
 FAKE_BIN = (
     "#!/bin/bash\n"
     + LOGGER
-    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
+    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine"; exit "${FAKE_DOCTOR_RC:-0}" ;; esac\n'
     + '[[ "$*" == "install --help" ]] && { echo "Unknown target \'--help\'" >&2; exit 1; }\n'
     + 'if [[ "$*" == "install --exclusive --help" ]]; then\n'
     + '  [[ -n "${FAKE_EXCLUSIVE:-}" ]] && { echo "Usage: yozakura install hyprland --exclusive [-y]"; exit 0; }\n'
@@ -148,6 +159,7 @@ OS_RELEASE = {
     "fedora": 'ID=fedora\nPRETTY_NAME="Fedora Linux 42"\n',
     "suse": 'ID="opensuse-tumbleweed"\nID_LIKE="opensuse suse"\nPRETTY_NAME="openSUSE Tumbleweed"\n',
     "debian": 'ID=debian\nPRETTY_NAME="Debian GNU/Linux 13 (trixie)"\n',
+    "nixos": 'ID=nixos\nPRETTY_NAME="NixOS 25.05 (Warbler)"\n',
 }
 FAMILY_STUBS = {"arch": ARCH_STUBS, "fedora": FEDORA_STUBS, "suse": SUSE_STUBS, "debian": DEBIAN_STUBS}
 
@@ -362,6 +374,7 @@ def test_yes_install_optional_failure_does_not_abort():
         voice = sb.calls("voice_setup.sh")
         check(voice == [["--vulkan"]], f"voice on AMD not built with --vulkan: {voice}")
         check(re.search(r"voice: failed \(see log\)", err), "summary lacks the voice failure", err)
+        check("an optional part failed" in err and "blossoms are out" not in err, "optional failure has an unqualified headline", err)
         check(any("doctor" in c for c in sb.calls("yozakura")), "doctor did not run after the failure")
         helper = [c for c in sb.calls("sudo") if c[:1] == ["install"]]
         check(
@@ -383,6 +396,78 @@ def test_yes_install_optional_failure_does_not_abort():
             f"system helper not installed root-owned: {helper}",
         )
         check(["reboot"] not in sb.calls("systemctl"), "-y rebooted")
+    finally:
+        sb.cleanup()
+
+
+# The polkit line of the user's Hyprland entry: the text is the one
+# backend/cmd/yozakura/hypr_polkit.go writes and goodbye removes
+# (hypr_polkit_test.go checks both against the same literals).
+OLD_POLKIT = {
+    "hyprland.conf": "exec-once = systemctl --user start hyprpolkitagent # yozakura: polkit",
+    "hyprland.lua": 'hl.on("hyprland.start", function() hl.exec_cmd("systemctl --user start hyprpolkitagent") end) -- yozakura: polkit',
+}
+
+
+def new_polkit(name, bin_path):
+    cmd = f"{bin_path} polkit-fallback"
+    if name.endswith(".lua"):
+        return f'hl.on("hyprland.start", function() hl.exec_cmd("{cmd}") end) -- yozakura: polkit'
+    return f"exec-once = {cmd} # yozakura: polkit"
+
+
+def test_hyprland_polkit_fallback_line():
+    for name in ("hyprland.conf", "hyprland.lua"):
+        # A fresh install: the line runs the installed binary's fallback verb.
+        sb = Sandbox("arch")
+        try:
+            hypr = sb.home / ".config/hypr"
+            hypr.mkdir(parents=True)
+            entry = hypr / name
+            if name.endswith(".conf"):
+                entry.write_text("monitor = , preferred, auto, 1\n")
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(rc == 0, f"{name}: hyprland install exit {rc}", err)
+            check(["install", "hyprland"] in sb.calls("yozakura"), f"{name}: 'install hyprland' not run", sb.log.read_text())
+            want = new_polkit(name, sb.home / ".local/bin/yozakura")
+            text = entry.read_text() if entry.exists() else ""
+            check(text.splitlines().count(want) == 1, f"{name}: fresh install lacks {want!r}", text)
+            check("hyprpolkitagent" not in text, f"{name}: still starts hyprpolkitagent directly", text)
+            # A re-run adds nothing.
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            again = entry.read_text() if entry.exists() else ""
+            check(again == text, f"{name}: re-run changed the entry", again)
+
+            # An install that has our old line: left to the binary's repair
+            # ('install hyprland', Go tests), never a second agent line.
+            entry.write_text("misc {\n}\n\n" + OLD_POLKIT[name] + "\n")
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(rc == 0, f"{name}: re-install exit {rc}", err)
+            check(["install", "hyprland"] in sb.calls("yozakura"), f"{name}: repair not run", sb.log.read_text())
+            check(entry.read_text().count("polkit") == 2, f"{name}: second polkit line added", entry.read_text())
+
+            # The user's own agent line stays the only one.
+            own = "exec-once = /usr/lib/polkit-kde-authentication-agent-1\n"
+            entry.write_text(own)
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(entry.read_text() == own, f"{name}: the user's polkit line was touched", entry.read_text())
+        finally:
+            sb.cleanup()
+
+    # Dry run: names the fallback verb, writes nothing.
+    sb = Sandbox("arch", strict=True)
+    try:
+        before = sb.snapshot()
+        rc, err, _ = sb.run("--dry-run", "-y", "--compositor", "hyprland", "--no-sddm")
+        check(rc == 0, f"polkit dry run exit {rc}", err)
+        check_untouched(sb, before, err)
+        check(
+            re.search(r"would run: append '~/\.local/bin/yozakura polkit-fallback' to ~/\.config/hypr/hyprland\.lua", err),
+            "dry run does not show the polkit-fallback line",
+            err,
+        )
+        check("polkit-fallback': the fallback polkit agent" in err, "plan does not name the fallback line", err)
+        check("hyprpolkitagent autostart" not in err, "dry run still describes the old line", err)
     finally:
         sb.cleanup()
 
@@ -677,8 +762,354 @@ def test_suse_force_upgrades_and_resolves():
         sb.cleanup()
 
 
+def no_phosphor(sb):
+    """No Phosphor font yet: it is planned from the AUR."""
+    Sandbox._script(sb.bin / "fc-list", "#!/bin/bash\nexit 0\n")
+
+
+def test_aur_failure_does_not_abort():
+    sb = Sandbox("arch")
+    try:
+        no_phosphor(sb)
+        Sandbox._script(sb.bin / "paru", "#!/bin/bash\n" + LOGGER + 'echo "error: target not found: ttf-phosphor-icons"\nexit 1\n')
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"install with a failing AUR exit {rc}", err)
+        check(any("-S" in c and "ttf-phosphor-icons" in c for c in sb.calls("paru")), "AUR install not tried", sb.log.read_text())
+        check(re.search(r"AUR: ttf-phosphor-icons: failed", err), "summary lacks the AUR failure", err)
+        fonts = [c for c in sb.calls("curl") if any("phosphor-icons/web" in a for a in c)]
+        check(fonts, "no per-user Phosphor font after the AUR failed", sb.log.read_text())
+        check(["install", "niri"] in sb.calls("yozakura"), "install stopped at the AUR", sb.log.read_text())
+        # Each failure shows its own output, not an earlier step's error.
+        font_fail = err[err.find("Installing the Phosphor icon font"):]
+        check("target not found" not in font_fail.split("continuing")[0], "font failure shows the AUR's error", err)
+    finally:
+        sb.cleanup()
+
+
+def test_yay_bootstrap_failure_does_not_abort():
+    sb = Sandbox("arch")
+    try:
+        no_phosphor(sb)
+        (sb.bin / "paru").unlink()  # no helper: yay is bootstrapped (no makepkg here: it fails)
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"install with a failing yay bootstrap exit {rc}", err)
+        ups = pacman_upgrades(sb)
+        check(ups and "base-devel" in ups[0] and "git" in ups[0], f"bootstrap needs not planned: {ups}")
+        check(re.search(r"AUR helper \(yay\): failed", err), "summary lacks the helper failure", err)
+        check("left out: ttf-phosphor-icons" in err, "no note about the AUR packages left out", err)
+        check(any(any("phosphor-icons/web" in a for a in c) for c in sb.calls("curl")), "no per-user Phosphor font fallback")
+        check(["install", "niri"] in sb.calls("yozakura"), "install stopped at the yay bootstrap", sb.log.read_text())
+    finally:
+        sb.cleanup()
+
+
+def systemd_root(sb, dm=None):
+    """A systemd host; dm: the unit display-manager.service links to."""
+    root = sb.root / "sysroot"
+    (root / "run/systemd/system").mkdir(parents=True, exist_ok=True)
+    link = root / "etc/systemd/system/display-manager.service"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if link.is_symlink():
+        link.unlink()
+    if dm:
+        unit = root / f"usr/lib/systemd/system/{dm}.service"
+        unit.parent.mkdir(parents=True, exist_ok=True)
+        unit.write_text("")
+        link.symlink_to(unit)
+    sb.extra_env["YOZAKURA_SYSROOT"] = str(root)
+
+
+def test_sddm_installed_but_disabled_is_set_up():
+    sb = Sandbox("arch")
+    try:
+        # sddm is installed (an earlier run stopped before its services step)
+        # but nothing is linked as display-manager.service.
+        systemd_root(sb)
+        Sandbox._script(sb.bin / "sddm", "#!/bin/bash\n")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"exit {rc}", err)
+        check("sddm is installed but not enabled" in err, "plan does not say SDDM is off", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not enabled", sb.log.read_text())
+        check(any(c[:1] == ["bash"] and c[1].endswith("install-sddm-theme.sh") for c in sb.calls("sudo")), "SDDM theme not installed", sb.log.read_text())
+        check("pick niri on the new login screen" in err, "next steps do not point at the login screen", err)
+
+        # An enabled login manager: SDDM is left alone.
+        systemd_root(sb, dm="gdm")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+gdm", err), "gdm not detected", err)
+        check(["systemctl", "enable", "sddm"] not in sb.calls("sudo"), "SDDM enabled next to gdm", sb.log.read_text())
+
+        # Enabling SDDM fails: the other services still run, and the summary
+        # does not promise a login screen.
+        systemd_root(sb)
+        sb.extra_env["STUB_SUDO_FAIL"] = "systemctl enable sddm"
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 2, f"failing sddm enable exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "failed login screen has a success headline", err)
+        check(["systemctl", "enable", "--now", "bluetooth"] in sb.calls("sudo"), "bluetooth skipped after sddm failed")
+        check(re.search(r"sddm: failed", err), "summary lacks the sddm failure", err)
+        check("new login screen" not in err and "niri-session" in err, "next steps promise a login screen", err)
+    finally:
+        sb.cleanup()
+
+
+def test_dangling_display_manager_link():
+    sb = Sandbox("arch")
+    try:
+        # display-manager.service still links to a removed gdm: no login
+        # manager is enabled; the installed sddm is found and set up.
+        systemd_root(sb, dm="gdm")
+        (sb.root / "sysroot/usr/lib/systemd/system/gdm.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+none: SDDM", err), "dangling link counted as an enabled gdm", err)
+        # systemd refuses a plain enable over the stale link: --force.
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "SDDM not enabled over the dangling link", sb.log.read_text())
+        check("sddm: failed" not in err, "enabling SDDM over the dangling link failed", err)
+        installed_unit(sb, "sddm.service")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and "sddm is installed but not enabled" in err, "installed sddm behind a dangling link not reported", err)
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "installed sddm not enabled over the dangling link", sb.log.read_text())
+    finally:
+        sb.cleanup()
+
+
+def test_suse_display_manager_unit_is_left_alone():
+    sb = Sandbox("suse")
+    try:
+        # Tumbleweed: display-manager.service is a real unit that starts the
+        # login manager update-alternatives selects; no /etc link.
+        systemd_root(sb)
+        installed_unit(sb, "display-manager.service")
+        installed_unit(sb, "sddm.service")
+        dms = sb.root / "sysroot/usr/lib/X11/displaymanagers"
+        dms.mkdir(parents=True)
+        (dms / "gdm").write_text("")
+        alt = sb.root / "sysroot/etc/alternatives"
+        alt.mkdir(parents=True)
+        (alt / "default-displaymanager").symlink_to(dms / "gdm")
+        for args in (("-y",), ("-y", "--with-sddm")):
+            rc, err, _ = sb.run(*args, "--compositor", "niri")
+            check(rc == 0, f"{args} exit {rc}", err)
+            check(re.search(r"Login\s+gdm \(display-manager.service of the distribution", err), f"{args}: managed login manager not reported", err)
+            enables = [c for c in sb.calls("sudo") if c[:2] == ["systemctl", "enable"]]
+            check(not any("sddm" in c or "gdm" in " ".join(c) for c in enables), f"{args}: enabled a login manager: {enables}")
+            check(not any(c[:1] == ["bash"] and c[1].endswith("install-sddm-theme.sh") for c in sb.calls("sudo")), f"{args}: SDDM theme installed")
+            check("not enabled" not in err and "Install SDDM" not in err, f"{args}: SDDM offered", err)
+        # Without the alternatives link it is reported under the unit's name.
+        (alt / "default-displaymanager").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+display-manager \(", err), "unnamed managed login manager not reported", err)
+    finally:
+        sb.cleanup()
+
+
+def installed_unit(sb, name):
+    """A login manager unit installed in the fake systemd root, not enabled."""
+    unit = sb.root / "sysroot/usr/lib/systemd/system" / name
+    unit.parent.mkdir(parents=True, exist_ok=True)
+    unit.write_text("")
+
+
+def test_other_login_manager_installed_but_disabled():
+    sb = Sandbox("arch")
+    try:
+        systemd_root(sb)
+        installed_unit(sb, "gdm.service")
+        # --yes: reported, never enabled; no SDDM next to it; console steps.
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"--yes exit {rc}", err)
+        check("gdm is installed but not enabled" in err, "--yes does not report the disabled gdm", err)
+        check(re.search(r"Login\s+gdm is installed but not enabled: left as it is", err), "plan lacks the login outcome", err)
+        enables = [c for c in sb.calls("sudo") if c[:2] == ["systemctl", "enable"]]
+        check(not any("gdm.service" in c or "sddm" in c for c in enables), f"--yes enabled a login manager: {enables}")
+        check("sddm" not in " ".join(c for call in pacman_upgrades(sb) for c in call).split(), "--yes installed SDDM next to gdm")
+        check("niri-session" in err and "new login screen" not in err, "next steps promise a login screen", err)
+        check("sudo systemctl enable gdm.service" in err, "next steps lack how to enable gdm", err)
+        # A folded next-steps row keeps its hanging indent.
+        check(re.search(r"for a login screen: sudo\s*│\n\s*│ {4}systemctl enable gdm.service", err), "folded row lost its indent", err)
+
+        # Interactive: 1 = enable gdm (Proceed: y, Reboot: n).
+        rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
+        check(rc == 0, f"enable gdm exit {rc}", err + shown)
+        check("Login screen" in err and "Enable gdm" in err, "no login screen menu", err)
+        check(["systemctl", "enable", "gdm.service"] in sb.calls("sudo"), "gdm not enabled", sb.log.read_text())
+        check(["systemctl", "enable", "--now", "gdm.service"] not in sb.calls("sudo"), "gdm started mid-install")
+        check(re.search(r"Login\s+gdm is installed but not enabled: enable it", err), "plan lacks the enable outcome", err)
+        check("pick niri on the new login screen" in err, "next steps do not point at gdm", err)
+
+        # Interactive: 2 = SDDM with the theme instead.
+        rc, err, shown = sb.run("--compositor", "niri", answers="2\ny\nn\n")
+        check(rc == 0, f"sddm instead exit {rc}", err + shown)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not enabled", sb.log.read_text())
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "gdm touched when SDDM was chosen")
+        check(any("sddm" in u for u in pacman_upgrades(sb)), "SDDM not installed", sb.log.read_text())
+
+        # Interactive: 3 = leave it.
+        rc, err, shown = sb.run("--compositor", "niri", answers="3\ny\nn\n")
+        check(rc == 0, f"leave exit {rc}", err + shown)
+        check(not any(c[:2] == ["systemctl", "enable"] and ("gdm.service" in c or "sddm" in c) for c in sb.calls("sudo")), "leave enabled something")
+        check("niri-session" in err and "Ctrl+Alt+F2" in err, "leave lacks the console steps", err)
+
+        # --no-sddm: SDDM is not offered (1 = enable, 2 = leave).
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="2\ny\nn\n")
+        check(rc == 0 and "Install SDDM" not in err, "--no-sddm still offers SDDM", err)
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "--no-sddm: 2 should leave gdm")
+
+        # --with-sddm --yes: SDDM takes the place of the disabled gdm.
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--with-sddm")
+        check(rc == 0, f"--with-sddm exit {rc}", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "--with-sddm did not enable SDDM", sb.log.read_text())
+        check(not any("gdm.service" in c for c in sb.calls("sudo")), "--with-sddm touched gdm")
+
+        # A dry run shows the choice and runs nothing.
+        rc, err, shown = sb.run("--compositor", "niri", "--dry-run", answers="1\ny\nn\n")
+        check(rc == 0 and "would run: sudo systemctl enable gdm.service" in err, "dry run does not show the enable", err)
+        check(["systemctl", "enable", "gdm.service"] not in sb.calls("sudo"), "dry run enabled gdm")
+    finally:
+        sb.cleanup()
+
+
+def test_ly_and_no_systemd_login_managers():
+    sb = Sandbox("arch")
+    try:
+        # ly 1.1+ is a ly@ttyN template with no display-manager link.
+        systemd_root(sb)
+        installed_unit(sb, "ly@.service")
+        rc, err, shown = sb.run("--compositor", "niri", answers="1\ny\nn\n")
+        check(rc == 0 and ["systemctl", "enable", "ly@tty2.service"] in sb.calls("sudo"), "ly not enabled on tty2", err + sb.log.read_text())
+        # Enabled ly: taken as the working login screen, no question.
+        wants = sb.root / "sysroot/etc/systemd/system/multi-user.target.wants"
+        wants.mkdir(parents=True, exist_ok=True)
+        (wants / "ly@tty2.service").symlink_to(sb.root / "sysroot/usr/lib/systemd/system/ly@.service")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+ly\s", err), "enabled ly not detected", err)
+        check("not enabled" not in err and "Log out (or reboot)" in err, "enabled ly reported as off", err)
+        # ly removed, its wants link left behind: nothing is enabled.
+        (sb.root / "sysroot/usr/lib/systemd/system/ly@.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and re.search(r"Login\s+none", err), "dangling ly link counted as enabled", err)
+        (wants / "ly@tty2.service").unlink()
+
+        # No systemd: what was found is reported, nothing is guessed.
+        sb.extra_env["YOZAKURA_SYSROOT"] = str(sb.root / "nosystemd")
+        Sandbox._script(sb.bin / "lightdm", "#!/bin/bash\n")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"no-systemd exit {rc}", err)
+        check("lightdm found (no systemd" in err, "plan does not say lightdm was found without systemd", err)
+        check(not any(c[:2] == ["systemctl", "enable"] for c in sb.calls("sudo")), "services enabled without systemd")
+        check("if lightdm shows a login screen" in err and "niri-session" in err, "next steps lack both ways", err)
+    finally:
+        sb.cleanup()
+
+
+def test_missing_required_component_exits_2():
+    sb = Sandbox("arch")
+    try:
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and "blossoms are out" in err and "NEEDS ATTENTION" not in err, f"clean install exit {rc}", err)
+        # The closing doctor reports a missing required component (exit 1).
+        sb.extra_env["FAKE_DOCTOR_RC"] = "1"
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 2, f"missing required component exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "headline claims success", err)
+        check("NEEDS ATTENTION" in err and "required components are missing" in err, "NEEDS ATTENTION lacks the doctor result", err)
+        check("doctor: fine" in err, "doctor output not shown", err)
+    finally:
+        sb.cleanup()
+
+
+def test_root_and_missing_sudo_give_guidance():
+    sb = Sandbox("arch")
+    try:
+        (sb.bin / "sudo").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 1 and "sudo is not installed" in err, f"missing sudo exit {rc}", err)
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        for line in ("pacman -Syu sudo", f"usermod -aG wheel {me}", "/etc/sudoers.d/10-wheel", f"log in again as {me}"):
+            check(line in err, f"missing-sudo guidance lacks {line!r}", err)
+        check("useradd" not in err, "the user exists: no useradd", err)
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check("apt install sudo" in err and f"usermod -aG sudo {me}" in err, "debian guidance wrong", err)
+        wheel = "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+        sb.os_release.write_text(OS_RELEASE["arch"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(wheel in err and "> /etc/sudoers.d" not in err, "sudoers line is not 0440 and non-clobbering", err)
+    finally:
+        sb.cleanup()
+
+
+def test_root_guidance_per_distribution():
+    """Run as root (an unprivileged user namespace maps us to uid 0): how to
+    create a user with sudo rights; on NixOS through the configuration."""
+    unshare = shutil.which("unshare")
+    if not unshare or subprocess.run([unshare, "-r", "true"], capture_output=True).returncode != 0:
+        print("skip  test_root_guidance_per_distribution (no unprivileged user namespaces)")
+        return
+    sb = Sandbox("arch")
+    try:
+
+        def as_root():
+            p = subprocess.run([unshare, "-r", "bash", str(INSTALL), "-y"], env=sb.env(), capture_output=True, text=True, timeout=60)
+            return p.returncode, p.stderr
+
+        rc, err = as_root()
+        check(rc == 1 and "not root" in err and "useradd -m -G wheel yourname" in err, f"arch root guidance (exit {rc})", err)
+        sb.os_release.write_text(OS_RELEASE["nixos"])
+        rc, err = as_root()
+        check(rc == 1 and 'extraGroups = [ "wheel" ]' in err and "nixos-rebuild switch" in err, f"nixos root guidance (exit {rc})", err)
+        check("useradd" not in err and "sudoers.d" not in err, "nixos root guidance suggests useradd/sudoers.d", err)
+    finally:
+        sb.cleanup()
+
+
+def test_refused_sudo_password_guidance():
+    sb = Sandbox("arch")
+    try:
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        sb.extra_env["STUB_SUDO_DENY"] = "1"
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "sudo authentication failed." in err, f"refused sudo exit {rc}", err + shown)
+        check("If the password was right" in err and "install -m 0440" in err, "arch guidance lacks the wheel line", err)
+        # Debian, the user already in the sudo group: only the password was wrong.
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        real_id = shutil.which("id")
+        (sb.bin / "id").unlink()
+        Sandbox._script(sb.bin / "id", f'#!/bin/bash\n[[ "$1" == -nG ]] && {{ echo "{me} sudo"; exit 0; }}\nexec {real_id} "$@"\n')
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "password was not accepted" in err, f"debian wrong password exit {rc}", err + shown)
+        check("usermod" not in err, "a sudo group member is told to join it", err)
+    finally:
+        sb.cleanup()
+
+
+def test_dry_run_without_git():
+    sb = Sandbox("arch", strict=True)
+    try:
+        (sb.bin / "git").unlink()
+        before = sb.snapshot()
+        rc, err, _ = sb.run("--dry-run", "-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"dry run on a system without git exit {rc}", err)
+        check_untouched(sb, before, err)
+        check(re.search(r"would run: \S+/yozakura install niri$", err, re.M), "dry run stopped before the end", err)
+    finally:
+        sb.cleanup()
+
+
 def main():
     for test in (
+        test_aur_failure_does_not_abort,
+        test_yay_bootstrap_failure_does_not_abort,
+        test_sddm_installed_but_disabled_is_set_up,
+        test_other_login_manager_installed_but_disabled,
+        test_ly_and_no_systemd_login_managers,
+        test_dangling_display_manager_link,
+        test_suse_display_manager_unit_is_left_alone,
+        test_root_and_missing_sudo_give_guidance,
+        test_root_guidance_per_distribution,
+        test_refused_sudo_password_guidance,
+        test_missing_required_component_exits_2,
+        test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
         test_arch_package_missing_from_repos,
@@ -695,6 +1126,7 @@ def main():
         test_fedora_mango_falls_back_and_niri_hint,
         test_yes_install_optional_failure_does_not_abort,
         test_attended_install_menu_and_reboot,
+        test_hyprland_polkit_fallback_line,
     ):
         before = len(FAILURES)
         test()

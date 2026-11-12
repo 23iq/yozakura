@@ -6,7 +6,7 @@
 // the backed-up tree and the units back exactly.
 //
 // Nothing outside ~/.config/hypr is touched except the backup dir
-// (~/.local/share/<app>/backups/) and the units, through the injected
+// (<data dir>/backups/) and the units, through the injected
 // Systemd; config import and the compositor reload are injected too.
 package exclusive
 
@@ -75,7 +75,10 @@ type Status struct {
 type Options struct {
 	Home, AppID, Compositor string
 	// HyprDir is the Hyprland config dir; empty means <Home>/.config/hypr.
-	HyprDir  string
+	HyprDir string
+	// DataDir is the app data dir (backups, the generated config the entry
+	// loads); empty means <Home>/.local/share/<AppID>.
+	DataDir  string
 	Now      func() time.Time
 	Systemd  Systemd
 	Import   func(monitors []ipc.OutputConfig, kb *ipc.KeyboardSettings) (previous map[string]any, err error)
@@ -106,8 +109,25 @@ func (o Options) hyprDir() string {
 
 // HyprPath is the Hyprland config dir exclusive mode manages.
 func HyprPath(o Options) string      { return o.hyprDir() }
-func (o Options) dataDir() string    { return filepath.Join(o.Home, ".local", "share", o.appID()) }
 func (o Options) backupRoot() string { return filepath.Join(o.dataDir(), "backups") }
+
+// backupRoots is where latestBackup looks: backupRoot, then the root used
+// before the data dir followed XDG_DATA_HOME (<Home>/.local/share/<app>),
+// so a backup taken then can still be restored.
+func (o Options) backupRoots() []string {
+	roots := []string{o.backupRoot()}
+	if old := filepath.Join(o.Home, ".local", "share", o.appID(), "backups"); o.Home != "" && old != roots[0] {
+		roots = append(roots, old)
+	}
+	return roots
+}
+
+func (o Options) dataDir() string {
+	if o.DataDir != "" {
+		return o.DataDir
+	}
+	return filepath.Join(o.Home, ".local", "share", o.appID())
+}
 
 func (o Options) now() time.Time {
 	if o.Now != nil {
@@ -203,7 +223,7 @@ func enable(o Options) (Status, error) {
 		}
 	}
 	r.treeTouched = true
-	if err := writeMinimal(hypr, entry, dir, o.Polkit); err != nil {
+	if err := writeMinimal(o, hypr, entry, dir); err != nil {
 		return r.rollback(err)
 	}
 	unitErrs, err := disableUnits(o, dir, &r.m)

@@ -76,7 +76,7 @@ Item { property Item anchorItem; property var bar; property int contentWidth; pr
  module('qs.modules.notch', {'NotchNotificationView':'''import QtQuick
 Item { property bool isNavigating: false; property bool notchHovered: false; implicitHeight: 80 }'''})
  module('qs.modules.components.kit', kit_stubs.files())
- module('qs.modules.globals', {'GlobalStates': 'pragma Singleton\nimport QtQuick\nQtObject {}'})
+ module('qs.modules.globals', {'GlobalStates': 'pragma Singleton\nimport QtQuick\nQtObject {}', 'BatterySaver': 'pragma Singleton\nimport QtQuick\nQtObject { property bool active: false }'})
  module('qs.modules.corners', {'RoundCorner': 'import QtQuick\nItem { enum CornerEnum { TopRight, BottomRight, TopLeft, BottomLeft } property int corner; property real size; property color color }'})
  # Live activities inside the notch: real components, stubbed service
  module('qs.modules.services.activities', {'ActivityService': '''pragma Singleton
@@ -224,6 +224,10 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  assert count()==0, 'disabled visualizer must release cava'
  evaluate(viz, 'Config.notch.visualizer = true')
  assert count()==1
+ evaluate(viz, 'BatterySaver.active = true')
+ assert count()==0, 'an active battery saver must release cava'
+ evaluate(viz, 'BatterySaver.active = false')
+ assert count()==1, 'leaving the battery saver must request cava again'
  viz.deleteLater(); QTest.qWait(20)
  assert count()==0, 'destroyed visualizer must release cava'
  print('Notch visualizer: cava consumer gating passed')

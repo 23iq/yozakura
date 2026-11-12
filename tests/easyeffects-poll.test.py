@@ -30,6 +30,7 @@ QtObject {
 }""",
     "SplitParser": "QtObject { signal read(string data) }",
 })
+h.module("qs.modules.globals", {})  # ProcessRole (the main shell)
 h.copy("modules/services/EasyEffectsService.qml", "qs/modules/services")
 h.module("qs.modules.services", {"SuspendManager": "pragma Singleton\nQtObject { property bool isSuspending: false }"})
 

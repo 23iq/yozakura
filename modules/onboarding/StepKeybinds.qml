@@ -56,7 +56,7 @@ Item {
             watch.restart();
         }
         function panelOpen() {
-            return Visibilities.currentActiveModule !== "" || GlobalStates.assistantVisible === true || GlobalStates.settingsWindowVisible === true;
+            return OnboardingService.shellPanelOpen || Visibilities.currentActiveModule !== "" || GlobalStates.assistantVisible === true || GlobalStates.settingsWindowVisible === true;
         }
     }
     Timer {
@@ -93,7 +93,7 @@ Item {
                     status: root.tour[modelData.id] || ""
                     active: root.active !== null && root.active.id === modelData.id
                     onSkipRequested: root.wizard.markTask(modelData.id, "skipped")
-                    onTryRequested: GlobalShortcuts.run(modelData.command)
+                    onTryRequested: GlobalShortcuts.tryCommand(modelData.command)
                 }
             }
         }

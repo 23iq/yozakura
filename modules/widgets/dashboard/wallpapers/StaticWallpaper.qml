@@ -53,9 +53,12 @@ Item {
         recursive: false
     }
 
+    // Decoded at the window size and drawn 1:1 (PreserveAspectCrop crops the
+    // decode, the transition and blur passes sample it at the same size), so
+    // no mipmaps: a mip chain would add a third to a screen-sized texture
+    // and never be sampled (tests/static-wallpaper-scale.test.py).
     Image {
         id: rawImage
-        mipmap: true
         anchors.fill: parent
         source: staticImageRoot.sourceFile ? "file://" + staticImageRoot.sourceFile : ""
         fillMode: Image.PreserveAspectCrop

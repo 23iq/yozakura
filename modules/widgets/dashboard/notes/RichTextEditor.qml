@@ -24,6 +24,13 @@ ColumnLayout {
         noteEditor.forceActiveFocus();
     }
 
+    // Show a loaded note: also when `content` did not change (same text as
+    // the previous note) or the binding was replaced by an edit
+    function setText(value) {
+        if (noteEditor.text !== value)
+            noteEditor.text = value;
+    }
+
     spacing: 8
 
     RichTextFormat {

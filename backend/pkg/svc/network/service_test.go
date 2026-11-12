@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 )
 
@@ -17,6 +18,13 @@ func TestMain(m *testing.M) {
 					_ = json.NewEncoder(f).Encode(os.Args[1:])
 					_ = f.Close()
 				}
+			}
+			if len(os.Args) > 1 && os.Args[1] == "monitor" {
+				// a quiet `nmcli monitor`: report the pid, then block
+				if f := os.Getenv("AUDIT_MONITOR_PID"); f != "" {
+					_ = os.WriteFile(f, []byte(strconv.Itoa(os.Getpid())), 0o600)
+				}
+				select {}
 			}
 			if len(os.Args) > 1 && os.Args[1] == "-g" {
 				fmt.Println(os.Getenv("AUDIT_SCAN_LINE"))

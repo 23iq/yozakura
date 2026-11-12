@@ -239,7 +239,12 @@ func (s *Service) subscribe(sub *ipc.Subscriber) {
 	if err := monitor.Start(); err != nil {
 		return
 	}
-	defer monitor.Process.Kill()
+	// kill and reap: an unwaited nmcli stayed a zombie of the daemon after
+	// every subscription that ended (each shell restart)
+	defer func() {
+		_ = monitor.Process.Kill()
+		_ = monitor.Wait()
+	}()
 	sc := bufio.NewScanner(stdout)
 	for sc.Scan() {
 		select {

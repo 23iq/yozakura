@@ -31,12 +31,15 @@ h.module("Quickshell.Wayland", {
     "WlrLayer": "QtObject { enum Layer { Top = 2, Overlay = 3 } }",
     "WlrKeyboardFocus": "QtObject { enum Focus { None = 0, Exclusive = 1, OnDemand = 2 } }",
 })
+h.module("qs.modules.corners", {"ScreenCornersContent": "Item { property bool hasFullscreenWindow }"})
 h.singleton("qs.config", "Config", """QtObject {
     property bool notchReady: true
     property bool barReady: true
     property bool dockReady: true
     property var dock: ({ enabled: false })
     property var bar: ({ frameEnabled: false })
+    property int roundness: 16
+    property var theme: ({ enableCorners: true })
 }""")
 h.module("qs.modules.services", {
     "ShellLayout": "pragma Singleton\nQtObject { property bool notchEnabled: true }",
@@ -44,6 +47,7 @@ h.module("qs.modules.services", {
     "YozdService": "pragma Singleton\nQtObject { property var focusedMonitor: null; function monitorFor(s) { return null } }",
 })
 h.copy("modules/services/Visibilities.qml", "qs/modules/services")
+h.copy("modules/services/PolkitService.qml", "qs/modules/services")
 h.module("qs.modules.services", {})
 h.singleton("qs.modules.bar.workspaces", "CompositorData", "QtObject { function monitorHasFullscreen(m) { return false } }")
 h.singleton("qs.modules.bar.panels", "Panels", 'QtObject { property string primaryEdge: "top" }')
@@ -99,7 +103,7 @@ h.module("qs.modules.frame", {"ScreenFrameContent": "Item { property var targetS
 h.module("qs.modules.shell", {
     "PanelShadows": """Item {
         property var frame; property var bars; property var notch: null; property var dock; property var activities
-        property bool barEnabled; property bool dockEnabled
+        property bool barEnabled; property bool dockEnabled; property bool frameElsewhere
         readonly property bool notchCast: notch !== null && notch.visualRegion !== null
     }""",
 })
@@ -115,6 +119,10 @@ h.module("qs.modules.components", {
     "FocusGrab": "Item { property var windows; property bool active; signal cleared() }",
 })
 h.module("qs.modules.globals", {})
+h.copy("modules/components/SettleGate.qml", "qs/modules/components")
+h.module("qs.modules.components", {})
+h.copy("modules/shell/FrameSplit.qml", "qs/modules/shell", siblings=False)
+h.copy("modules/shell/PanelPresence.qml", "qs/modules/shell", siblings=False)
 panel = h.copy("modules/shell/UnifiedShellPanel.qml", "qs/modules/shell", siblings=False)
 text = re.sub(r"\n    anchors \{[^}]*\}", "", panel.read_text(), count=1)
 for old, new in (("WlrLayershell.keyboardFocus:", "property int compositorKeyboardFocus:"),

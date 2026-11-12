@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"runtime/debug"
 	"sync"
 
 	"yozakura/backend/pkg/instancelock"
@@ -34,6 +36,14 @@ type ServiceEvent struct {
 // HandlerFunc processes a method request and returns the result payload.
 type HandlerFunc func(params json.RawMessage) (any, error)
 
+// Deferred is a result whose answer comes later. An ordered method returns
+// one when what it decides and broadcasts must run in order with the
+// connection's earlier requests (it does that before returning) but its
+// answer waits on something slow (another client's reply): the server runs
+// the Deferred in its own goroutine and answers with its result, so later
+// requests on the connection are not held up by the wait.
+type Deferred func() (any, error)
+
 // Service is a set of methods plus an optional subscription stream.
 type Service struct {
 	Name      string
@@ -47,9 +57,13 @@ type Service struct {
 
 // Subscriber is a per-client subscription context.
 type Subscriber struct {
-	Events chan ServiceEvent
-	stop   chan struct{}
-	once   sync.Once
+	// ClientID is what the client named itself in its subscribe request
+	// (params.clientId; the shell sends its process role: "shell" for the
+	// main shell, the window kind for a separate window), "" when unnamed.
+	ClientID string
+	Events   chan ServiceEvent
+	stop     chan struct{}
+	once     sync.Once
 }
 
 // NewSubscriber returns a subscriber with an event buffer of size buf, as
@@ -58,10 +72,19 @@ func NewSubscriber(buf int) *Subscriber {
 	return &Subscriber{Events: make(chan ServiceEvent, buf), stop: make(chan struct{})}
 }
 
+// Push queues event without blocking; it is dropped when the buffer is full.
 func (s *Subscriber) Push(event ServiceEvent) {
+	s.TryPush(event)
+}
+
+// TryPush is Push reporting whether event was queued, for streams that must
+// recover from a drop (resend their state) instead of losing it silently.
+func (s *Subscriber) TryPush(event ServiceEvent) bool {
 	select {
 	case s.Events <- event:
+		return true
 	default:
+		return false
 	}
 }
 
@@ -74,6 +97,11 @@ func (s *Subscriber) StopCh() <-chan struct{} { return s.stop }
 
 func (s *Subscriber) Send(service string, data any) {
 	s.Push(ServiceEvent{Service: service, Data: data})
+}
+
+// TrySend is Send reporting whether the event was queued (see TryPush).
+func (s *Subscriber) TrySend(service string, data any) bool {
+	return s.TryPush(ServiceEvent{Service: service, Data: data})
 }
 
 // Server is a line-delimited JSON server over a Unix socket.
@@ -168,7 +196,13 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer close(serial)
 	go func() {
 		for req := range serial {
-			s.handleOne(writer, &wmu, &req)
+			if later := s.handleOne(writer, &wmu, &req); later != nil {
+				pending.Add(1)
+				go func() {
+					defer pending.Done()
+					later()
+				}()
+			}
 			pending.Done()
 		}
 	}()
@@ -194,7 +228,9 @@ func (s *Server) handleConn(conn net.Conn) {
 		if s.isAsync(req.Method) {
 			go func(req Request) {
 				defer pending.Done()
-				s.handleOne(writer, &wmu, &req)
+				if later := s.handleOne(writer, &wmu, &req); later != nil {
+					later()
+				}
 			}(req)
 			continue
 		}
@@ -235,49 +271,98 @@ func (s *Server) isAsync(method string) bool {
 }
 
 // handleOne processes a single request and writes its response; wmu
-// serializes writes with concurrently running async handlers.
-func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) {
+// serializes writes with concurrently running async handlers. When the
+// handler returned a Deferred, nothing is written yet: the returned func
+// waits for it and writes the answer (the caller runs it off the worker).
+func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) func() {
 	if len(req.ID) == 0 {
-		return
+		return nil
 	}
 	w := &lockedWriter{w: bw, mu: wmu}
 	svcName, method := splitMethod(req.Method)
 	if svcName == "" {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
-		return
+		return nil
 	}
 	s.mu.RLock()
 	svc := s.services[svcName]
 	s.mu.RUnlock()
 	if svc == nil {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown service: %s", svcName)})
-		return
+		return nil
 	}
 	hdl, ok := svc.Methods[method]
 	if !ok {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
-		return
+		return nil
 	}
 
-	result, err := hdl(req.Params)
-	if err != nil {
-		w.write(Response{ID: req.ID, Error: err.Error()})
+	raw, errMsg, later := invoke(req.Method, hdl, req.Params)
+	if later != nil {
+		id, name := req.ID, req.Method
+		return func() {
+			raw, errMsg, _ := invoke(name, func(json.RawMessage) (any, error) { return later() }, nil)
+			w.respond(id, raw, errMsg)
+		}
+	}
+	w.respond(req.ID, raw, errMsg)
+	return nil
+}
+
+func (l *lockedWriter) respond(id, raw json.RawMessage, errMsg string) {
+	if errMsg != "" {
+		l.write(Response{ID: id, Error: errMsg})
 		return
 	}
-	var raw json.RawMessage
-	if result != nil {
-		data, merr := json.Marshal(result)
-		if merr != nil {
-			w.write(Response{ID: req.ID, Error: "result marshal failed"})
-			return
-		}
-		raw = data
+	l.write(Response{ID: id, Result: raw})
+}
+
+// crashOnPanic, deferred around service code, logs a panic with the stack
+// of the goroutine that raised it and then panics again, so the daemon
+// still dies exactly as an unrecovered panic would. It must not swallow
+// the panic: most services take their mutex without a deferred Unlock, so
+// a handler that panics mid-section leaves the lock held and every later
+// call to that service would block forever. A dead daemon is recoverable
+// (the next CLI call or keybind starts it again through ensureDaemon, which
+// sweeps the children of the old one); a half-deadlocked one is not.
+func crashOnPanic(what string) {
+	if r := recover(); r != nil {
+		log.Printf("[ipc] panic in %s: %v\n%s", what, r, debug.Stack())
+		panic(r)
 	}
-	w.write(Response{ID: req.ID, Result: raw})
+}
+
+// invoke runs one handler and marshals its result. A Deferred result is
+// returned as later, unrun (its caller runs it through invoke again, so a
+// panic there crashes the daemon the same way).
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string, later Deferred) {
+	defer crashOnPanic(method)
+	result, err := hdl(params)
+	if err != nil {
+		return nil, err.Error(), nil
+	}
+	if result == nil {
+		return nil, "", nil
+	}
+	if d, ok := result.(Deferred); ok {
+		return nil, "", d
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return nil, "result marshal failed", nil
+	}
+	return data, "", nil
+}
+
+// runSubscribe registers a stream with one service.
+func runSubscribe(svc *Service, sub *Subscriber) {
+	defer crashOnPanic(svc.Name + " subscribe")
+	svc.Subscribe(sub)
 }
 
 // marshalEvent serializes a ServiceEvent for the result field.
 func marshalEvent(event ServiceEvent) json.RawMessage {
+	defer crashOnPanic("marshalling a " + event.Service + " event")
 	data, err := json.Marshal(event)
 	if err != nil {
 		return json.RawMessage(`{"error":"marshal failed"}`)

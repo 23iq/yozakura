@@ -41,11 +41,10 @@ func FishHook(cfg Config, configFile string) string {
 		b.WriteString("    end\n")
 	}
 	b.WriteString("end\n")
-	if cfg.Greeting == "fastfetch" {
-		b.WriteString("function fish_greeting\n    fastfetch\nend\n")
-	} else {
-		b.WriteString("set -g fish_greeting\n")
-	}
+	// fish's own welcome text stays quiet; the fastfetch greeting is a
+	// file of its own (greeting.go), so switching one never rewrites the
+	// other. A fish_greeting function (ours or the user's) runs regardless.
+	b.WriteString("set -g fish_greeting\n")
 	return b.String()
 }
 

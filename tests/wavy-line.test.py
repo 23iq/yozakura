@@ -1,8 +1,9 @@
-"""CarouselProgress (WavyLine) only animates while `active`.
+"""CarouselProgress (WavyLine) only animates while `active`, at a capped rate.
 
-The wave is a Canvas repainted from a FrameAnimation. `active: false`
-(paused player) must stop the per-frame repaint, which otherwise runs at the
-output's refresh rate forever, while shape changes still redraw it once.
+The wave is a Canvas repainted from a timer. `active: false` (paused player)
+must stop the repaint, while shape changes still redraw it once. While it
+runs it repaints about 30 times a second, whatever the output's refresh rate
+(it used to follow the refresh rate, up to 240/s).
 """
 import sys
 import time
@@ -61,6 +62,8 @@ check('inactive wave redraws once on shape change', root.property('paints') > be
 h.eval(root, 'wave.active = true')
 running = paints_during(600)
 check('active wave animates', running >= 10, f'({running} paints in 600 ms)')
+cap = h.eval(root, 'wave.maxFps')
+check('repaint rate is capped', cap == 30 and running <= 0.6 * cap + 3, f'({running} paints in 600 ms, cap {cap}/s)')
 
 h.eval(root, 'wave.active = false')
 stopped = paints_during(600)

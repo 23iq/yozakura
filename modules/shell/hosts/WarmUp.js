@@ -14,6 +14,13 @@ function targetScreen(screenNames, focused) {
     return names.length > 0 ? names[0] : "";
 }
 
+// performance.warmViews (default true): false turns the launcher
+// pre-creation off, so the launcher view is only created (and holds memory)
+// once it is first opened. `perf` is Config.performance.
+function enabled(perf) {
+    return !perf || perf.warmViews === undefined || perf.warmViews === null ? true : perf.warmViews !== false;
+}
+
 // owner      "notch" (NotchHostedSurfaces) or "hosts" (HostedSurfaces)
 // host       HostRouter.hostFor("launcher"): notch | spotlight | sheet
 // screen     the owner's screen name

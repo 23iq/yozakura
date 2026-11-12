@@ -32,6 +32,7 @@ import "defaults/specials.js" as SpecialsDefaults
 import "defaults/displays.js" as DisplaysDefaults
 import "defaults/keyboard.js" as KeyboardDefaults
 import "KeyboardMigration.js" as KeyboardMigration
+import "AutoSavePause.js" as AutoSavePause
 import "defaults/apps.js" as AppsDefaults
 import "defaults/terminal.js" as TerminalDefaults
 
@@ -51,14 +52,28 @@ Singleton {
     // Dev fallback seed: the default set's own files (the backend seeds from the composed set).
     property string presetDir: Qt.resolvedUrl("../assets/presets/sets/" + Brand.displayName).toString().replace("file://", "")
 
-    // Auto-save of the config domains is paused while a staged settings
-    // change is waiting for Apply / Discard (GlobalStates *HasChanges), or
-    // while a service holds it (holdAutoSave / releaseAutoSave, ref-counted).
+    // Auto-save of the staged config domains is paused while a staged
+    // settings change is waiting for Apply / Discard (GlobalStates
+    // *HasChanges), and of every domain while a service holds it
+    // (holdAutoSave / releaseAutoSave, ref-counted). See autoSavePausedFor.
     // Derived, never assigned: nothing can leave it stuck on or off.
     property int autoSaveHolds: 0
     readonly property bool pauseAutoSave: autoSaveHolds > 0 || GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
     // Edits are coalesced into one write per domain after this many ms.
     readonly property int autoSaveDelay: 150
+
+    // What ConfigFile asks per domain: a hold pauses every domain, a staged
+    // change only the domains it stages (AutoSavePause.js); pauseAutoSave
+    // above stays the "anything staged or held" flag for its readers.
+    function autoSavePausedFor(name) {
+        return AutoSavePause.paused(name, {
+            holds: root.autoSaveHolds,
+            theme: GlobalStates.themeHasChanges,
+            compositor: GlobalStates.compositorHasChanges,
+            shell: GlobalStates.shellHasChanges,
+            shellDomains: GlobalStates._shellSections
+        });
+    }
 
     function holdAutoSave() {
         root.autoSaveHolds++;
@@ -66,6 +81,16 @@ Singleton {
 
     function releaseAutoSave() {
         root.autoSaveHolds = Math.max(0, root.autoSaveHolds - 1);
+    }
+
+    // Each domain's ConfigFile by name (registered by ConfigFile itself), for
+    // a merged write of one domain: Config.configFile("bar").writeMerged().
+    property var _files: ({})
+    function registerFile(name, file) {
+        root._files[name] = file;
+    }
+    function configFile(name) {
+        return root._files[name] || null;
     }
 
     // A domain file was reloaded (external change): the staged settings

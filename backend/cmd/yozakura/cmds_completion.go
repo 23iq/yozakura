@@ -25,7 +25,8 @@ const (
 	displaySubs  = "list set identify help"
 	keyboardSubs = "list add remove switch-bind next help"
 	extrasSubs   = "list install status help"
-	termSubs     = "list set preview status off help"
+	termSubs     = "list set preview status off greeting help"
+	greetSubs    = "on off preset logo presets preview help"
 	updateSubs   = "channel --channel --check --allow-downgrade --help"
 	channelNames = "stable beta git"
 )
@@ -80,7 +81,8 @@ _{bin}() {
     extras)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{extrasSubs}" -- "$cur")) ;;
     term)
-        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{termSubs}" -- "$cur")) ;;
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{termSubs}" -- "$cur"))
+        (( COMP_CWORD == 3 )) && [[ ${COMP_WORDS[2]} == greeting ]] && COMPREPLY=($(IFS=' ' compgen -W "{greetSubs}" -- "$cur")) ;;
     stopwatch)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{swSubs}" -- "$cur")) ;;
     update)
@@ -126,7 +128,9 @@ _{bin}() {
     display) (( CURRENT == 3 )) && compadd -- {displaySubs} ;;
     keyboard) (( CURRENT == 3 )) && compadd -- {keyboardSubs} ;;
     extras) (( CURRENT == 3 )) && compadd -- {extrasSubs} ;;
-    term) (( CURRENT == 3 )) && compadd -- {termSubs} ;;
+    term)
+        (( CURRENT == 3 )) && compadd -- {termSubs}
+        (( CURRENT == 4 )) && [[ $words[3] == greeting ]] && compadd -- {greetSubs} ;;
     stopwatch) (( CURRENT == 3 )) && compadd -- {swSubs} ;;
     update)
         if (( CURRENT == 3 )); then compadd -- {updateSubs}
@@ -174,6 +178,7 @@ complete -c {bin} -n '__{bin}_at display "" 2' -a '{displaySubs}'
 complete -c {bin} -n '__{bin}_at keyboard "" 2' -a '{keyboardSubs}'
 complete -c {bin} -n '__{bin}_at extras "" 2' -a '{extrasSubs}'
 complete -c {bin} -n '__{bin}_at term "" 2' -a '{termSubs}'
+complete -c {bin} -n '__{bin}_at term greeting 3' -a '{greetSubs}'
 complete -c {bin} -n '__{bin}_at stopwatch "" 2' -a '{swSubs}'
 complete -c {bin} -n '__{bin}_at update "" 2' -a '{updateSubs}'
 complete -c {bin} -n '__{bin}_at update channel 3' -a '{channelNames}'
@@ -213,6 +218,7 @@ func completionScript(shell string) (string, error) {
 		"{termSubs}", termSubs,
 		"{updateSubs}", updateSubs,
 		"{channelNames}", channelNames,
+		"{greetSubs}", greetSubs,
 	).Replace(tpl), nil
 }
 

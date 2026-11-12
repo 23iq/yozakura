@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../modules/services/Notifications.qml'), 'utf8');
 function setup(notif, live = [], entries = [], clients = []) {
     const events = [];
-    const root = { list: [notif], idOffset: 10, discardNotification: id => events.push(['discard', id]) };
+    const root = { list: [notif], idOffset: 10, discardNotification: id => events.push(['discard', id]), _liveNotifs: () => live };
     const context = { root, notifServer: { trackedNotifications: { values: live } },
         DesktopEntries: { applications: { values: entries }, byId: id => entries.find(e => e.id === id) },
         YozdService: { clients: { values: clients }, dispatch: cmd => events.push(['focus', cmd]) } };

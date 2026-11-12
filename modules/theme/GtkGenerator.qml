@@ -63,18 +63,39 @@ QtObject {
         const gtk4Dir = home + "/.config/gtk-4.0"
 
         writer.text = css
-        
+
         // Write to GTK 3/4 and reload theme
-        // $1 gtk-3.0 dir, $2 gtk-4.0 dir, $3 css, $4 on|off (dark mode), $5 daemon
+        // $1 gtk-3.0 dir, $2 gtk-4.0 dir, $3 css, $4 on|off (dark mode), $5 daemon,
+        // $6 marker (the header line: a gtk.css starting with it is ours),
+        // $7 backup suffix.
+        // A gtk.css we did not write is copied to gtk.css.<suffix> once before
+        // the first overwrite; a symlinked one (dotfiles) is never written
+        // through: the link itself is moved aside and a regular file written.
         const cmd = `
+            css="$3"; marker="$6"; suffix="$7"
+            backup_name() {
+                b="$1.$suffix"
+                if [ -e "$b" ] || [ -L "$b" ]; then b="$b-$(date +%s)"; fi
+                printf '%s' "$b"
+            }
+            place() {
+                f="$1/gtk.css"
+                if [ -L "$f" ]; then
+                    mv -- "$f" "$(backup_name "$f")" || return 1
+                elif [ -e "$f" ] && [ "$(head -n 1 -- "$f" 2>/dev/null)" != "$marker" ]; then
+                    cp -p -- "$f" "$(backup_name "$f")" || return 1
+                fi
+                printf '%s\\n' "$css" > "$f.tmp.$$" && mv -f -- "$f.tmp.$$" "$f"
+            }
             mkdir -p "$1" "$2" && \\
-            printf '%s\\n' "$3" | tee "$1/gtk.css" "$2/gtk.css" > /dev/null && \\
+            place "$1" && place "$2" && \\
             gsettings set org.gnome.desktop.interface gtk-theme "" && \\
             gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3 && \\
             "$5" darkmode "$4"
         `
 
-        writerProcess.command = ["sh", "-c", cmd, Brand.appId + "-gtk", gtk3Dir, gtk4Dir, css, darkMode ? "on" : "off", Brand.daemonBin]
+        const marker = css.split("\n")[0]
+        writerProcess.command = ["sh", "-c", cmd, Brand.appId + "-gtk", gtk3Dir, gtk4Dir, css, darkMode ? "on" : "off", Brand.daemonBin, marker, Brand.appId + "-backup"]
         writerProcess.running = true
     }
 

@@ -8,8 +8,8 @@ restores the profile when GameMode ends.
 BorderPulse (modules/services/BorderPulse.qml): idle (no cava consumer, no
 timer, no socket traffic) unless enabled and a player is playing; while
 active, cava frames become `eval hl.config(...)` requests on Hyprland's
-socket only when the quantized level changes; stopping restores the base
-border.
+socket only when the quantized level changes; stopping (music, or an
+active battery saver) restores the base border and releases cava.
 """
 import json
 import sys
@@ -61,6 +61,7 @@ h.singleton('qs.config', 'Config', '''QtObject {
 }''')
 h.singleton('qs.modules.bar.panels', 'Panels', 'QtObject { property string primaryEdge: "top" }')
 h.singleton('qs.modules.theme', 'Colors', 'QtObject { signal fileChanged() }')
+h.singleton('qs.modules.globals', 'BatterySaver', 'QtObject { property bool active: false }')
 h.module('qs.modules.services', {
     'GameModeClient': 'pragma Singleton\nQtObject { property bool toggled: false }',
     'BackendService': 'pragma Singleton\nQtObject { property var sent: []; function notify(m, p) { sent = sent.concat([p.expression]); } }',
@@ -158,5 +159,36 @@ last = h.eval(pulse, 'hyprSocket.written[hyprSocket.written.length - 1]')
 check('stopping restores the exact base border', 'rgb(ff0000)' in last and 'rgb(00ff00)' in last and 'rgba(00000080)' in last, last)
 check('stopping releases cava and the timer',
       h.eval(pulse, 'ticker.running') is False and h.eval(pulse, 'Object.keys(CavaService.consumers).length') == 0)
+
+# The battery saver stops the pulse like the music stopping does.
+h.eval(pulse, 'MprisController.isPlaying = true')
+pump(100)
+check('playing again re-activates the pulse', h.eval(pulse, 'active') is True)
+h.eval(pulse, 'CavaService.values = [1, 1, 1, 1]')
+pump(150)
+h.eval(pulse, 'hyprSocket.connected = false')
+pump(50)
+sent = h.eval(pulse, 'hyprSocket.written.length')
+h.eval(pulse, 'hyprSocket.connected = false; BatterySaver.active = true')
+pump(100)
+last = h.eval(pulse, 'hyprSocket.written[hyprSocket.written.length - 1]')
+check('battery saver stops the pulse', h.eval(pulse, 'active') is False and h.eval(pulse, 'ticker.running') is False)
+check('battery saver releases cava', h.eval(pulse, 'Object.keys(CavaService.consumers).length') == 0)
+check('battery saver restores the exact base border',
+      h.eval(pulse, 'hyprSocket.written.length') > sent and 'rgb(ff0000)' in last and 'rgb(00ff00)' in last
+      and 'rgba(00000080)' in last and 'hl.config' in last, last)
+h.eval(pulse, 'hyprSocket.connected = false')
+pump(50)
+sent = h.eval(pulse, 'hyprSocket.written.length')
+h.eval(pulse, 'CavaService.values = [0, 0, 0, 0]')
+pump(200)
+h.eval(pulse, 'CavaService.values = [1, 1, 1, 1]')
+pump(200)
+check('no border updates while the saver is active',
+      h.eval(pulse, 'hyprSocket.written.length') == sent and h.eval(pulse, '_pending') == '')
+h.eval(pulse, 'BatterySaver.active = false')
+check('saver off while playing resumes the pulse', h.eval(pulse, 'active') is True
+      and h.eval(pulse, 'CavaService.consumers["border-pulse"]') is True)
+h.eval(pulse, 'MprisController.isPlaying = false')
 
 sys.exit(0 if ok_all else 1)

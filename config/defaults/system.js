@@ -5,6 +5,7 @@ var data = {
     "language": "auto",
     "updateServiceEnabled": true,
     "updateChannel": "stable",
+    "polkitAgent": true,
     "idle": {
         "general": {
             "lock_cmd": "yozakura lock",

@@ -7,6 +7,7 @@ JsonAdapter {
     property string language: "auto"
     property bool updateServiceEnabled: true
     property string updateChannel: "stable"
+    property bool polkitAgent: true
     property JsonObject idle: JsonObject {
         property JsonObject general: JsonObject {
             property string lock_cmd: "yozakura lock"

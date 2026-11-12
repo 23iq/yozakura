@@ -11,7 +11,9 @@ import (
 
 // Monitor layout tools (resolution, refresh rate, scale, rotation). A change
 // always goes through the daemon's confirm session: it reverts by itself
-// after revertIn seconds unless it is kept ("keep": true, or displays_confirm).
+// after revertIn seconds unless the user keeps it in the shell's prompt or
+// displays_confirm is called. displays_apply never keeps its own change: the
+// user must see the new picture before it is saved.
 
 func displayLayoutTools(d Deps) []mcp.ToolDef {
 	return []mcp.ToolDef{
@@ -19,8 +21,8 @@ func displayLayoutTools(d Deps) []mcp.ToolDef {
 			`The connected monitors with connector name (usable as "name" in displays_apply), current mode, position, scale, rotation, VRR and every supported mode.`,
 			noArgs, toolOpts{readOnly: true}, d.displaysList),
 		define("displays_apply", "Change monitor settings",
-			`Change resolution/refresh rate ("mode": "2560x1440@165" or "preferred"), "scale", "transform" (0-7, 1=90, 2=180, 3=270), "vrr" (0 off, 1 on, 2 fullscreen), "enabled", "x"/"y" of one or more monitors (see displays_list). Applied live, then REVERTED automatically after revertIn seconds (15) unless "keep": true is given or displays_confirm is called with the returned session, so a bad mode never sticks. Only ask for keep after the user confirmed the picture is fine.`,
-			`{"type":"object","properties":{"outputs":{"type":"array","minItems":1,"items":{"type":"object","properties":{"name":{"type":"string"},"mode":{"type":"string"},"scale":{"type":"number","minimum":0.25,"maximum":4},"transform":{"type":"integer","minimum":0,"maximum":7},"vrr":{"type":"integer","minimum":0,"maximum":2},"enabled":{"type":"boolean"},"x":{"type":"integer"},"y":{"type":"integer"}},"required":["name"],"additionalProperties":false}},"keep":{"type":"boolean","default":false}},"required":["outputs"],"additionalProperties":false}`,
+			`Change resolution/refresh rate ("mode": "2560x1440@165" or "preferred"), "scale", "transform" (0-7, 1=90, 2=180, 3=270), "vrr" (0 off, 1 on, 2 fullscreen), "enabled", "x"/"y" of one or more monitors (see displays_list). Applied live, then REVERTED automatically after revertIn seconds (15) unless the user keeps it in the shell's prompt or displays_confirm is called with the returned session, so a bad mode never sticks. The change is never kept in the same call: only call displays_confirm after the user confirmed the picture is fine. Disabling the last enabled monitor is refused.`,
+			`{"type":"object","properties":{"outputs":{"type":"array","minItems":1,"items":{"type":"object","properties":{"name":{"type":"string"},"mode":{"type":"string"},"scale":{"type":"number","minimum":0.25,"maximum":4},"transform":{"type":"integer","minimum":0,"maximum":7},"vrr":{"type":"integer","minimum":0,"maximum":2},"enabled":{"type":"boolean"},"x":{"type":"integer"},"y":{"type":"integer"}},"required":["name"],"additionalProperties":false}}},"required":["outputs"],"additionalProperties":false}`,
 			toolOpts{}, d.displaysApply),
 		define("displays_confirm", "Keep or revert monitor change",
 			`Answer a pending displays_apply session: "keep": true saves the layout as it is now, false reverts at once. After revertIn seconds without an answer the change is reverted automatically.`,
@@ -50,7 +52,9 @@ type displayChangeArg struct {
 func (d Deps) displaysApply(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {
 	var a struct {
 		Outputs []displayChangeArg
-		Keep    bool
+		// Keep is no longer honoured (older clients may still send it):
+		// the change always waits for the user's confirmation.
+		Keep bool
 	}
 	if err := decode(args, &a); err != nil {
 		return nil, err
@@ -79,18 +83,12 @@ func (d Deps) displaysApply(_ context.Context, args json.RawMessage) (*mcp.CallT
 	if err != nil {
 		return nil, err
 	}
-	out := map[string]any{"session": sess.Session, "applied": cfgs, "was": before}
-	if !a.Keep {
-		out["state"] = "pending"
-		out["revertIn"] = sess.RevertIn
-		out["note"] = "reverts automatically unless displays_confirm keep=true is called"
-		return mcp.JSONResult(out), nil
+	out := map[string]any{"session": sess.Session, "applied": cfgs, "was": before,
+		"state": "pending", "revertIn": sess.RevertIn,
+		"note": "reverts automatically unless the user keeps it, or displays_confirm keep=true is called after the user confirmed the picture"}
+	if a.Keep {
+		out["keepIgnored"] = true
 	}
-	saved, err := KeepDisplays(d.callerOrNil(), sess.Session)
-	if err != nil {
-		return nil, err
-	}
-	out["state"], out["saved"] = "kept", saved
 	return mcp.JSONResult(out), nil
 }
 

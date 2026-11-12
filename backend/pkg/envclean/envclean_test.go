@@ -86,3 +86,35 @@ func TestCleanProcessQuietWhenClean(t *testing.T) {
 		t.Errorf("msgs %v", msgs)
 	}
 }
+
+// The role of a separate window process never reaches another child: a
+// main shell or daemon started from a window's environment stays the main
+// shell.
+func TestWindowVarsAreDropped(t *testing.T) {
+	for _, k := range WindowVars {
+		t.Setenv(k, "settings")
+	}
+	t.Setenv("KEEP_ME", "1")
+	for _, kv := range ChildEnv() {
+		k, _, _ := strings.Cut(kv, "=")
+		if isWindowVar(k) {
+			t.Errorf("ChildEnv kept %s", kv)
+		}
+	}
+	got := StripWindowVars([]string{"A=1", WindowVars[0] + "=settings", "B=2"})
+	if strings.Join(got, ",") != "A=1,B=2" {
+		t.Errorf("StripWindowVars: %v", got)
+	}
+	msgs := CleanProcess()
+	for _, k := range WindowVars {
+		if _, ok := os.LookupEnv(k); ok {
+			t.Errorf("CleanProcess left %s", k)
+		}
+	}
+	if len(msgs) < len(WindowVars) {
+		t.Errorf("CleanProcess messages: %v", msgs)
+	}
+	if os.Getenv("KEEP_ME") != "1" {
+		t.Error("other variables are kept")
+	}
+}

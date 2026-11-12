@@ -15,7 +15,9 @@ import "ShadowBlur.js" as ShadowBlur
 // includes them); with `inverted`, everything outside the box (a screen
 // frame around its rounded hole: the quad covers the parent). `strength`
 // scales the shadow like a translucent source's alpha scaled the captured
-// one.
+// one. With `holeClipped`, the shadow is cut to the rounded box `holeClip`
+// (parent coordinates, corner radius `holeClipRadius`): the screen frame's
+// hole when the frame is drawn in a window below (performance.splitFrame).
 ShaderEffect {
     id: root
 
@@ -26,6 +28,9 @@ ShaderEffect {
     property bool inverted: false
     property real strength: 1
     property bool active: true
+    property rect holeClip: Qt.rect(0, 0, 0, 0)
+    property real holeClipRadius: 0
+    property bool holeClipped: false
 
     readonly property var blurModel: ShadowBlur.weights(Lighting.shadowBlur)
     readonly property real spill: root.blurModel.reach + 2
@@ -50,6 +55,10 @@ ShaderEffect {
     property real edgeIndex: Math.max(0, ["top", "bottom", "left", "right"].indexOf(root.edge))
     property real invertedFlag: root.inverted ? 1 : 0
     property vector4d color: Qt.vector4d(root.shadowColor.r * root.coverage, root.shadowColor.g * root.coverage, root.shadowColor.b * root.coverage, root.coverage)
+    // the clip box in the quad's coordinates
+    property vector4d clipBox: Qt.vector4d(root.holeClip.x - root.x, root.holeClip.y - root.y, root.holeClip.width, root.holeClip.height)
+    property real clipRadius: Math.max(0, Math.min(root.holeClipRadius, root.holeClip.width / 2, root.holeClip.height / 2))
+    property real clipFlag: root.holeClipped ? 1 : 0
 
     fragmentShader: Qt.resolvedUrl("shape_shadow.frag.qsb")
 }

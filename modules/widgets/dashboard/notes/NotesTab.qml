@@ -63,6 +63,12 @@ Item {
     property bool currentNoteIsMarkdown: false
     property bool loadingNote: false
     property bool editorDirty: false
+    // The last save of the open note failed (it stays dirty: the next edit
+    // retries). The note stays open until a save succeeds or the user
+    // discards the changes (NoteSaveNotice).
+    property bool saveFailed: false
+    // Set while the selection is put back on the open note (a switch refused)
+    property bool holdSelection: false
 
     NotesStore {
         id: store
@@ -118,6 +124,8 @@ Item {
     }
 
     onSelectedIndexChanged: {
+        if (holdSelection)
+            return;
         if (selectedIndex === -1 && listPanel.listView.count > 0) {
             listPanel.listView.positionViewAtIndex(0, ListView.Beginning);
         }
@@ -129,19 +137,15 @@ Item {
         }
 
         // Load note content when selection changes
-        if (selectedIndex >= 0 && selectedIndex < filteredNotes.length) {
-            let note = filteredNotes[selectedIndex];
-            if (note && !note.isCreateButton) {
-                loadNoteContent(note.id);
-            } else {
-                currentNoteId = "";
-                currentNoteContent = "";
-                currentNoteTitle = "";
-            }
-        } else {
+        const note = selectedIndex >= 0 && selectedIndex < filteredNotes.length ? filteredNotes[selectedIndex] : null;
+        if (note && !note.isCreateButton) {
+            loadNoteContent(note.id);
+        } else if (leaveNote()) {
             currentNoteId = "";
             currentNoteContent = "";
             currentNoteTitle = "";
+        } else {
+            keepOpenNote();
         }
     }
 
@@ -273,13 +277,53 @@ Item {
         store.create(title || "Untitled Note", isMarkdown);
     }
 
+    // Before another note (or none) is shown: save the open note's unsaved
+    // text and stop its pending auto-save (it would write this editor's text
+    // into the next note). False when that save failed: stay on the note.
+    function leaveNote() {
+        saveDebounceTimer.stop();
+        if (currentNoteId && editorDirty)
+            saveCurrentNote();
+        return !(currentNoteId && editorDirty && saveFailed);
+    }
+
+    // A switch was refused: select the open note again (when listed)
+    function keepOpenNote() {
+        const i = filteredNotes.findIndex(n => n.id === currentNoteId);
+        if (i < 0 || i === selectedIndex)
+            return;
+        holdSelection = true;
+        selectedIndex = i;
+        holdSelection = false;
+        Qt.callLater(() => {
+            if (selectedIndex === i)
+                listPanel.listView.currentIndex = i;
+        });
+    }
+
+    // NoteSaveNotice: try the failed save again
+    function retrySave() {
+        saveCurrentNote();
+    }
+
+    // NoteSaveNotice: drop the unsaved text and reload the note from disk
+    function discardChanges() {
+        saveDebounceTimer.stop();
+        editorDirty = false;
+        saveFailed = false;
+        if (currentNoteId)
+            loadNoteContent(currentNoteId);
+    }
+
     function loadNoteContent(noteId) {
         if (!noteId || noteId === "__create__")
             return;
 
-        // Save current note before loading new one
-        if (currentNoteId && editorDirty) {
-            saveCurrentNote();
+        // Save the current note before loading another one; keep it open
+        // when that fails
+        if (!leaveNote()) {
+            keepOpenNote();
+            return;
         }
 
         // Find note to get isMarkdown flag
@@ -293,16 +337,24 @@ Item {
     }
 
     function saveCurrentNote() {
-        if (!currentNoteId || currentNoteId === "__create__")
+        // Never while a note loads: the editor still holds the previous text
+        if (!currentNoteId || currentNoteId === "__create__" || loadingNote)
             return;
 
         // Get the text content
         var content = editorPane.text(currentNoteIsMarkdown);
-        store.write(currentNoteId, currentNoteIsMarkdown, content);
-        editorDirty = false;
+        const ok = store.write(currentNoteId, currentNoteIsMarkdown, content);
+        saveFailed = !ok;
+        editorDirty = !ok;
 
         // Update modified timestamp
-        store.touch(currentNoteId);
+        if (ok)
+            store.touch(currentNoteId);
+    }
+
+    // Put the loaded content in the editor of the open note
+    function showNoteContent() {
+        editorPane.setText(currentNoteIsMarkdown, currentNoteContent);
     }
 
     function openNoteInEditor(noteId) {
@@ -349,8 +401,9 @@ Item {
         moveNote(1);
     }
 
-    function saveNotesOrder() {
-        store.writeIndex(allNotes);
+    // `removedIds`: notes deleted here (others missing from allNotes are kept)
+    function saveNotesOrder(removedIds) {
+        store.writeIndex(allNotes, removedIds || []);
     }
 
     // A text change in an editor marks the open note dirty (debounced save)

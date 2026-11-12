@@ -64,7 +64,9 @@
    "methods": [
     "dispatch",
     "eval",
+    "polkitState",
     "render",
+    "setPolkitState",
     "state",
     "write"
    ],
@@ -143,6 +145,11 @@
     "set",
     "toggle"
    ],
+   "subscribe": true
+  },
+  {
+   "name": "idlemon",
+   "methods": [],
    "subscribe": true
   },
   {
@@ -267,6 +274,17 @@
    "subscribe": true
   },
   {
+   "name": "preview",
+   "methods": [
+    "commit",
+    "discard",
+    "set",
+    "state",
+    "written"
+   ],
+   "subscribe": true
+  },
+  {
    "name": "providers",
    "methods": [
     "list",
@@ -365,6 +383,9 @@
    "name": "term",
    "methods": [
     "apply",
+    "fetch.allow",
+    "fetch.presets",
+    "fetch.preview",
     "presets",
     "preview",
     "status"
@@ -455,6 +476,18 @@
     "get"
    ],
    "subscribe": false
+  },
+  {
+   "name": "windows",
+   "methods": [
+    "close",
+    "hiding",
+    "open",
+    "ready",
+    "relay",
+    "status"
+   ],
+   "subscribe": true
   }
  ]
 }

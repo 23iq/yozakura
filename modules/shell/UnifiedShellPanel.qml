@@ -7,6 +7,7 @@ import qs.modules.bar
 import qs.modules.bar.panels
 import qs.modules.bar.activities
 import qs.modules.bar.workspaces
+import qs.modules.corners
 import qs.modules.notch
 import qs.modules.dock
 import qs.modules.frame
@@ -117,6 +118,55 @@ PanelWindow {
     readonly property bool keepBarBorder: Config.bar.keepBarBorder ?? false
     readonly property bool containBar: barContent ? barContent.contained : false
 
+    // Unmapped under a fullscreen window while nothing here has to show
+    // (performance.hidePanelInFullscreen; always mapped while it is off).
+    // Every reason to stay mapped is in PanelPresence.js.
+    visible: presence.mapped
+    readonly property PanelPresence presence: panelPresence
+    PanelPresence {
+        id: panelPresence
+        enabled: Config.performance?.hidePanelInFullscreen ?? false
+        settleInterval: Math.max(400, (Config.animDuration ?? 0) + 250)
+        state: {
+            // Off: nothing is read, nothing changes
+            if (!panelPresence.enabled)
+                return ({});
+            const name = unifiedPanel.targetScreen ? unifiedPanel.targetScreen.name : "";
+            const bars = panelHost.bars || [];
+            const modules = Visibilities.getForScreen(name);
+            const dockHere = unifiedPanel.dockEnabled;
+            const f = frameContent;
+            return {
+                "fullscreen": unifiedPanel.hasFullscreenWindow,
+                "barRevealOnHover": (Config.bar?.availableOnFullscreen ?? false) && (unifiedPanel.barEnabled || unifiedPanel.notchContent !== null),
+                "dockRevealOnHover": dockHere && (Config.dock?.availableOnFullscreen ?? false) && (Config.dock?.hoverToReveal ?? false),
+                "barShown": unifiedPanel.barEnabled && bars.some(b => !!b && b.reveal === true),
+                "barPopupOpen": bars.some(b => !!b && b.popupOpen === true),
+                "notchShown": unifiedPanel.notchReveal,
+                "notchOpen": unifiedPanel.notchOpen || unifiedPanel.notchPanelModal,
+                "dockShown": dockHere && unifiedPanel.dockReveal,
+                "activitiesShown": activityHost.revealed && (activityHost.wanted || activityHost.lingering),
+                "notifications": Notifications.popupList.length > 0 && Notifications.showsOnScreen(name),
+                "stripsOpen": stripsView.wantsKeyboard,
+                "cornerPills": cornerPills.active,
+                "moduleOpen": !!modules && Visibilities.moduleNames.some(m => modules[m] === true),
+                "osdInPanel": GlobalStates.osdVisible && !OsdService.routeForScreen(name).window,
+                "focusGrab": FocusGrabManager.hasActiveGrab,
+                "frameDrawn": frameSplitState.panelDraws && (Config.bar?.frameEnabled ?? false) && (f.topThickness + f.bottomThickness + f.leftThickness + f.rightThickness) > 0
+            };
+        }
+    }
+
+    // Who draws the frame (performance.splitFrame): this panel, or its own
+    // window (FrameWindow, created next to this panel in shell.qml)
+    readonly property FrameSplit frameSplit: frameSplitState
+    FrameSplit {
+        id: frameSplitState
+        enabled: Config.performance?.splitFrame ?? false
+        frameEnabled: Config.bar?.frameEnabled ?? false
+        fullscreen: unifiedPanel.hasFullscreenWindow
+    }
+
     Component.onCompleted: {
         Visibilities.registerBarPanel(screen.name, unifiedPanel);
         Visibilities.registerNotchPanel(screen.name, unifiedPanel);
@@ -224,6 +274,7 @@ PanelWindow {
             anchors.fill: parent
             z: 0
             frame: frameContent
+            frameElsewhere: !frameSplitState.panelDraws
             bars: panelHost.bars
             notch: unifiedPanel.notchContent
             dock: dockContent
@@ -232,11 +283,14 @@ PanelWindow {
             dockEnabled: unifiedPanel.dockEnabled
         }
 
+        // Also computes the hole PanelShadows clips to while the frame is
+        // drawn by its own window (FrameWindow)
         ScreenFrameContent {
             id: frameContent
             anchors.fill: parent
             targetScreen: unifiedPanel.targetScreen
             hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
+            visible: frameSplitState.panelDraws
             z: 1
         }
 
@@ -304,6 +358,18 @@ PanelWindow {
             panel: unifiedPanel
             screenName: unifiedPanel.targetScreen.name
             z: 5
+        }
+    }
+
+    // Rounded screen corners, last so above everything drawn here, and in no
+    // input region (clicks pass through). No window of their own: one more
+    // full-screen (or four corner-sized) layer surface costs far more than
+    // four small canvases in this one. Nothing is loaded while they are off.
+    Loader {
+        anchors.fill: parent
+        active: !!(Config.theme.enableCorners && Config.roundness > 0)
+        sourceComponent: ScreenCornersContent {
+            hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
         }
     }
 }

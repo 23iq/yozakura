@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import "BorderPulse.js" as Pulse
@@ -11,7 +12,8 @@ import "BorderPulse.js" as Pulse
 // the bass of the shared cava spectrum.
 //
 // Cost model: nothing runs unless the pulse is enabled, a player is
-// playing and the compositor is Hyprland. Then a 30 Hz tick reads
+// playing, the compositor is Hyprland and the battery saver is not active
+// (BatterySaver). Then a 30 Hz tick reads
 // CavaService.values (cava is shared with the notch visualizer), and only
 // a change of the quantized level (Pulse.STEPS) sends one `eval` straight
 // to Hyprland's request socket - no process spawn per frame. When the
@@ -26,7 +28,7 @@ QtObject {
         return sig && run ? run + "/hypr/" + sig + "/.socket.sock" : "";
     }
     readonly property bool wanted: !!cfg && cfg.enabled && cfg.source === "cava" && socketPath !== "" && CavaService.available
-    readonly property bool active: wanted && MprisController.isPlaying && !GameModeClient.toggled
+    readonly property bool active: wanted && MprisController.isPlaying && !GameModeClient.toggled && !BatterySaver.active
 
     readonly property string consumerKey: "border-pulse"
     property real level: 0

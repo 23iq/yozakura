@@ -16,3 +16,34 @@ test('Permissions.js confirms every Go ConfirmTools entry', () => {
         assert.equal(Permissions.mustConfirm({ name, server: 'yozakura' }, {}, []), true, name);
     assert.equal(Permissions.mustConfirm({ name: 'extras_install', server: 'other' }, {}, []), false);
 });
+
+// Command-capable calls: the key list and the shared cases match Go
+// (routines.CommandConfigKeys / ConfirmCall).
+const callsSrc = fs.readFileSync(path.join(__dirname, '../backend/pkg/svc/routines/confirm_calls.go'), 'utf8');
+const keysBlock = callsSrc.match(/var CommandConfigKeys = \[\]string\{([\s\S]*?)\n\}/)[1];
+const goKeys = [...keysBlock.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/ai-confirm-calls.json'), 'utf8'));
+
+test('Permissions.js command config keys equal the Go list', () => {
+    assert.ok(goKeys.length >= 6, `parsed ${goKeys.length} Go keys`);
+    assert.deepEqual([...Permissions.COMMAND_CONFIG_KEYS], goKeys);
+});
+
+test('command-capable calls always ask, harmless ones follow the policy', () => {
+    assert.ok(cases.length >= 20);
+    for (const c of cases) {
+        const tool = { name: c.tool, server: 'yozakura' };
+        assert.equal(Permissions.mustConfirm(tool, c.args, []), c.confirm, `${c.tool} ${JSON.stringify(c.args)}`);
+        const yolo = Permissions.decide(Object.assign({ args: c.args }, tool), { yolo: true });
+        assert.equal(yolo, c.confirm ? 'ask' : 'allow', `yolo ${c.tool} ${JSON.stringify(c.args)}`);
+    }
+    assert.equal(Permissions.mustConfirm({ name: 'config_set', server: 'other' }, { key: 'general.terminalCommand', value: 'x' }, []), false);
+});
+
+test('a routine step that writes a command asks', () => {
+    const steps = [{ kind: 'tool', tool: 'config_set', args: { key: 'system.idle.listeners', value: [] } }];
+    assert.deepEqual([...Permissions.routineConfirmSteps(steps, [])], ['config_set']);
+    const harmless = [{ kind: 'tool', tool: 'config_set', args: { key: 'bar.position', value: 'top' } }];
+    assert.deepEqual([...Permissions.routineConfirmSteps(harmless, [])], []);
+    assert.equal(Permissions.mustConfirm({ name: 'routine_save', server: 'yozakura' }, { steps }, []), true);
+});

@@ -17,6 +17,14 @@ import (
 // Manager can be exercised without the real compositor.
 func fakeDaemon(t *testing.T) string {
 	t.Helper()
+	toml, _ := fakeDaemonSocket(t)
+	return toml
+}
+
+// fakeDaemonSocket is fakeDaemon that also returns the socket's listener, so
+// a test can play the daemon side of the subscribe stream.
+func fakeDaemonSocket(t *testing.T) (string, net.Listener) {
+	t.Helper()
 	bin := t.TempDir()
 	script := "#!/bin/sh\nexec sleep 300\n"
 	if err := os.WriteFile(filepath.Join(bin, brand.Daemon), []byte(script), 0o755); err != nil {
@@ -30,7 +38,7 @@ func fakeDaemon(t *testing.T) string {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = ln.Close() })
-	return filepath.Join(t.TempDir(), brand.DaemonConfigFile())
+	return filepath.Join(t.TempDir(), brand.DaemonConfigFile()), ln
 }
 
 type tomlPath string

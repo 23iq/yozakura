@@ -31,7 +31,7 @@ var category = {
     "icon": "circuitry",
     "title": "prefs.cat.system",
     "description": "prefs.cat.system.desc",
-    "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard",
+    "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard polkit password",
     "sections": [
         {
             "id": "language",
@@ -121,6 +121,51 @@ var category = {
                 },
                 toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
                 toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
+                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
+                {
+                    "key": "performance.visualizerFps",
+                    "type": "number",
+                    "advanced": true,
+                    "min": 15,
+                    "max": 60,
+                    "step": 5,
+                    "unit": "fps",
+                    "label": "system.performance.visualizer_fps",
+                    "description": "system.performance.visualizer_fps_desc",
+                    "keywords": "visualizer cava audio bars frame rate fps cpu"
+                },
+                {
+                    "key": "performance.warmViews",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.warm_views",
+                    "description": "system.performance.warm_views_desc",
+                    "keywords": "warm preload prepare startup launcher memory"
+                },
+                {
+                    "key": "performance.hidePanelInFullscreen",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.hide_panel_fullscreen",
+                    "description": "system.performance.hide_panel_fullscreen_desc",
+                    "keywords": "fullscreen game video panel bar unmap scanout overlay surface"
+                },
+                {
+                    "key": "performance.compactOsd",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.compact_osd",
+                    "description": "system.performance.compact_osd_desc",
+                    "keywords": "osd volume brightness window surface size memory"
+                },
+                {
+                    "key": "performance.splitFrame",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.split_frame",
+                    "description": "system.performance.split_frame_desc",
+                    "keywords": "frame border window surface redraw layer"
+                },
                 {
                     "key": "performance.settingsKeepAliveMinutes",
                     "type": "number",
@@ -130,7 +175,19 @@ var category = {
                     "unit": "min",
                     "label": "prefs.sys.settings_keep_alive",
                     "description": "prefs.sys.settings_keep_alive.desc",
-                    "keywords": "settings window keep loaded memory reopen instant release"
+                    "keywords": "settings window keep loaded memory reopen instant release",
+                    "enabledWhen": {
+                        "key": "performance.separateWindows",
+                        "equals": false
+                    }
+                },
+                {
+                    "key": "performance.separateWindows",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.separate_windows",
+                    "description": "system.performance.separate_windows_desc",
+                    "keywords": "separate process settings window setup wizard onboarding memory ram release open slower"
                 }
             ]
         },
@@ -189,6 +246,20 @@ var category = {
             "entries": [
                 command("system.idle.general.before_sleep_cmd", "settings.system.before_sleep", "prefs.sys.before_sleep.desc", "idle.before_sleep", "suspend sleep before lock command power"),
                 command("system.idle.general.after_sleep_cmd", "settings.system.after_sleep", "prefs.sys.after_sleep.desc", "idle.after_sleep", "resume wake after sleep command power screen on")
+            ]
+        },
+        {
+            "id": "auth",
+            "title": "prefs.sys.section.auth",
+            "entries": [
+                {
+                    "key": "system.polkitAgent",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "prefs.sys.polkit_agent",
+                    "description": "prefs.sys.polkit_agent.desc",
+                    "keywords": "polkit password prompt authentication agent pkexec sudo admin root hyprpolkitagent dialog"
+                }
             ]
         },
         {

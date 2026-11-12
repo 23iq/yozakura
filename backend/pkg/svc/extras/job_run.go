@@ -50,7 +50,7 @@ func (q *Queue) execute(ctx context.Context, j *qjob) (state, reason string) {
 		}
 		fmt.Fprintf(logw, "$ %s\n", strings.Join(cmd, " "))
 		seen := ""
-		code, err := q.run.Run(ctx, cmd, jobEnv, func(line string) {
+		onLine := func(line string) {
 			fmt.Fprintln(logw, line)
 			r := lineReason(line)
 			if r == ReasonAuthCancelled && !privileged(j.Kind) {
@@ -60,7 +60,14 @@ func (q *Queue) execute(ctx context.Context, j *qjob) (state, reason string) {
 				seen = r
 			}
 			q.progress(j, line)
-		})
+		}
+		var code int
+		var err error
+		if ar, ok := q.run.(authRunner); ok && privileged(j.Kind) {
+			code, err = ar.RunAuth(ctx, cmd, jobEnv, onLine, func(on bool) { q.setAuth(j, on) })
+		} else {
+			code, err = q.run.Run(ctx, cmd, jobEnv, onLine)
+		}
 		if code == 0 && err == nil {
 			continue // finished despite a late cancel: keep the result
 		}
@@ -105,6 +112,18 @@ func (q *Queue) progress(j *qjob, line string) {
 	if phase != "" && phase != j.prog.Phase {
 		j.prog.Phase, changed = phase, true
 	}
+	p := j.prog
+	q.mu.Unlock()
+	if changed {
+		q.send(p)
+	}
+}
+
+// setAuth records whether the job waits for the password; emits on change.
+func (q *Queue) setAuth(j *qjob, on bool) {
+	q.mu.Lock()
+	changed := j.prog.Auth != on
+	j.prog.Auth = on
 	p := j.prog
 	q.mu.Unlock()
 	if changed {

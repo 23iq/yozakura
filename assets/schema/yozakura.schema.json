@@ -7123,6 +7123,22 @@
             "control": "toggle",
             "keywords": "lock screen status user network wifi battery"
           }
+        },
+        "pamService": {
+          "title": "PAM service",
+          "type": "string",
+          "default": "",
+          "description": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. A stack with pam_faillock (such as Arch \"system-auth\") counts wrong passwords here as well: after 3 the account is locked for about 10 minutes, even with the right password. Kept on this computer: presets never change it.",
+          "x-settings": {
+            "category": "lockscreen",
+            "section": "auth",
+            "label": "prefs.lockscreen.pam_service",
+            "control": "text",
+            "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
+            "advanced": true
+          },
+          "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
+          "x-local": true
         }
       },
       "additionalProperties": false
@@ -8692,12 +8708,119 @@
             "control": "number",
             "unit": "min",
             "keywords": "settings window keep loaded memory reopen instant release",
+            "enabledWhen": {
+              "key": "performance.separateWindows",
+              "equals": false
+            },
             "advanced": true,
             "min": 0,
             "max": 120
           },
           "minimum": 0,
           "maximum": 120
+        },
+        "separateWindows": {
+          "title": "Settings in Its Own Process",
+          "type": "boolean",
+          "default": false,
+          "description": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.separate_windows",
+            "control": "toggle",
+            "keywords": "separate process settings window setup wizard onboarding memory ram release open slower",
+            "advanced": true
+          }
+        },
+        "visualizerFps": {
+          "title": "Visualizer Frame Rate",
+          "type": "number",
+          "default": 30,
+          "description": "Frames per second of the audio visualizer; lower uses less CPU",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.visualizer_fps",
+            "control": "number",
+            "step": 5,
+            "unit": "fps",
+            "keywords": "visualizer cava audio bars frame rate fps cpu",
+            "advanced": true,
+            "min": 15,
+            "max": 60
+          },
+          "minimum": 15,
+          "maximum": 60
+        },
+        "batterySaver": {
+          "title": "Battery Saver",
+          "type": "boolean",
+          "default": false,
+          "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.battery_saver",
+            "control": "toggle",
+            "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
+          }
+        },
+        "warmViews": {
+          "title": "Prepare Launcher in Background",
+          "type": "boolean",
+          "default": true,
+          "description": "Create the launcher a few seconds after startup so it opens instantly the first time. Turn off to save the memory it holds until you first open it",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.warm_views",
+            "control": "toggle",
+            "keywords": "warm preload prepare startup launcher memory",
+            "advanced": true
+          }
+        },
+        "hidePanelInFullscreen": {
+          "title": "Hide the Panel Under Fullscreen Windows",
+          "type": "boolean",
+          "default": false,
+          "description": "Unmap a screen's panel while a fullscreen window covers it and nothing there has to show, so games and videos can be shown directly. It comes back at once for a notification or an opened view. No effect while the bar or dock reveals on hover in fullscreen. Experimental",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.hide_panel_fullscreen",
+            "control": "toggle",
+            "keywords": "fullscreen game video panel bar unmap scanout overlay surface",
+            "advanced": true
+          }
+        },
+        "compactOsd": {
+          "title": "Compact Volume and Brightness Window",
+          "type": "boolean",
+          "default": false,
+          "description": "Size the volume and brightness display's window to the display itself instead of the whole screen. Looks and works the same; a layout change applies from its next showing",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.compact_osd",
+            "control": "toggle",
+            "keywords": "osd volume brightness window surface size memory",
+            "advanced": true
+          }
+        },
+        "splitFrame": {
+          "title": "Screen Frame in Its Own Window",
+          "type": "boolean",
+          "default": false,
+          "description": "Draw the screen frame in a separate window so bar, notch and dock animations do not redraw it. Shadows stop at the frame's edge, which shows only on a translucent frame",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.split_frame",
+            "control": "toggle",
+            "keywords": "frame border window surface redraw layer",
+            "advanced": true
+          }
         }
       },
       "additionalProperties": false
@@ -9381,6 +9504,20 @@
             "git": "Git"
           }
         },
+        "polkitAgent": {
+          "title": "Built-in password prompt",
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for the password of system actions (app installs, pkexec) in the shell's own dialog, above every window. Off: an external polkit agent asks instead. Fully applies at the next login.",
+          "x-settings": {
+            "category": "system",
+            "section": "auth",
+            "label": "prefs.sys.polkit_agent",
+            "control": "toggle",
+            "keywords": "polkit password prompt authentication agent pkexec sudo admin root hyprpolkitagent dialog",
+            "advanced": true
+          }
+        },
         "idle": {
           "title": "Idle",
           "type": "object",
@@ -9995,7 +10132,7 @@
     "terminal": {
       "$id": "urn:yozakura:config:terminal",
       "title": "terminal",
-      "description": "Terminal look: the fish prompt (Starship or oh-my-posh) following the shell palette, the greeting, and kitty padding and cursor.",
+      "description": "Terminal look: the fish prompt (Starship or oh-my-posh) following the shell palette, the fastfetch greeting of new terminals (fish, bash, zsh), and kitty padding and cursor.",
       "type": "object",
       "x-file": "config/terminal.json",
       "properties": {
@@ -10057,26 +10194,78 @@
           "title": "Greeting",
           "type": "string",
           "default": "none",
-          "description": "What fish shows when a terminal opens. Applies while \"Use this prompt in fish\" is on.",
           "x-settings": {
             "category": "terminal",
-            "section": "look",
-            "label": "prefs.term.look.greeting",
-            "control": "selector",
-            "keywords": "greeting fastfetch welcome fish_greeting",
-            "enabledWhen": {
-              "key": "terminal.enabled",
-              "equals": true
-            }
+            "section": "greeting",
+            "label": "prefs.term.fetch",
+            "entry": "terminal.fetch",
+            "entryTitle": "System info greeting",
+            "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
           },
+          "description": "What a new terminal prints: fastfetch runs once per terminal in fish, bash and zsh (interactive shells on a terminal only; not in tmux/screen panes or nested shells), whether or not the prompt is on. bash/zsh get one marked line in ~/.bashrc / ~/.zshrc that sources <config>/<app>/greeting.sh; turning it off removes it. The rc lines are only written once the user switched the greeting on in this version (`yozakura term greeting on`, Settings, the setup wizard); set otherwise, or on from before the update, it runs in fish only. Machine-local: presets never switch the greeting on or off (they can carry its look).",
           "enum": [
             "none",
             "fastfetch"
           ],
-          "x-enumLabels": {
-            "none": "Nothing",
-            "fastfetch": "fastfetch"
-          }
+          "x-local": true
+        },
+        "fastfetchPreset": {
+          "title": "Fastfetch preset",
+          "type": "string",
+          "default": "own",
+          "x-settings": {
+            "category": "terminal",
+            "section": "greeting",
+            "label": "prefs.term.fetch",
+            "entry": "terminal.fetch",
+            "entryTitle": "System info greeting",
+            "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
+          },
+          "description": "Greeting look (assets/terminal/fastfetch/<id>.jsonc, colored from the shell palette; `yozakura term greeting presets`). own = plain fastfetch with your own ~/.config/fastfetch config (never edited).",
+          "enum": [
+            "sakura",
+            "compact",
+            "boxed",
+            "full",
+            "minimal",
+            "own"
+          ]
+        },
+        "fastfetchLogo": {
+          "title": "Fastfetch logo",
+          "type": "string",
+          "default": "sakura",
+          "x-settings": {
+            "category": "terminal",
+            "section": "greeting",
+            "label": "prefs.term.fetch",
+            "entry": "terminal.fetch",
+            "entryTitle": "System info greeting",
+            "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
+          },
+          "description": "Greeting logo: the distribution's (fastfetch detection), the sakura text logo, a file of yours (fastfetchLogoPath) or none. Ignored by the own and minimal looks.",
+          "enum": [
+            "distro",
+            "sakura",
+            "custom",
+            "none"
+          ]
+        },
+        "fastfetchLogoPath": {
+          "title": "Fastfetch logo path",
+          "type": "string",
+          "default": "",
+          "x-settings": {
+            "category": "terminal",
+            "section": "greeting",
+            "label": "prefs.term.fetch",
+            "entry": "terminal.fetch",
+            "entryTitle": "System info greeting",
+            "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
+          },
+          "description": "Custom greeting logo (fastfetchLogo custom): an absolute path, outside hidden (dot) files and directories such as ~/.ssh, to a UTF-8 text file (up to 64 KiB; $1..$5 colour markers, or ANSI colours: other escape sequences are removed) or a PNG (up to 8 MiB, shown in kitty; other terminals get the sakura text logo). Machine-local.",
+          "format": "path",
+          "x-local": true
         },
         "padding": {
           "title": "Window padding",

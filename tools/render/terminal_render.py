@@ -13,7 +13,13 @@ settings_render.py. Views: `page` (preview, notices, gallery), `gallery`
 (scrolled to the cards), `controls` (engine, greeting, padding, cursor),
 `approx` (oh-my-posh missing, fish not the login shell, a foreign prompt
 in config.fish, fastfetch greeting, block cursor), `notices` (no Nerd Font
-on the system, the engine installing for this prompt).
+on the system, the engine installing for this prompt), and the greeting
+section (`fetch-off`, `fetch-<look>-<logo>`: the switch on, each look, the
+distro / sakura / custom logo). The greeting previews come from
+tools/render/fetchpreview.go (fastfetch when installed, else the bundled
+samples) or `--fetch-previews FILE` ({"<look>|<logo>|<path>": term.fetch.preview
+result}, e.g. collected with `yozakura ipc call term.fetch.preview`).
+`--seed '#e8a0bf'` draws everything in a matugen palette from that colour.
 Writes <out>/<view>-<mode>.png (your theme.language), or
 <out>/<view>-<mode>-<language>.png per --language.
 """
@@ -68,6 +74,9 @@ def main() -> int:
     ap.add_argument("--size", default="1280x1100")
     ap.add_argument("--language", action="append", choices=LANGUAGES,
                     help="visual language(s) to draw (default: the one in your config)")
+    ap.add_argument("--seed", default="", help="palette seed colour (default: your palette)")
+    ap.add_argument("--fetch-previews", default="", help="greeting previews JSON (default: fetchpreview.go)")
+    ap.add_argument("--only", choices=["prompt", "fetch"], help="only the prompt or only the greeting views")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
@@ -75,8 +84,95 @@ def main() -> int:
     state = wallpaper_state()
     for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
         for lang in args.language or [""]:
-            render(mode, state, out, w, h, lang)
+            if args.only != "fetch":
+                render(mode, state, out, w, h, lang)
+            if args.only != "prompt":
+                render_fetch(mode, state, out, w, h, lang, args.seed, args.fetch_previews)
     return 0
+
+
+def fetch_previews(pal: dict) -> tuple[list, dict]:
+    """(looks, {"look|logo|": preview}) from fetchpreview.go."""
+    with tempfile.TemporaryDirectory() as tmp:
+        colors = Path(tmp) / "colors.json"
+        colors.write_text(json.dumps(pal))
+        r = subprocess.run(["go", "run", str(REPO / "tools/render/fetchpreview.go"), str(colors),
+                            str(REPO / "assets/terminal/fastfetch")],
+                           cwd=REPO / "backend", capture_output=True, text=True, check=True)
+    data = json.loads(r.stdout)
+    return data.pop("_presets"), data
+
+
+# (look, logo, logo path) shown in turn with the greeting on
+FETCH_VIEWS = [("sakura", "sakura", ""), ("compact", "sakura", ""), ("boxed", "sakura", ""), ("full", "distro", ""),
+               ("sakura", "distro", ""), ("sakura", "custom", "/home/user/cat.txt"), ("minimal", "sakura", ""),
+               ("own", "sakura", "")]
+
+
+def render_fetch(mode: str, state: dict, out: Path, w: int, h: int, lang: str, seed: str, previews_file: str) -> None:
+    theme = {"lightMode": mode == "light", **({"language": lang} if lang else {})}
+    tag = f"{mode}-{lang}" if lang else mode
+    pal = with_ansi(palette(mode, state, seed), mode == "dark")
+    looks, pvs = fetch_previews(pal)
+    if previews_file:
+        pvs.update(json.loads(Path(previews_file).read_text()))
+    shells = [{"shell": "fish", "state": "on"}, {"shell": "bash", "state": "on"}, {"shell": "zsh", "state": "absent"}]
+    status = {**STATUS, "greeting": {"on": False, "fastfetchInstalled": True, "ownConfig": True, "shells": shells}}
+    env = TerminalEnv(f"terminal-fetch-{tag}", palette=pal, user_config=True, wallpaper=state, status=status,
+                      catalog=full_catalog(), fetch_previews=pvs, replies={"term.fetch.presets": looks},
+                      overrides={"theme": theme, "terminal": {"enabled": True, "engine": "starship", "prompt": "plain",
+                                                             "greeting": "none", "fastfetchPreset": "sakura",
+                                                             "fastfetchLogo": "sakura"}})
+    win = env.load(f"""
+import QtQuick
+import QtQuick.Window
+import qs.modules.settings
+import qs.modules.settings.store
+import qs.modules.services
+import qs.config
+Window {{
+    width: {w}; height: {h}; visible: true; color: "black"
+    SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
+}}""")
+    ev = env.h.eval
+    shell = env.h.find(win, "shell")
+
+    def snap(name: str, wait: int = 900) -> None:
+        QCursor.setPos(win.mapToGlobal(QPoint(w - 4, 4)))
+        QTest.mouseMove(win, QPoint(w - 4, 4))
+        QTest.qWait(wait)
+        page = env.h.find(win, "settingsPage").property("item")
+        target = _item(page, "settingRow:terminal.fetch")
+        y = target.mapToItem(page.property("contentItem"), 0, 0).y()
+        page.setProperty("contentY", max(0, y - 24))
+        QTest.qWait(300)
+        path = out / f"{name}-{tag}.png"
+        win.grabWindow().save(str(path))
+        print(path)
+
+    ev(shell, 'select("terminal")')
+    QTest.qWait(1500)
+    snap("fetch-off", 1500)
+    ev(win, "SettingsStore.set('terminal.greeting', 'fastfetch')")
+    on = json.dumps({**status, "greeting": {**status["greeting"], "on": True}})
+    ev(win, "BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s, 'term.apply': %s})"
+        % (on, on))
+    ev(win, "TerminalLookService.refreshStatus()")
+    for look, logo, path in FETCH_VIEWS:
+        ev(win, f"SettingsStore.set('terminal.fastfetchLogoPath', {json.dumps(path)})")
+        ev(win, f"SettingsStore.set('terminal.fastfetchPreset', '{look}')")
+        ev(win, f"SettingsStore.set('terminal.fastfetchLogo', '{logo}')")
+        snap(f"fetch-{look}-{logo}")
+
+
+def _item(root, name: str):
+    for c in root.childItems():
+        if c.objectName() == name:
+            return c
+        found = _item(c, name)
+        if found is not None:
+            return found
+    return None
 
 
 def render(mode: str, state: dict, out: Path, w: int, h: int, lang: str = "") -> None:

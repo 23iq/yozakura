@@ -99,14 +99,15 @@ def check_style(style: str) -> None:
     assert lev("lockView.styleEntry.id") == style
     assert lev("startAnim"), "lock starts its entry animation"
     assert lev("passwordInput !== null")
-    lev('passwordInput.text = "   "; passwordInput.accepted()')
+    lev('passwordInput.text = ""; passwordInput.accepted()')
     pump(50)  # nothing may start: give a deferred PAM start the chance to show
-    assert lev("pamAuth.starts") == 0, f"{style}: blank submit must not start PAM"
-    lev('passwordInput.text = "wrong"; passwordInput.accepted()')
+    assert lev("pamAuth.starts") == 0, f"{style}: empty submit must not start PAM"
+    lev('passwordInput.text = " wrong  "; passwordInput.accepted()')
     assert lev("passwordInput.text") == "", "field clears immediately on submit"
     assert lev("authenticating"), "submit marks authenticating"
     wait_until(lambda: lev("pamAuth.starts") == 1 and lev("errorMessage") != "")
-    assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == "wrong", "PAM receives the typed password"
+    assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == " wrong  ", "PAM receives the typed password verbatim"
+    assert lev("pamAuth.startedWith").endswith("/config/pam|password.conf"), "default: the bundled PAM config"
     assert lev("authPasswordHolder.password") == "", "holder cleared after PAM completes"
     assert lev("errorMessage") == "Authentication failed"
     assert lev("passwordInputBox.showError"), f"{style}: failure shakes the field"
@@ -124,6 +125,110 @@ def check_style(style: str) -> None:
 
 for s in STYLES:
     check_style(s)
+
+# Spaces are legal in a password: a whitespace-only one reaches PAM as typed.
+lock = env.lock_screen()
+
+
+def lev(expr):
+    return h.eval(lock, expr)
+
+
+lev("GlobalStates.lockscreenVisible = true")  # the last style's check unlocked
+
+
+def submit(text: str) -> str:
+    """Submit a (wrong) password, wait for the shake to end; the PAM target used."""
+    before = lev("pamAuth.starts")
+    lev(f"passwordInput.text = {json.dumps(text)}; passwordInput.accepted()")
+    wait_until(lambda: lev("pamAuth.starts") == before + 1 and lev("errorMessage") != "")
+    assert lev("pamAuth.received") == text, f"PAM must receive {text!r} verbatim"
+    wait_until(lambda: not lev("authenticating"))
+    assert lev("GlobalStates.lockscreenVisible"), "a wrong password keeps the session locked"
+    return lev("pamAuth.startedWith")
+
+
+submit("   ")
+submit("\t")
+print("whitespace-only passwords reach PAM verbatim")
+
+# lockscreen.pamService: the system stack only for a plain name whose
+# /etc/pam.d file was found to be a usable password stack; the bundled
+# config otherwise. The check is grep for `auth ... pam_permit.so`:
+# exit 1 = read, none found (usable), 0 = found (refused), 2 = unreadable.
+USABLE, PERMIT, UNREADABLE = 1, 0, 2
+
+
+def check_cmd(name):
+    return json.dumps(["grep", "-Eiqs", "-e", "^[[:space:]]*-?auth[[:space:]].*pam_permit\\.so", "--", "/etc/pam.d/" + name],
+                      separators=(",", ":"))
+
+
+BUNDLED = lev("pamTarget.bundledDir") + "|password.conf"
+assert lev("Config.lockscreen.pamService") == "", "default: no service"
+assert not lev("pamTarget.check.running"), "default: no service check"
+assert submit("a") == BUNDLED
+lev('Config.lockscreen.pamService = "system-auth"')
+assert lev("JSON.stringify(pamTarget.check.command)") == check_cmd("system-auth")
+assert lev("pamTarget.check.running")
+assert lev("pamTarget.pending")
+
+
+def submit_pending(text: str) -> int:
+    """Submit while the service check has not answered; PAM must not start yet."""
+    before = lev("pamAuth.starts")
+    lev(f"passwordInput.text = {json.dumps(text)}; passwordInput.accepted()")
+    pump(100)
+    assert lev("pamAuth.starts") == before, "a submit waits for the pending service check"
+    assert lev("authenticating") and lev("pamWait.running")
+    return before
+
+
+def finish_submit(before: int, text: str) -> str:
+    wait_until(lambda: lev("pamAuth.starts") == before + 1 and lev("errorMessage") != "")
+    assert lev("pamAuth.received") == text, f"PAM must receive {text!r} verbatim"
+    wait_until(lambda: not lev("authenticating"))
+    return lev("pamAuth.startedWith")
+
+
+# Typed before the check answered: the submit waits and uses its verdict.
+b = submit_pending("b")
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
+assert finish_submit(b, "b") == "/etc/pam.d|system-auth", "a submit waits for the check, then uses its verdict"
+# A failure re-checks the file; the result for that path stands meanwhile.
+assert lev("pamTarget.check.running"), "a failed attempt re-checks the service file"
+assert not lev("pamTarget.pending"), "a re-check of a checked file does not hold a submit"
+assert submit("c") == "/etc/pam.d|system-auth", "a usable service file selects the system stack"
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({UNREADABLE}, 0)")
+assert submit("d") == BUNDLED, "a missing or unreadable service file falls back to the bundled config"
+assert lev("pamTarget.check.running")
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({PERMIT}, 0)")
+assert submit("d2") == BUNDLED, "a service whose auth uses pam_permit.so is refused"
+lev("pamTarget.check.running = false")
+lev('Config.lockscreen.pamService = "login"')
+lev('Config.lockscreen.pamService = "sddm"')  # changed while the check for "login" runs
+e = submit_pending("e")
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
+pump(100)
+assert lev("pamAuth.starts") == e, "a result for another name does not count"
+wait_until(lambda: lev("JSON.stringify(pamTarget.check.command)") == check_cmd("sddm"))
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
+assert finish_submit(e, "e") == "/etc/pam.d|sddm"
+assert submit("f") == "/etc/pam.d|sddm"
+# A check that never answers: the submit goes ahead with the bundled config.
+lev("pamTarget.check.running = false")
+lev('Config.lockscreen.pamService = "login"')
+lev("pamWait.interval = 200")
+g = submit_pending("f2")
+assert finish_submit(g, "f2") == BUNDLED, "a check that never answers falls back to the bundled config"
+lev("pamTarget.check.running = false")
+for bad in ("../shadow", "/etc/shadow", "pam.d/login", ".hidden", "-x", "a b", "gdm-autologin", "sddm-autologin"):
+    lev(f"Config.lockscreen.pamService = {json.dumps(bad)}")
+    assert not lev("pamTarget.check.running"), f"{bad!r}: no file check for an invalid or refused name"
+    assert submit("g") == BUNDLED, f"{bad!r}: invalid and autologin names use the bundled config"
+lev('Config.lockscreen.pamService = ""')
+assert submit("h") == BUNDLED
+print("lockscreen.pamService selects the PAM stack conservatively")
 
 # Unknown ids fall back to the default style instead of an empty screen.
 root = env.load('import QtQuick\nimport qs.modules.lockscreen\nItem { width: 640; height: 360\n LockView { objectName: "lv"; anchors.fill: parent; styleId: "nope" } }')

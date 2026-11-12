@@ -59,6 +59,13 @@ func parseColorString(str string) (string, string) {
 	return colorStr, angle
 }
 
+// miscConf lets a restarted shell take over the session lock of one that
+// died while locked, instead of leaving the "locker died" screen.
+// Applies only after the config is regenerated. It also lets any other
+// client take over a lock whose owner died, and it has not been verified
+// on a real Hyprland session (see modules/lockscreen/AGENTS.md).
+const miscConf = "misc {\n    allow_session_lock_restore = true\n}\n\n"
+
 func (g *Generator) GenerateAppearance(config ipc.ConfigAppearance) string {
 	var out strings.Builder
 
@@ -145,6 +152,8 @@ func (g *Generator) GenerateAppearance(config ipc.ConfigAppearance) string {
 	}
 	out.WriteString("    }\n")
 	out.WriteString("}\n\n")
+
+	out.WriteString(miscConf)
 
 	if config.Animations != nil && config.Animations.Enabled != nil {
 		enabled := "false"

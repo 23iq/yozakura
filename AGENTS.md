@@ -46,7 +46,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ├── modules/
 │   ├── bar/              # Panel widgets: clock, systray, workspaces, indicators
 │   ├── components/       # Reusable UI primitives + GLSL shaders; kit/ = the UI kit every screen uses
-│   ├── corners/          # Rounded screen corners overlay
+│   ├── corners/          # Rounded screen corners (drawn by the unified panel)
 │   ├── desktop/          # Desktop background + icon grid
 │   ├── dock/             # App dock (standalone or integrated into bar)
 │   ├── frame/            # Screen border/glow effect
@@ -56,6 +56,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 │   ├── notch/            # Dynamic island UI (launcher, dashboard, notifications)
 │   ├── notifications/    # Notification popup system + history
 │   ├── onboarding/       # First-run setup wizard: step registry, preset gallery, keybind tour
+│   ├── polkit/           # In-shell polkit agent + password dialog (PolkitHost: main shell only)
 │   ├── services/         # Backend singletons (30+): Battery, AI, Network, etc.
 │   ├── settings/         # Schema-driven settings window (see modules/settings/AGENTS.md)
 │   ├── shell/            # UnifiedShellPanel + ReservationWindows + OSD
@@ -74,6 +75,8 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ├── backend/              # Go backend — single `yozakura` process supervises Quickshell, yozd and wl-paste (replaces cli.sh)
 ├── nix/                  # Nix flake, packages, and module definitions
 ├── shell.qml             # Entry point: ShellRoot, Variants, service init
+├── settings-window.qml   # Settings as its own process (performance.separateWindows)
+├── onboarding-window.qml # Setup wizard as its own process (same switch)
 └── cli.sh                # REMOVED — replaced by Go binary `yozakura`
 ```
 
@@ -98,6 +101,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Notifications** | `modules/notifications/` | Popup system + delegate + history |
 | **Adding Config** | `config/defaults/*.js` + `make schema` | Adapters are generated; int/var keys: `config/meta/AdapterTypes.js` |
 | **Onboarding** | `modules/onboarding/`, `modules/services/OnboardingService.qml` | First-run wizard; steps in `OnboardingSteps.js`; `general.onboardingDone`; `<app> run onboarding` |
+| **Polkit agent** | `modules/polkit/`, `modules/services/PolkitService.qml`, `backend/pkg/svc/compositor/polkit_shell.go` | `system.polkitAgent`; only an instance with `PolkitHost {}` registers; generated configs never start the external agent directly (`shellPolkit`): startup lines (niri/Mango `exec-once-non-hyprland` too) run `<app> polkit-fallback`, which waits (bounded) for the shell's report `compositor.setPolkitState` (`polkit_state.go`) and starts the external agent unless it says `registered`; the daemon runs it too when it gives up on a crash-looping shell whose agent held the session (`backend/pkg/daemon/polkitfallback.go`) (also the installer's Hyprland line; `backend/cmd/yozakura/hypr_polkit.go` rewrites the old one at start; NixOS: `polkit.externalAgent`) |
 | **Keybinds** | `config/CoreBinds.js`, `config/KeybindActions.js`, `modules/keybinds/` | Core bind registry, action catalog (group + `binds.action.*` label), cheatsheet; editor in `modules/settings/editors/Keybind*` |
 | **Settings UI** | `modules/settings/schema/*.js` | Declare a setting (one entry + translations); see `modules/settings/AGENTS.md` |
 | **Settings catalog** | `config/meta/*.js` + `tools/schema/` -> `assets/schema/` | Descriptions/enums/ranges of keys the settings UI does not declare; `make schema`; read by `backend/pkg/catalog` (CLI + MCP) |
@@ -300,6 +304,14 @@ make install    # sudo install of ./yozakura to /usr/local/bin
 ## NOTES
 - Config keys are declared once, in `config/defaults/<domain>.js`; `config/adapters/` is generated
   (`make schema`, `tools/config/gen_adapters.cjs`). Use `pauseAutoSave` for bulk edits.
+- **Separate windows** (`performance.separateWindows`, default off): Settings and the
+  setup wizard run as their own Quickshell processes (`settings-window.qml`,
+  `onboarding-window.qml`, started on demand by the daemon's `windows` service,
+  `backend/pkg/svc/windows`), so they cost nothing until opened. Only the main shell
+  claims session-wide resources: check `ProcessRole.primary` (modules/globals) in any
+  service that does (modules/services/AGENTS.md). Staged settings preview on the
+  desktop through the daemon's `preview` relay (modules/settings/AGENTS.md, SEPARATE
+  PROCESS). A root file compiles what it names: keep these two lean (load windows by URL).
 - Large files (>800 lines, `make audit` lists them): `PresetsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `MetricsTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.
@@ -312,9 +324,13 @@ make install    # sudo install of ./yozakura to /usr/local/bin
   only holds the few files loaded by plain path. Bytecode compile of the whole tree
   (367 files, ~96k lines, `qmlcachegen --only-bytecode`) costs ~1.7 s single-threaded; the
   biggest are lazy dashboard tabs (ClipboardTab 85 ms, NotesTab 64 ms), compiled on first
-  open. Keep startup-critical files small and push rarely used views behind `Loader`s
-  (heavy kept views: `WarmLoader` = async + request/callback, the launcher is warmed ~3 s after
-  start; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
+  open. Types a file names statically are compiled when that file loads, transitively, even
+  inside an inactive `Loader`'s inline component; only components loaded by URL at runtime
+  (`setSource`, `Qt.createComponent`, `Loader.source`) compile lazily, on first use. Keep
+  startup-critical files small and push rarely used views behind `Loader`s (a `Loader` defers
+  creation; only loading by URL also defers compilation)
+  (heavy kept views: `WarmLoader` = async + request/callback, the launcher is created ~3 s after
+  start unless `performance.warmViews` is off; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
   `performance.settingsKeepAliveMinutes`; its content sees `visible: false` while hidden, so
   timers and polls gated on `visible` stop). Do not
   switch to relative `import "../x"` imports to get caching: they create separate singleton

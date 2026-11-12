@@ -17,6 +17,70 @@ var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_lis
 // Their card has no "for session" choice.
 var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true, notes_delete: true, extras_install: true };
 
+// Config keys whose value the shell or the backend runs as a command line
+// (or as the program it starts), or that switch a safeguard off: the PAM
+// service that decides who can unlock the lock screen, and the code agents'
+// auto-approval of every tool request (yolo). MUST equal routines.CommandConfigKeys in
+// Go (backend/pkg/svc/routines/confirm_calls.go; tests/ai-confirm-tools.test.cjs
+// enforces it). A "*" segment matches any key.
+var COMMAND_CONFIG_KEYS = ["general.terminalCommand", "system.idle.general.lock_cmd", "system.idle.general.before_sleep_cmd", "system.idle.general.after_sleep_cmd", "system.idle.listeners", "specials.workspaces", "ai.agents.*.binary", "ai.agents.*.extraArgs", "ai.agents.*.yolo", "lockscreen.pamService"];
+
+function _fullConfigKey(domain, key) {
+    var k = String(key || "").trim().replace(/\[/g, ".").replace(/\]/g, "").replace(/^\.+|\.+$/g, "");
+    var d = String(domain || "");
+    if (d === "")
+        return k;
+    return k === "" ? d : d + "." + k;
+}
+
+// value (merged into an enclosing key) sets the member at path; a value
+// that is not an object, other than null, counts (it is not understood).
+function _carries(value, path) {
+    if (path.length === 0)
+        return true;
+    if (value === null || value === undefined)
+        return false;
+    if (typeof value !== "object" || Array.isArray(value))
+        return true;
+    if (path[0] === "*")
+        return Object.keys(value).some(function (k) {
+            return _carries(value[k], path.slice(1));
+        });
+    return Object.prototype.hasOwnProperty.call(value, path[0]) && _carries(value[path[0]], path.slice(1));
+}
+
+function _commandConfigKey(key, value) {
+    if (key === "")
+        return false;
+    var ks = key.split(".");
+    return COMMAND_CONFIG_KEYS.some(function (pattern) {
+        var ps = pattern.split(".");
+        var n = Math.min(ks.length, ps.length);
+        for (var i = 0; i < n; i++)
+            if (ps[i] !== "*" && ps[i] !== ks[i])
+                return false;
+        return ks.length >= ps.length || _carries(value, ps.slice(ks.length));
+    });
+}
+
+// A call of a Yozakura tool (bare name) that always asks: a confirm tool,
+// or a call that can make the shell run a command line or bind keys
+// (routines.ConfirmCall in Go): config_set of a command-valued key,
+// special_app_add with a command, special_add / special_update with a
+// toggle or send key combo.
+function commandCall(name, args) {
+    var a = args || {};
+    if (CONFIRM[name] === true)
+        return true;
+    if (name === "config_set")
+        return _commandConfigKey(_fullConfigKey(typeof a.domain === "string" ? a.domain : "", typeof a.key === "string" ? a.key : ""), a.value);
+    if (name === "special_app_add")
+        return typeof a.command === "string" && a.command.trim() !== "";
+    if (name === "special_add" || name === "special_update")
+        return Object.prototype.hasOwnProperty.call(a, "toggle") || Object.prototype.hasOwnProperty.call(a, "send");
+    return false;
+}
+
 // Routine steps as sensitive as a confirm tool (routines/confirm.go): an
 // arbitrary command line, a raw dispatcher, closing the focused window and
 // quitting the shell (<app>.quit).
@@ -46,7 +110,7 @@ function routineConfirmSteps(steps, routines, depth, visited) {
             return;
         var tool = String(s.tool || "").trim();
         var action = String(s.action || "").trim();
-        if (s.kind === "tool" && (CONFIRM[tool] || ROUTINE_TOOLS[tool]))
+        if (s.kind === "tool" && (commandCall(tool, s.args) || ROUTINE_TOOLS[tool]))
             out.push(tool);
         if (s.kind !== "action")
             return;
@@ -74,9 +138,9 @@ function mustConfirm(tool, args, routines) {
     if (!tool || tool.server !== "yozakura")
         return false;
     var name = String(tool.name || "");
-    if (CONFIRM[name] === true)
-        return true;
     var a = args || {};
+    if (commandCall(name, a))
+        return true;
     if (name === "routine_save")
         return routineConfirmSteps(a.steps, routines).length > 0;
     if (name === "routine_run") {

@@ -183,6 +183,6 @@ Singleton {
 
     function restart() {
         root.restartRequired = false;
-        Quickshell.execDetached([Brand.appBin, "reload"]);
+        Quickshell.execDetached(ProcessRole.detached([Brand.appBin, "reload"]));
     }
 }

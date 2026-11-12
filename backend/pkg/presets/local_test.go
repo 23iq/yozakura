@@ -270,3 +270,93 @@ func TestKeepLocalPreservesUnmigratedLegacyCredentials(t *testing.T) {
 	assert.Contains(t, string(out), "hunter2")
 	assert.Contains(t, string(out), `"position": "top"`)
 }
+
+// The lock screen's PAM service decides who can unlock: a preset never
+// carries it (save, export, import) nor changes or clears it (apply, try,
+// revert), so a shared preset cannot point the lock screen at an
+// autologin stack and switching looks never locks out an LDAP/homed user.
+func TestPresetsNeverTouchThePamService(t *testing.T) {
+	m := newManager(t)
+	assert.True(t, m.Cat.MachineLocal("lockscreen.pamService"))
+	assert.False(t, m.Cat.MachineLocal("lockscreen.style"))
+	live := `{"style": "paper", "pamService": "system-local-login"}`
+	pam := func(what string) {
+		t.Helper()
+		assert.Equal(t, "system-local-login", liveDoc(t, m, "lockscreen")["pamService"], what)
+	}
+
+	writeLive(t, m, "lockscreen", live)
+	saved, err := m.Save("Mine", nil, false)
+	assert.NoError(t, err)
+	data, _ := os.ReadFile(filepath.Join(saved.Path, "lockscreen.json"))
+	assert.NotContains(t, string(data), "pamService", "save")
+	assert.Contains(t, string(data), "paper", "the look is saved")
+
+	file := filepath.Join(t.TempDir(), "x.json")
+	_, err = m.Export(Current, file)
+	assert.NoError(t, err)
+	data, _ = os.ReadFile(file)
+	assert.NotContains(t, string(data), "pamService", "export")
+
+	bundle := filepath.Join(t.TempDir(), "shared.json")
+	assert.NoError(t, os.WriteFile(bundle, []byte(`{"format": "`+BundleFormat+`", "version": 1, "name": "Shared",
+		"domains": {"lockscreen": {"style": "neon", "pamService": "gdm-autologin"}}}`), 0o644))
+	p, _, err := m.Import(bundle, "", false)
+	assert.NoError(t, err)
+	data, _ = os.ReadFile(filepath.Join(p.Path, "lockscreen.json"))
+	assert.NotContains(t, string(data), "autologin", "import")
+	_, _, err = m.Apply("Shared")
+	assert.NoError(t, err)
+	pam("apply of an imported preset")
+	assert.Equal(t, "neon", liveDoc(t, m, "lockscreen")["style"])
+
+	// An old preset directory holding the key still never sets it.
+	assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "lockscreen.json"),
+		[]byte(`{"style": "glass", "pamService": "sddm-autologin"}`), 0o644))
+	_, _, err = m.Apply("Mine")
+	assert.NoError(t, err)
+	pam("apply of a preset holding the key")
+	_, _, _, err = m.ApplyExact("Mine")
+	assert.NoError(t, err)
+	pam("exact apply")
+
+	// Official sets (their lockscreen.json resets leftovers) never clear it.
+	for _, name := range []string{"Neon Tokyo", "Sumi-e"} {
+		_, _, err = m.Apply(name)
+		assert.NoError(t, err)
+		pam("apply " + name)
+	}
+	_, _, err = m.Begin(TrySession, "Neon Tokyo")
+	assert.NoError(t, err)
+	pam("try")
+	_, err = m.End(TrySession, false, false)
+	assert.NoError(t, err)
+	pam("revert")
+}
+
+// The greeting edits ~/.bashrc / ~/.zshrc: a preset never switches it on
+// or off, while it can carry the look.
+func TestPresetNeverSwitchesTheGreeting(t *testing.T) {
+	m := newManager(t)
+	assert.True(t, m.Cat.MachineLocal("terminal.greeting"))
+	assert.True(t, m.Cat.MachineLocal("terminal.fastfetchLogoPath"))
+	for _, k := range []string{"terminal.fastfetchPreset", "terminal.fastfetchLogo"} {
+		assert.False(t, m.Cat.MachineLocal(k), k)
+	}
+	writeLive(t, m, "terminal", `{"greeting": "none", "fastfetchPreset": "own"}`)
+	saved, err := m.Save("Mine", nil, false)
+	assert.NoError(t, err)
+	data, _ := os.ReadFile(filepath.Join(saved.Path, "terminal.json"))
+	assert.NotContains(t, string(data), "greeting")
+	if assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "terminal.json"),
+		[]byte(`{"greeting": "fastfetch", "fastfetchPreset": "boxed", "fastfetchLogo": "none"}`), 0o644)) {
+		_, _, err = m.Apply("Mine")
+		assert.NoError(t, err)
+		var got map[string]any
+		data, _ := os.ReadFile(m.Store.File("terminal"))
+		assert.NoError(t, json.Unmarshal(data, &got))
+		assert.Equal(t, "none", got["greeting"])
+		assert.Equal(t, "boxed", got["fastfetchPreset"])
+		assert.Equal(t, "none", got["fastfetchLogo"])
+	}
+}

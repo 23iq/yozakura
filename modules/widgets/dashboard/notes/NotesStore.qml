@@ -4,8 +4,11 @@ import "notes_utils.js" as NotesUtils
 
 // File storage of the notes tab: <notesPath>/<id>.html (rich text) or
 // <id>.md (markdown) per note, plus <indexPath> (order + metadata, see
-// notes_utils.js). Every operation is an async Process; results come back
-// as signals.
+// notes_utils.js). Reads, deletes and directory setup are async processes,
+// one per request (a request never replaces another one); results come back
+// as signals. Files are written through `writer`: atomically (a temp file
+// renamed over the old one, so a kill mid-write never leaves an empty note
+// or index), in order, and never through argv (a long note does not fit).
 Item {
     id: store
 
@@ -19,244 +22,191 @@ Item {
     signal noteCreated(string noteId, string title, bool isMarkdown)
     // Note file removed by remove()
     signal noteDeleted(string noteId)
-    // read() finished (content without the parser's trailing newline)
-    signal noteRead(bool ok, string content)
+    // The latest read() finished (content without the parser's trailing
+    // newline); an older read still running is never reported
+    signal noteRead(string noteId, bool ok, string content)
     // setTitle() updated the index
     signal titleSaved(string noteId, string title)
+
+    property int _readSeq: 0
+    property string _readingId: ""
+    // Pending index changes: [{ apply: index => index | null, done }]
+    property var _indexQueue: []
+    property bool _indexBusy: false
+    property bool _writeFailed: false
 
     function fileOf(noteId, isMarkdown) {
         return store.notesPath + "/" + noteId + (isMarkdown ? ".md" : store.noteExtension);
     }
 
-    // $1 path, $2 content (argv, never part of the script)
-    function writeCommand(path, content) {
-        return ["sh", "-c", 'printf "%s" "$2" > "$1"', "notes-write", path, content];
-    }
-
     // Create the directories and index, then load it
     function init() {
-        initDirProcess.running = true;
+        store.run(["sh", "-c", 'mkdir -p "$1" && touch "$2"', "notes-init", store.notesPath, store.indexPath], code => store.refresh());
     }
 
     function refresh() {
-        readIndexProcess.running = true;
+        store.run(["cat", store.indexPath], (code, out) => {
+            store.indexLoaded(NotesUtils.indexEntries(NotesUtils.parseIndex(out.trim())));
+        });
     }
 
     function create(title, isMarkdown) {
-        var noteId = NotesUtils.generateUUID();
-        // Create the note file with appropriate content
-        var initialContent = isMarkdown ? "# " + title + "\n\n" : "<h1>" + title + "</h1><p></p>";
-
-        createNoteProcess.noteId = noteId;
-        createNoteProcess.noteTitle = title;
-        createNoteProcess.noteIsMarkdown = isMarkdown || false;
-        createNoteProcess.command = ["sh", "-c", 'mkdir -p "$1" && printf "%s" "$3" > "$2"', "notes-create", store.notesPath, fileOf(noteId, isMarkdown), initialContent];
-        createNoteProcess.running = true;
+        const noteId = NotesUtils.generateUUID();
+        const markdown = isMarkdown || false;
+        const initialContent = markdown ? "# " + title + "\n\n" : "<h1>" + title + "</h1><p></p>";
+        store.run(["mkdir", "-p", store.notesPath], code => {
+            if (code === 0 && store.writeFile(store.fileOf(noteId, markdown), initialContent))
+                store.noteCreated(noteId, title, markdown);
+        });
     }
 
     function remove(noteId, isMarkdown) {
-        deleteNoteProcess.deletedNoteId = noteId;
-        deleteNoteProcess.command = ["rm", "-f", fileOf(noteId, isMarkdown)];
-        deleteNoteProcess.running = true;
+        store.run(["rm", "-f", store.fileOf(noteId, isMarkdown)], code => {
+            if (code === 0)
+                store.noteDeleted(noteId);
+        });
     }
 
     function read(noteId, isMarkdown) {
-        readNoteProcess.command = ["cat", fileOf(noteId, isMarkdown)];
-        readNoteProcess.running = true;
-    }
-
-    function write(noteId, isMarkdown, content) {
-        saveNoteProcess.command = writeCommand(fileOf(noteId, isMarkdown), content);
-        saveNoteProcess.running = true;
-    }
-
-    // Rewrite the index from the notes array (order + metadata)
-    function writeIndex(notes) {
-        var indexData = {
-            order: notes.map(n => n.id),
-            notes: {}
-        };
-        for (var i = 0; i < notes.length; i++) {
-            var note = notes[i];
-            indexData.notes[note.id] = {
-                title: note.title,
-                created: note.created,
-                modified: note.modified,
-                isMarkdown: note.isMarkdown || false
-            };
-        }
-        saveIndexProcess.command = writeCommand(store.indexPath, NotesUtils.serializeIndex(indexData));
-        saveIndexProcess.running = true;
-    }
-
-    // Read index, update title, save
-    function setTitle(noteId, newTitle) {
-        readIndexForUpdateProcess.noteId = noteId;
-        readIndexForUpdateProcess.newTitle = newTitle;
-        readIndexForUpdateProcess.command = ["cat", store.indexPath];
-        readIndexForUpdateProcess.running = true;
-    }
-
-    // Read index, bump the modified timestamp, save
-    function touch(noteId) {
-        readIndexForModifiedProcess.noteId = noteId;
-        readIndexForModifiedProcess.command = ["cat", store.indexPath];
-        readIndexForModifiedProcess.running = true;
-    }
-
-    // Initialize directories
-    Process {
-        id: initDirProcess
-        command: ["sh", "-c", 'mkdir -p "$1" && touch "$2"', "notes-init", store.notesPath, store.indexPath]
-
-        onExited: code => {
-            store.refresh();
-        }
-    }
-
-    // Read index.json
-    Process {
-        id: readIndexProcess
-        command: ["cat", store.indexPath]
-        stdout: SplitParser {
-            onRead: data => readIndexProcess.stdoutData += data + "\n"
-        }
-        property string stdoutData: ""
-
-        onExited: code => {
-            var indexData = NotesUtils.parseIndex(readIndexProcess.stdoutData.trim());
-            readIndexProcess.stdoutData = "";
-
-            var loadedNotes = [];
-            for (var i = 0; i < indexData.order.length; i++) {
-                var noteId = indexData.order[i];
-                var noteMeta = indexData.notes[noteId];
-                if (noteMeta) {
-                    loadedNotes.push({
-                        id: noteId,
-                        title: noteMeta.title || "Untitled",
-                        created: noteMeta.created || "",
-                        modified: noteMeta.modified || "",
-                        isMarkdown: noteMeta.isMarkdown || false,
-                        isCreateButton: false
-                    });
-                }
-            }
-            store.indexLoaded(loadedNotes);
-        }
-    }
-
-    // Create note
-    Process {
-        id: createNoteProcess
-        property string noteId: ""
-        property string noteTitle: ""
-        property bool noteIsMarkdown: false
-
-        onExited: code => {
-            let id = createNoteProcess.noteId;
-            let title = createNoteProcess.noteTitle;
-            let isMarkdown = createNoteProcess.noteIsMarkdown;
-            createNoteProcess.noteId = "";
-            createNoteProcess.noteTitle = "";
-            createNoteProcess.noteIsMarkdown = false;
-            if (code === 0)
-                store.noteCreated(id, title, isMarkdown);
-        }
-    }
-
-    // Delete note
-    Process {
-        id: deleteNoteProcess
-        property string deletedNoteId: ""
-
-        onExited: code => {
-            if (code === 0 && deleteNoteProcess.deletedNoteId !== "") {
-                let id = deleteNoteProcess.deletedNoteId;
-                deleteNoteProcess.deletedNoteId = "";
-                store.noteDeleted(id);
-            }
-        }
-    }
-
-    // Read note content
-    Process {
-        id: readNoteProcess
-        stdout: SplitParser {
-            onRead: data => readNoteProcess.stdoutData += data + "\n"
-        }
-        property string stdoutData: ""
-
-        onExited: code => {
+        // Already being read: that result comes (a second one would land
+        // after the first and replace what was typed in between)
+        if (store._readingId === noteId)
+            return;
+        const seq = ++store._readSeq;
+        store._readingId = noteId;
+        store.run(["cat", store.fileOf(noteId, isMarkdown)], (code, out) => {
+            if (seq !== store._readSeq)
+                return;
+            store._readingId = "";
             // Remove trailing newline added by parser
-            let content = code === 0 ? readNoteProcess.stdoutData.replace(/\n$/, '') : "";
-            readNoteProcess.stdoutData = "";
-            store.noteRead(code === 0, content);
+            store.noteRead(noteId, code === 0, code === 0 ? out.replace(/\n$/, '') : "");
+        });
+    }
+
+    // Returns whether the note was saved
+    function write(noteId, isMarkdown, content) {
+        return store.writeFile(store.fileOf(noteId, isMarkdown), content);
+    }
+
+    // Rewrite the index from the notes array (order + metadata), keeping the
+    // notes added to it elsewhere unless listed in `removedIds`
+    function writeIndex(notes, removedIds) {
+        const snapshot = notes.map(n => ({
+                    "id": n.id,
+                    "title": n.title,
+                    "created": n.created,
+                    "modified": n.modified,
+                    "isMarkdown": n.isMarkdown || false
+                }));
+        store.updateIndex(index => NotesUtils.mergeIndex(index, snapshot, removedIds), null);
+    }
+
+    // Update the title in the index (+ modified)
+    function setTitle(noteId, newTitle) {
+        store.updateIndex(index => NotesUtils.updateNote(index, noteId, {
+                "title": newTitle
+            }), () => store.titleSaved(noteId, newTitle));
+    }
+
+    // Bump the modified timestamp in the index
+    function touch(noteId) {
+        store.updateIndex(index => NotesUtils.updateNote(index, noteId, {}), null);
+    }
+
+    // Read the index from disk, apply `apply` (null: nothing to write),
+    // write it back. One at a time, queued: no change is lost and the notes
+    // other writers added are read before each rewrite.
+    function updateIndex(apply, done) {
+        store._indexQueue.push({
+            "apply": apply,
+            "done": done
+        });
+        store._nextIndexUpdate();
+    }
+
+    function _nextIndexUpdate() {
+        if (store._indexBusy || store._indexQueue.length === 0)
+            return;
+        store._indexBusy = true;
+        store.run(["cat", store.indexPath], (code, out) => {
+            // An unreadable index (null) is only replaced by writeIndex
+            let index = NotesUtils.parseIndexStrict(code === 0 ? out.trim() : "");
+            let changed = false;
+            const batch = store._indexQueue.splice(0);
+            batch.forEach(req => {
+                const next = req.apply(index);
+                if (next) {
+                    index = next;
+                    changed = true;
+                }
+            });
+            if (changed)
+                store.writeFile(store.indexPath, NotesUtils.serializeIndex(index));
+            batch.forEach(req => {
+                if (req.done)
+                    req.done();
+            });
+            store._indexBusy = false;
+            store._nextIndexUpdate();
+        });
+    }
+
+    // Write a file (atomic, blocking); returns false (and logs) on failure.
+    // FileView.setText() skips a write equal to the data it holds, so it
+    // first reads what the file holds now (not the previous file's data, nor
+    // a version from before another writer changed it).
+    function writeFile(path, text) {
+        store._writeFailed = false;
+        writer.path = path;
+        writer.reload();
+        writer.text();
+        writer.setText(text);
+        return !store._writeFailed;
+    }
+
+    // `command` in its own process; done(exitCode, stdout)
+    function run(command, done) {
+        const proc = oneShot.createObject(store, {
+            "command": command,
+            "done": done
+        });
+        proc.running = true;
+    }
+
+    FileView {
+        id: writer
+        // Only the blocking read of writeFile(), no background one per path
+        preload: false
+        blockAllReads: true
+        atomicWrites: true
+        blockWrites: true
+        printErrors: false
+        onSaveFailed: error => {
+            store._writeFailed = true;
+            console.warn("Notes: could not write", writer.path, error);
         }
     }
 
-    // Save note content
-    Process {
-        id: saveNoteProcess
-        onExited: code => {}
-    }
+    Component {
+        id: oneShot
 
-    // Save index
-    Process {
-        id: saveIndexProcess
-        onExited: code => {}
-    }
+        Process {
+            id: proc
 
-    // Read index for title update
-    Process {
-        id: readIndexForUpdateProcess
-        property string noteId: ""
-        property string newTitle: ""
-        stdout: SplitParser {
-            onRead: data => readIndexForUpdateProcess.stdoutData += data + "\n"
-        }
-        property string stdoutData: ""
+            property var done: null
+            property string out: ""
 
-        onExited: code => {
-            var indexData = NotesUtils.parseIndex(readIndexForUpdateProcess.stdoutData.trim());
-            readIndexForUpdateProcess.stdoutData = "";
-            let id = readIndexForUpdateProcess.noteId;
-            let title = readIndexForUpdateProcess.newTitle;
-
-            if (indexData.notes[id]) {
-                indexData.notes[id].title = title;
-                indexData.notes[id].modified = NotesUtils.getCurrentTimestamp();
+            stdout: SplitParser {
+                onRead: data => proc.out += data + "\n"
             }
 
-            saveIndexProcess.command = store.writeCommand(store.indexPath, NotesUtils.serializeIndex(indexData));
-            saveIndexProcess.running = true;
-
-            readIndexForUpdateProcess.noteId = "";
-            readIndexForUpdateProcess.newTitle = "";
-            store.titleSaved(id, title);
-        }
-    }
-
-    // Read index for modified timestamp update
-    Process {
-        id: readIndexForModifiedProcess
-        property string noteId: ""
-        stdout: SplitParser {
-            onRead: data => readIndexForModifiedProcess.stdoutData += data + "\n"
-        }
-        property string stdoutData: ""
-
-        onExited: code => {
-            var indexData = NotesUtils.parseIndex(readIndexForModifiedProcess.stdoutData.trim());
-            readIndexForModifiedProcess.stdoutData = "";
-
-            if (indexData.notes[readIndexForModifiedProcess.noteId]) {
-                indexData.notes[readIndexForModifiedProcess.noteId].modified = NotesUtils.getCurrentTimestamp();
+            onExited: code => {
+                const done = proc.done;
+                proc.done = null;
+                if (done)
+                    done(code, proc.out);
+                proc.destroy();
             }
-
-            saveIndexProcess.command = store.writeCommand(store.indexPath, NotesUtils.serializeIndex(indexData));
-            saveIndexProcess.running = true;
-            readIndexForModifiedProcess.noteId = "";
         }
     }
 }

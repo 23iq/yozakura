@@ -9,7 +9,36 @@ import (
 	"testing"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/termlook"
 )
+
+// goodbye removes the greeting's record (<data>/<app>/greeting.json) too.
+func TestCleanupGreetingForgetsItsRecord(t *testing.T) {
+	home, data := t.TempDir(), t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("XDG_DATA_HOME", data)
+	if err := termlook.AllowGreetingShells(greetingEnv(home)); err != nil {
+		t.Fatal(err)
+	}
+	record := filepath.Join(data, brand.AppID, "greeting.json")
+	if _, err := os.Stat(record); err != nil {
+		t.Fatalf("no record written: %v", err)
+	}
+	removed, err := cleanupGreeting(CleanupEnv{Home: home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(record); err == nil {
+		t.Error("greeting.json left after goodbye")
+	}
+	if !strings.Contains(strings.Join(removed, "\n"), "greeting record") {
+		t.Errorf("removed %v", removed)
+	}
+	if removed, err = cleanupGreeting(CleanupEnv{Home: home}); err != nil || len(removed) != 0 {
+		t.Errorf("second run: %v %v", removed, err)
+	}
+}
 
 func TestRunCleanupsCallsEveryStepAndSummarises(t *testing.T) {
 	var ran []string

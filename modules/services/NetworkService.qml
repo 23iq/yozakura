@@ -126,7 +126,7 @@ Singleton {
     }
 
     function openPublicWifiPortal() {
-        Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]);
+        Quickshell.execDetached(ProcessRole.detached(["xdg-open", "https://nmcheck.gnome.org/"]));
     }
 
     // WiFi icon by strength

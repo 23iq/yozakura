@@ -33,6 +33,7 @@ h.singleton("qs.config", "Config", """QtObject {
     property QtObject bar: QtObject { property string position: "top"; property bool frameEnabled: false }
     property QtObject dock: QtObject { property string position: "bottom"; property int height: 64; property bool enabled: true }
     property QtObject notch: QtObject { property string position: "top" }
+    property QtObject performance: QtObject { property bool warmViews: true }
 }""")
 h.module("qs.modules.globals", {})
 h.module("qs.modules.theme", {
@@ -190,6 +191,22 @@ def overlaps(a, b):
 # Views load asynchronously (WarmLoader). The warm-up pre-creates the
 # launcher on the focused screen only, hidden, without opening a host.
 assert not ev(hsA, "launcherReady") and not ev(hsB, "launcherReady")
+# performance.warmViews = false: no launcher pre-creation.
+h.eval(root, "Config.performance.warmViews = false")
+h.eval(hsA, "warmLauncher()")
+pump(50)
+assert not ev(hsA, "launcherReady"), "warmViews off still pre-created the launcher"
+# The same gate for a launcher that lives in the notch.
+nhA = h.find(root, "nhA")
+h.eval(root, 'Config.layout.launcher.host = "notch"')
+h.eval(nhA, "warmLauncher()")
+pump(50)
+assert not ev(nhA, "launcherReady"), "warmViews off still pre-created the notch launcher"
+h.eval(root, "Config.performance.warmViews = true")
+h.eval(nhA, "warmLauncher()")
+pump(50)
+assert ev(nhA, "launcherReady"), "warmViews on did not pre-create the notch launcher"
+h.eval(root, 'Config.layout.launcher.host = "spotlight"')
 h.eval(hsA, "warmLauncher()")
 h.eval(hsB, "warmLauncher()")
 pump(50)

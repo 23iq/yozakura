@@ -160,3 +160,51 @@ function callHandler(deps, method, params) {
         deps.call(method, params);
     };
 }
+
+// The other way round: notifyInternal() options as the params of the
+// backend's notify.send, for a separate window process (ProcessRole) whose
+// notifications the main shell shows. Local action handlers cannot cross
+// the process boundary: actions with `actionData` (clipboard / call) are
+// kept, as notify.send actions; any other action is dropped.
+var URGENCY = ["low", "normal", "critical"];
+
+function toSend(options) {
+    var o = options || {};
+    var out = {
+        "summary": String(o.summary || ""),
+        "body": String(o.body || ""),
+        "appName": String(o.appName || ""),
+        "appIcon": String(o.appIcon || ""),
+        "image": String(o.image || ""),
+        "replaceKey": String(o.replaceKey || "")
+    };
+    if (typeof o.urgency === "number" && URGENCY[o.urgency])
+        out.urgency = URGENCY[o.urgency];
+    else if (URGENCY.indexOf(o.urgency) >= 0)
+        out.urgency = o.urgency;
+    if (typeof o.expireTimeout === "number")
+        out.expireTimeout = o.expireTimeout;
+    var data = o.actionData || {};
+    var actions = [];
+    var list = o.actions || [];
+    for (var i = 0; i < list.length; i++) {
+        var a = list[i] || {};
+        var d = data[a.identifier];
+        if (!d)
+            continue;
+        var act = {
+            "identifier": String(a.identifier),
+            "text": String(a.text || a.identifier)
+        };
+        if (d.clipboard !== undefined && d.clipboard !== null)
+            act.clipboard = String(d.clipboard);
+        else if (d.call && d.call.method)
+            act.call = d.call;
+        else
+            continue;
+        actions.push(act);
+    }
+    if (actions.length > 0)
+        out.actions = actions;
+    return out;
+}

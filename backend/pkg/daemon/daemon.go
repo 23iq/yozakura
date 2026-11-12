@@ -46,6 +46,7 @@ import (
 	ocrsvc "yozakura/backend/pkg/svc/ocr"
 	"yozakura/backend/pkg/svc/powerprofile"
 	"yozakura/backend/pkg/svc/preset"
+	"yozakura/backend/pkg/svc/preview"
 	"yozakura/backend/pkg/svc/providers"
 	recordersvc "yozakura/backend/pkg/svc/recorder"
 	"yozakura/backend/pkg/svc/screenshot"
@@ -59,6 +60,7 @@ import (
 	voicesvc "yozakura/backend/pkg/svc/voice"
 	"yozakura/backend/pkg/svc/wallpaper"
 	"yozakura/backend/pkg/svc/weather"
+	"yozakura/backend/pkg/svc/windows"
 	yipc "yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -93,12 +95,19 @@ type Daemon struct {
 	term       *term.Service
 	usage      *usage.Service
 	tasks      *tasks.Manager
+	// separate Settings / wizard processes and their staged previews
+	windows *windows.Service
+	preview *preview.Service
 
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
 
 	qsCmd  *exec.Cmd
 	qsDone <-chan error
+	// Quickshell binary and the shell.qml it runs now (a mod rollback
+	// changes it); the separate windows start next to it
+	qsBin    atomic.Value // string
+	shellQML atomic.Value // string
 	// supervision of the shell: pid of the running one (0: none), restart
 	// policy, freeze watchdog and their side effects (qssupervise.go)
 	qsPid atomic.Int64
@@ -300,6 +309,20 @@ func New() (*Daemon, error) {
 	d.voice = voicesvc.NewService(d.paths)
 	d.voice.Register(d.srv)
 
+	// Settings / setup wizard as their own Quickshell processes
+	// (performance.separateWindows): started on demand next to the running
+	// shell.qml; what they staged is discarded when the last one exits.
+	d.preview = preview.NewService()
+	d.preview.Register(d.srv)
+	d.windows = windows.NewService(windows.Options{
+		QS:       func() string { s, _ := d.qsBin.Load().(string); return s },
+		ShellDir: d.shellDir,
+		BaseDir:  paths.FindBaseShellSource,
+		Env:      d.qsEnv,
+		OnExit:   func(kind string) { d.preview.OwnerGone(kind, d.windows.AnyRunning()) },
+	})
+	d.windows.Register(d.srv)
+
 	// Live activity downloads/copies/updates; sources start on demand.
 	transfers.NewService().Register(d.srv)
 
@@ -431,6 +454,7 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 		d.tasks.Start()
 	}()
 
+	d.qsBin.Store(qsBin)
 	d.hooks = d.defaultQSHooks(qsBin)
 	watchTick := time.NewTicker(WatchdogCheck)
 	defer watchTick.Stop()
@@ -474,14 +498,7 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	env := envclean.ChildEnv()
-	if os.Getenv("MALLOC_CONF") == "" {
-		env = append(env, "MALLOC_CONF=dirty_decay_ms:1000,muzzy_decay_ms:1000")
-	}
-	if backend := mediaBackend(os.Getenv, pathExists); backend != "" {
-		env = append(env, "QT_MEDIA_BACKEND="+backend)
-	}
-	cmd.Env = env
+	cmd.Env = d.qsEnv()
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -497,10 +514,35 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	return nil
 }
 
+// qsEnv is the environment every Quickshell of ours runs with.
+func (d *Daemon) qsEnv() []string {
+	env := envclean.ChildEnv()
+	if os.Getenv("MALLOC_CONF") == "" {
+		env = append(env, "MALLOC_CONF=dirty_decay_ms:1000,muzzy_decay_ms:1000")
+	}
+	if backend := mediaBackend(os.Getenv, pathExists); backend != "" {
+		env = append(env, "QT_MEDIA_BACKEND="+backend)
+	}
+	return env
+}
+
+// shellDir is the directory of the shell.qml the daemon runs (a mods
+// generation or the base source), "" before the first start.
+func (d *Daemon) shellDir() string {
+	if s, _ := d.shellQML.Load().(string); s != "" {
+		return filepath.Dir(s)
+	}
+	return ""
+}
+
 func (d *Daemon) shutdown() {
 	// Refuse new IPC first: a request arriving mid-teardown could otherwise
 	// start agent processes or MCP servers after their owners shut down.
 	d.srv.Close()
+	if d.windows != nil {
+		// the separate Settings / wizard go with the shell
+		d.windows.Close()
+	}
 	if d.extras != nil {
 		// drops queued installs; a running pacman/AUR one is left running
 		// (detached), never waited for or cut off

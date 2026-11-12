@@ -134,7 +134,9 @@ WlSessionLockSurface {
     Connections {
         target: root.passwordInput
         function onAccepted() {
-            if (passwordInput.text.trim() === "")
+            // Only an empty field is ignored: spaces are legal in a password
+            // and the text reaches PAM exactly as typed.
+            if (root.passwordInput.text === "")
                 return;
 
             // Guardar contraseña y limpiar campo inmediatamente
@@ -143,7 +145,40 @@ WlSessionLockSurface {
 
             authenticating = true;
             errorMessage = "";
-            pamAuth.start();
+            // The configured service is not checked yet (the password came
+            // right after a lock or a settings change): wait for its verdict,
+            // or a system-only account (sssd, homed) fails its first try.
+            if (pamTarget.pending) {
+                pamTarget.refresh();
+                pamWait.restart();
+                return;
+            }
+            root.startPam();
+        }
+    }
+
+    // Starts PAM with the stack resolved now (bundled while still pending).
+    function startPam() {
+        pamWait.stop();
+        const target = pamTarget.resolve();
+        pamAuth.configDirectory = target.configDirectory;
+        pamAuth.config = target.config;
+        pamAuth.start();
+    }
+
+    // A submit waiting for the service check: starts once it settles, or
+    // with the bundled config when it never answers.
+    Timer {
+        id: pamWait
+        interval: 3000
+        onTriggered: root.startPam()
+    }
+
+    Connections {
+        target: pamTarget
+        function onSettled() {
+            if (pamWait.running && !pamTarget.pending)
+                root.startPam();
         }
     }
 
@@ -190,7 +225,7 @@ WlSessionLockSurface {
     // Timer to unlock after exit animation
     Timer {
         id: unlockTimer
-        // A Timer with interval 0 never fires in Qt; ensure a minimum interval
+        // Motion off: no exit animation to wait for, unlock right away (1 ms)
         interval: Config.animDuration > 0 ? Config.animDuration * 2 : 1
         onTriggered: {
             GlobalStates.lockscreenVisible = false;
@@ -266,11 +301,20 @@ WlSessionLockSurface {
         }
     }
 
+    // PAM stack: the bundled config/pam/password.conf, or the system service
+    // named by lockscreen.pamService when its /etc/pam.d file is a usable
+    // password stack (LockPam.js).
+    LockPamTarget {
+        id: pamTarget
+        service: Config.lockscreen.pamService
+        bundledDir: Qt.resolvedUrl("../../config/pam").toString().replace("file://", "")
+    }
+
     // PAM authentication process
     PamContext {
         id: pamAuth
-        // Use custom PAM config for lockscreen authentication
-        configDirectory: Qt.resolvedUrl("../../config/pam").toString().replace("file://", "")
+        // Set from pamTarget before every start(); the bundled config by default
+        configDirectory: pamTarget.bundledDir
         config: "password.conf"
 
         onPamMessage: {
@@ -298,6 +342,9 @@ WlSessionLockSurface {
                 // Error de autenticación
                 errorMessage = "Authentication failed";
                 console.warn("PAM auth failed with result:", result);
+                // Re-check the configured service: if its file went away the
+                // next attempt falls back to the bundled config.
+                pamTarget.refresh();
                 if (Config.animDuration > 0) {
                     passwordInputBox.playWrongPassword();
                 } else {

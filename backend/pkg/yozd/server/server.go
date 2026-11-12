@@ -1408,9 +1408,10 @@ func (s *Server) handleConnection(conn net.Conn) {
 			s.clients[conn] = struct{}{}
 			s.clientsMu.Unlock()
 			notif := Notification{
-				JSONRPC: "2.0",
-				Method:  "State.Dump",
-				State:   s.stateDump(false),
+				JSONRPC:  "2.0",
+				Method:   "State.Dump",
+				State:    s.stateDump(false),
+				Features: s.streamFeatures(),
 			}
 			if data, err := json.Marshal(notif); err == nil {
 				data = append(data, '\n')
@@ -1439,6 +1440,8 @@ type Notification struct {
 	Method  string      `json:"method"`
 	Params  interface{} `json:"params,omitempty"`
 	State   *StateDump  `json:"state,omitempty"`
+	// Features is set on the State.Dump that opens a subscription.
+	Features []string `json:"features,omitempty"`
 }
 
 func (s *Server) getOverviewOpen() *bool {
@@ -1473,14 +1476,6 @@ func (s *Server) broadcastEvent(method string, params interface{}) {
 			c.Write(data)
 		}(conn)
 	}
-}
-
-func (s *Server) handleIdleMonitorChanged(id uint32, isIdle bool) {
-	params := map[string]interface{}{
-		"id":      id,
-		"is_idle": isIdle,
-	}
-	s.broadcastEvent("Event.IdleMonitorChanged", params)
 }
 
 func (s *Server) broadcastBrightnessChange(monitor string, value float64) {

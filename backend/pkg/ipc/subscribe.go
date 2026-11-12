@@ -33,8 +33,9 @@ func (s *Server) streamSubscribe(conn net.Conn, w *bufio.Writer, req *Request) {
 	}
 
 	sub := &Subscriber{
-		Events: make(chan ServiceEvent, 256),
-		stop:   make(chan struct{}),
+		ClientID: params.ClientID,
+		Events:   make(chan ServiceEvent, 256),
+		stop:     make(chan struct{}),
 	}
 
 	// Stream events in a goroutine. On dead conn it stops the sub.
@@ -85,7 +86,7 @@ func (s *Server) streamSubscribe(conn net.Conn, w *bufio.Writer, req *Request) {
 		wg.Add(1)
 		go func(svc *Service) {
 			defer wg.Done()
-			svc.Subscribe(sub)
+			runSubscribe(svc, sub)
 		}(svc)
 	}
 	s.mu.RUnlock()

@@ -2,6 +2,7 @@
 .import "CompositorGate.js" as CompositorGate
 .import "Synonyms.js" as Synonyms
 .import "../../config/JsonUtil.js" as JsonUtil
+.import "ConfigWrite.js" as ConfigWrite
 
 // Pure helpers for the schema-driven settings (modules/settings/schema).
 // No QML types here: unit tested with node (tests/settings-schema.test.cjs)
@@ -121,54 +122,25 @@ function storeOf(key) {
     return key.indexOf(WALLPAPER_PREFIX) === 0 ? "wallpaper" : "config";
 }
 
+// Key paths: ConfigWrite.js (the main shell applies relayed
+// previews with it too).
 function splitKey(key) {
-    var parts = String(key).split(".");
-    return {
-        "domain": parts[0],
-        "prop": parts[1],
-        "path": parts.slice(1)
-    };
+    return ConfigWrite.splitKey(key);
 }
 
 // JsonAdapter hands lists to JS as list wrappers; normalize to plain JSON.
 function plain(value) {
-    if (value === undefined || value === null)
-        return value;
-    if (typeof value !== "object")
-        return value;
-    try {
-        return JSON.parse(JSON.stringify(value));
-    } catch (e) {
-        return value;
-    }
+    return ConfigWrite.plain(value);
 }
 
 function getPath(obj, path) {
-    var cur = obj;
-    for (var i = 0; i < path.length; i++) {
-        if (cur === undefined || cur === null)
-            return undefined;
-        cur = cur[path[i]];
-    }
-    return cur;
+    return ConfigWrite.getPath(obj, path);
 }
 
 // Returns a deep copy of `obj` with `path` set to `value` (used for nested
 // keys inside `property var` objects such as bar.layout.style).
 function withPath(obj, path, value) {
-    if (path.length === 0)
-        return plain(value);
-    var copy = plain(obj);
-    if (copy === undefined || copy === null || typeof copy !== "object")
-        copy = {};
-    var cur = copy;
-    for (var i = 0; i < path.length - 1; i++) {
-        if (cur[path[i]] === undefined || cur[path[i]] === null || typeof cur[path[i]] !== "object")
-            cur[path[i]] = {};
-        cur = cur[path[i]];
-    }
-    cur[path[path.length - 1]] = plain(value);
-    return copy;
+    return ConfigWrite.withPath(obj, path, value);
 }
 
 // Deep, key-order independent comparison. Numbers compare with a small

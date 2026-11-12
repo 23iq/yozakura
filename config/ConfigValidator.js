@@ -4,6 +4,7 @@
 .import "../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
 .import "meta/Enums.js" as Enums
 .import "meta/KeyAliases.js" as KeyAliases
+.import "meta/AdapterTypes.js" as AdapterTypes
 .import "JsonUtil.js" as JsonUtil
 
 // Key-alias migration (config/meta/KeyAliases.js) over the raw, not yet
@@ -56,13 +57,27 @@ function overlay(base, over) {
     if (!isObject(over))
         return JsonUtil.clone(over);
     var out = isObject(base) ? JsonUtil.clone(base) : {};
-    for (var k in over)
-        out[k] = isObject(over[k]) ? overlay(out[k], over[k]) : JsonUtil.clone(over[k]);
+    for (var k in over) {
+        if (!ownKey(over, k))
+            continue;
+        out[k] = isObject(over[k]) ? overlay(hasOwn(out, k) ? out[k] : undefined, over[k]) : JsonUtil.clone(over[k]);
+    }
     return out;
 }
 
 function isObject(v) {
     return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+function hasOwn(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+// A key of `obj` that may be copied into a plain object: its own, and never
+// "__proto__" (JSON.parse makes it an own key; assigning it would replace
+// the prototype of the result instead of adding a key).
+function ownKey(obj, key) {
+    return key !== "__proto__" && hasOwn(obj, key);
 }
 
 // The object at `path` under `obj`; `create` adds missing levels.
@@ -79,7 +94,30 @@ function walk(obj, path, create) {
     return cur;
 }
 
+// Dotted paths of a domain's free-form maps ("var" in meta/AdapterTypes.js):
+// their keys are not config keys, so the user's own keys are kept.
+function freeFormPaths(domain) {
+    var types = (AdapterTypes.types || {})[domain] || {};
+    return Object.keys(types).filter(function (p) {
+        return types[p] === "var";
+    });
+}
+
+// validate() for a whole domain file: like validate(), but inside the
+// domain's free-form maps the keys the defaults do not list are kept
+// (cloned) instead of dropped. Keys the defaults list are validated as
+// everywhere else.
+function validateDomain(current, defaults, domain) {
+    return validateNode(current, defaults, undefined, "", false, freeFormPaths(domain));
+}
+
 function validate(current, defaults, keyName) {
+    return validateNode(current, defaults, keyName, "", false, []);
+}
+
+// `path`: dotted path of this value inside the domain; `free`: it is (or
+// lies inside) a free-form map; `freePaths`: the domain's free-form paths.
+function validateNode(current, defaults, keyName, path, free, freePaths) {
     if (current === undefined || current === null) {
         return JsonUtil.clone(defaults);
     }
@@ -98,7 +136,15 @@ function validate(current, defaults, keyName) {
 
         var result = {};
         for (var key in defaults) {
-            result[key] = validate(current[key], defaults[key], key);
+            var childPath = path ? path + "." + key : key;
+            var childFree = free || freePaths.indexOf(childPath) !== -1;
+            result[key] = validateNode(current[key], defaults[key], key, childPath, childFree, freePaths);
+        }
+        if (free) {
+            for (var extra in current) {
+                if (ownKey(current, extra) && !hasOwn(defaults, extra) && current[extra] !== undefined)
+                    result[extra] = JsonUtil.clone(current[extra]);
+            }
         }
         return result;
     }

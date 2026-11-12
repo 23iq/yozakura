@@ -11,6 +11,7 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/deps"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 // doctorItem is one line of the report.
@@ -99,6 +100,9 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 		if d.ID == brand.Daemon && !it.ok {
 			it.ok = daemonFound()
 		}
+		if d.ID == polkitDep {
+			it = doctorPolkitRow(it, doctorShellPolkit())
+		}
 		if len(it.pkgs) == 0 {
 			// Built from this repository (yozd) or installed per user.
 			it.fix = installerHint()
@@ -106,6 +110,50 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 		items = append(items, it)
 	}
 	return items
+}
+
+// polkitDep is the external polkit agent row of pkg/deps.
+const polkitDep = "polkit-agent"
+
+// shellPolkit is the shell's own polkit agent for the doctor: what the
+// running shell reports (live), else only what the config says.
+type shellPolkit struct {
+	live    bool
+	state   string // compositor.Polkit*, when live
+	enabled bool   // system.polkitAgent
+}
+
+// doctorShellPolkit reads it (faked in tests).
+var doctorShellPolkit = func() shellPolkit {
+	sp := shellPolkit{enabled: compositor.ShellAgentEnabled(paths.New().Config("system"))}
+	if r, ok := shellPolkitReport(); ok && r.State != "" && pidAlive(r.PID) {
+		sp.live, sp.state = true, r.State
+	}
+	return sp
+}
+
+// doctorPolkitRow words the external agent's row: with the shell's own
+// agent registered it is only the fallback and its absence is no gap.
+// Without a running shell it says what is configured, not what is in use.
+func doctorPolkitRow(it doctorItem, sp shellPolkit) doctorItem {
+	own := brand.DisplayName + "'s own agent"
+	switch {
+	case sp.live && sp.state == compositor.PolkitRegistered:
+		it.ok = true
+		it.purpose = "fallback only: " + own + " takes the password prompts"
+	case sp.live && sp.state == compositor.PolkitPending:
+		it.purpose += " (" + own + " is not registered: another agent holds the session, or polkit is unavailable)"
+	case sp.live && sp.state == compositor.PolkitUnavailable:
+		it.purpose += " (" + own + " is unavailable: this Quickshell has no Polkit module)"
+	case sp.live:
+		it.purpose += " (" + own + " is off)"
+	case sp.enabled:
+		it.ok = true
+		it.purpose = "fallback only: " + own + " is configured to take the password prompts (the shell is not running)"
+	default:
+		it.purpose += " (" + own + " is off)"
+	}
+	return it
 }
 
 func doctorInstall(distro, compositor string) []doctorItem {

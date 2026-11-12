@@ -113,7 +113,8 @@ var types = {
     "performance": {
         "dashboardMaxPersistentTabs": "int",
         "pauseWallpaperIdleDelay": "int",
-        "settingsKeepAliveMinutes": "int"
+        "settingsKeepAliveMinutes": "int",
+        "visualizerFps": "int"
     },
     "voice": {
         "idleTimeout": "int",

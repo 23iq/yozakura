@@ -30,7 +30,13 @@ type ExecRunner struct{}
 
 // Run implements Runner. stdout and stderr are merged; lines are split on
 // \n and \r so redrawn progress bars arrive one by one.
-func (ExecRunner) Run(ctx context.Context, argv []string, env []string, line func(string)) (int, error) {
+func (r ExecRunner) Run(ctx context.Context, argv []string, env []string, line func(string)) (int, error) {
+	return r.run(ctx, argv, env, line, nil)
+}
+
+// run is Run; started (when set) gets the process group id once the
+// command is running.
+func (ExecRunner) run(ctx context.Context, argv []string, env []string, line func(string), started func(pgid int)) (int, error) {
 	if len(argv) == 0 {
 		return 0, errors.New("empty command")
 	}
@@ -64,6 +70,9 @@ func (ExecRunner) Run(ctx context.Context, argv []string, env []string, line fun
 	err = cmd.Start()
 	out.Close() // the child holds its own copy
 	if err == nil {
+		if started != nil {
+			started(cmd.Process.Pid) // Setpgid: the group id is the pid
+		}
 		err = cmd.Wait()
 	}
 	close(exited)

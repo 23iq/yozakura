@@ -112,12 +112,7 @@ func (s *Service) Poll() time.Duration {
 
 // mutate runs f under the lock, then persists, reschedules and broadcasts.
 func (s *Service) mutate(f func(e *Engine) (any, error)) (any, error) {
-	s.mu.Lock()
-	res, err := f(s.eng)
-	if err == nil {
-		s.saveLocked()
-	}
-	s.mu.Unlock()
+	res, err := s.apply(f)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +122,19 @@ func (s *Service) mutate(f func(e *Engine) (any, error)) (any, error) {
 	}
 	s.broadcast()
 	return res, nil
+}
+
+// apply runs f and persists under the lock. The unlock is deferred: the
+// IPC server recovers a panicking request, which must not leave the lock
+// held and every later timers request hanging.
+func (s *Service) apply(f func(e *Engine) (any, error)) (any, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	res, err := f(s.eng)
+	if err == nil {
+		s.saveLocked()
+	}
+	return res, err
 }
 
 func (s *Service) saveLocked() {

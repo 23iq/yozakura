@@ -66,6 +66,8 @@ h._write_qmldir(h.root / "qs/modules/components", "qs.modules.components")
 h.copy("modules/components/shape/ShapeShadow.qml", "qs/modules/components/shape", siblings=False)
 h._write_qmldir(h.root / "qs/modules/components/shape", "qs.modules.components.shape")
 h.copy("modules/shell/PanelShadows.qml", "qs/modules/shell", siblings=False)
+h.copy("modules/shell/FrameShapeShadow.qml", "qs/modules/shell", siblings=False)
+h.copy("modules/shell/ShadowHoleClip.qml", "qs/modules/shell", siblings=False)
 h._write_qmldir(h.root / "qs/modules/shell", "qs.modules.shell")
 
 W, H = 640, 420

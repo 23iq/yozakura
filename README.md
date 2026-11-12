@@ -70,6 +70,10 @@ so AI agents can drive the desktop too.
 **App theming from the wallpaper palette** (Material You via matugen)
 - GTK, Qt (qt5ct/qt6ct), kitty, Neovim (base16 palette), starship/fastfetch via
   the terminal palette, Papirus folder colours.
+- A fastfetch greeting in new terminals (fish, bash and zsh): a few looks, the
+  distribution's logo, the sakura or one of your own (text, or a picture in
+  kitty), coloured from the palette; Settings > Terminal or
+  `yozakura term greeting`.
 - Discord clients (Vesktop, Equibop, Equicord, Vencord), Spotify (spicetify),
   Telegram, Firefox (userChrome/userContent).
 
@@ -133,7 +137,7 @@ curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bas
 | --- | --- |
 | `--with-voice` | Local speech-to-text: builds whisper.cpp (CUDA when available) and downloads the model, ~1 GB (`scripts/voice_setup.sh`) |
 | `--with-depth` | Depth clock behind the wallpaper subject: uv venv with rembg plus a model, ~0.7 GB (`scripts/depth_setup.sh`) |
-| `--with-sddm` | SDDM with the Yozakura login theme. On by default when no login manager is installed; SDDM is enabled for the next boot |
+| `--with-sddm` | SDDM with the Yozakura login theme, enabled for the next boot. On by default when no login manager is installed or SDDM is installed but not enabled. Another login manager that is installed but not enabled gets a menu (enable it, SDDM instead, leave it); `--with-sddm` puts SDDM in its place, and `--yes` never enables it. An enabled login manager is left alone |
 | `--no-voice` / `--no-depth` / `--no-sddm` | Turn a feature off |
 | `-y`, `--yes` | Do not ask; go with the plan (unattended installs) |
 | `--dry-run` | Walk the whole install (questions, plan, every step) showing what would run; changes nothing, no sudo |
@@ -147,7 +151,11 @@ curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bas
 | `--dir PATH` / `--bin-dir PATH` / `--branch NAME` | Source checkout, binary location, git branch |
 
 Piped without a terminal (CI, containers) it never waits for input: it goes
-with the plan and its defaults. `YOZAKURA_REPO_URL` points it at another git
+with the plan and its defaults. It exits with 0 when everything is in place
+(a failed optional feature is listed under NEEDS ATTENTION), 1 when the
+install stopped, and 2 when it installed but needs attention: a required
+component is missing (`yozakura doctor`) or the login screen could not be
+set up. `YOZAKURA_REPO_URL` points it at another git
 remote (a fork or a local path). Optional features can also be set up later
 with their scripts in `~/.local/src/yozakura/scripts/`.
 
@@ -194,7 +202,7 @@ installer installs from it and `yozakura doctor` checks it.
 | Compositor and UI | `hyprland` (≥ 0.56), `quickshell`, Qt 6 (`qt6-base`, `qt6-wayland`, `qt6-declarative`, `qt6-svg`, `qt6-multimedia`, `qt6-imageformats`), `yozd` (built from this repo) | everything |
 | Build | `go` (≥ 1.26), `make`, `git` | the binaries |
 | Theming | `matugen`, `adw-gtk-theme`, Phosphor icons, Noto (CJK, emoji), bundled fonts in `assets/fonts` | colors, icons, text |
-| Desktop integration | `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `hyprpolkitagent`, `xdg-utils` | screen sharing, file pickers, password prompts |
+| Desktop integration | `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `hyprpolkitagent`, `xdg-utils` | screen sharing, file pickers, password prompts (`hyprpolkitagent` is the fallback when the shell's own polkit agent is off) |
 | Audio and media | `pipewire`, `pipewire-pulse`, `wireplumber`, `playerctl`, `cava`, `ffmpeg`, GStreamer plugins, `gpu-screen-recorder` | media, visualizer, video wallpapers, recording |
 | System panels | `networkmanager`, `bluez`, `brightnessctl`, `ddcutil`, `upower`, `power-profiles-daemon` | network, bluetooth, brightness, battery, power |
 | Tools | `wl-clipboard`, `wtype`, `grim`, `slurp`, `jq`, `python`, `glib2`, `libnotify`, `tesseract`, `fd`, `plocate`, `zenity`, `imagemagick`, `kitty`, `tmux` | clipboard, typing, screenshots, OCR, search, dialogs |

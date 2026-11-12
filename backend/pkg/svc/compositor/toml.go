@@ -38,7 +38,10 @@ func Render(in Input, gameMode bool) string {
 
 	// [startup]
 	b.WriteString("\n[startup]\n")
-	fmt.Fprintf(&b, "exec-once = %q\n", brand.AppID)
+	// The command that starts the shell, as the installer's bootstrap
+	// wrote it (shellBinary: the packaging launcher, else the installed
+	// binary by path): the compositor's PATH may lack its directory.
+	fmt.Fprintf(&b, "exec-once = %q\n", execWord(shellBinary()))
 	if in.PolkitCmd != "" {
 		fmt.Fprintf(&b, "exec-once-non-hyprland = %q\n", in.PolkitCmd)
 	}
@@ -449,4 +452,14 @@ func writeWindowRules(b *strings.Builder, in Input) {
 		fmt.Fprintf(b, "match = %s\n", tomlString(r.Match))
 		fmt.Fprintf(b, "workspace = %s\n", tomlString(r.Workspace))
 	}
+}
+
+// execWord quotes cmd for the shell that runs exec-once on Hyprland and
+// Mango (niri runs a quoted command through sh -c): one sh word, the same
+// rule the polkit lines use (ShellWord). An empty command stays empty.
+func execWord(cmd string) string {
+	if cmd == "" {
+		return cmd
+	}
+	return ShellWord(cmd)
 }

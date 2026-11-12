@@ -16,7 +16,6 @@ import qs.modules.widgets.overview
 import qs.modules.widgets.presets
 import qs.modules.widgets.menus
 import qs.modules.services
-import qs.modules.corners
 import qs.modules.frame
 import qs.modules.components
 import qs.modules.desktop
@@ -35,6 +34,7 @@ import qs.modules.aicenter.selection
 import qs.modules.settings
 import qs.modules.keybinds
 import qs.modules.onboarding
+import qs.modules.polkit
 import qs.modules.specials
 import "modules/tools"
 import "modules/settings/SettingsScreen.js" as SettingsScreen
@@ -53,7 +53,7 @@ ShellRoot {
     }
 
     // Screens for the always-present per-screen windows (wallpaper, desktop,
-    // corners, panel, OSD): the outputs at startup pass at once, a hotplugged
+    // panel, OSD): the outputs at startup pass at once, a hotplugged
     // one only after the output list held still, so no window is created on
     // an output in the tick it appears (a QtWayland crash).
     SettledScreens {
@@ -103,23 +103,18 @@ ShellRoot {
             id: screenShellContainer
             required property ShellScreen modelData
 
+            // The frame in its own Top-layer window (performance.splitFrame);
+            // the panel decides when (FrameSplit)
+            FrameWindowLoader {
+                targetScreen: screenShellContainer.modelData
+                split: unifiedPanel.frameSplit
+                hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
+            }
+
             // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
                 id: unifiedPanel
                 targetScreen: screenShellContainer.modelData
-            }
-
-            // Debounced like the desktop window above.
-            SettleGate {
-                id: cornersWanted
-                value: !!(Config.theme.enableCorners && Config.roundness > 0)
-                interval: 300
-            }
-            Loader {
-                active: cornersWanted.output === true
-                sourceComponent: ScreenCorners {
-                    screen: screenShellContainer.modelData
-                }
             }
 
             // The AI bar: its own window, sized to the panel
@@ -242,7 +237,10 @@ ShellRoot {
         }
     }
 
-    // Secure WlSessionLock lockscreen
+    // Secure WlSessionLock lockscreen. The marker locks again at startup
+    // when a previous shell died while the session was locked.
+    LockStateMarker {}
+
     WlSessionLock {
         id: sessionLock
         locked: GlobalStates.lockscreenVisible
@@ -325,14 +323,16 @@ ShellRoot {
     // Its output is an initial property resolved once per creation (a
     // `screen` binding would move the mapped window on every output change);
     // a kept window moves itself while hidden (SettingsWindow.retarget()).
+    // With performance.separateWindows the window is a process of its own
+    // (SeparateWindows, settings-window.qml) and this loader stays empty.
     KeepAliveLoader {
         id: settingsWindowLoader
         allowed: SuspendManager.wakeReady
-        wanted: GlobalStates.settingsWindowVisible
+        wanted: GlobalStates.settingsWindowVisible && !SeparateWindows.settingsSeparate
         keepFor: Math.max(0, Config.performance.settingsKeepAliveMinutes) * 60000
         function load() {
             if (active)
-                setSource("modules/settings/SettingsWindow.qml", {
+                setSource("modules/settings/SettingsWindowInProcess.qml", {
                     "targetScreen": SettingsScreen.byName(Quickshell.screens, GlobalStates.settingsTargetScreenName)
                 });
             else
@@ -344,14 +344,26 @@ ShellRoot {
 
     // First-run setup wizard (OnboardingService: auto-shown once on a fresh
     // install, `<app> run onboarding`, Settings > About)
+    // (its own process with performance.separateWindows: onboarding-window.qml)
     Loader {
-        active: SuspendManager.wakeReady && OnboardingService.visible
+        active: SuspendManager.wakeReady && OnboardingService.visible && !SeparateWindows.wizardSeparate
         source: "modules/onboarding/OnboardingWindow.qml"
     }
     Loader {
-        active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek
+        active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek && !SeparateWindows.wizardSeparate
         source: "modules/onboarding/OnboardingPeekPill.qml"
     }
+    // "Opening Settings..." while a separate window process starts
+    Loader {
+        active: SeparateWindows.settingsOpening || SeparateWindows.wizardOpening
+        source: "modules/settings/OpeningPill.qml"
+    }
+
+    // Password prompts of system actions (pkexec, app installs): the
+    // shell's own polkit agent and dialog. Only this instance registers
+    // one; another instance (dry-run wizard, a separate Settings process)
+    // simply has no PolkitHost.
+    PolkitHost {}
 
     // Display prompts: keep/revert countdown and identify numbers, per screen
     Variants {
@@ -400,6 +412,7 @@ ShellRoot {
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = WallpaperCommandService; // Force init (IPC wallpaper.set subscriber)
                 _ = PresetCommandService;    // Force init (IPC preset.load subscriber)
+                _ = SeparateWindows.wanted;   // Settings / wizard as their own processes (when on)
             });
         }
     }

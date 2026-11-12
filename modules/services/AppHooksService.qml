@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.modules.services
+import qs.modules.globals
 import qs.config
 import "../theme/AppThemes.js" as AppThemes
 
@@ -98,9 +99,10 @@ Singleton {
             root._togglesChanged();
     }
 
+    // the main shell keeps the hooks connected (a window only acts on clicks)
     Timer {
         interval: root.startDelay
-        running: Config.initialLoadComplete && !root.started
+        running: Config.initialLoadComplete && !root.started && ProcessRole.primary
         onTriggered: {
             root.started = true;
             root._seen = root.enabledIds;
