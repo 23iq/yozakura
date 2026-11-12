@@ -125,6 +125,8 @@ ShellRoot {
             Qt.quit();
             return;
         }
+        // the staging shared with the main shell and the other window
+        PreviewSink.link();
         BackendService.addSubscription(["windows"], (service, data) => root.event(service, data));
     }
 }

@@ -231,23 +231,26 @@ window reopens at once). Off, everything is as before.
   its own environment and every other child (`envclean.WindowVars`), and a
   window starts detached programs through `ProcessRole.detached(argv)`
   (xdg-open, terminals), which removes them.
-- Staged changes (one preview, not two stores): the window stages in its own
+- Staged changes (one staging, as in-process): the window stages in its own
   Config exactly as in-process (`SettingsStore.set` -> GlobalStates snapshot,
   auto-save paused) and, for a staged domain only, relays `preview.set
-  {owner, key, value}` (backend/pkg/svc/preview). The main shell's
-  `PreviewSink` applies it with the same `ConfigWrite.assign` + snapshot
-  (`GlobalStates.mark*Changed`), so the desktop previews it and writes
-  nothing. Apply: the window writes the files (`apply*Changes`) and sends
-  `preview.commit`; the main shell drops its snapshots without restoring (the
-  reload of the written files brings the same values). Discard / closing
-  without applying: `preview.discard`, the main shell restores its
-  snapshots. The window process gone (crash, kill): the daemon discards for
-  it. The daemon keeps the staged values, so a main shell restarted while the
-  window is open gets them again. Unstaged settings are written by the
-  window at once; the main shell follows the file, and both processes follow
-  `config set`, MCP and presets through their file watchers. Known gap: a
-  change the desktop itself makes to a staged domain while a preview is
-  pending is replaced by the window's Apply (in-process, Apply saved it too).
+  {owner, key, value}` (backend/pkg/svc/preview). Every other process (the
+  main shell, the other window) applies it in `PreviewSink` with the same
+  `ConfigWrite.assign` + snapshot (`GlobalStates.mark*Changed`), so the
+  desktop previews it, the other window shows it as unsaved, and nothing of
+  it is written. In-process Settings and the wizard share one set of
+  snapshots, so here too it is one staging: Apply or Discard by either ends
+  all of it (`preview.commit` drops the other processes' snapshots without
+  restoring, `preview.discard` restores them). Apply: the window writes the
+  files (`apply*Changes`) and sends `preview.commit`. A window process gone
+  (crash, kill, closed without applying) while the other window runs leaves
+  the staging to that one; the last one gone discards it. The daemon keeps
+  the staged values, so a process (re)started meanwhile gets them again.
+  Unstaged settings are written by the window at once; the main shell
+  follows the file, and every process follows `config set`, MCP and presets
+  through its file watchers. Known gap: a change the desktop itself makes to
+  a staged domain while a preview is pending is replaced by the window's
+  Apply (in-process, Apply saved it too).
 - What the window cannot own is asked of the main shell
   (`windows.relay {to: "shell", topic}`): wallpaper changes
   (`RemoteWallpapers`, which reads wallpapers.json and scans the library like

@@ -1,21 +1,24 @@
-// Package preview relays staged settings from a separate Settings window
-// process (performance.separateWindows, pkg/svc/windows) to the main shell,
-// so a staged change previews on the desktop as it does with the window
-// in-process.
+// Package preview relays staged settings between the processes of the
+// shell when Settings and the setup wizard run as their own processes
+// (performance.separateWindows, pkg/svc/windows), so a staged change
+// previews on the desktop and in the other window as it does in-process.
 //
-// The window stages a change in its own Config (snapshot + auto-save paused,
-// GlobalStates.mark*Changed) and sends preview.set {owner, key, value}; the
-// main shell (modules/services/PreviewSink.qml, the only subscriber) applies
-// it to its in-memory Config through the same staging, so nothing of it is
-// written there. Apply: the window writes the files and sends
-// preview.commit; the main shell drops its snapshot without restoring it
-// (the reload of the written files brings the same values). Discard (or
-// closing without applying): the window restores its snapshot and sends
-// preview.discard; the main shell restores its own. When the window process
-// is gone (crash, kill) the windows service calls OwnerGone and the main
-// shell is told to discard. The daemon keeps the staged values, so a main
-// shell that restarts while the window is open gets them again on
-// subscribe.
+// In-process there is one Config and one staging (the GlobalStates
+// snapshots): whatever Settings or the wizard stage is the same set of
+// unsaved changes, Apply anywhere writes all of it and Discard anywhere
+// restores all of it. This relay keeps that: it is one shared staging, not
+// one per window. A window stages a change in its own Config (snapshot +
+// auto-save paused) and sends preview.set {owner, key, value}; every other
+// process (the main shell's and the other window's PreviewSink.qml) applies
+// it with the same staging, so nothing of it is written and every window
+// shows it as unsaved. Commit (Apply) or Discard by any owner ends the
+// whole staging: preview.commit / preview.discard {owner} tells every
+// other process to drop / restore its snapshots. When a window process is
+// gone (crash, kill, closed without applying) and no other window runs,
+// the staging is discarded; while another window runs it stays, shown
+// there as unsaved changes, to apply or discard. The daemon keeps the
+// staged values, so a process that (re)starts meanwhile (the main shell, a
+// window opened later) gets them on subscribe.
 package preview
 
 import (
@@ -116,35 +119,33 @@ func (s *Service) Set(e Entry) {
 // Discard drops what owner staged; the main shell restores its snapshot.
 func (s *Service) Discard(owner string) bool { return s.end(owner, "preview.discard") }
 
-// Commit drops what owner staged; the main shell keeps the values (the
-// owner wrote them to disk).
+// Commit ends the staging (every owner's: it is one); the other processes
+// keep the values (they were written).
 func (s *Service) Commit(owner string) bool { return s.end(owner, "preview.commit") }
 
-// OwnerGone is Discard for a window process that exited.
-func (s *Service) OwnerGone(owner string) { s.end(owner, "preview.discard") }
+// OwnerGone is called when the window process of owner exited. With
+// another window still running the staging stays (that window shows it and
+// can apply or discard it); otherwise it is discarded, so no staged value
+// stays live on the desktop with no window left to discard it.
+func (s *Service) OwnerGone(owner string, othersRunning bool) {
+	s.mu.Lock()
+	n := len(s.staged)
+	s.mu.Unlock()
+	if othersRunning || n == 0 {
+		return
+	}
+	s.end(owner, "preview.discard")
+}
 
-// end drops owner's entries and tells the main shell; the entries of any
-// other owner are sent again after it, since the shell's discard restores
-// a whole snapshot. Reports whether owner had staged anything (the event
-// is sent either way: the shell may hold a staging the daemon never saw,
-// e.g. after a daemon restart).
+// end drops the whole staging and tells every process. Reports whether
+// anything was staged (the event is sent either way: a process may hold a
+// staging the daemon never saw, e.g. after a daemon restart).
 func (s *Service) end(owner, event string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	kept := s.staged[:0]
-	had := false
-	for _, e := range s.staged {
-		if e.Owner == owner {
-			had = true
-			continue
-		}
-		kept = append(kept, e)
-	}
-	s.staged = kept
+	had := len(s.staged) > 0
+	s.staged = nil
 	s.sendLocked(event, Done{Owner: owner})
-	for _, e := range s.staged {
-		s.sendLocked("preview.set", e)
-	}
 	return had
 }
 

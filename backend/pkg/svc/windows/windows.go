@@ -11,13 +11,13 @@
 // asked while the window is still starting (not listening yet) is kept,
 // the last one per kind, and handed over in the answer to its
 // windows.ready. A closed window reports windows.hiding until its process
-// quits; an open meanwhile raises it again. The window
-// quits when it closes; the service reaps it, tells every subscriber
-// (windows.state) and calls OnExit (the preview relay drops what that
-// window staged). A crash of a window never touches the main shell: the
-// window runs in its own process group and is not restarted. Close (daemon
-// shutdown, reload, quit) stops every window: SIGTERM, then SIGKILL of the
-// group after StopWait.
+// quits; an open meanwhile raises it again. The window quits when it
+// closes; the service reaps it, tells every subscriber (windows.state) and
+// calls OnExit (the preview relay discards the staging once no window is
+// left). A crash of a window never touches the main shell: the window runs
+// in its own process group and is not restarted. Close (daemon shutdown,
+// reload, quit) stops every window: SIGTERM, then SIGKILL of every group
+// still there after StopWait.
 //
 // windows.relay carries small messages between the processes (to "shell"
 // or a kind): the window asks the main shell to act on what only it owns
@@ -382,6 +382,14 @@ func (s *Service) Hiding(kind string) bool {
 		s.broadcast("windows.state", Status{Kind: kind, State: StateHiding, Pid: inst.proc.Pid()})
 	}
 	return ok
+}
+
+// AnyRunning reports whether a window process of any kind runs (one that
+// exited is no longer counted when OnExit runs).
+func (s *Service) AnyRunning() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return len(s.running) > 0
 }
 
 // Statuses is the state of every kind.

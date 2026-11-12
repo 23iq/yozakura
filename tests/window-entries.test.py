@@ -59,6 +59,7 @@ QtObject {
     }
     function count(m) { return calls.filter(c => c.method === m).length }
 }"""
+PREVIEW = "pragma Singleton\nQtObject { property int links: 0; function link() { links++ } }"
 QUICKSHELL = """pragma Singleton
 QtObject {
     property var screens: [{ "name": "DP-1" }, { "name": "HDMI-A-1" }]
@@ -95,7 +96,7 @@ env_s = {"WINDOW_PAGE": "network", "WINDOW_SCREEN": "HDMI-A-1", "WINDOW_WORKSPAC
 def settings_scene(name: str, role: str):
     h = Harness(name)
     common(h, role, env_s)
-    h.module("qs.modules.services", {"BackendService": BACKEND})
+    h.module("qs.modules.services", {"BackendService": BACKEND, "PreviewSink": PREVIEW})
     h.copy("settings-window.qml", "app", replace={"interval: 1000": "interval: 200"})
     (h.root / "app/modules/settings").mkdir(parents=True, exist_ok=True)
     (h.root / "app/modules/settings/SettingsWindowSeparate.qml").write_text(WINDOW)
@@ -135,6 +136,7 @@ check(ev("GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.remote"
 check(ev("entry.win !== null && entry.win.targetScreen && entry.win.targetScreen.name === 'HDMI-A-1'") is True,
       "the window is loaded on the target screen")
 check(json.loads(ev("JSON.stringify(BackendService.cbs.map(c => c.s))")) == [["windows"]], "it listens to the windows stream only")
+check(ev("PreviewSink.links") == 1, "...and links the shared staging")
 ev("BackendService.readyResult = { ok: true, command: { kind: 'settings', action: 'raise', page: 'about' } }")
 ev("entry.win.visible = false")
 ev("entry.win.visible = true")
@@ -177,8 +179,8 @@ check(quits != [], "closed: it quits")
 h2 = settings_scene("window-entries-settings-norole", "")
 root2, quits2 = load_entry(h2, "settings-window.qml")
 check(quits2 != [], "no settings role: quits at once")
-check(h2.eval(root2, "entry.win") is None and h2.eval(root2, "GlobalStates.settingsWindowVisible") is False,
-      "...loading nothing")
+check(h2.eval(root2, "entry.win") is None and h2.eval(root2, "GlobalStates.settingsWindowVisible") is False
+      and h2.eval(root2, "PreviewSink.links") == 0, "...loading nothing")
 
 # ---------------------------------------------------------------- wizard
 ONBOARDING = """pragma Singleton
@@ -199,6 +201,7 @@ def wizard_scene(name: str, role: str):
     common(h, role, {"WINDOW_SCREEN": "HDMI-A-1"})
     h.module("qs.modules.services", {
         "BackendService": BACKEND,
+        "PreviewSink": PREVIEW,
         "OnboardingService": ONBOARDING,
         "StateService": "pragma Singleton\nQtObject { property bool initialized: false }",
         "ExclusiveService": "pragma Singleton\nQtObject { property bool busy: false }",
@@ -228,6 +231,7 @@ wait_until(lambda: ew("OnboardingService.opens") == 1)
 check(ew("OnboardingService.visible") is True and ew("OnboardingService.screenName") == "HDMI-A-1",
       "opens (resuming) on the screen it was given")
 check(ew("BackendService.count('windows.ready')") == 1, "shown: windows.ready")
+check(ew("PreviewSink.links") == 1, "it links the shared staging")
 ew("BackendService.emit('windows.relay', { to: 'onboarding', topic: 'shell.state', data: { panelOpen: true, bottomZone: 48 } })")
 check(ew("OnboardingService.shellPanelOpen") is True, "takes the main shell's panel state (keybind tour)")
 check(ew("Visibilities.reservations['HDMI-A-1'].bottomZone") == 48, "...and its bottom bar (peek pill)")

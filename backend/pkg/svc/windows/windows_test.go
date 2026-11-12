@@ -223,6 +223,7 @@ func TestExitIsReapedAndReported(t *testing.T) {
 		t.Fatal("OnExit not called")
 	}
 	assert.Equal(t, StateClosed, r.svc.Statuses()[0].State)
+	assert.False(t, r.svc.AnyRunning())
 
 	// the next open starts a fresh process (never restarted on its own)
 	res, err := r.svc.Open(Request{Kind: KindSettings})

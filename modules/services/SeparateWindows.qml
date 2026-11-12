@@ -17,8 +17,8 @@ import qs.config
 // shell.qml loads the in-process windows only while `*Separate` is false.
 // A window open in-process stays in-process until it closes (the setting
 // can change while it is open); a window process that could not start
-// falls back to the in-process window. It also relays staged previews into
-// Config (PreviewSink) and runs what a window asks of the main shell
+// falls back to the in-process window. It also links the shared staging
+// (PreviewSink) and runs what a window asks of the main shell
 // (windows.relay to "shell": wallpaper changes, opening the other window).
 Singleton {
     id: root
@@ -45,8 +45,6 @@ Singleton {
     // Methods of the wallpaper manager a window may ask for (RemoteWallpapers).
     readonly property var wallpaperMethods: ["setWallpaper", "setWallpaperDir", "setMatugenScheme", "setColorPreset", "clearPerScreenWallpaper", "clearAllPerScreenWallpapers", "nextWallpaper", "previousWallpaper"]
 
-    property PreviewSink sink: PreviewSink {}
-
     // A relay to the shell no case below handles, for the feature that owns
     // it (DesktopWidgets: desktop.editMode).
     signal relayed(string topic, var data)
@@ -58,7 +56,7 @@ Singleton {
             return;
         root._subscribed = true;
         BackendService.addSubscription(["windows"], (service, data) => root._onWindows(service, data));
-        BackendService.addSubscription(["preview"], (service, data) => root.sink.handle(service, data));
+        PreviewSink.link();
     }
     onWantedChanged: root._subscribe()
     Component.onCompleted: root._subscribe()

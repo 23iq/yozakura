@@ -116,21 +116,48 @@ func TestCommitAndDiscardClearAndTellTheShell(t *testing.T) {
 	noMore(t, sub)
 }
 
-func TestOwnerGoneDiscardsOnlyThatOwnerAndReplaysTheRest(t *testing.T) {
+// One staging, as in-process: Apply or Discard by either window ends what
+// both staged, in both orders.
+func TestCommitOrDiscardEndsEveryOwnersStaging(t *testing.T) {
+	for _, first := range []string{"commit", "discard"} {
+		s := NewService()
+		sub := subscribed(t, s)
+		s.Set(Entry{Owner: "onboarding", Key: "theme.roundness", Value: json.RawMessage("8")})
+		s.Set(Entry{Owner: "settings", Key: "bar.position", Value: json.RawMessage(`"top"`)})
+		drain(t, sub, 2)
+		fn, then := s.Commit, s.Discard
+		if first == "discard" {
+			fn, then = s.Discard, s.Commit
+		}
+		assert.True(t, fn("settings"), first)
+		got := drain(t, sub, 1)
+		assert.Equal(t, ev{"preview." + first, `{"owner":"settings"}`}, got[0])
+		assert.Empty(t, s.Staged(), "%s by one owner ends the other's too", first)
+		noMore(t, sub)
+		// the other window's later Apply / Discard has nothing left
+		assert.False(t, then("onboarding"))
+		drain(t, sub, 1)
+	}
+}
+
+// A window gone while the other runs: the staging stays for that one to
+// apply or discard; the last window gone: discarded.
+func TestOwnerGone(t *testing.T) {
 	s := NewService()
 	sub := subscribed(t, s)
+	s.OwnerGone("settings", false)
+	noMore(t, sub) // nothing staged: nothing to say
 	s.Set(Entry{Owner: "onboarding", Key: "theme.roundness", Value: json.RawMessage("8")})
 	s.Set(Entry{Owner: "settings", Key: "bar.position", Value: json.RawMessage(`"top"`)})
 	drain(t, sub, 2)
 
-	s.OwnerGone("settings")
-	got := drain(t, sub, 2)
-	assert.Equal(t, ev{"preview.discard", `{"owner":"settings"}`}, got[0])
-	// the shell's discard restored its whole snapshot: the other owner's
-	// value is staged again
-	assert.Equal(t, "preview.set", got[1].name)
-	assert.JSONEq(t, `{"owner":"onboarding","key":"theme.roundness","value":8}`, got[1].data)
-	must(t, assert.Len(t, s.Staged(), 1))
+	s.OwnerGone("settings", true)
+	noMore(t, sub)
+	must(t, assert.Len(t, s.Staged(), 2))
+
+	s.OwnerGone("onboarding", false)
+	assert.Equal(t, ev{"preview.discard", `{"owner":"onboarding"}`}, drain(t, sub, 1)[0])
+	assert.Empty(t, s.Staged())
 }
 
 func TestSubscribeReplaysStagedValues(t *testing.T) {

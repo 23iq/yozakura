@@ -19,8 +19,8 @@ import "modules/settings/SettingsScreen.js" as SettingsScreen
 // content is loaded by URL, SettingsWindowSeparate.qml): the frame maps at
 // once, then the pages compile and build. A later open asks this process
 // to raise itself (windows.command); closing the window ends the process.
-// Staged changes preview on the desktop through the daemon's `preview`
-// relay (SettingsStore, PreviewSink in the main shell).
+// Staged changes are one staging shared with the main shell and the wizard
+// through the daemon's `preview` relay (SettingsStore, PreviewSink).
 ShellRoot {
     id: root
 
@@ -127,6 +127,8 @@ ShellRoot {
             Qt.quit();
             return;
         }
+        // the staging shared with the main shell and the other window
+        PreviewSink.link();
         root.target(ProcessRole.initialPage, ProcessRole.initialScreen, ProcessRole.initialWorkspace);
         GlobalStates.settingsWindowVisible = true;
         BackendService.addSubscription(["windows"], (service, data) => {

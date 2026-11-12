@@ -311,7 +311,7 @@ func New() (*Daemon, error) {
 
 	// Settings / setup wizard as their own Quickshell processes
 	// (performance.separateWindows): started on demand next to the running
-	// shell.qml; what a window staged is dropped when it exits.
+	// shell.qml; what they staged is discarded when the last one exits.
 	d.preview = preview.NewService()
 	d.preview.Register(d.srv)
 	d.windows = windows.NewService(windows.Options{
@@ -319,7 +319,7 @@ func New() (*Daemon, error) {
 		ShellDir: d.shellDir,
 		BaseDir:  paths.FindBaseShellSource,
 		Env:      d.qsEnv,
-		OnExit:   d.preview.OwnerGone,
+		OnExit:   func(kind string) { d.preview.OwnerGone(kind, d.windows.AnyRunning()) },
 	})
 	d.windows.Register(d.srv)
 
