@@ -6,6 +6,8 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.globals
+import "IdleSchedule.js" as IdleSchedule
+import "../widgets/dashboard/wallpapers/WallpaperPause.js" as WallpaperPause
 
 Singleton {
     id: root
@@ -47,9 +49,23 @@ Singleton {
         syncSleepCommands();
     }
 
-    // Master Idle Logic
+    // Master Idle Logic. There is no per-second tick while the user is
+    // away: a single-shot timer wakes at the next threshold that matters
+    // (each listener's timeout and the wallpaper idle-pause delay), so an
+    // idle session costs one wake-up per threshold.
+    // Idle seconds as of the last threshold reached (0 while active). It
+    // steps from threshold to threshold and is not a running clock, so
+    // compare it only against one of idleThresholds (Wallpaper compares it
+    // with pauseWallpaperIdleDelay); idleSecondsNow() reads the live value.
     property int elapsedIdleTime: 0
     property var triggeredListeners: [] // Keeps track of indices that have fired
+    readonly property var idleThresholds: IdleSchedule.thresholds(Config.system.idle.listeners, [WallpaperPause.idleDelay(Config.performance)])
+
+    property bool _idle: false
+    // Idle time accounted up to the start of the pending wait (ms), and
+    // when that wait started (wall clock, only to place a mid-wait change).
+    property real _idleMs: 0
+    property real _stepStart: 0
 
     // Master Monitor: Detects "absence of activity" almost immediately
     property var masterMonitor: IdleMonitor {
@@ -59,22 +75,64 @@ Singleton {
 
         onIsIdleChanged: {
             if (isIdle) {
-                idleTimer.start();
+                root._idle = true;
+                root._idleMs = 0;
+                root.elapsedIdleTime = 0;
+                root._schedule();
             } else {
                 idleTimer.stop();
+                root._idle = false;
                 root.resetIdleState();
             }
         }
     }
 
+    // The timer measures idle time like the old 1 s tick did (it does not
+    // run while the machine is suspended); the wall clock only places a
+    // threshold change that lands in the middle of a wait.
     property var idleTimer: Timer {
         id: idleTimer
-        interval: 1000 // 1 second tick
-        repeat: true
+        repeat: false
         onTriggered: {
-            root.elapsedIdleTime += 1;
-            root.checkListeners();
+            root._idleMs += idleTimer.interval;
+            root._reached();
         }
+    }
+
+    // Listeners or the wallpaper delay changed while idle: account the time
+    // spent in the current wait, fire what is now due and re-plan.
+    onIdleThresholdsChanged: {
+        if (!root._idle)
+            return;
+        root._idleMs += root._pendingMs();
+        idleTimer.stop();
+        root._reached();
+    }
+
+    function _pendingMs() {
+        const spent = Math.max(0, Date.now() - root._stepStart);
+        return idleTimer.running ? Math.min(spent, idleTimer.interval) : spent;
+    }
+
+    function _reached() {
+        root.elapsedIdleTime = Math.floor(root._idleMs / 1000);
+        root.checkListeners();
+        root._schedule();
+    }
+
+    function _schedule() {
+        root._stepStart = Date.now();
+        const wait = IdleSchedule.nextDelay(root.idleThresholds, root._idleMs);
+        if (wait < 0)
+            return;
+        idleTimer.interval = Math.max(1, Math.ceil(wait));
+        idleTimer.restart();
+    }
+
+    // Live idle seconds (0 while active) for a reader that needs the
+    // running value at one moment; nothing is ticking to provide it.
+    function idleSecondsNow() {
+        return root._idle ? Math.floor((root._idleMs + root._pendingMs()) / 1000) : 0;
     }
 
     // Idle hooks are user-configured shell commands; the command string is
@@ -112,19 +170,15 @@ Singleton {
     }
 
     function checkListeners() {
-        let listeners = Config.system.idle.listeners;
-        for (let i = 0; i < listeners.length; i++) {
-            let listener = listeners[i];
-            let tVal = listener.timeout || 60;
-
-            // If time matches and hasn't been triggered yet
-            if (root.elapsedIdleTime >= tVal && !root.triggeredListeners.includes(i)) {
-                if (listener.onTimeout) {
-                    console.log("Idle timer " + tVal + "s reached: " + listener.onTimeout);
-                    root.executeCommand(listener.onTimeout);
-                }
-                root.triggeredListeners.push(i);
+        const listeners = Config.system.idle.listeners;
+        const due = IdleSchedule.due(listeners, root.elapsedIdleTime, root.triggeredListeners);
+        for (const i of due) {
+            const listener = listeners[i];
+            if (listener.onTimeout) {
+                console.log("Idle timer " + (listener.timeout || 60) + "s reached: " + listener.onTimeout);
+                root.executeCommand(listener.onTimeout);
             }
+            root.triggeredListeners.push(i);
         }
     }
 

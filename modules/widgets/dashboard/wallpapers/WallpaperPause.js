@@ -11,6 +11,16 @@ function _on(value, fallback) {
     return value === undefined || value === null ? fallback : !!value;
 }
 
+// Idle seconds after which the wallpaper pauses, or 0 when idle pausing is
+// off. IdleService wakes at this threshold so `idleSeconds` reaches it.
+function idleDelay(perf) {
+    var p = perf || {};
+    if (!_on(p.pauseWallpaperOnIdle, true))
+        return 0;
+    var delay = Number(p.pauseWallpaperIdleDelay);
+    return delay > 0 ? delay : DEFAULT_IDLE_DELAY;
+}
+
 function shouldPause(state, perf) {
     var s = state || {};
     var p = perf || {};
@@ -20,12 +30,8 @@ function shouldPause(state, perf) {
         return true;
     if (s.covered)
         return true;
-    if (_on(p.pauseWallpaperOnIdle, true)) {
-        var delay = Number(p.pauseWallpaperIdleDelay);
-        if (!(delay > 0))
-            delay = DEFAULT_IDLE_DELAY;
-        if ((Number(s.idleSeconds) || 0) >= delay)
-            return true;
-    }
+    var delay = idleDelay(p);
+    if (delay > 0 && (Number(s.idleSeconds) || 0) >= delay)
+        return true;
     return !!s.onBattery && _on(p.pauseWallpaperOnBattery, false);
 }

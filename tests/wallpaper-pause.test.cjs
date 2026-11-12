@@ -27,6 +27,14 @@ test('idle pauses after the configured delay, unless turned off', () => {
     assert.equal(P.shouldPause({ idleSeconds: 60 }, { pauseWallpaperIdleDelay: 'x' }), true);
 });
 
+test('idleDelay is the threshold IdleService wakes at (0 when off)', () => {
+    assert.equal(P.idleDelay(defaults), defaults.pauseWallpaperIdleDelay);
+    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 10 }), 10);
+    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 0 }), 60);
+    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperOnIdle: false }), 0);
+    assert.equal(P.idleDelay(undefined), 60);
+});
+
 test('battery pause is opt-in', () => {
     assert.equal(defaults.pauseWallpaperOnBattery, false);
     assert.equal(P.shouldPause({ onBattery: true }, defaults), false);
