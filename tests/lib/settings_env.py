@@ -802,7 +802,10 @@ QtObject {
 
 class SettingsEnv:
     def __init__(self, name: str = "settings", *, palette: dict | None = None, user_config: bool = False,
-                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None):
+                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None,
+                 devices: bool = False):
+        """`devices`: believable live services (tests/lib/device_fixtures.py)
+        instead of the idle stand-ins, for the device pages."""
         self.h = Harness(name)
         self.root = self.h.root
         domains = load_defaults()
@@ -836,6 +839,7 @@ class SettingsEnv:
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
         from lockscreen_env import SERVICES as LOCK_SERVICES  # (lockscreen_env imports this module)
         from osd_env import AUDIO_STUB, OSD_SERVICE_STUB  # (same)
+        from device_fixtures import SERVICES as DEVICE_SERVICES
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
@@ -846,7 +850,8 @@ class SettingsEnv:
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
                                               "NetworkService": NETWORK_STUB, "PowerProfileClient": POWER_PROFILE_STUB,
-                                              **LOCK_SERVICES, **DESKTOP_STUBS})
+                                              **LOCK_SERVICES, **DESKTOP_STUBS,
+                                              **(DEVICE_SERVICES if devices else {})})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
                                              "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})

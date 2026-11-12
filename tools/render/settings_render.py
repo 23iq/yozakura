@@ -10,6 +10,8 @@ palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
 `home` renders the home screen (with `--search` a query in its field).
+`--devices` gives the device pages (Power, Displays, Keys, Network,
+Bluetooth, Sound) a believable world to show (tests/lib/device_fixtures.py).
 Colours: with `--wallpaper` the palette is derived from that image (matugen,
 or without it `wallpaper_palette.py`, which needs the `materialyoucolor`
 package), so the proof's wallpaper and colours belong together; light mode
@@ -195,6 +197,8 @@ def main() -> int:
     ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
     ap.add_argument("--hover", default="", metavar="ENTRY", help="hover the row of this entry id")
     ap.add_argument("--undo", action="store_true", help="show the undo pill (as after a change)")
+    ap.add_argument("--devices", action="store_true",
+                    help="believable device state (battery, monitors, networks, audio: tests/lib/device_fixtures.py)")
     ap.add_argument("--palette", default="wallpaper", choices=["wallpaper", "default"],
                     help="colours from the wallpaper (default) or the fixed rose palette")
     args = ap.parse_args()
@@ -229,7 +233,7 @@ def render(lang: str, mode: str, args, size: tuple, state: dict, schemes: dict, 
         else palette(mode, state, from_wallpaper=bool(args.wallpaper))
     env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=colors,
                       user_config=True,
-                      overrides=extra, wallpaper=state)
+                      overrides=extra, wallpaper=state, devices=args.devices)
     backdrop = json.dumps(("file://" + wall) if wall and lang else "")
     win = env.load(f"""
 import QtQuick

@@ -8789,7 +8789,7 @@
           "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
           "x-settings": {
             "category": "power",
-            "section": "battery",
+            "section": "idle",
             "label": "system.performance.battery_saver",
             "control": "toggle",
             "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
@@ -9578,7 +9578,8 @@
                     "section": "idle",
                     "label": "settings.system.lock_command",
                     "control": "text",
-                    "keywords": "lock screen command idle"
+                    "keywords": "lock screen command idle",
+                    "advanced": true
                   },
                   "format": "command"
                 },
@@ -9592,7 +9593,8 @@
                     "section": "power",
                     "label": "settings.system.before_sleep",
                     "control": "text",
-                    "keywords": "suspend sleep before lock command power"
+                    "keywords": "suspend sleep before lock command power",
+                    "advanced": true
                   },
                   "format": "command"
                 },
@@ -9606,7 +9608,8 @@
                     "section": "power",
                     "label": "settings.system.after_sleep",
                     "control": "text",
-                    "keywords": "resume wake after sleep command power screen on"
+                    "keywords": "resume wake after sleep command power screen on",
+                    "advanced": true
                   },
                   "format": "command"
                 }
@@ -9645,7 +9648,8 @@
                 "section": "idle",
                 "label": "idle.listeners",
                 "control": "list",
-                "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
+                "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle",
+                "advanced": true
               }
             }
           },

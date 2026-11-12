@@ -250,7 +250,7 @@
       "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
       "x-settings": {
         "category": "power",
-        "section": "battery",
+        "section": "idle",
         "label": "system.performance.battery_saver",
         "control": "toggle",
         "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"

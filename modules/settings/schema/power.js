@@ -1,12 +1,14 @@
 .pragma library
 
-// Power: what happens when the computer is idle, and around sleep (moved out
-// of System). Not curated for the window yet: see modules/settings/AGENTS.md,
-// CONVERTING A PAGE. Entry format: see modules/settings/AGENTS.md.
+// Power: the battery and power profile (the stage), battery saver, what
+// happens while you are away (one idle timeline) and around sleep (two
+// switches). The raw idle listeners and sleep commands are out of the
+// window (`yozakura config`). Entry format: see modules/settings/AGENTS.md.
 
 function command(key, label, description, placeholder, keywords) {
     return {
         "key": key,
+        "advanced": true,
         "type": "text",
         "monospace": true,
         "placeholder": placeholder,
@@ -31,22 +33,32 @@ var category = {
     "icon": "batteryHigh",
     "title": "prefs.cat.power",
     "description": "prefs.cat.power.desc",
-    "keywords": "power idle sleep suspend lock screen off dim timeout battery hypridle",
+    "keywords": "power idle sleep suspend lock screen off dim timeout battery hypridle profile performance saver balanced",
+    "stage": "PowerStage",
+    "hero": {
+        "right": ["performance.batterySaver"],
+        "hint": "prefs.power.hero_hint"
+    },
+    "row": ["idle", "power"],
     "sections": [
         {
-            "id": "battery",
-            "title": "prefs.power.section.battery",
-            "entries": [
-                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse")
-            ]
-        },
-        {
             "id": "idle",
-            "title": "settings.system.idle",
+            "title": "prefs.power.section.away",
             "entries": [
+                {
+                    "id": "power.idle",
+                    "type": "custom",
+                    "component": "IdleTimeline",
+                    "keys": ["system.idle.listeners"],
+                    "label": "prefs.power.idle",
+                    "description": "prefs.power.idle.desc",
+                    "keywords": "idle away timeout dim lock screen off sleep suspend minutes timeline hypridle"
+                },
+                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
                 command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle"),
                 {
                     "key": "system.idle.listeners",
+                    "advanced": true,
                     "type": "list",
                     "fields": [
                         {
@@ -91,8 +103,17 @@ var category = {
         },
         {
             "id": "power",
-            "title": "prefs.sys.section.power",
+            "title": "prefs.power.section.sleep",
             "entries": [
+                {
+                    "id": "power.sleep",
+                    "type": "custom",
+                    "component": "SleepSwitches",
+                    "keys": ["system.idle.general.before_sleep_cmd", "system.idle.general.after_sleep_cmd"],
+                    "label": "prefs.power.sleep",
+                    "description": "prefs.power.sleep.desc",
+                    "keywords": "sleep suspend lock before resume wake screen on after"
+                },
                 command("system.idle.general.before_sleep_cmd", "settings.system.before_sleep", "prefs.sys.before_sleep.desc", "idle.before_sleep", "suspend sleep before lock command power"),
                 command("system.idle.general.after_sleep_cmd", "settings.system.after_sleep", "prefs.sys.after_sleep.desc", "idle.after_sleep", "resume wake after sleep command power screen on")
             ]

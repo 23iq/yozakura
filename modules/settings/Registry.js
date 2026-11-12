@@ -70,7 +70,9 @@ var EDITORS = {
     "AiStripChips": "editors/AiStripChips.qml",
     "WindowBorderEditor": "editors/WindowBorderEditor.qml",
     "WindowCornersEditor": "editors/WindowCornersEditor.qml",
-    "WindowGapsEditor": "editors/WindowGapsEditor.qml"
+    "WindowGapsEditor": "editors/WindowGapsEditor.qml",
+    "IdleTimeline": "editors/IdleTimeline.qml",
+    "SleepSwitches": "editors/SleepSwitches.qml"
 };
 
 var PREVIEWS = {
@@ -137,7 +139,8 @@ var STAGES = {
     "TasksStage": "stages/TasksStage.qml",
     "SystemStage": "stages/SystemStage.qml",
     "UpdatesStage": "stages/UpdatesStage.qml",
-    "WindowsStage": "stages/WindowsStage.qml"
+    "WindowsStage": "stages/WindowsStage.qml",
+    "PowerStage": "stages/PowerStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
