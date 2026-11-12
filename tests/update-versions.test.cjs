@@ -112,3 +112,15 @@ test('gitFollowsMain: the git notice is for checkouts that follow main', () => {
     assert.equal(V.gitFollowsMain('dev'), false);
     assert.equal(V.gitFollowsMain('feature/x'), false);
 });
+
+test('nextPage follows only the next page of the same API', () => {
+    const base = 'https://api.github.com/repos/o/r';
+    const link = '<' + base + '/tags?per_page=100&page=2>; rel="next", <' + base + '/tags?per_page=100&page=5>; rel="last"';
+    assert.equal(V.nextPage(link, base), base + '/tags?per_page=100&page=2');
+    assert.equal(V.nextPage('<' + base + '/tags?page=1>; rel="prev"', base), '');
+    assert.equal(V.nextPage('', base), '');
+    assert.equal(V.nextPage(null, base), '');
+    assert.equal(V.nextPage('<https://evil.example/tags?page=2>; rel="next"', base), '');
+    assert.equal(V.nextPage('<' + base + 'x/tags?page=2>; rel="next"', base), '');
+    assert.ok(V.MAX_TAG_PAGES >= 1);
+});

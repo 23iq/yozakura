@@ -172,3 +172,18 @@ function gitFollowsMain(branch) {
 function gitLabel(tip) {
     return "main @ " + String(tip || "").substring(0, 7);
 }
+
+// The most pages of 100 tags an update check reads.
+var MAX_TAG_PAGES = 10;
+
+// The rel="next" URL of a GitHub Link header, "" when there is none or it
+// does not start with base (the API the check reads).
+function nextPage(link, base) {
+    var parts = String(link || "").split(",");
+    for (var i = 0; i < parts.length; i++) {
+        var m = /^\s*<([^>]*)>\s*;\s*rel="next"\s*$/.exec(parts[i]);
+        if (m && base && m[1].indexOf(base + "/") === 0)
+            return m[1];
+    }
+    return "";
+}

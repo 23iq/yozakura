@@ -11,7 +11,8 @@ import "UpdateVersions.js" as Versions
 // Background update notice. What counts as newer depends on the update
 // channel (system.updateChannel, see UpdateVersions.js): stable / beta read
 // the repository's tags, git the tip of main. One unauthenticated GitHub
-// call per check, at most about once an hour; the installed commit comes
+// call per check (one per 100 tags on the tag channels), at most about
+// once an hour; the installed commit comes
 // from the checkout the shell runs from (git describe), nothing else.
 Singleton {
     id: root
@@ -19,7 +20,7 @@ Singleton {
     readonly property string currentVersion: Config.version
     readonly property string channel: Versions.channel(Config.system.updateChannel)
     readonly property string apiBase: "https://api.github.com/repos/" + Brand.repoSlug
-    // one page of up to 100 tags (GitHub orders them by name, not version)
+    // the first page of tags (fetchTags follows the next ones)
     readonly property string repoUrl: root.apiBase + "/tags?per_page=100"
     readonly property string changelogUrl: Brand.repoUrl + (root.channel === "git" ? "/commits/main" : "/releases")
     // QUICKSHELL-GIT: readonly property string cacheFile: Quickshell.cachePath("update_check.json")
@@ -177,11 +178,13 @@ Singleton {
     }
 
     function fetchTarget(channel) {
-        const git = channel === "git";
+        if (channel !== "git") {
+            root.fetchTags(channel, root.repoUrl, [], 1);
+            return;
+        }
         const xhr = new XMLHttpRequest();
-        xhr.open("GET", git ? root.apiBase + "/commits/main" : root.repoUrl);
-        if (git)
-            xhr.setRequestHeader("Accept", "application/vnd.github.sha");
+        xhr.open("GET", root.apiBase + "/commits/main");
+        xhr.setRequestHeader("Accept", "application/vnd.github.sha");
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
@@ -189,27 +192,47 @@ Singleton {
                 root.finishCheck(channel, null);
                 return;
             }
-            if (git) {
-                const tip = xhr.responseText.trim();
-                const verdict = Versions.gitCompare(tip, root.described.commit);
-                if (verdict === "check") {
-                    ancestorProc.tip = tip;
-                    ancestorProc.command = ["git", "-C", Quickshell.shellDir, "merge-base", "--is-ancestor", tip, "HEAD"];
-                    ancestorProc.running = true;
-                } else {
-                    root.finishCheck(channel, verdict === "same" ? "" : null);
-                }
+            const tip = xhr.responseText.trim();
+            const verdict = Versions.gitCompare(tip, root.described.commit);
+            if (verdict === "check") {
+                ancestorProc.tip = tip;
+                ancestorProc.command = ["git", "-C", Quickshell.shellDir, "merge-base", "--is-ancestor", tip, "HEAD"];
+                ancestorProc.running = true;
+            } else {
+                root.finishCheck(channel, verdict === "same" ? "" : null);
+            }
+        };
+        xhr.send();
+    }
+
+    // The tag channels read every page of tags (GitHub lists them by name,
+    // not by version, so the newest release can be on any page), following
+    // the Link header up to Versions.MAX_TAG_PAGES pages.
+    function fetchTags(channel, url, acc, page) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            if (xhr.status !== 200) {
+                root.finishCheck(channel, null);
                 return;
             }
+            let tags;
             try {
-                const tags = JSON.parse(xhr.responseText);
-                // GitHub lists tags by name, not by version
-                const installed = Versions.installed(root.currentVersion, root.described);
-                root.finishCheck(channel, Versions.tagUpdate(tags, channel, installed));
+                tags = acc.concat(JSON.parse(xhr.responseText));
             } catch (e) {
                 console.log("[UpdateService] Error parsing GitHub tags:", e);
                 root.finishCheck(channel, null);
+                return;
             }
+            const next = page < Versions.MAX_TAG_PAGES ? Versions.nextPage(xhr.getResponseHeader("Link"), root.apiBase) : "";
+            if (next !== "") {
+                root.fetchTags(channel, next, tags, page + 1);
+                return;
+            }
+            const installed = Versions.installed(root.currentVersion, root.described);
+            root.finishCheck(channel, Versions.tagUpdate(tags, channel, installed));
         };
         xhr.send();
     }
