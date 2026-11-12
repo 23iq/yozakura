@@ -45,25 +45,6 @@ Item {
             width: parent.width
             spacing: Space.s
 
-            Repeater {
-                model: root.panels
-                delegate: Chip {
-                    required property var modelData
-                    required property int index
-                    active: index === root.current
-                    icon: Icons[PanelStyles.get(modelData.style).icon] ?? ""
-                    text: modelData.id + " · " + I18n.t("common." + modelData.edge)
-                    onClicked: SettingsStore.selectedPanel = index
-                }
-            }
-            Chip {
-                icon: Icons.plus
-                text: I18n.t("prefs.bar.panels.add")
-                onClicked: {
-                    root.commit(PanelsModel.addPanel(root.panels, "classic"));
-                    SettingsStore.selectedPanel = root.panels.length;
-                }
-            }
             Chip {
                 icon: Icons.arrowCounterClockwise
                 text: I18n.t("prefs.bar.panels.single")

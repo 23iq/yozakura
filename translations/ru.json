@@ -985,7 +985,7 @@
   "prefs.scheme.preset_active": "Активен пресет «%1» — выберите схему, чтобы вернуться к цветам обоев",
   "prefs.scheme.presets": "Цветовые пресеты",
   "prefs.bar.section.style": "Стиль",
-  "prefs.bar.section.layout": "Модули",
+  "prefs.bar.section.layout": "На панели",
   "prefs.bar.section.clock": "Часы",
   "prefs.bar.section.workspaces": "Рабочие столы",
   "prefs.bar.section.autohide": "Видимость",
@@ -1099,7 +1099,7 @@
   "prefs.common.open_classic": "Открыть",
   "prefs.cat.voice": "Голосовой ввод",
   "prefs.cat.voice.desc": "Локальное распознавание речи, диктовка и push-to-talk.",
-  "prefs.notch.section.notch": "Вырез",
+  "prefs.notch.section.notch": "Остров",
   "prefs.notch.section.media": "Медиа",
   "prefs.notch.section.activities": "Активности",
   "prefs.notch.position.desc": "Край экрана, у которого находится остров. У бокового края он стоит вертикально и раскрывается к центру.",
@@ -4556,5 +4556,14 @@
   "prefs.home.profile.balanced": "Сбалансированный",
   "prefs.home.profile.performance": "Производительность",
   "prefs.home.sub.apps": "Терминал, дополнения, моды",
-  "prefs.home.sub.network": "Wi-Fi и Bluetooth"
+  "prefs.home.sub.network": "Wi-Fi и Bluetooth",
+  "prefs.bar.size": "Размер",
+  "prefs.bar.section.edge_frame": "Край и рамка",
+  "prefs.bar.add_bar": "Добавить панель",
+  "prefs.bar.hero_hint": "Нажмите на край, чтобы перенести панель · на остров или док, чтобы настроить их",
+  "prefs.undo.bar_added": "Панель добавлена",
+  "prefs.notch.hero_hint": "Нажмите верхний или нижний край, чтобы перенести остров · на панель или док, чтобы настроить их",
+  "prefs.dock.hero_hint": "Нажмите на край, чтобы перенести док · на остров, чтобы настроить его",
+  "prefs.layout.hero_hint": "Выберите значок на экране, затем нажмите, где он должен открываться",
+  "prefs.undo.surface_moved": "Перемещено"
 }

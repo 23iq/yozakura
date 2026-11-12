@@ -19,7 +19,7 @@ Item {
 
     property var entry
     readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
-    readonly property int columns: width < 520 ? 2 : 3
+    readonly property int columns: width < 300 ? 2 : 3
     readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
     implicitHeight: grid.implicitHeight

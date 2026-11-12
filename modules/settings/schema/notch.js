@@ -10,6 +10,11 @@ var category = {
     "description": "prefs.cat.notch.desc",
     "keywords": "notch island dynamic activities visualizer media panels",
     "stage": "IslandStage",
+    "hero": {
+        "right": ["notch.keepHidden", "notch.disableHoverExpansion"],
+        "hint": "prefs.notch.hero_hint"
+    },
+    "row": ["notch", "media", "activities"],
     "sections": [
         {
             "id": "notch",

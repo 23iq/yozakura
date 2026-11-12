@@ -23,7 +23,7 @@ Item {
     signal tabSelected(string id)
     signal back
 
-    implicitHeight: Space.controlM
+    implicitHeight: Space.controlL
 
     Row {
         id: titleRow
@@ -34,7 +34,7 @@ Item {
             objectName: "backPill"
             anchors.verticalCenter: parent.verticalCenter
             icon: Icons.arrowLeft
-            size: "s"
+            size: "l"
             focusable: true
             tooltip: I18n.t("prefs.home.back")
             onClicked: header.back()
@@ -44,6 +44,7 @@ Item {
             objectName: "destinationTitle"
             anchors.verticalCenter: parent.verticalCenter
             role: "title"
+            font.pixelSize: Math.round(Type.size("title") * 1.25)
             text: header.destination ? I18n.t(header.destination.title) : ""
         }
     }
@@ -68,9 +69,24 @@ Item {
         }
     }
 
+    IconButton {
+        id: undoButton
+        objectName: "pageUndo"
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        icon: Icons.arrowCounterClockwise
+        size: "l"
+        focusable: true
+        enabled: SettingsStore.undoStack.length > 0
+        opacity: enabled ? 1 : 0.4
+        tooltip: I18n.t("prefs.home.undo")
+        onClicked: SettingsStore.undo()
+    }
+
     SectionLabel {
         objectName: "pageReset"
-        anchors.right: parent.right
+        anchors.right: undoButton.left
+        anchors.rightMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
         inset: 0
         visible: header.modifiedCount > 0

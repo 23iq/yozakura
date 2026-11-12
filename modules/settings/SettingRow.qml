@@ -47,6 +47,10 @@ FocusScope {
     // The row above in the section: a run of rows waiting for the same
     // switch names it once, on its first row.
     property var previousEntry: null
+    // The card's heading names it (a card of one setting): a picture /
+    // editor control without the row's own label line, edge to edge.
+    property bool bare: false
+    readonly property bool labelHidden: row.bare && row.stacked
     readonly property bool noteRepeats: {
         if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
             return false;
@@ -151,8 +155,8 @@ FocusScope {
     // label above it (SectionLabel.inset).
     Column {
         id: body
-        x: Look.rowInset
-        width: parent.width - Look.rowInset * 2
+        x: row.labelHidden ? 0 : Look.rowInset
+        width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
         topPadding: Space.s
         bottomPadding: Space.s
         spacing: Space.m
@@ -160,6 +164,7 @@ FocusScope {
         RowLayout {
             width: parent.width
             spacing: Space.l
+            visible: !row.labelHidden
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -177,7 +182,10 @@ FocusScope {
                         id: label
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
+                        // wraps in a narrow place (beside the stage)
+                        Layout.maximumWidth: Math.max(Space.px(60), body.width - Space.l * 2 - inlineControl.implicitWidth)
                         role: "body"
+                        wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
 
                         Tooltip {

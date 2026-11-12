@@ -11,6 +11,8 @@ var EDITORS = {
     "BarStyleCards": "editors/BarStyleCards.qml",
     "BarLayoutEditor": "editors/BarLayoutEditor.qml",
     "PanelsEditor": "editors/PanelsEditor.qml",
+    "PanelList": "editors/PanelList.qml",
+    "BarSizeCards": "editors/BarSizeCards.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorCards": "editors/IndicatorCards.qml",
     "BranchBlossomChips": "editors/BranchBlossomChips.qml",
@@ -88,7 +90,6 @@ var THUMBS = {
     "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
     "IndicatorThumb": "thumbs/IndicatorThumb.qml",
     "NumeralThumb": "thumbs/NumeralThumb.qml",
-    "HostThumb": "thumbs/HostThumb.qml",
     "WeightThumb": "thumbs/WeightThumb.qml"
 };
 

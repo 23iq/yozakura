@@ -265,7 +265,7 @@ under-row preview, unconverted pages only), `component` (custom editor),
 `keys` (every key a composite entry reads / resets), `sizeKey` / `sizeUnit`
 (font), `resettable: false`, `compositor`, `id`, `target` (PageLink),
 `invert` (a toggle shown on for false), `surface` (a host picker's surface
-id: the row notes "Island is off - shown as X" and HostThumb pictures it).
+id: the row notes "Island is off - shown as X"; the stage draws it).
 Section fields: `id`, `title`, `entries`, `advanced: true` (the whole section
 is out of the window), `compositor`. A section shows only while one of its
 rows does. Category fields: `id`, `icon`, `title` (the tab label),

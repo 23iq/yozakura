@@ -16,9 +16,14 @@ import "../../shell/hosts/HostResolve.js" as HostResolve
 // one whose row is under the pointer (or that just changed) is drawn solid,
 // named and ringed, and glides to its new place. Surfaces that share a
 // place share one ghost (their icons side by side), so no label is ever
-// drawn over another.
+// drawn over another. Direct manipulation: the icon of a surface that can
+// open in several places (launcher, dashboard, quick ask, voice and
+// timers, shortcut sheet) is a chip; picking it (`picked`) shows every
+// other place it can open in as a drop zone, and a click on a zone moves
+// it there (one undo step), the surface gliding to its new place.
 Stage {
     id: stage
+    objectName: "opensStage"
 
     stageHeight: Space.px(300)
 
@@ -72,6 +77,45 @@ Stage {
         })
     // The surface in focus: the hovered row's, else the last one changed.
     property string active: "launcher"
+    // The surface picked to move ("" none): its drop zones show.
+    property string picked: ""
+    readonly property var movable: ["launcher", "dashboard", "aiquick", "panels", "cheatsheet"]
+    // The other places the picked surface can open in: [{value, label, rect}]
+    readonly property var zones: {
+        const id = stage.picked;
+        if (!id)
+            return [];
+        const key = stage.surfaces[id].key;
+        const entry = SettingsStore.entryByKey[key];
+        const now = stage.rectOf(id, "").map(v => Math.round(v)).join(",");
+        const out = [];
+        for (const opt of (entry && entry.options) || []) {
+            const lay = Object.assign({}, stage.layout);
+            lay[id] = {
+                "host": opt.value
+            };
+            const host = HostResolve.resolve(lay, id, {
+                "notchEnabled": stage.notchOn
+            });
+            const r = stage.rectOf(id, host).map(v => Math.round(v));
+            const k = r.join(",");
+            if (k === now || out.some(z => z.key === k))
+                continue;
+            out.push({
+                "key": k,
+                "value": opt.value,
+                "label": opt.label,
+                "rect": r
+            });
+        }
+        return out;
+    }
+    function moveTo(value) {
+        const key = stage.surfaces[stage.picked].key;
+        stage.active = stage.picked;
+        stage.picked = "";
+        SettingsStore.transaction("prefs.undo.surface_moved", () => SettingsStore.set(key, value));
+    }
     readonly property var focusKeys: SettingsStore.focusKeys
     function surfaceOf(key) {
         return Object.keys(stage.surfaces).find(id => stage.surfaces[id].key === key) || "";
@@ -115,8 +159,9 @@ Stage {
     readonly property string notifPosition: String(SettingsStore.get("notifications.position") || "auto")
     readonly property string osdPosition: String(SettingsStore.get("layout.osd.position") || "auto")
 
-    // [x, y, w, h] of a surface on the screen miniature.
-    function rectOf(id) {
+    // [x, y, w, h] of a surface on the screen miniature (`host`: where it
+    // would open, "" = where it opens now).
+    function rectOf(id, host) {
         const f = screen.freeRect;
         const isl = screen.islandRect;
         const u = Math.max(1, screen.unit);
@@ -137,10 +182,10 @@ Stage {
         }
         if (id === "overview")
             return [f.x + f.w * 0.05, f.y + f.h * 0.06, f.w * 0.9, f.h * 0.88];
-        const host = HostResolve.resolve(stage.layout, id, {
+        const at = host || HostResolve.resolve(stage.layout, id, {
             "notchEnabled": stage.notchOn
         });
-        switch (host) {
+        switch (at) {
         case "notch":
             return small ? [isl.x - u, isl.y, isl.w + u * 2, f.h * 0.34] : [isl.x - isl.w * 0.7, isl.y, isl.w * 2.4, f.h * 0.6];
         case "sheet":
@@ -160,7 +205,7 @@ Stage {
     readonly property var places: {
         const out = [];
         Object.keys(stage.surfaces).forEach(id => {
-            const r = stage.rectOf(id).map(v => Math.round(v));
+            const r = stage.rectOf(id, "").map(v => Math.round(v));
             const key = r.join(",");
             const at = out.find(p => p.key === key);
             if (at)
@@ -186,7 +231,7 @@ Stage {
         });
         return out;
     }
-    readonly property var activeRect: stage.rectOf(stage.active)
+    readonly property var activeRect: stage.rectOf(stage.active, "")
 
     ScreenMini {
         id: screen
@@ -221,11 +266,34 @@ Stage {
                     spacing: Space.xs
                     Repeater {
                         model: place.modelData.ids
-                        delegate: Icon {
+                        delegate: Mark {
+                            id: chip
                             required property string modelData
-                            icon: Icons[stage.surfaces[modelData].icon] ?? ""
-                            role: "caption"
-                            tone: "text"
+                            readonly property bool canMove: stage.movable.indexOf(modelData) >= 0
+                            readonly property bool isPicked: stage.picked === modelData
+                            objectName: "opensChip:" + modelData
+                            width: chipIcon.width + Space.s
+                            height: chipIcon.height + Space.xs
+                            radius: height / 2
+                            color: chip.isPicked ? Type.accent : (chip.canMove && chipArea.containsMouse ? Qt.alpha(Type.accent, 0.3) : "transparent")
+                            Icon {
+                                id: chipIcon
+                                anchors.centerIn: parent
+                                icon: Icons[stage.surfaces[chip.modelData].icon] ?? ""
+                                role: "caption"
+                                tone: chip.isPicked ? "accentInk" : "text"
+                            }
+                            MouseArea {
+                                id: chipArea
+                                anchors.fill: parent
+                                enabled: chip.canMove
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    stage.active = chip.modelData;
+                                    stage.picked = chip.isPicked ? "" : chip.modelData;
+                                }
+                            }
                         }
                     }
                 }
@@ -287,6 +355,40 @@ Stage {
                     color: Type.text
                     text: I18n.t(stage.surfaces[stage.active].name)
                     elide: Text.ElideRight
+                }
+            }
+        }
+        // the picked surface's other places: drop zones
+        Repeater {
+            model: stage.zones
+            delegate: Mark {
+                id: zone
+                required property var modelData
+                objectName: "opensZone:" + modelData.value
+                z: 5
+                x: zone.modelData.rect[0]
+                y: zone.modelData.rect[1]
+                width: zone.modelData.rect[2]
+                height: zone.modelData.rect[3]
+                radius: Look.radius("small", height)
+                color: Qt.alpha(Type.accent, zoneArea.containsMouse ? 0.32 : 0.14)
+                border.width: Space.hairline + 1
+                border.color: Type.accent
+                KitText {
+                    anchors.centerIn: parent
+                    width: Math.min(implicitWidth, parent.width - Space.s)
+                    role: "caption"
+                    font.weight: Font.DemiBold
+                    color: Type.text
+                    elide: Text.ElideRight
+                    text: I18n.t(zone.modelData.label)
+                }
+                MouseArea {
+                    id: zoneArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: stage.moveTo(zone.modelData.value)
                 }
             }
         }

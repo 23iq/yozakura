@@ -25,11 +25,32 @@ var category = {
     "description": "prefs.cat.bar.desc",
     "keywords": "bar panel taskbar islands top modules widgets",
     "stage": "BarStage",
+    // Beside the stage: the bars (left), when the bar shows (right).
+    "hero": {
+        "left": ["bar.panels.list"],
+        "right": ["bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen"],
+        "hint": "prefs.bar.hero_hint"
+    },
+    // One row of cards under the stage.
+    "row": ["shape", "size", "layout"],
     "sections": [
         {
             "id": "panels",
             "title": "prefs.bar.section.panels",
             "entries": [
+                {
+                    "id": "bar.panels.list",
+                    "type": "custom",
+                    "component": "PanelList",
+                    "keys": ["bar.panels"],
+                    // the list of bars beside the stage; the selected bar's
+                    // fields are bar.panels.editor's (one part each)
+                    "part": true,
+                    "resettable": false,
+                    "label": "prefs.bar.panels",
+                    "description": "prefs.bar.panels.desc",
+                    "keywords": "bars panels add bar second bar"
+                },
                 {
                     "id": "bar.panels.editor",
                     "type": "custom",
@@ -48,8 +69,8 @@ var category = {
             ]
         },
         {
-            "id": "style",
-            "title": "prefs.bar.section.style",
+            "id": "shape",
+            "title": "prefs.bar.style",
             "entries": [
                 {
                     "key": "bar.layout.style",
@@ -62,7 +83,27 @@ var category = {
                     "label": "prefs.bar.style",
                     "description": "prefs.bar.style.desc",
                     "keywords": "classic islands floating pills style look"
-                },
+                }
+            ]
+        },
+        {
+            "id": "size",
+            "title": "prefs.bar.size",
+            "entries": [
+                {
+                    "key": "bar.compact",
+                    "type": "custom",
+                    "component": "BarSizeCards",
+                    "label": "prefs.bar.compact",
+                    "description": "prefs.bar.compact.desc",
+                    "keywords": "compact dense slim thin small height size"
+                }
+            ]
+        },
+        {
+            "id": "style",
+            "title": "prefs.bar.section.edge_frame",
+            "entries": [
                 {
                     "key": "bar.position",
                     "visibleWhen": {
@@ -81,13 +122,6 @@ var category = {
                     "label": "prefs.label.bar_edge",
                     "description": "prefs.bar.position.desc",
                     "keywords": "position edge top bottom left right vertical horizontal"
-                },
-                {
-                    "key": "bar.compact",
-                    "type": "toggle",
-                    "label": "prefs.bar.compact",
-                    "description": "prefs.bar.compact.desc",
-                    "keywords": "compact dense slim thin small height"
                 },
                 {
                     "key": "bar.frameEnabled",

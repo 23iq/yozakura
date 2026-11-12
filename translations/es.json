@@ -985,7 +985,7 @@
   "prefs.scheme.preset_active": "El preajuste «%1» está activo: elige un esquema para volver a los colores del fondo",
   "prefs.scheme.presets": "Preajustes de color",
   "prefs.bar.section.style": "Estilo",
-  "prefs.bar.section.layout": "Módulos",
+  "prefs.bar.section.layout": "En la barra",
   "prefs.bar.section.clock": "Reloj",
   "prefs.bar.section.workspaces": "Espacios de trabajo",
   "prefs.bar.section.autohide": "Visibilidad",
@@ -1099,7 +1099,7 @@
   "prefs.common.open_classic": "Abrir",
   "prefs.cat.voice": "Entrada de voz",
   "prefs.cat.voice.desc": "Reconocimiento de voz local, dictado y pulsar para hablar.",
-  "prefs.notch.section.notch": "Notch",
+  "prefs.notch.section.notch": "Isla",
   "prefs.notch.section.media": "Multimedia",
   "prefs.notch.section.activities": "Actividades",
   "prefs.notch.position.desc": "El borde de la pantalla donde va la isla. En un borde lateral queda vertical y se abre hacia el centro.",
@@ -4528,5 +4528,14 @@
   "prefs.home.profile.balanced": "Equilibrado",
   "prefs.home.profile.performance": "Rendimiento",
   "prefs.home.sub.apps": "Terminal, extras, mods",
-  "prefs.home.sub.network": "Wi-Fi y Bluetooth"
+  "prefs.home.sub.network": "Wi-Fi y Bluetooth",
+  "prefs.bar.size": "Tamaño",
+  "prefs.bar.section.edge_frame": "Borde y marco",
+  "prefs.bar.add_bar": "Añadir una barra",
+  "prefs.bar.hero_hint": "Haz clic en un borde para mover la barra · clic en la isla o el dock para editarlos",
+  "prefs.undo.bar_added": "Barra añadida",
+  "prefs.notch.hero_hint": "Haz clic en el borde superior o inferior para mover la isla · clic en la barra o el dock para editarlos",
+  "prefs.dock.hero_hint": "Haz clic en un borde para mover el dock · clic en la isla para editarla",
+  "prefs.layout.hero_hint": "Elige una ficha en la pantalla y haz clic donde debe abrirse",
+  "prefs.undo.surface_moved": "Movido"
 }

@@ -67,6 +67,10 @@ test('a setting has one control in the window (Bar and Look)', () => {
     for (const x of windowItems()) {
         if (!['bar', 'layout', 'appearance', 'icons-type'].includes(x.category.id))
             continue;
+        // `part`: an editor of one part of a composite value (the bars list
+        // beside the stage, the selected bar's fields in a card)
+        if (x.entry.part)
+            continue;
         for (const k of SchemaUtil.entryKeys(x.entry)) {
             assert.ok(!seen[k], `${k} twice: ${seen[k]} and ${x.entry.key || x.entry.id}`);
             seen[k] = x.entry.key || x.entry.id;

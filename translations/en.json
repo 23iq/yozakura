@@ -985,7 +985,7 @@
   "prefs.scheme.preset_active": "Preset “%1” is active — pick a scheme to go back to wallpaper colors",
   "prefs.scheme.presets": "Color presets",
   "prefs.bar.section.style": "Style",
-  "prefs.bar.section.layout": "Modules",
+  "prefs.bar.section.layout": "On the bar",
   "prefs.bar.section.clock": "Clock",
   "prefs.bar.section.workspaces": "Workspaces",
   "prefs.bar.section.autohide": "Showing",
@@ -1099,7 +1099,7 @@
   "prefs.common.open_classic": "Open",
   "prefs.cat.voice": "Voice input",
   "prefs.cat.voice.desc": "Local speech recognition, dictation and push-to-talk.",
-  "prefs.notch.section.notch": "Notch",
+  "prefs.notch.section.notch": "Island",
   "prefs.notch.section.media": "Media",
   "prefs.notch.section.activities": "Activities",
   "prefs.notch.position.desc": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
@@ -4528,5 +4528,14 @@
   "prefs.home.profile.balanced": "Balanced",
   "prefs.home.profile.performance": "Performance",
   "prefs.home.sub.apps": "Terminal, extras, mods",
-  "prefs.home.sub.network": "Wi-Fi and Bluetooth"
+  "prefs.home.sub.network": "Wi-Fi and Bluetooth",
+  "prefs.bar.size": "Size",
+  "prefs.bar.section.edge_frame": "Edge and frame",
+  "prefs.bar.add_bar": "Add a bar",
+  "prefs.bar.hero_hint": "Click an edge to move the bar there · click the island or the dock to edit them",
+  "prefs.undo.bar_added": "Bar added",
+  "prefs.notch.hero_hint": "Click the top or bottom edge to move the island · click the bar or the dock to edit them",
+  "prefs.dock.hero_hint": "Click an edge to move the dock · click the island to edit it",
+  "prefs.layout.hero_hint": "Pick a chip on the screen, then click where it should open",
+  "prefs.undo.surface_moved": "Moved"
 }
