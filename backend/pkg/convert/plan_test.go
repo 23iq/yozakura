@@ -24,26 +24,26 @@ func TestArgvBuilders(t *testing.T) {
 		engine   Engine
 		want     []string
 	}{
-		{"flac", "mp3", QualityBest, EngineFFmpeg, []string{"ffmpeg ", "-nostdin", "-progress pipe:1", "-i /in/file.flac", "-vn", "-c:a libmp3lame -b:a 320k", "/work/out.mp3"}},
+		{"flac", "mp3", QualityBest, EngineFFmpeg, []string{"ffmpeg ", "-nostdin", "-progress pipe:1", "-i in.flac", "-vn", "-c:a libmp3lame -b:a 320k", "out.mp3"}},
 		{"flac", "mp3", QualitySmall, EngineFFmpeg, []string{"-b:a 128k"}},
-		{"wav", "ogg", QualityBalanced, EngineFFmpeg, []string{"-c:a libvorbis -q:a 5", "/work/out.ogg"}},
+		{"wav", "ogg", QualityBalanced, EngineFFmpeg, []string{"-c:a libvorbis -q:a 5", "out.ogg"}},
 		{"mp4", "mp3", QualityBalanced, EngineFFmpeg, []string{"-vn", "libmp3lame"}},
-		{"mkv", "mp4", QualityBalanced, EngineFFmpeg, []string{"-c:v libx264", "-crf 23", "-movflags +faststart", "/work/out.mp4"}},
+		{"mkv", "mp4", QualityBalanced, EngineFFmpeg, []string{"-c:v libx264", "-crf 23", "-movflags +faststart", "out.mp4"}},
 		{"mp4", "webm", QualitySmall, EngineFFmpeg, []string{"libvpx-vp9", "-crf 40", "libopus"}},
-		{"mp4", "gif", QualityBalanced, EngineFFmpeg, []string{"fps=15", "palettegen", "-loop 0", "/work/out.gif"}},
+		{"mp4", "gif", QualityBalanced, EngineFFmpeg, []string{"fps=15", "palettegen", "-loop 0", "out.gif"}},
 		{"gif", "mp4", QualityBalanced, EngineFFmpeg, []string{"scale=trunc(iw/2)*2:trunc(ih/2)*2"}},
-		{"jpg", "png", QualityBalanced, EngineMagick, []string{"magick /in/file.jpg[0] /work/out.png"}},
-		{"png", "jpg", QualityBest, EngineMagick, []string{"-background white -alpha remove", "-quality 92", "/work/out.jpg"}},
-		{"gif", "webp", QualityBalanced, EngineMagick, []string{"magick /in/file.gif -quality 80 /work/out.webp"}},
+		{"jpg", "png", QualityBalanced, EngineMagick, []string{"magick in.jpg[0] out.png"}},
+		{"png", "jpg", QualityBest, EngineMagick, []string{"-background white -alpha remove", "-quality 92", "out.jpg"}},
+		{"gif", "webp", QualityBalanced, EngineMagick, []string{"magick in.gif -quality 80 out.webp"}},
 		{"png", "ico", QualityBalanced, EngineMagick, []string{"icon:auto-resize"}},
-		{"svg", "png", QualityBalanced, EngineRsvg, []string{"rsvg-convert -f png -o /work/out.png /in/file.svg"}},
-		{"docx", "pdf", QualityBalanced, EngineSoffice, []string{"soffice --headless", "-env:UserInstallation=file:///prof", "--convert-to pdf --outdir /work/office-out /in/file.docx"}},
+		{"svg", "png", QualityBalanced, EngineRsvg, []string{"rsvg-convert -f png -o out.png in.svg"}},
+		{"docx", "pdf", QualityBalanced, EngineSoffice, []string{"soffice --headless", "-env:UserInstallation=file:///prof", "--convert-to pdf --outdir office-out in.docx"}},
 		{"pdf", "docx", QualityBalanced, EngineSoffice, []string{"--infilter=writer_pdf_import", "docx:MS Word 2007 XML"}},
 		{"xlsx", "csv", QualityBalanced, EngineSoffice, []string{"csv:Text - txt - csv (StarCalc):44,34,76,1"}},
-		{"md", "html", QualityBalanced, EnginePandoc, []string{"pandoc -f markdown -t html5 -s -o /work/out.html /in/file.md"}},
-		{"docx", "md", QualityBalanced, EnginePandoc, []string{"-f docx -t markdown"}},
-		{"pdf", "png", QualityBalanced, EnginePdftoppm, []string{"pdftoppm -png -r 150 -f 1 -l 1 -singlefile /in/file.pdf /work/pages/page"}},
-		{"pdf", "txt", QualityBalanced, EnginePdftotext, []string{"pdftotext -layout -enc UTF-8 /in/file.pdf /work/out.txt"}},
+		{"md", "html", QualityBalanced, EnginePandoc, []string{"pandoc --sandbox -f markdown -t json -o doc.json in.md"}},
+		{"docx", "md", QualityBalanced, EnginePandoc, []string{"pandoc --sandbox -f docx -t json -o doc.json --extract-media=media in.docx"}},
+		{"pdf", "png", QualityBalanced, EnginePdftoppm, []string{"pdftoppm -png -r 150 -f 1 -l 1 -singlefile in.pdf pages/page"}},
+		{"pdf", "txt", QualityBalanced, EnginePdftotext, []string{"pdftotext -layout -enc UTF-8 in.pdf out.txt"}},
 	}
 	for _, c := range cases {
 		p := plan(t, c.from, c.to, c.q)
@@ -60,14 +60,44 @@ func TestArgvBuilders(t *testing.T) {
 	}
 }
 
-func TestDocPDFIsTwoSteps(t *testing.T) {
+// Markup to PDF: read in pandoc's sandbox, clean the tree, write an ODT
+// from the document's own folder, print it with LibreOffice.
+func TestDocPDFSteps(t *testing.T) {
 	p := plan(t, "md", "pdf", QualityBalanced)
-	if p.Engine != EngineDocPDF || len(p.Steps) != 2 {
+	if p.Engine != EngineDocPDF || len(p.Steps) != 4 {
 		t.Fatalf("%+v", p)
 	}
-	if !strings.Contains(argv(p, 0), "-t odt -s -o /work/mid.odt /in/file.md") ||
-		!strings.Contains(argv(p, 1), "--convert-to pdf --outdir /work/office-out /work/mid.odt") || p.Steps[1].Out != "/work/out.pdf" {
-		t.Fatalf("%s | %s", argv(p, 0), argv(p, 1))
+	if argv(p, 0) != "pandoc --sandbox -f markdown -t json -o doc.json in.md" || p.Steps[1].Native == nil ||
+		argv(p, 2) != "pandoc -f json -t odt -s -o /work/mid.odt /work/doc-safe.json" || p.Steps[2].Dir != "/in" ||
+		!strings.Contains(argv(p, 3), "--convert-to pdf --outdir office-out mid.odt") || p.Steps[3].Out != "out.pdf" {
+		t.Fatalf("%s | %s | %s", argv(p, 0), argv(p, 2), argv(p, 3))
+	}
+}
+
+// Tools never see the user's file name: a "%d" in it would be a pattern
+// to ImageMagick and ffmpeg. Every engine reads in.<ext> and writes
+// out.<ext> inside the work dir; every external step has a timeout.
+func TestArgvNeverCarriesTheSourceName(t *testing.T) {
+	all := allTools()
+	for _, f := range Formats() {
+		for _, tg := range Targets(f.ID, all) {
+			src := "/home/u/odd %d [0] name." + f.Ext()
+			p, err := BuildPlan(Request{Src: src, From: f.ID, To: tg.ID}, all, "/w", PlanOptions{OfficeProfile: "/p"})
+			if err != nil {
+				t.Fatalf("%s->%s: %v", f.ID, tg.ID, err)
+			}
+			for i, st := range p.Steps {
+				if st.Native != nil {
+					continue
+				}
+				if a := strings.Join(st.Args, " "); strings.Contains(a, "odd") || strings.Contains(a, "%d") {
+					t.Errorf("%s->%s step %d: %s", f.ID, tg.ID, i, a)
+				}
+				if st.Timeout <= 0 {
+					t.Errorf("%s->%s step %d has no timeout", f.ID, tg.ID, i)
+				}
+			}
+		}
 	}
 }
 

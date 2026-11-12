@@ -20,11 +20,22 @@ import (
 // ProgressFunc receives the fraction done (0..1), or -1 while unknown.
 type ProgressFunc func(float64)
 
-// Run executes the plan's steps in order (each bound to ctx: cancelling
-// kills the step's whole process group). The result is left at p.Out.
+// Run executes the plan's steps in order inside p.Work (each bound to ctx
+// and to its timeout: cancelling kills the step's whole process group).
+// The source is first linked into the work dir under a neutral name, so
+// tools never see the user's file name. The result is left at p.Out.
 func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 	if onProgress == nil {
 		onProgress = func(float64) {}
+	}
+	if p.Src != "" && p.Input != "" {
+		src, err := filepath.Abs(p.Src)
+		if err != nil {
+			return err
+		}
+		if err := placeInput(src, filepath.Join(p.Work, p.Input)); err != nil {
+			return err
+		}
 	}
 	for _, st := range p.Steps {
 		if err := ctx.Err(); err != nil {
@@ -37,8 +48,11 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 			}
 			continue
 		}
+		if st.Dir == "" {
+			st.Dir = p.Work
+		}
 		if st.Collect != "" {
-			if err := os.MkdirAll(st.Collect, 0o755); err != nil {
+			if err := os.MkdirAll(filepath.Join(p.Work, st.Collect), 0o755); err != nil {
 				return err
 			}
 		}
@@ -46,7 +60,7 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 			return err
 		}
 		if st.Collect != "" {
-			if err := collect(st.Collect, st.Out); err != nil {
+			if err := collect(filepath.Join(p.Work, st.Collect), filepath.Join(p.Work, st.Out)); err != nil {
 				return err
 			}
 		}
@@ -57,8 +71,47 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 	return nil
 }
 
+// patternChars mean something to ImageMagick or ffmpeg in a file name.
+// ImageMagick resolves a symlink to its target's name, so a source whose
+// path holds one is hard-linked, else copied, never symlinked.
+const patternChars = "%[]*?{}@~:"
+
+func placeInput(src, dst string) error {
+	_ = os.Remove(dst)
+	if err := os.Link(src, dst); err == nil {
+		return nil
+	}
+	if !strings.ContainsAny(src, patternChars) {
+		return os.Symlink(src, dst)
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
+}
+
+// errTimeout is a step that ran past its timeout.
+var errTimeout = errors.New("timed out")
+
 func runStep(ctx context.Context, st Step, duration float64, onProgress ProgressFunc) error {
+	stepCtx := ctx
+	if st.Timeout > 0 {
+		var cancel context.CancelFunc
+		stepCtx, cancel = context.WithTimeoutCause(ctx, st.Timeout, errTimeout)
+		defer cancel()
+	}
 	cmd := proc.Command(context.Background(), st.Prog, st.Args...)
+	cmd.Dir = st.Dir
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	tail := &tailBuffer{max: 64}
 	cmd.Stderr = tail
@@ -75,11 +128,19 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 	if err := proc.StartTied(cmd); err != nil {
 		return fmt.Errorf("cannot start %s: %v", filepath.Base(st.Prog), err)
 	}
+	pgid := cmd.Process.Pid
+	release := trackGroup(pgid, filepath.Base(st.Prog))
+	// the whole group goes when the step ends, however it ends: helpers
+	// such as soffice.bin must not outlive their step
+	defer func() {
+		_ = syscall.Kill(-pgid, syscall.SIGKILL)
+		release()
+	}()
 	done := make(chan struct{})
 	go func() {
 		select {
-		case <-ctx.Done():
-			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		case <-stepCtx.Done():
+			_ = syscall.Kill(-pgid, syscall.SIGKILL)
 		case <-done:
 		}
 	}()
@@ -90,6 +151,9 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 	close(done)
 	if ctx.Err() != nil {
 		return ctx.Err()
+	}
+	if errors.Is(context.Cause(stepCtx), errTimeout) {
+		return fmt.Errorf("%s timed out after %s", filepath.Base(st.Prog), st.Timeout)
 	}
 	if err != nil {
 		if msg := ErrorLine(tail.String()); msg != "" {
