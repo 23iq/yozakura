@@ -99,7 +99,70 @@ QtObject {
     function setTemperature(v) { calls = calls.concat([["temp", v]]); temp = v }
 }"""
 
+# NetworkService: connected to "Sakura 5G", five more networks around.
+NETWORKS = [
+    {"ssid": "Sakura 5G", "strength": 86, "frequency": 5180, "security": "WPA2", "active": True},
+    {"ssid": "Sakura", "strength": 72, "frequency": 2437, "security": "WPA2", "active": False},
+    {"ssid": "Café Hanami", "strength": 58, "frequency": 2412, "security": "", "active": False},
+    {"ssid": "Neighbour-5G", "strength": 41, "frequency": 5220, "security": "WPA3", "active": False},
+    {"ssid": "Printer-DIRECT", "strength": 33, "frequency": 2462, "security": "WPA2", "active": False},
+    {"ssid": "Library Guest", "strength": 18, "frequency": 2412, "security": "", "active": False},
+]
+NETWORK = """pragma Singleton
+import QtQuick
+import qs.modules.theme
+QtObject {
+    id: net
+    property bool wifi: true
+    property bool ethernet: false
+    property bool wifiEnabled: true
+    property bool wifiScanning: false
+    property string wifiStatus: "connected"
+    property var calls: []
+    property var friendlyWifiNetworks: %s.map(n => Object.assign({ "askingPassword": false, "isSecure": n.security !== "" }, n))
+    readonly property var active: friendlyWifiNetworks.find(n => n.active) || null
+    readonly property string networkName: active ? active.ssid : ""
+    readonly property int networkStrength: active ? active.strength : 0
+    function enableWifi(on) { calls = calls.concat([["enable", on]]); wifiEnabled = on }
+    function toggleWifi() { enableWifi(!wifiEnabled) }
+    function rescanWifi() { calls = calls.concat([["rescan"]]) }
+    function connectToWifiNetwork(ap) { calls = calls.concat([["connect", ap.ssid]]) }
+    function disconnectWifiNetwork() { calls = calls.concat([["disconnect"]]) }
+    function changePassword(ap, pw) { calls = calls.concat([["password", ap.ssid]]) }
+    function wifiIconForStrength(s) { return s > 80 ? Icons.wifiHigh : s > 55 ? Icons.wifiMedium : Icons.wifiLow }
+}""" % json.dumps(NETWORKS)
+
+# BluetoothService: headphones and a mouse connected, a keyboard paired, a
+# speaker nearby.
+DEVICES = [
+    {"address": "AC:80:0A:11:22:33", "name": "Sakura Buds", "icon": "audio-headset", "paired": True,
+     "connected": True, "battery": 64},
+    {"address": "D0:3E:07:44:55:66", "name": "MX Anywhere", "icon": "input-mouse", "paired": True,
+     "connected": True, "battery": 90},
+    {"address": "F4:73:35:77:88:99", "name": "Keychron K3", "icon": "input-keyboard", "paired": True,
+     "connected": False, "battery": -1},
+    {"address": "08:EB:ED:AA:BB:CC", "name": "Living room speaker", "icon": "audio-card", "paired": False,
+     "connected": False, "battery": -1},
+]
+BLUETOOTH = """pragma Singleton
+import QtQuick
+QtObject {
+    property bool enabled: true
+    property bool discovering: false
+    property var calls: []
+    property var friendlyDeviceList: %s.map(d => Object.assign({ "connecting": false, "trusted": d.paired }, d))
+    function setEnabled(v) { calls = calls.concat([["enabled", v]]); enabled = v }
+    function startDiscovery() { discovering = true }
+    function stopDiscovery() { discovering = false }
+    function connectDevice(a) { calls = calls.concat([["connect", a]]) }
+    function disconnectDevice(a) { calls = calls.concat([["disconnect", a]]) }
+    function pairDevice(a) { calls = calls.concat([["pair", a]]) }
+    function removeDevice(a) { calls = calls.concat([["remove", a]]) }
+}""" % json.dumps(DEVICES)
+
 SERVICES = {
+    "NetworkService": NETWORK,
+    "BluetoothService": BLUETOOTH,
     "Battery": BATTERY,
     "PowerProfileClient": POWER_PROFILES,
     "DisplaysService": DISPLAYS,

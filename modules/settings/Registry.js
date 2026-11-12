@@ -72,6 +72,10 @@ var EDITORS = {
     "WindowCornersEditor": "editors/WindowCornersEditor.qml",
     "WindowGapsEditor": "editors/WindowGapsEditor.qml",
     "IdleTimeline": "editors/IdleTimeline.qml",
+    "WifiList": "connect/WifiList.qml",
+    "WifiDetails": "connect/WifiDetails.qml",
+    "BluetoothList": "connect/BluetoothList.qml",
+    "BluetoothDetails": "connect/BluetoothDetails.qml",
     "SleepSwitches": "editors/SleepSwitches.qml"
 };
 
@@ -140,7 +144,9 @@ var STAGES = {
     "SystemStage": "stages/SystemStage.qml",
     "UpdatesStage": "stages/UpdatesStage.qml",
     "WindowsStage": "stages/WindowsStage.qml",
-    "PowerStage": "stages/PowerStage.qml"
+    "PowerStage": "stages/PowerStage.qml",
+    "NetworkBand": "stages/NetworkBand.qml",
+    "BluetoothBand": "stages/BluetoothBand.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
@@ -148,14 +154,12 @@ var STAGES = {
 // properties set on creation (besides `category`).
 var PAGES = {
     "AboutPage": { "file": "AboutPage.qml" },
-    "Bluetooth": { "file": "connect/ConnectPage.qml", "props": { "panel": "BluetoothPanel.qml" } },
     "Changes": { "file": "changes/ChangesPage.qml" },
     "Displays": { "file": "displays/DisplaysPage.qml" },
     "Effects": { "file": "connect/ConnectPage.qml", "props": { "panel": "EasyEffectsPanel.qml" } },
     "Extras": { "file": "extras/ExtrasPage.qml" },
     "Keyboard": { "file": "keyboard/KeyboardPage.qml" },
     "Mods": { "file": "mods/ModsEditor.qml" },
-    "Network": { "file": "connect/ConnectPage.qml", "props": { "panel": "WifiPanel.qml" } },
     "PresetStudio": { "file": "presets/PresetStudioPage.qml" },
     "Sound": { "file": "connect/ConnectPage.qml", "props": { "panel": "AudioMixerPanel.qml" } }
 };
