@@ -144,7 +144,7 @@ ev("Config.theme.lightMode = false")
 wait_until(lambda: not ev('loaded("barRoot")') and not ev('loaded("modulePill")'))
 check(not ev('loaded("barRoot")') and not ev('loaded("modulePill")'), "switching to none unloads overlays")
 
-# settings: effect cards and indicator chips cover the registries
+# settings: effect cards and indicator cards cover the registries
 h.eval(shell, 'select("appearance")')
 pump(600)
 for eid in ["none", "crt", "ink"]:
@@ -152,10 +152,10 @@ for eid in ["none", "crt", "ink"]:
 h.eval(shell, 'select("bar")')
 pump(600)
 for sid in ["pill", "underline", "dot", "brush", "bracket"]:
-    check(ev(f'w.findItem("indicatorChip:{sid}") !== null'), f"indicator chip for {sid}")
-ev('w.findItem("indicatorChip:bracket").children[w.findItem("indicatorChip:bracket").children.length - 1].clicked(null)')
+    check(ev(f'w.findItem("card:{sid}") !== null'), f"indicator card for {sid}")
+ev('w.findItem("card:bracket").clicked()')
 wait_until(lambda: ev("Config.workspaces.indicatorStyle") == "bracket")
-check(ev("Config.workspaces.indicatorStyle") == "bracket", "clicking a chip sets workspaces.indicatorStyle")
+check(ev("Config.workspaces.indicatorStyle") == "bracket", "clicking a card sets workspaces.indicatorStyle")
 
 errors = [e for e in h.type_errors if "surfaceeffects" in e or "indicators" in e or "StyledRect" in e]
 check(not errors, f"no QML errors: {errors}")

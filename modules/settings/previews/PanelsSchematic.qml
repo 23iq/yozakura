@@ -19,6 +19,11 @@ Item {
     property string notchEdge: Config.notchPosition !== undefined ? Config.notchPosition : "top"
     property bool showNotch: true
     property bool showWindows: true
+    // Draw the palette backdrop (false: a MiniScreen / Stage behind it).
+    property bool backdrop: true
+    // Panel surfaces on the theme's bar fill (>= 0) instead of the plain
+    // background colour (-1).
+    property real barOpacity: -1
     // Module size in mockup pixels
     property real unit: Math.max(9, Math.round(width * 0.03))
     readonly property real frame: Config.bar && Config.bar.frameEnabled ? Math.max(2, Math.round(unit * 0.3)) : 0
@@ -46,6 +51,7 @@ Item {
 
     ScreenBackdrop {
         anchors.fill: parent
+        visible: root.backdrop
     }
 
     // Frame
@@ -104,7 +110,7 @@ Item {
                     width: modelData.w
                     height: modelData.h
                     radius: Math.min(modelData.r, Styling.radius(0))
-                    color: modelData.kind === "dock" ? Ui.alpha(Colors.surfaceContainerHigh, 0.95) : Colors.background
+                    color: modelData.kind === "dock" ? Ui.alpha(Colors.surfaceContainerHigh, 0.95) : (root.barOpacity >= 0 ? Ui.alpha(Colors.background, root.barOpacity) : Colors.background)
                     border.width: panel.isSelected ? 2 : (modelData.kind === "dock" ? 1 : 0)
                     border.color: panel.isSelected ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.8)
 

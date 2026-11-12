@@ -1,8 +1,11 @@
 .pragma library
 
-// Layout: where the launcher and dashboard open (notch, spotlight or side
-// sheet) and which side the sheet uses, with a live edge preview of the
-// screen. Hosts: modules/shell/hosts. Entry format: see modules/settings/AGENTS.md.
+// Bar > Where things open: where the launcher, dashboard, quick ask, the
+// voice / timer panels and the cheatsheet open (the island, a spotlight, a
+// side sheet, a card), each a row of picture cards (thumbs/HostThumb), over
+// a stage that opens the surface of the row under the pointer
+// (stages/OpensStage.qml). Hosts: modules/shell/hosts. Entry format: see
+// modules/settings/AGENTS.md.
 // `surface` (SurfaceRegistry.js id) notes where an entry shows while the
 // notch is off ("Island is off - shown as X", SettingRow).
 
@@ -74,11 +77,14 @@ var category = {
     "icon": "layout",
     "title": "prefs.cat.layout",
     "description": "prefs.cat.layout.desc",
+    "stage": "OpensStage",
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
         {
             "id": "parts",
             "title": "prefs.layout.section.parts",
+            // The edges live on the bar, island and dock pages.
+            "advanced": true,
             "entries": [
                 {
                     "id": "layout.builder",
@@ -101,9 +107,10 @@ var category = {
                 {
                     "key": "layout.launcher.host",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "HostThumb",
                     "options": HOSTS,
                     "surface": "launcher",
-                    "preview": "LayoutPreview",
                     "label": "prefs.layout.launcher_host",
                     "description": "prefs.layout.launcher_host.desc",
                     "keywords": "launcher host spotlight sheet notch centered search"
@@ -111,6 +118,8 @@ var category = {
                 {
                     "key": "layout.dashboard.host",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "HostThumb",
                     "options": HOSTS,
                     "surface": "dashboard",
                     "label": "prefs.layout.dashboard_host",
@@ -120,6 +129,8 @@ var category = {
                 {
                     "key": "layout.aiquick.host",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "HostThumb",
                     "options": HOSTS.slice(0, 2).concat([CARD, HOSTS[2]]),
                     "surface": "aiquick",
                     "label": "prefs.layout.aiquick_host",
@@ -129,6 +140,8 @@ var category = {
                 {
                     "key": "layout.panels.host",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "HostThumb",
                     "options": HOSTS.slice(0, 2).concat([CARD]),
                     "surface": "panels",
                     "label": "prefs.layout.panels_host",
@@ -170,6 +183,9 @@ var category = {
                 {
                     "key": "layout.cheatsheet.host",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "HostThumb",
+                    "surface": "cheatsheet",
                     "options": [
                         {
                             "value": "fullscreen",

@@ -5,19 +5,22 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.previews
+import qs.modules.settings.thumbs
 import qs.modules.settings.store
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 import "../../bar/panels/PanelLayout.js" as PanelLayout
 import qs.modules.components.kit
 
-// The bar's look (bar.layout.style): full, floating, islands, pills,
-// dock-like or none, each previewed with your modules on your bar's edge.
+// The bar's shape (bar.layout.style): full, floating, islands, pills,
+// dock-like or none, each pictured with your modules on your bar's edge
+// over your wallpaper (the top of the screen, where the bar is).
 Item {
     id: root
 
     property var entry
     readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
     readonly property int columns: width < 520 ? 2 : 3
+    readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
     implicitHeight: grid.implicitHeight
 
@@ -33,7 +36,8 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: Space.m
+        rowSpacing: Space.l
+        columnSpacing: Space.l
 
         Repeater {
             model: PanelStyles.barStyles()
@@ -41,20 +45,25 @@ Item {
             delegate: ChoiceCard {
                 id: card
                 required property var modelData
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round(width * 9 / 16) - 8
+                objectName: "card:" + modelData.id
+                width: root.cardWidth
+                previewHeight: Math.round(width * 0.4)
                 selected: root.current === modelData.id
-                icon: modelData.icon
                 title: I18n.t(modelData.label)
-                subtitle: I18n.t(modelData.desc)
                 onClicked: SettingsStore.set("bar.layout.style", modelData.id)
 
-                PanelsSchematic {
+                MiniScreen {
+                    id: screen
                     anchors.fill: parent
-                    panels: root.previewOf(card.modelData.id)
-                    showWindows: false
-                    selected: -1
-                    unit: Math.max(8, Math.round(width * 0.075))
+                    PanelsSchematic {
+                        anchors.fill: parent
+                        backdrop: false
+                        barOpacity: screen.barOpacity
+                        panels: root.previewOf(card.modelData.id)
+                        showWindows: false
+                        selected: -1
+                        unit: Math.round(width * 0.075)
+                    }
                 }
             }
         }
