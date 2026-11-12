@@ -17,6 +17,17 @@ in one keeps everything (nothing comes back on a later Discard of the
 other), Discard in one restores everything; a window crashing while the
 other runs leaves the staging to that one; the last window gone discards
 it; never is a value left live, unwritten and with no window to discard it.
+
+What this test cannot see: the daemon here is a JS model that delivers
+every event at once and in call order, and the Config mock records saves
+without a real file reload or auto-save. Ordering on the wire (a commit
+overtaking a set sent before it on the same connection, a dropped event,
+the main shell's answer racing the wait) is covered in Go against the real
+ipc.Server and preview service (backend/pkg/svc/preview/order_test.go,
+preview_test.go). Driving these scenes against the real daemon would need
+Quickshell's Socket (the harness has none: BackendService's sockets are
+stubbed in every test) and a built daemon that supervises Quickshell, so
+there is no end-to-end case here.
 """
 from __future__ import annotations
 
