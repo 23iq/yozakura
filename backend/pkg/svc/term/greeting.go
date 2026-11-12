@@ -108,6 +108,10 @@ type fetchPreviewJSON struct {
 	ImageLogo bool         `json:"imageLogo,omitempty"`
 }
 
+// fetchPreview reads (and has fastfetch print) the logoPath it is given:
+// fine for the user's own shell and CLI on their own socket. It must not
+// be exposed to AI tools (MCP) without restricting that path, or a prompt
+// could read any file of the user's through the preview.
 func (s *Service) fetchPreview(params json.RawMessage) (any, error) {
 	var p struct {
 		Preset   *string  `json:"preset"`
