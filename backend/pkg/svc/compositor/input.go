@@ -43,7 +43,8 @@ type Input struct {
 	PolkitCmd string `json:"polkitCmd,omitempty"`
 	// ShellPolkit: the shell registers its own polkit agent
 	// (system.polkitAgent on and Quickshell has the module), so the
-	// generated config starts no external one (PolkitCmd is dropped).
+	// generated config starts the external one only as the fallback,
+	// `<app> polkit-fallback` (startupPolkit; PolkitCmd is dropped).
 	ShellPolkit bool `json:"shellPolkit,omitempty"`
 	// QtTheme is apps.theming.qt: the backend fills Env from it (QtEnv).
 	QtTheme bool `json:"qtTheme,omitempty"`

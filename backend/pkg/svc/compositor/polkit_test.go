@@ -68,13 +68,25 @@ func TestRenderStartupPolkitOnlyWhenSet(t *testing.T) {
 	}
 }
 
+func stubShellBinary(t *testing.T, bin string) {
+	t.Helper()
+	old := shellBinary
+	shellBinary = func() string { return bin }
+	t.Cleanup(func() { shellBinary = old })
+}
+
 func TestStartupPolkitLeavesTheAgentToTheShell(t *testing.T) {
+	stubShellBinary(t, "/opt/my apps/yozakura")
 	find := func() string { return "/usr/lib/hyprpolkitagent/hyprpolkitagent" }
-	if got := startupPolkit(Input{ShellPolkit: true}, find); got != "" {
-		t.Fatalf("shell agent on: %q", got)
+	fallback := "'/opt/my apps/yozakura' polkit-fallback"
+	if got := startupPolkit(Input{ShellPolkit: true}, find); got != fallback {
+		t.Fatalf("shell agent on: %q, want the fallback %q", got, fallback)
 	}
-	if got := startupPolkit(Input{ShellPolkit: true, PolkitCmd: "/x/agent"}, find); got != "" {
+	if got := startupPolkit(Input{ShellPolkit: true, PolkitCmd: "/x/agent"}, find); got != fallback {
 		t.Fatalf("shell agent on drops a sent command: %q", got)
+	}
+	if got := startupPolkit(Input{ShellPolkit: true}, func() string { return "" }); got != "" {
+		t.Fatalf("no external agent installed: %q", got)
 	}
 	if got := startupPolkit(Input{}, find); got != find() {
 		t.Fatalf("shell agent off: %q", got)
@@ -84,14 +96,22 @@ func TestStartupPolkitLeavesTheAgentToTheShell(t *testing.T) {
 	}
 }
 
-// The input the shell sends: shellPolkit renders no external agent.
-func TestShellPolkitInputRendersNoAgent(t *testing.T) {
+// The input the shell sends: shellPolkit renders the fallback line, not
+// the external agent itself (it would register first and keep the shell's
+// agent out), so niri and Mango still get an agent when the shell's never
+// registers.
+func TestShellPolkitInputRendersTheFallback(t *testing.T) {
+	stubShellBinary(t, "/opt/bin/yozakura")
 	var in Input
 	if err := json.Unmarshal([]byte(`{"shellPolkit": true}`), &in); err != nil || !in.ShellPolkit {
 		t.Fatalf("shellPolkit not decoded: %v %+v", err, in)
 	}
 	in.PolkitCmd = startupPolkit(in, func() string { return "/usr/lib/hyprpolkitagent/hyprpolkitagent" })
-	if out := Render(in, false); strings.Contains(out, "exec-once-non-hyprland") {
+	out := Render(in, false)
+	if want := "exec-once-non-hyprland = \"/opt/bin/yozakura polkit-fallback\"\n"; !strings.Contains(out, want) {
+		t.Fatalf("missing %q in\n%s", want, out)
+	}
+	if strings.Contains(out, "hyprpolkitagent") {
 		t.Fatalf("external agent started next to the shell's:\n%s", out)
 	}
 }

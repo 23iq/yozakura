@@ -220,7 +220,8 @@ Singleton {
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
             // The stock terminal bind execs it directly (works with the shell down).
             terminal: Config.generalReady ? (Config.general.terminal || "") : "",
-            // The shell registers its own polkit agent: no external one at login.
+            // The shell registers its own polkit agent: the external one
+            // starts at login only as the fallback (`<app> polkit-fallback`).
             shellPolkit: PolkitService.available,
         };
     }

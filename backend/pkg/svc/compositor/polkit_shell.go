@@ -57,12 +57,19 @@ func HyprlangValue(s string) string {
 	return strings.ReplaceAll(s, "#", "##")
 }
 
-// startupPolkit is the external agent the generated config starts: none
-// while the shell's own agent takes the prompts, else the one the shell
-// sent or the installed one (find).
+// startupPolkit is what the generated config starts on niri and Mango for
+// polkit. While the shell's own agent takes the prompts it is
+// `<launcher> polkit-fallback` (what the Hyprland installer line runs):
+// the external agent then starts only when the shell does not register
+// its own in time, so a shell that never comes up still leaves an agent.
+// Nothing when no external agent is installed (find). With the shell's
+// agent off: the one the shell sent, else the installed one.
 func startupPolkit(in Input, find func() string) string {
 	if in.ShellPolkit {
-		return ""
+		if find() == "" {
+			return ""
+		}
+		return FallbackShellCommand(shellBinary())
 	}
 	if in.PolkitCmd != "" {
 		return in.PolkitCmd
