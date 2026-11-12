@@ -11,17 +11,17 @@ const Categories = loadLibrary(path.join(__dirname, '..', 'modules/settings/sche
 const tr = lang => require(`../translations/${lang}.json`);
 const plain = v => JSON.parse(JSON.stringify(v));
 
-const TILES = ['layout', 'look', 'wallpaper', 'presets', 'notifications', 'lockscreen', 'assistant',
-    'launcher', 'dashboard', 'desktop', 'keys', 'displays', 'windows'];
-const PILLS = ['network', 'sound', 'power', 'apps', 'system'];
+const TILES = ['layout', 'look', 'wallpaper', 'notifications', 'lockscreen', 'presets',
+    'launcher', 'dashboard', 'assistant', 'keys', 'displays', 'windows'];
+const PILLS = ['network', 'sound', 'power', 'desktop', 'apps', 'system'];
 
 test('home is the destinations as tiles then pills, each titled (en, es, ru) and with an icon', () => {
     const home = Categories.home();
     assert.deepEqual(plain(home.map(g => g.id)), TILES);
     assert.deepEqual(plain(Categories.pills().map(g => g.id)), PILLS);
-    assert.equal(home[0].size, 'big');
+    assert.equal(home[0].hero, true);
     for (const g of home)
-        assert.ok(['big', 'wide', 'small'].includes(g.size), g.id);
+        assert.ok(g.w >= 2 && g.w <= 6 && g.h >= 3, g.id);
     for (const g of home.concat(Categories.pills())) {
         for (const lang of ['en', 'es', 'ru'])
             assert.ok(tr(lang)[g.title], `${lang} ${g.title}`);

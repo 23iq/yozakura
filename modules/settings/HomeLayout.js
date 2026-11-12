@@ -2,23 +2,28 @@
 
 // The home bento (SettingsHome): how many columns a width takes and where
 // each tile sits. Pure, node-tested (tests/settings-home.test.cjs).
-// Tile sizes: big 2 x 2, wide 2 x 1, small 1 x 1 (columns x rows); a tile
-// never gets wider than the grid.
+// Tiles are `w` columns by `h` row units (Categories.HOME: a 12-column grid
+// of half-row units); a tile never gets wider than the grid. The rows
+// stretch so the bento fills the window (rowUnit).
 
 var SPANS = {
-    "big": [2, 2],
-    "wide": [2, 1],
-    "small": [1, 1]
+    "big": [6, 8],
+    "wide": [3, 4],
+    "small": [2, 4]
 };
 
-// Columns for a content width: at least `minTile` px per column.
-function columns(width, minTile) {
-    var n = Math.floor(width / Math.max(1, minTile));
-    if (n >= 6)
-        return 6;
-    if (n >= 4)
-        return 4;
-    return 2;
+// Columns for a content width: 12 (the whole bento side by side), else 6
+// (the hero full width, the rest in halves and thirds).
+function columns(width, minColumn) {
+    return width >= Math.max(1, minColumn) * 12 ? 12 : 6;
+}
+
+// The height of one row unit so `rows` units (and their gaps) fill
+// `height`, never under `minUnit` (then the bento scrolls).
+function rowUnit(height, rows, gap, minUnit) {
+    if (rows <= 0)
+        return minUnit;
+    return Math.max(minUnit, (height - gap * (rows - 1)) / rows);
 }
 
 // First-fit packing in reading order: [{id, col, row, w, h}] and the row
@@ -42,7 +47,7 @@ function pack(tiles, cols) {
     var cells = [];
     var rows = 0;
     tiles.forEach(function (t) {
-        var span = SPANS[t.size] || SPANS.small;
+        var span = t.w ? [t.w, t.h || 1] : (SPANS[t.size] || SPANS.small);
         var w = Math.min(span[0], cols), h = span[1];
         for (var r = 0; ; r++) {
             var placed = false;

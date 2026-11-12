@@ -13,6 +13,7 @@ import qs.modules.settings.layout
 import qs.modules.settings.system
 import qs.modules.settings.changes
 import qs.modules.settings.stages
+import qs.modules.settings.home
 import "Registry.js" as Registry
 import "PageCache.js" as PageCache
 import "Ui.js" as Ui

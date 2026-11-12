@@ -70,26 +70,28 @@ var groups = [
     { "id": "apps", "icon": "packageBox", "title": "prefs.dest.apps", "categories": ["terminal", "extras", "mods"] }
 ];
 
-// The home bento, in reading order: `size` big (2 x 2), wide (2 x 1) or
-// small (1 x 1); the grid packs them (HomeLayout.js).
+// The home bento, in reading order, on a 12-column grid whose rows are
+// half-row units: `w` columns by `h` units (HomeLayout.js packs them and
+// stretches the rows so the bento fills the window). Desktop layout is
+// the hero (`hero`: the accent ring).
 var HOME = [
-    { "id": "layout", "size": "big" },
-    { "id": "look", "size": "wide" },
-    { "id": "wallpaper", "size": "wide" },
-    { "id": "presets", "size": "small" },
-    { "id": "notifications", "size": "small" },
-    { "id": "lockscreen", "size": "small" },
-    { "id": "assistant", "size": "small" },
-    { "id": "launcher", "size": "small" },
-    { "id": "dashboard", "size": "small" },
-    { "id": "desktop", "size": "small" },
-    { "id": "keys", "size": "small" },
-    { "id": "displays", "size": "small" },
-    { "id": "windows", "size": "small" }
+    { "id": "layout", "w": 6, "h": 8, "hero": true },
+    { "id": "look", "w": 3, "h": 4 },
+    { "id": "wallpaper", "w": 3, "h": 4 },
+    { "id": "notifications", "w": 2, "h": 4 },
+    { "id": "lockscreen", "w": 2, "h": 4 },
+    { "id": "presets", "w": 2, "h": 4 },
+    { "id": "launcher", "w": 2, "h": 6 },
+    { "id": "dashboard", "w": 2, "h": 6 },
+    { "id": "assistant", "w": 2, "h": 6 },
+    { "id": "keys", "w": 3, "h": 6 },
+    { "id": "displays", "w": 3, "h": 3 },
+    { "id": "windows", "w": 3, "h": 3 }
 ];
 
-// The pills under the bento: plain system destinations.
-var PILLS = ["network", "sound", "power", "apps", "system"];
+// The wide status tiles under the bento: plain system destinations, each
+// with a live value (Widgets: desktop widgets and the overview).
+var PILLS = ["network", "sound", "power", "desktop", "apps", "system"];
 
 // A hand-written page (Registry.PAGES[name]).
 function page(id, icon, name, keywords) {
@@ -247,7 +249,7 @@ function tabsOf(categoryId) {
 // Home model: the bento tiles and the pills as destinations.
 function home() {
     return HOME.map(function (t) {
-        return Object.assign({ "size": t.size }, groupById(t.id));
+        return Object.assign({ "w": t.w, "h": t.h, "hero": !!t.hero }, groupById(t.id));
     });
 }
 

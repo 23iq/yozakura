@@ -28,14 +28,7 @@ Item {
     default property alias content: area.data
     property real radius: Look.radius("surface", stage.height)
     // The wallpaper as a file URL ("" while there is none).
-    readonly property string wallpaper: {
-        const m = GlobalStates.wallpaperManager;
-        if (!m)
-            return "";
-        const path = m.effectiveWallpaper ?? m.currentWallpaper ?? "";
-        const shown = path && m.getDisplaySource ? m.getDisplaySource(path) : path;
-        return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
-    }
+    readonly property string wallpaper: SettingsStore.wallpaper
 
     implicitHeight: stage.stageHeight
 

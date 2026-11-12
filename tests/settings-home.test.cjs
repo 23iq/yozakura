@@ -15,16 +15,19 @@ const Categories = loadLibrary(path.join(dir, 'schema/Categories.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 const tr = lang => require(`../translations/${lang}.json`);
 
-test('home columns reflow 6 / 4 / 2 with the width', () => {
-    assert.equal(HomeLayout.columns(1200, 150), 6);
-    assert.equal(HomeLayout.columns(700, 150), 4);
-    assert.equal(HomeLayout.columns(500, 150), 2);
-    assert.equal(HomeLayout.columns(0, 150), 2);
+test('home columns reflow 12 / 6 with the width; rows stretch to fill', () => {
+    assert.equal(HomeLayout.columns(1100, 72), 12);
+    assert.equal(HomeLayout.columns(700, 72), 6);
+    assert.equal(HomeLayout.columns(0, 72), 6);
+    // 14 units and 13 gaps of 12 fill 556 px
+    assert.equal(Math.round(HomeLayout.rowUnit(556, 14, 12, 20) * 14 + 13 * 12), 556);
+    // never under the minimum (the bento scrolls then)
+    assert.equal(HomeLayout.rowUnit(100, 14, 12, 20), 20);
 });
 
 test('home tiles pack without overlap, in reading order, at every column count', () => {
     const tiles = Categories.home();
-    for (const cols of [2, 4, 6]) {
+    for (const cols of [6, 12]) {
         const { cells, rows } = HomeLayout.pack(tiles, cols);
         assert.equal(cells.length, tiles.length);
         const taken = new Set();
@@ -38,13 +41,15 @@ test('home tiles pack without overlap, in reading order, at every column count',
                 }
             assert.ok(c.row + c.h <= rows);
         }
-        // the big tile comes first, top left
-        assert.deepEqual(plain(cells[0]), { id: 'layout', col: 0, row: 0, w: 2, h: 2 });
+        // the hero comes first, top left
+        assert.deepEqual(plain(cells[0]), { id: 'layout', col: 0, row: 0, w: 6, h: 8 });
+        // no hole: every cell of the rows the tiles span is taken
+        assert.equal(taken.size, cols * rows, `${cols} cols: ${taken.size} of ${cols * rows} cells`);
     }
 });
 
 test('arrow keys move to the nearest tile that way', () => {
-    const { cells } = HomeLayout.pack(Categories.home(), 6);
+    const { cells } = HomeLayout.pack(Categories.home(), 12);
     const at = id => cells.findIndex(c => c.id === id);
     // look sits right of the big layout tile
     assert.equal(cells[HomeLayout.neighbour(cells, at('layout'), 'right')].id, 'look');
@@ -92,6 +97,7 @@ test('every tile has a live status line in every language', () => {
     const values = {
         'bar.position': 'top', 'bar.panels': [], 'notch.enabled': true, 'dock.enabled': true,
         'theme.language': 'ink', 'wallpaper.matugenScheme': 'scheme-tonal-spot', 'compositor.gapsIn': 6,
+        'compositor.borderSize': 2,
     };
     for (const lang of ['en', 'es', 'ru']) {
         const t = tr(lang);
@@ -105,7 +111,10 @@ test('every tile has a live status line in every language', () => {
     const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
     assert.equal(HomeStatus.line('layout', ctx), 'Top bar · island · dock');
     assert.equal(HomeStatus.line('wallpaper', ctx), '12 in your library');
-    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 px');
+    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 · border 2');
+    // an "auto" corner is named as the shell resolves it
+    assert.equal(HomeStatus.line('notifications', ctx), 'Top right');
+    assert.equal(HomeStatus.line('displays', { ...ctx, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), '2560×1440 · 144 Hz');
     values['bar.panels'] = [{}, {}];
     values['dock.enabled'] = false;
     assert.equal(HomeStatus.line('layout', ctx), '2 bars · island');

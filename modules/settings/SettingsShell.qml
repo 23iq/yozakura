@@ -195,21 +195,14 @@ Item {
     // itself first, a popup closes first).
     Keys.onEscapePressed: shell.goHome()
 
-    // Window background: the theme's "bg" surface, or the language's
-    // translucent window fill (glass) over the desktop.
-    StyledRect {
+    // Window background: the wallpaper, blurred, darkened and vignetted
+    // (kit Ambient), so the window carries the desktop's colour; plain on
+    // battery saver.
+    Ambient {
+        objectName: "windowAmbient"
         anchors.fill: parent
-        visible: !Look.windowTranslucent
-        variant: "bg"
-        glassSurface: "settings"
-        radius: 0
-        enableBorder: false
-    }
-    Rectangle {
-        objectName: "windowGlass"
-        anchors.fill: parent
-        visible: Look.windowTranslucent
-        color: Look.windowFill
+        source: SettingsStore.wallpaper
+        plain: Config.performance.batterySaver === true
     }
 
     // The mouse back button returns home.

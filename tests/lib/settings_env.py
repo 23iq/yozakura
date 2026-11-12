@@ -142,6 +142,22 @@ QtObject {
     function test(r, cb) { calls = calls.concat([["test", r]]); if (cb) cb(nextReport, "") }
 }"""
 
+# Home status tiles read the network and the power profile.
+NETWORK_STUB = """pragma Singleton
+QtObject {
+    property string networkName: "Sakura 5G"
+    property int networkStrength: 80
+    property bool ethernet: false
+    property bool wifiEnabled: true
+}"""
+
+POWER_PROFILE_STUB = """pragma Singleton
+QtObject {
+    property string currentProfile: "balanced"
+    property bool isAvailable: true
+    property var availableProfiles: ["power-saver", "balanced", "performance"]
+}"""
+
 UPDATE_STUB = """pragma Singleton
 QtObject {
     property string currentVersion: "1.3.9"
@@ -827,6 +843,7 @@ class SettingsEnv:
                                               "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
+                                              "NetworkService": NETWORK_STUB, "PowerProfileClient": POWER_PROFILE_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),

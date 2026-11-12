@@ -14,10 +14,12 @@ import "ChangesModel.js" as ChangesModel
 import "HomeLayout.js" as HomeLayout
 import "Ui.js" as Ui
 
-// The home screen of the settings window: the sakura brand and one large
-// search field, then a bento of live tiles (HomeTile, packed by
-// HomeLayout.js: fewer columns in a smaller window) and a row of pills for
-// the plain system destinations. Typing anywhere searches; the results
+// The home screen of the settings window: the sakura brand, one large
+// search field and undo, then a bento of live tiles (HomeTile, each a
+// small scene of what it opens; packed by HomeLayout.js on a 12-column grid,
+// 6 in a narrow window, its rows stretched so home fills the window) and a
+// row of wide status tiles for the plain system destinations
+// (HomeStatusTile). Typing anywhere searches; the results
 // (window rows only, with their current value) replace the bento; Enter
 // opens the first, Esc clears. Arrows move between tiles, Enter opens one.
 // Cheap by design: no page is created here, the tiles read config only.
@@ -52,6 +54,12 @@ FocusScope {
     // Once home has shown its first frame: what that frame does not need
     // (tile pictures and status lines, the preset footer) fills in then.
     property bool warm: false
+    // Tile scenes come in one per frame after that (spreads their cost).
+    property int scenes: 0
+    FrameAnimation {
+        running: home.warm && home.scenes < home.packing.cells.length
+        onTriggered: home.scenes++
+    }
     Connections {
         target: home.warm ? null : home.Window.window
         function onFrameSwapped() {
@@ -64,7 +72,9 @@ FocusScope {
             Qt.callLater(() => home.warm = true);
     }
     readonly property var tiles: Categories.home()
-    readonly property int columns: HomeLayout.columns(grid.width, Space.px(150))
+    readonly property int columns: HomeLayout.columns(grid.width, Space.px(72))
+    readonly property real margin: Space.xl
+    readonly property real gap: Space.m
     readonly property var packing: HomeLayout.pack(home.tiles, home.columns)
 
     signal destinationOpened(string id, var tile)
@@ -124,7 +134,7 @@ FocusScope {
         id: flick
         anchors.fill: parent
         contentWidth: width
-        contentHeight: column.height + Space.xxl * 2
+        contentHeight: column.height + home.margin * 2
         boundsBehavior: Flickable.StopAtBounds
         clip: true
         ScrollBar.vertical: ScrollBar {
@@ -133,52 +143,74 @@ FocusScope {
 
         Column {
             id: column
-            x: (parent.width - width) / 2
-            y: Space.xl
-            width: Math.min(parent.width - Space.xxl * 2, Space.px(1240))
-            spacing: Space.xl
+            x: home.margin
+            y: home.margin
+            width: flick.width - home.margin * 2
+            spacing: home.gap
 
-            // Brand
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Space.m
-                Image {
+            // Header: the brand, the search, undo
+            Item {
+                id: header
+                width: parent.width
+                height: Space.controlL
+
+                Row {
+                    id: brand
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.round(Type.iconSize("title") * 1.6)
-                    height: width
-                    source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
-                    sourceSize.width: width * 2
-                    sourceSize.height: height * 2
-                    fillMode: Image.PreserveAspectFit
-                    mipmap: true
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        brightness: 1.0
-                        colorization: 1.0
-                        colorizationColor: Type.accent
+                    spacing: Space.m
+                    Image {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.round(Type.iconSize("title") * 1.5)
+                        height: width
+                        source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
+                        sourceSize.width: width * 2
+                        sourceSize.height: height * 2
+                        fillMode: Image.PreserveAspectFit
+                        mipmap: true
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            brightness: 1.0
+                            colorization: 1.0
+                            colorizationColor: Type.accent
+                        }
+                    }
+                    KitText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "title"
+                        font.pixelSize: Math.round(Type.size("title") * 1.25)
+                        text: I18n.t("prefs.title")
                     }
                 }
-                KitText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    role: "title"
-                    font.pixelSize: Type.size("title") * 1.5
-                    text: I18n.t("prefs.title")
-                }
-            }
 
-            SearchField {
-                id: search
-                objectName: "settingsSearch"
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(parent.width, Space.px(620))
-                boxed: true
-                placeholderText: I18n.t("prefs.home.search")
-                hints: ["Ctrl F"]
-                clearOnEscape: true
-                focus: true
-                onDownPressed: home.resultIndex = Math.min(home.resultIndex + 1, home.results.length - 1)
-                onUpPressed: home.resultIndex = Math.max(home.resultIndex - 1, 0)
-                onAccepted: home.activateResult(home.resultIndex)
+                SearchField {
+                    id: search
+                    objectName: "settingsSearch"
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: Math.max(brand.width + home.gap, (parent.width - width) / 2)
+                    width: Math.min(parent.width - brand.width - undoButton.width - home.gap * 2, Space.px(620))
+                    boxed: true
+                    placeholderText: I18n.t("prefs.home.search")
+                    hints: ["Ctrl F"]
+                    clearOnEscape: true
+                    focus: true
+                    onDownPressed: home.resultIndex = Math.min(home.resultIndex + 1, home.results.length - 1)
+                    onUpPressed: home.resultIndex = Math.max(home.resultIndex - 1, 0)
+                    onAccepted: home.activateResult(home.resultIndex)
+                }
+
+                IconButton {
+                    id: undoButton
+                    objectName: "homeUndo"
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: Icons.arrowCounterClockwise
+                    size: "l"
+                    focusable: true
+                    enabled: SettingsStore.undoStack.length > 0
+                    opacity: enabled ? 1 : 0.4
+                    tooltip: I18n.t("prefs.home.undo")
+                    onClicked: SettingsStore.undo()
+                }
             }
 
             // Search results
@@ -188,7 +220,7 @@ FocusScope {
                 readonly property var model: home.results
                 readonly property int count: home.results.length
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(parent.width, Space.px(720))
+                width: Math.min(parent.width, Space.px(760))
                 visible: home.query.length > 0
                 spacing: Space.hairline
 
@@ -229,15 +261,17 @@ FocusScope {
                 }
             }
 
-            // The bento
+            // The bento: its rows stretch so it and the status tiles fill
+            // the window (HomeLayout.rowUnit), never under a readable size.
             Item {
                 id: grid
                 objectName: "homeGrid"
                 width: parent.width
                 visible: home.query.length === 0
-                readonly property real gap: Space.l
+                readonly property real gap: home.gap
                 readonly property real colW: (width - gap * (home.columns - 1)) / home.columns
-                readonly property real rowH: Math.max(Space.px(132), Math.round(colW * 0.78))
+                readonly property real avail: flick.height - home.margin * 2 - header.height - statusRow.height - home.gap * 2
+                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(20))
                 height: home.packing.rows * rowH + Math.max(0, home.packing.rows - 1) * gap
 
                 Repeater {
@@ -248,7 +282,7 @@ FocusScope {
                         required property var modelData
                         required property int index
                         destination: home.tiles.find(t => t.id === modelData.id)
-                        live: home.warm
+                        live: home.warm && tile.index < home.scenes
                         x: modelData.col * (grid.colW + grid.gap)
                         y: modelData.row * (grid.rowH + grid.gap)
                         width: modelData.w * grid.colW + (modelData.w - 1) * grid.gap
@@ -266,7 +300,7 @@ FocusScope {
                         Keys.onDownPressed: {
                             const n = HomeLayout.neighbour(home.packing.cells, tile.index, "down");
                             if (n === tile.index)
-                                pillRow.children[0].forceActiveFocus();
+                                (statusRepeater.itemAt(0) as Item).forceActiveFocus();
                             else
                                 home.focusTile(n);
                         }
@@ -274,27 +308,31 @@ FocusScope {
                 }
             }
 
-            // Pills for the plain system destinations
-            Row {
-                id: pillRow
-                anchors.horizontalCenter: parent.horizontalCenter
+            // Wide status tiles: the plain system destinations, live
+            Grid {
+                id: statusRow
+                width: parent.width
                 visible: home.query.length === 0
-                spacing: Space.s
+                readonly property int count: Categories.pills().length
+                columns: home.columns >= 12 ? statusRow.count : 3
+                spacing: home.gap
+                readonly property real tileW: (width - spacing * (columns - 1)) / columns
 
                 Repeater {
+                    id: statusRepeater
                     model: Categories.pills()
-                    delegate: Chip {
+                    delegate: HomeStatusTile {
                         id: pill
                         required property var modelData
-                        objectName: "homePill:" + modelData.id
-                        icon: Icons[modelData.icon] ?? ""
-                        text: I18n.t(modelData.title)
-                        activeFocusOnTab: true
-                        highlighted: activeFocus
-                        Keys.onReturnPressed: clicked()
-                        Keys.onSpacePressed: clicked()
-                        Keys.onUpPressed: home.focusTile(0)
+                        required property int index
+                        destination: modelData
+                        live: home.warm
+                        width: statusRow.tileW
+                        height: Space.controlL + Space.m
                         onClicked: home.destinationOpened(modelData.id, pill)
+                        Keys.onUpPressed: home.focusTile(0)
+                        Keys.onLeftPressed: (statusRepeater.itemAt(Math.max(0, index - 1)) as Item).forceActiveFocus()
+                        Keys.onRightPressed: (statusRepeater.itemAt(Math.min(statusRow.count - 1, index + 1)) as Item).forceActiveFocus()
                     }
                 }
             }

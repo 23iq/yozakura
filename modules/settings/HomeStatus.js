@@ -1,11 +1,13 @@
 .pragma library
 .import "schema/Categories.js" as Categories
 .import "../lockscreen/styles/LockStyleRegistry.js" as LockStyles
+.import "../notifications/NotificationPolicy.js" as Policy
 
 // The one live status line under a home tile ("Dark · Ink · Tonal spot",
 // "Top bar · island · dock", "Glass", "12 in your library"). Pure,
 // node-tested (tests/settings-home.test.cjs).
-// ctx = {get(key), tr(i18nKey), wallpapers: number, preset: string}
+// ctx = {get(key), tr(i18nKey), wallpapers: number, preset: string,
+//        outputs: [{width, height, refresh, enabled}] (optional)}
 
 // Destinations with a fixed line of what they hold (prefs.home.sub.<id>).
 var SUBTITLED = ["launcher", "dashboard", "desktop", "keys", "displays", "assistant", "system"];
@@ -57,8 +59,11 @@ function line(dest, ctx) {
             var pres = ctx.get("notifications.presentation") || "auto";
             if (pres === "notch")
                 return ctx.tr("prefs.home.in_island");
-            var pos = ctx.get("notifications.position") || "auto";
-            return pos === "auto" ? ctx.tr("prefs.notif.presentation." + pres) : ctx.tr("prefs.notif.position." + pos);
+            // where they show now: an "auto" corner resolved as the shell does
+            var pos = Policy.resolvePosition(ctx.get("notifications.position") || "auto", {
+                "barPosition": ctx.get("bar.position") || "top"
+            });
+            return ctx.tr("prefs.notif.position." + pos);
         }
     case "lockscreen":
         {
@@ -66,7 +71,26 @@ function line(dest, ctx) {
             return st ? ctx.tr(st.labelKey) : "";
         }
     case "windows":
-        return ctx.tr("prefs.home.gaps").replace("%1", ctx.get("compositor.gapsIn") ?? 0);
+        return ctx.tr("prefs.home.gaps_border").replace("%1", ctx.get("compositor.gapsIn") ?? 0).replace("%2", ctx.get("compositor.borderSize") ?? 0);
+    case "keys":
+        {
+            var layouts = (ctx.get("keyboard.layouts") || []).map(function (l) {
+                return String(l && l.layout || "").toUpperCase();
+            }).filter(function (l) {
+                return l !== "";
+            });
+            return layouts.length > 0 ? ctx.tr("prefs.home.sub.keys") + " · " + layouts.join(", ") : tabsLine(dest, ctx.tr);
+        }
+    case "displays":
+        {
+            var on = (ctx.outputs || []).filter(function (o) {
+                return o && o.enabled !== false && o.width > 0;
+            });
+            if (on.length === 0)
+                return tabsLine(dest, ctx.tr);
+            var o = on[0];
+            return o.width + "×" + o.height + (o.refresh > 0 ? " · " + Math.round(o.refresh) + " Hz" : "") + (on.length > 1 ? " · +" + (on.length - 1) : "");
+        }
     default:
         return tabsLine(dest, ctx.tr);
     }

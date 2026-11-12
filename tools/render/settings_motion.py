@@ -88,7 +88,9 @@ def scene(name: str, args, out: Path) -> None:
         wp = str(Path(args.wallpaper).resolve())
         state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": [wp],
                  "current": wp, "thumbs": {}, "presets": []}
-    env = SettingsEnv(f"motion-{name}", palette=sr.palette("dark", state), user_config=True,
+    colors = sr.DEFAULT_PALETTE if args.palette == "default" else sr.palette("dark", state, from_wallpaper=bool(args.wallpaper))
+    env = SettingsEnv(f"motion-{name}", palette=colors,
+                      user_config=True,
                       overrides={"theme": {"language": args.language, "lightMode": False}}, wallpaper=state)
     win = env.load(f"""
 import QtQuick
@@ -152,6 +154,8 @@ def main() -> int:
     ap.add_argument("--size", default="1180x780")
     ap.add_argument("--scale", type=int, default=880, help="output width in px")
     ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
+    ap.add_argument("--palette", default="wallpaper", choices=["wallpaper", "default"],
+                    help="colours from the wallpaper (default) or the fixed rose palette")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)

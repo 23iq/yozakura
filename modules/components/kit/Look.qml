@@ -74,6 +74,20 @@ QtObject {
 
     // App windows (settings): glass draws a translucent frosted background
     // over the desktop; null keeps the theme's opaque "bg" surface.
+    // Bento cards (kit Card) over the window's ambient wallpaper (Ambient).
+    readonly property var card: root.spec.card || {
+        "fill": "surfaceContainer",
+        "fillOpacity": 1,
+        "edge": 0,
+        "shadow": 0.3,
+        "ambient": 0.5
+    }
+    readonly property color cardEdge: root.alpha("overBackground", root.card.edge)
+    readonly property color cardShadow: root.alpha("shadow", root.card.shadow)
+    readonly property real ambientStrength: root.card.ambient
+    function cardFill(hovered: bool): color {
+        return Qt.tint(root.alpha(root.card.fill, root.card.fillOpacity), root.alpha("overBackground", hovered ? 0.06 : 0));
+    }
     readonly property bool windowTranslucent: !!root.spec.window
     readonly property color windowFill: root.windowTranslucent ? root.alpha(root.spec.window.fill, root.spec.window.fillOpacity) : "transparent"
 

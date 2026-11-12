@@ -47,6 +47,16 @@ Singleton {
     // The bar panel being edited (several bars): the Bar stage picks it
     // with a click, the bars editor edits it.
     property int selectedPanel: 0
+    // The wallpaper on screen as a file URL ("" while there is none): the
+    // window's ambient background, the stages and the picture tiles.
+    readonly property string wallpaper: {
+        const m = GlobalStates.wallpaperManager;
+        if (!m)
+            return "";
+        const path = m.effectiveWallpaper ?? m.currentWallpaper ?? "";
+        const shown = path && m.getDisplaySource ? m.getDisplaySource(path) : path;
+        return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
+    }
     property var _focusOwner: null
 
     // A row is pointed at (hovered / focused) or no longer: the last one

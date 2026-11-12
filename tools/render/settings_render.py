@@ -10,6 +10,12 @@ palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
 `home` renders the home screen (with `--search` a query in its field).
+Colours: with `--wallpaper` the palette is derived from that image (matugen,
+or without it `wallpaper_palette.py`, which needs the `materialyoucolor`
+package), so the proof's wallpaper and colours belong together; light mode
+likewise; without either the fixed rose palette. `--palette default` forces
+the rose palette (it belongs with assets/wallpapers_example/wallpaper-01.png
+and wallpaper-06.png, the art direction's pairing).
 `--set theme.surfaceEffect='"crt"'` overrides a config key for the render
 (value parsed as JSON, plain strings allowed). `--wallpaper PATH` uses that
 image as the wallpaper (e.g. assets/wallpapers_example/wallpaper-03.png on a
@@ -39,6 +45,9 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window a
 from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import wallpaper_palette  # noqa: E402
 
 CACHE = Path.home() / ".cache" / "yozakura"
 
@@ -101,26 +110,31 @@ def seed_palette(mode: str, seed: str) -> dict:
     return out
 
 
-def palette(mode: str, state: dict, seed: str = "") -> dict:
+def palette(mode: str, state: dict, seed: str = "", from_wallpaper: bool = False) -> dict:
+    """The palette of a render. `from_wallpaper`: derived from the render's
+    wallpaper (so the two belong together), by matugen or, without it, by
+    wallpaper_palette.py; otherwise the user's current colors."""
+    src = color_source(state)
     if not shutil.which("matugen"):
+        if src and not seed and wallpaper_palette.available():
+            return {**(DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE), **wallpaper_palette.palette(src, mode)}
         return DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE
     if seed:
         return seed_palette(mode, seed)
-    if mode == "dark":
+    if mode == "dark" and not from_wallpaper:
         try:
             return json.loads((CACHE / "colors.json").read_text())
         except (OSError, ValueError):
             return DEFAULT_PALETTE
-    src = color_source(state)
     if not src:
         return DEFAULT_PALETTE
-    r = subprocess.run(["matugen", "image", src, "--dry-run", "-q", "-j", "hex", "-m", "light",
+    r = subprocess.run(["matugen", "image", src, "--dry-run", "-q", "-j", "hex", "-m", mode,
                         "--source-color-index", "0"], capture_output=True, text=True)
     if r.returncode != 0:
         return DEFAULT_PALETTE
     colors = json.loads(r.stdout)["colors"]
     out = dict(DEFAULT_PALETTE)
-    out.update({camel(k): v["light"]["color"] for k, v in colors.items() if "light" in v})
+    out.update({camel(k): v[mode]["color"] for k, v in colors.items() if mode in v})
     return out
 
 
@@ -128,6 +142,8 @@ def scheme_palettes(state: dict) -> dict:
     src = color_source(state)
     if not src:
         return {}
+    if not shutil.which("matugen"):
+        return wallpaper_palette.scheme_previews(src) if wallpaper_palette.available() else {}
     binary = REPO / ".cache" / "render" / "yozakura"
     binary.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["go", "build", "-o", str(binary), "./cmd/yozakura"], cwd=REPO / "backend", check=True)
@@ -179,6 +195,8 @@ def main() -> int:
     ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
     ap.add_argument("--hover", default="", metavar="ENTRY", help="hover the row of this entry id")
     ap.add_argument("--undo", action="store_true", help="show the undo pill (as after a change)")
+    ap.add_argument("--palette", default="wallpaper", choices=["wallpaper", "default"],
+                    help="colours from the wallpaper (default) or the fixed rose palette")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
@@ -204,7 +222,10 @@ def render(lang: str, mode: str, args, size: tuple, state: dict, schemes: dict, 
     extra["theme"] = {**extra.get("theme", {}), "lightMode": mode == "light"}
     if lang:
         extra["theme"]["language"] = lang
-    env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=palette(mode, state), user_config=True,
+    colors = (DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE) if args.palette == "default" \
+        else palette(mode, state, from_wallpaper=bool(args.wallpaper))
+    env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=colors,
+                      user_config=True,
                       overrides=extra, wallpaper=state)
     backdrop = json.dumps(("file://" + wall) if wall and lang else "")
     win = env.load(f"""

@@ -1,9 +1,11 @@
 import QtQuick
+import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.components.kit
 
-// A bento card: one raised box (Look.raisedFill, Look.bigRadius, the
-// language's control edge) holding a concept - an optional label
+// A bento card: one surface (Look.cardFill: translucent over the window's
+// Ambient in glass / ink, solid in the boxed languages; Look.bigRadius, a
+// hairline edge, a soft shadow) holding a concept - an optional label
 // (SectionLabel) over its content, laid out in a column. Visible in every
 // visual language (unlike Group, which ink leaves unboxed), so a grid of
 // cards reads as a bento. `interactive` makes the whole card a button:
@@ -20,6 +22,10 @@ Item {
     property bool interactive: false
     property bool highlighted: false
     property bool fill: true
+    // an accent ring and glow (the thing the window is about, e.g. the hero tile)
+    property bool accented: false
+    // the shadow under the card (off for cards inside cards)
+    property bool shadow: true
     property int padding: Look.boxPadding + Space.xs
     property int spacing: Space.m
     readonly property real radius: Look.bigRadius(Space.controlXL)
@@ -67,13 +73,28 @@ Item {
             }
         }
 
+        RectangularShadow {
+            anchors.fill: parent
+            visible: root.shadow && (root.fill || root.accented)
+            radius: root.radius
+            offset: Qt.vector2d(0, root.interactive && root.hovered ? Space.s : Space.xs)
+            blur: root.interactive && root.hovered ? Space.xxl : Space.xl
+            spread: 0
+            color: root.accented ? Qt.alpha(Type.accent, 0.35) : Look.cardShadow
+            Behavior on blur {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
+        }
         Mark {
             anchors.fill: parent
             visible: root.fill
             radius: root.radius
-            color: Look.raisedFill(root.interactive && root.hovered)
-            border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
-            border.color: Look.controlEdge
+            color: Look.cardFill(root.interactive && root.hovered)
+            border.width: Look.cardEdge.a > 0 ? Space.hairline : 0
+            border.color: Look.cardEdge
             Behavior on color {
                 enabled: Motion.micro.duration > 0
                 ColorAnimation {
@@ -101,6 +122,16 @@ Item {
             }
         }
 
+        // the accent ring, over the picture
+        Mark {
+            anchors.fill: parent
+            visible: root.accented
+            radius: root.radius
+            color: "transparent"
+            border.width: Space.stroke
+            border.color: Type.accent
+            z: 2
+        }
         FocusRing {
             shown: root.activeFocus
             radius: root.radius + Space.stroke
