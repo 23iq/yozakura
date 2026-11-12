@@ -30,10 +30,15 @@ FILEVIEW = """QtObject {
     property bool blockLoading: false
     property bool watchChanges: false
     property bool preload: true
+    property bool blockAllReads: false
+    property bool blockWrites: false
+    property bool atomicWrites: false
     property string _text: ""
     signal loaded()
     signal loadFailed(var error)
     signal fileChanged()
+    signal saved()
+    signal saveFailed(var error)
     function text() { return _text }
     function setText(t) { _text = t }
     function reload() {

@@ -519,8 +519,10 @@ QUICKSHELL_IO = {
     "Process": "QtObject { property var command: []; property bool running: false; property var stdout; property var stderr; "
                "signal exited(int exitCode, int exitStatus) }",
     "StdioCollector": "QtObject { property string text: ''; property bool waitForEnd: false; signal streamFinished() }",
-    "FileView": "QtObject { property string path; property bool blockLoading; signal loaded(); function reload() {} "
-                "function text() { return '' } }",
+    "FileView": "QtObject { property string path; property bool blockLoading; property bool blockAllReads; "
+                "property bool blockWrites; property bool atomicWrites; property bool preload: true; "
+                "property bool printErrors: true; signal loaded(); signal saved(); signal saveFailed(var error); "
+                "function reload() {} function text() { return '' } function setText(t) {} }",
 }
 QUICKSHELL_WIDGETS = {
     "ClippingRectangle": "Rectangle { clip: true; property bool contentUnderBorder: false }",
