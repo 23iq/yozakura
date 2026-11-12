@@ -16,5 +16,8 @@ var data = {
     "settingsKeepAliveMinutes": 5,
     "visualizerFps": 30,
     "batterySaver": false,
-    "warmViews": true
+    "warmViews": true,
+    "hidePanelInFullscreen": false,
+    "compactOsd": false,
+    "splitFrame": false
 }

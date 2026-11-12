@@ -143,6 +143,30 @@ var category = {
                     "keywords": "warm preload prepare startup launcher memory"
                 },
                 {
+                    "key": "performance.hidePanelInFullscreen",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.hide_panel_fullscreen",
+                    "description": "system.performance.hide_panel_fullscreen_desc",
+                    "keywords": "fullscreen game video panel bar unmap scanout overlay surface"
+                },
+                {
+                    "key": "performance.compactOsd",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.compact_osd",
+                    "description": "system.performance.compact_osd_desc",
+                    "keywords": "osd volume brightness window surface size memory"
+                },
+                {
+                    "key": "performance.splitFrame",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.split_frame",
+                    "description": "system.performance.split_frame_desc",
+                    "keywords": "frame border window surface redraw layer"
+                },
+                {
                     "key": "performance.settingsKeepAliveMinutes",
                     "type": "number",
                     "advanced": true,

@@ -19,4 +19,7 @@ JsonAdapter {
     property int visualizerFps: 30
     property bool batterySaver: false
     property bool warmViews: true
+    property bool hidePanelInFullscreen: false
+    property bool compactOsd: false
+    property bool splitFrame: false
 }

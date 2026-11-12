@@ -251,6 +251,48 @@
         "keywords": "warm preload prepare startup launcher memory",
         "advanced": true
       }
+    },
+    "hidePanelInFullscreen": {
+      "title": "Hide the Panel Under Fullscreen Windows",
+      "type": "boolean",
+      "default": false,
+      "description": "Unmap a screen's panel while a fullscreen window covers it and nothing there has to show, so games and videos can be shown directly. It comes back at once for a notification or an opened view. No effect while the bar or dock reveals on hover in fullscreen. Experimental",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.hide_panel_fullscreen",
+        "control": "toggle",
+        "keywords": "fullscreen game video panel bar unmap scanout overlay surface",
+        "advanced": true
+      }
+    },
+    "compactOsd": {
+      "title": "Compact Volume and Brightness Window",
+      "type": "boolean",
+      "default": false,
+      "description": "Size the volume and brightness display's window to the display itself instead of the whole screen. Looks and works the same; a layout change applies from its next showing",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.compact_osd",
+        "control": "toggle",
+        "keywords": "osd volume brightness window surface size memory",
+        "advanced": true
+      }
+    },
+    "splitFrame": {
+      "title": "Screen Frame in Its Own Window",
+      "type": "boolean",
+      "default": false,
+      "description": "Draw the screen frame in a separate window so bar, notch and dock animations do not redraw it. Shadows stop at the frame's edge, which shows only on a translucent frame",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.split_frame",
+        "control": "toggle",
+        "keywords": "frame border window surface redraw layer",
+        "advanced": true
+      }
     }
   },
   "additionalProperties": false
