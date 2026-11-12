@@ -35,6 +35,7 @@ import qs.modules.aicenter.selection
 import qs.modules.settings
 import qs.modules.keybinds
 import qs.modules.onboarding
+import qs.modules.polkit
 import qs.modules.specials
 import "modules/tools"
 import "modules/settings/SettingsScreen.js" as SettingsScreen
@@ -352,6 +353,12 @@ ShellRoot {
         active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek
         source: "modules/onboarding/OnboardingPeekPill.qml"
     }
+
+    // Password prompts of system actions (pkexec, app installs): the
+    // shell's own polkit agent and dialog. Only this instance registers
+    // one; another instance (dry-run wizard, a separate Settings process)
+    // simply has no PolkitHost.
+    PolkitHost {}
 
     // Display prompts: keep/revert countdown and identify numbers, per screen
     Variants {

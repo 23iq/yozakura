@@ -9358,6 +9358,20 @@
             "keywords": "updates check background notify new version"
           }
         },
+        "polkitAgent": {
+          "title": "Built-in password prompt",
+          "type": "boolean",
+          "default": true,
+          "description": "Ask for the password of system actions (app installs, pkexec) in the shell's own dialog, above every window. Off: an external polkit agent asks instead. Fully applies at the next login.",
+          "x-settings": {
+            "category": "system",
+            "section": "auth",
+            "label": "prefs.sys.polkit_agent",
+            "control": "toggle",
+            "keywords": "polkit password prompt authentication agent pkexec sudo admin root hyprpolkitagent dialog",
+            "advanced": true
+          }
+        },
         "idle": {
           "title": "Idle",
           "type": "object",

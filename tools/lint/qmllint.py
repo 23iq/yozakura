@@ -36,6 +36,8 @@ GATING = {"warning", "critical"}
 NOISE = [
     ("unresolved-type", r'"(FileViewAdapter|PopupAnchor|qs::dbus::dbusmenu::DBusMenuHandle)"',
      "Quickshell qmltypes reference types they do not export"),
+    ("unresolved-type", r'"(AuthFlow|Identity|QList<Identity\*>)"',
+     "Quickshell.Services.Polkit qmltypes name AuthFlow / Identity by their C++ names, which they do not export"),
     ("signal-handler-parameters", r"was not found, but is required to compile",
      "Qt enum parameter types (QProcess::ExitStatus, ...) missing from qmltypes"),
     ("uncreatable-type", r"Type (PanelWindow|FloatingWindow|PopupWindow) is not creatable",
