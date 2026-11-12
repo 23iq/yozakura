@@ -11,8 +11,9 @@ Singleton {
 
     readonly property string configLanguage: Config.system?.language ?? "auto"
     property string resolvedLanguage: "en"
-    property var strings: ({})
-    property var fallback: ({})
+    // One lookup table: the selected language over the English fallback
+    // (mergeTables), so a non-English session keeps a single dictionary.
+    property var table: ({})
     property var availableLanguages: ({})
     property bool ready: false
     // Bumped after every successful load. t() reads it so every binding which
@@ -26,7 +27,7 @@ Singleton {
 
     function t(key) {
         const currentRevision = root.revision;
-        let str = root.strings[key] ?? root.fallback[key] ?? root.humanize(key);
+        let str = root.table[key] ?? root.humanize(key);
         for (let i = 1; i < arguments.length; i++)
             str = str.replace("%" + i, arguments[i]);
         return str;
@@ -43,7 +44,21 @@ Singleton {
     // A translation exists for key (current language or the English
     // fallback), so t() will not humanize it.
     function has(key) {
-        return root.strings[key] !== undefined || root.fallback[key] !== undefined;
+        return root.table[key] !== undefined;
+    }
+
+    // `strings` over `fallback`, built in `fallback` (a freshly parsed object
+    // the caller gives up). A null/undefined entry of `strings` keeps the
+    // fallback text; t() and has() answer exactly as with two lookups.
+    function mergeTables(fallback, strings) {
+        for (const key of Object.keys(strings)) {
+            if (key === "__proto__")
+                continue;
+            const value = strings[key];
+            if ((value !== null && value !== undefined) || fallback[key] === undefined)
+                fallback[key] = value;
+        }
+        return fallback;
     }
 
     function detectSystemLanguage() {
@@ -103,27 +118,31 @@ Singleton {
             root.availableLanguages = { "en": "English" };
         }
 
+        let fallback = ({});
         try {
-            root.fallback = JSON.parse(fallbackLoader.text());
+            fallback = JSON.parse(fallbackLoader.text());
         } catch (e) {
             console.warn("I18n: failed to parse en.json:", e);
-            root.fallback = ({});
         }
+        if (fallback === null || typeof fallback !== "object")
+            fallback = ({});
+        const ready = Object.keys(fallback).length > 0;
 
         root.resolvedLanguage = root.resolveLanguage();
 
-        if (root.resolvedLanguage === "en") {
-            root.strings = root.fallback;
-        } else {
+        let table = fallback;
+        if (root.resolvedLanguage !== "en") {
             try {
-                root.strings = JSON.parse(langLoader.text());
+                const strings = JSON.parse(langLoader.text());
+                if (strings !== null && typeof strings === "object")
+                    table = root.mergeTables(fallback, strings);
             } catch (e) {
                 console.warn("I18n: failed to parse " + root.resolvedLanguage + ".json:", e);
-                root.strings = root.fallback;
             }
         }
 
-        root.ready = Object.keys(root.fallback).length > 0;
+        root.table = table;
+        root.ready = ready;
         root.revision++;
     }
 
