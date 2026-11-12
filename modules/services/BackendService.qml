@@ -52,13 +52,14 @@ Singleton {
 
     // Freeze watchdog: the GUI thread reports it is alive; the daemon kills
     // and restarts a shell that stops (backend/pkg/daemon/qsguard.go,
-    // HeartbeatInterval). A dry-run shell is not the supervised one.
+    // HeartbeatInterval). A dry-run shell or a separate window
+    // (ProcessRole) is not the supervised one.
     Timer {
         id: heartbeatTimer
         interval: 3000
         repeat: true
         triggeredOnStart: true
-        running: root.socketAvailable && !DryRun.active
+        running: root.socketAvailable && !DryRun.active && ProcessRole.primary
         onTriggered: root.notify("system.heartbeat", {
             pid: Quickshell.processId
         })

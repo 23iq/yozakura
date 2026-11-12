@@ -126,3 +126,28 @@ test('argument substitution is one pass and tolerates missing args', () => {
     assert.equal(R.localized('k', [{ key: 'gone', text: 'fallback' }], 'f', nested), '<fallback>');
     assert.equal(R.localized('', [], 'f', d), 'f');
 });
+
+test('toSend: a separate window hands its notification to the daemon', () => {
+    const d = deps();
+    const o = R.build({
+        summary: 'Copied', body: '#ff0000', urgency: 'low', replaceKey: 'pick',
+        actions: [
+            { identifier: 'hex', text: 'HEX', clipboard: '#ff0000' },
+            { identifier: 'stop', text: 'Stop', call: { method: 'timers.dismiss', params: { id: 't3' } } }
+        ]
+    }, d);
+    const s = plain(R.toSend(Object.assign({}, o, { appName: 'Yozakura', appIcon: 'color', expireTimeout: 0 })));
+    assert.deepEqual(s, {
+        summary: 'Copied', body: '#ff0000', appName: 'Yozakura', appIcon: 'color', image: '', replaceKey: 'pick',
+        urgency: 'low', expireTimeout: 0,
+        actions: [
+            { identifier: 'hex', text: 'HEX', clipboard: '#ff0000' },
+            { identifier: 'stop', text: 'Stop', call: { method: 'timers.dismiss', params: { id: 't3' } } }
+        ]
+    });
+    // NotificationUrgency numbers; a local-only handler cannot cross processes
+    const t = plain(R.toSend({ summary: 'x', urgency: 2, actions: [{ identifier: 'open', text: 'Open' }], actionHandlers: { open: () => 0 } }));
+    assert.equal(t.urgency, 'critical');
+    assert.equal(t.actions, undefined);
+    assert.deepEqual(plain(R.toSend(null)), { summary: '', body: '', appName: '', appIcon: '', image: '', replaceKey: '' });
+});

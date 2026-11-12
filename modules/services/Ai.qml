@@ -263,7 +263,7 @@ Singleton {
     }
     onSessionKeyChanged: spaces.remember(sessionKey)
 
-    readonly property bool _wantsAutomations: enabled && (Config.ai.automations || []).some(a => a && a.enabled)
+    readonly property bool _wantsAutomations: enabled && ProcessRole.primary && (Config.ai.automations || []).some(a => a && a.enabled)
     on_WantsAutomationsChanged: _syncAutomations()
     Component.onCompleted: _syncAutomations()
     function _syncAutomations() {

@@ -53,10 +53,12 @@ Singleton {
         cacheFileView.setText(JSON.stringify(data));
     }
 
+    // Scheduled checks run in the main shell; a separate Settings window
+    // only checks when asked (About > Check now).
     Timer {
         id: startupDelay
         interval: 2000
-        running: true
+        running: ProcessRole.primary
         onTriggered: {
             if (Config.system.updateServiceEnabled) {
                 checkUpdates();

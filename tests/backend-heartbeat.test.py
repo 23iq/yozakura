@@ -4,7 +4,8 @@
 The real BackendService over a fake socket: once connected it sends
 system.heartbeat with the Quickshell pid right away and then every few
 seconds (the daemon's watchdog, backend/pkg/daemon/qsguard.go, kills a
-shell that stops); a dry-run shell, not the supervised one, sends none.
+shell that stops); a dry-run shell or a separate Settings window process
+(ProcessRole), not the supervised one, sends none.
 """
 from __future__ import annotations
 
@@ -13,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from qmlharness import REPO, Harness, dryrun_qml, hard_exit  # noqa: E402
+from qmlharness import REPO, Harness, dryrun_qml, hard_exit, process_role_qml  # noqa: E402
 
 from waits import pump, wait_until  # noqa: E402
 
@@ -51,12 +52,13 @@ def check(cond: bool, msg: str) -> None:
         print("FAIL:", msg)
 
 
-def scene(name: str, dry: bool):
+def scene(name: str, dry: bool, role: str = ""):
     h = Harness(name)
     h.module("Quickshell", {"Singleton": "QtObject { default property list<QtObject> data }",
                             "Quickshell": QUICKSHELL})
     h.module("Quickshell.Io", {"Wire": WIRE, "Socket": SOCKET, "SplitParser": PARSER})
-    h.module("qs.modules.globals", {"DryRun": dryrun_qml({"DRYRUN": "1"} if dry else {})})
+    h.module("qs.modules.globals", {"DryRun": dryrun_qml({"DRYRUN": "1"} if dry else {}),
+                                    "ProcessRole": process_role_qml(role)})
     services = h.root / "qs/modules/services"
     services.mkdir(parents=True, exist_ok=True)
     for lib in ("DryRunBackend.js", "DryRunMethods.js"):
@@ -94,6 +96,12 @@ wait_until(lambda: h2.eval(root2, "up") is True)
 pump(100)  # a heartbeat would go out at once (triggeredOnStart)
 check(h2.eval(root2, "up") is True, "dry-run socket connected")
 check(json.loads(h2.eval(root2, "beats()")) == [], "a dry-run shell sends no heartbeat")
+
+h3, root3 = scene("backend-heartbeat-settings", dry=False, role="settings")
+wait_until(lambda: h3.eval(root3, "up") is True)
+pump(100)
+check(h3.eval(root3, "up") is True, "settings-window socket connected")
+check(json.loads(h3.eval(root3, "beats()")) == [], "a separate Settings window sends no heartbeat")
 
 if failures:
     print(f"{len(failures)} failure(s)")

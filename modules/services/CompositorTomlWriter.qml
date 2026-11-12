@@ -320,6 +320,9 @@ Singleton {
     property var _gate: WriteGate.create()
 
     function callWrite() {
+        // the main shell writes (it follows binds.json and the config files)
+        if (!ProcessRole.primary)
+            return;
         if (!WriteGate.request(root._gate, DisplaysService.pending))
             return;
         writeDebounce.restart();

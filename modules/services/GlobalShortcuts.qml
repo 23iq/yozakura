@@ -25,8 +25,9 @@ QtObject {
     // High-performance Pipe Listener (Daemon mode)
     property Process pipeListener: Process {
         command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; exec tail -f "$p"', "ipc-pipe", root.ipcName]
-        // a dry-run instance must not take over the live shell's FIFO
-        running: !DryRun.active
+        // a dry-run instance or a separate window must not take over the
+        // live shell's FIFO
+        running: !DryRun.active && ProcessRole.primary
 
         stdout: SplitParser {
             onRead: data => {
@@ -45,9 +46,10 @@ QtObject {
     function run(command) {
         console.log("IPC run command received:", command);
         root.commandRan(command);
-        // Dry run: the live shell runs the real commands (same "ui" stream);
-        // the wizard only needs commandRan for its keybind tour.
-        if (DryRun.active)
+        // Dry run / separate wizard: the live shell runs the real commands
+        // (same "ui" stream); the wizard only needs commandRan for its
+        // keybind tour. A separate Settings window never runs them.
+        if (DryRun.active || !ProcessRole.primary)
             return;
         switch (command) {
             // Launcher (Standalone Notch Module)
@@ -155,6 +157,10 @@ QtObject {
     // route it into the same runner. `yozakura toggle <target>` pushes a
     // separate "ui.toggle" event with its own state-flipping switch.
     Component.onCompleted: {
+        // Settings in its own process: the commands are the main shell's
+        // (the separate wizard listens for its keybind tour, as the dry run).
+        if (ProcessRole.settings)
+            return;
         BackendService.addSubscription(["ui"], (service, data) => {
             if (typeof data !== "string" || data === "")
                 return;
@@ -181,7 +187,30 @@ QtObject {
         }
     }
 
+    // The keybind tour's "Try" button. In a separate wizard process the
+    // main shell runs it (`ui.run`; the `ui` stream brings commandRan back).
+    function tryCommand(command) {
+        if (ProcessRole.primary)
+            root.run(command);
+        else
+            BackendService.call("ui.run", {
+                "command": command
+            });
+    }
+
     function toggleSettings(screenName) {
+        // A separate window process (the wizard's summary links): the main
+        // shell opens Settings, on the page asked for.
+        if (!ProcessRole.primary) {
+            BackendService.call("windows.relay", {
+                "to": "shell",
+                "topic": "settings.open",
+                "data": {
+                    "page": GlobalStates.settingsCategory || ""
+                }
+            });
+            return;
+        }
         const willOpen = !GlobalStates.settingsWindowVisible;
         if (willOpen) {
             const targetMonitor = screenName ? YozdService.monitorFor(screenName) : YozdService.focusedMonitor;

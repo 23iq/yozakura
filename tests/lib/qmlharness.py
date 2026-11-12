@@ -129,6 +129,18 @@ def dryrun_qml(env: dict[str, str] | None = None) -> str:
     return text
 
 
+def process_role_qml(role: str = "", env: dict[str, str] | None = None) -> str:
+    """The real modules/globals/ProcessRole.qml without Quickshell: <PREFIX>ROLE
+    is `role` ("" = the main shell) and the other <PREFIX>NAME lookups come
+    from `env` ({"WINDOW_PAGE": "network", ...})."""
+    env = {"ROLE": role, **(env or {})}
+    text = (REPO / "modules/globals/ProcessRole.qml").read_text()
+    text = re.sub(r"^import Quickshell\s*$", "", text, flags=re.M)
+    text = text.replace("Singleton {", "QtObject {", 1)
+    return re.sub(r'Quickshell\.env\(BrandActions\.envPrefix \+ "(\w+)"\)',
+                  lambda m: json.dumps(env.get(m.group(1), "")), text)
+
+
 _ROOTS: list[Path] = []
 
 
@@ -209,8 +221,9 @@ class Harness:
         """Create or extend stub module `name` with {TypeName: qml body}.
 
         `qs.modules.globals` always gets the real Brand singleton (app ids
-        and dirs, see brand_qml()) and an inactive DryRun (dryrun_qml())
-        unless the test passes its own.
+        and dirs, see brand_qml()), an inactive DryRun (dryrun_qml()) and
+        the main shell's ProcessRole (process_role_qml()) unless the test
+        passes its own.
         """
         d = self.root / name.replace(".", "/")
         d.mkdir(parents=True, exist_ok=True)
@@ -220,6 +233,8 @@ class Harness:
                 files = {**files, "Brand": brand_qml()}
             if "DryRun" not in files and not (d / "DryRun.qml").exists():
                 files = {**files, "DryRun": dryrun_qml()}
+            if "ProcessRole" not in files and not (d / "ProcessRole.qml").exists():
+                files = {**files, "ProcessRole": process_role_qml()}
         for type_name, body in files.items():
             singleton = body.lstrip().startswith("pragma Singleton")
             (d / f"{type_name}.qml").write_text(_qml_body(body, singleton))

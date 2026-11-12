@@ -70,6 +70,9 @@ Singleton {
 
     // Save usage data to file
     function saveUsageData() {
+        // usage.json has one writer, the main shell (its launcher)
+        if (!ProcessRole.primary)
+            return;
         if (!root.fileReady) {
             console.warn("UsageTracker: File not ready, skipping save");
             return;

@@ -40,7 +40,7 @@ h.singleton('qs.config', 'Config', '''QtObject {
     }
 }''')
 h.module('qs.modules.globals', {})
-h.stub('IdleMonitor', 'QtObject { property int timeout; property bool respectInhibitors; property bool isIdle }')
+h.stub('IdleMonitor', 'QtObject { property bool enabled: true; property int timeout; property bool respectInhibitors; property bool isIdle }')
 for name in ('BackendService', 'SuspendManager', 'LockscreenService'):
     h.stub(name, 'pragma Singleton\nQtObject { function call() {} function addSubscription() { return 1 } '
                  'function onPrepareForSleep() {} function onWakingUp() {} function lock() {} }')

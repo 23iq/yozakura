@@ -227,6 +227,9 @@ Singleton {
     }
 
     Component.onCompleted: {
+        // alarms ring and the notch shows timers in the main shell only
+        if (!ProcessRole.primary)
+            return;
         BackendService.addSubscription(["timers"], (service, data) => {
             if (service === "timers.state")
                 root.applyState(data);

@@ -278,7 +278,8 @@ Singleton {
     }
 
     function saveNotifications() {
-        historyFile.save();
+        if (ProcessRole.primary)
+            historyFile.save();
     }
 
     // Once, merged under the live notifications (NotificationHistory.merge):
@@ -303,7 +304,7 @@ Singleton {
                     "time": n.time,
                     "summary": n.summary
                 }));
-        const fixed = root.list.some(n => n.notification !== null) || notifServer.trackedNotifications.values.length > 0;
+        const fixed = root.list.some(n => n.notification !== null) || root._liveNotifs().length > 0;
         const m = NotificationHistory.merge(data, live, root.idOffset, root.internalIdCounter, fixed);
         root.idOffset = m.idOffset;
         root.internalIdCounter = m.internalIdCounter;
@@ -382,55 +383,68 @@ Singleton {
 
     // Live notification objects (hints update in place on replaces_id);
     // read by the notification-progress live activity
-    readonly property var serverNotifications: notifServer.trackedNotifications
+    readonly property var serverNotifications: root.notifServer ? root.notifServer.trackedNotifications : null
+    function _liveNotifs() {
+        return root.notifServer ? root.notifServer.trackedNotifications.values : [];
+    }
 
-    NotificationServer {
-        id: notifServer
-        actionsSupported: true
-        bodyHyperlinksSupported: true
-        bodyImagesSupported: true
-        bodyMarkupSupported: true
-        bodySupported: true
-        imageSupported: true
-        keepOnReload: false
-        persistenceSupported: true
-        // Capability "sound": sound-file / sound-name / suppress-sound are honoured
-        extraHints: ["sound"]
+    // The session's D-Bus notification server: the main shell only
+    // (ProcessRole). A separate window hands its notifications to the daemon
+    // (notifyInternal) and never reads or writes the history.
+    readonly property var notifServer: serverInstance.object
+    property Instantiator serverInstance: Instantiator {
+        active: ProcessRole.primary
+        delegate: NotificationServer {
+            actionsSupported: true
+            bodyHyperlinksSupported: true
+            bodyImagesSupported: true
+            bodyMarkupSupported: true
+            bodySupported: true
+            imageSupported: true
+            keepOnReload: false
+            persistenceSupported: true
+            // Capability "sound": sound-file / sound-name / suppress-sound are honoured
+            extraHints: ["sound"]
 
-        onNotification: notification => {
-            // Verificar que la notificación tiene contenido válido antes de procesarla
-            if (!notification || (!notification.summary && !notification.body)) {
-                return;
+            onNotification: notification => {
+                // Verificar que la notificación tiene contenido válido antes de procesarla
+                if (!notification || (!notification.summary && !notification.body)) {
+                    return;
+                }
+
+                notification.tracked = true;
+                const newNotifObject = notifComponent.createObject(root, {
+                    "id": notification.id + root.idOffset,
+                    "notification": notification,
+                    "time": Date.now()
+                });
+
+                // Usar Qt.callLater para evitar race conditions al actualizar la lista
+                Qt.callLater(() => {
+                    root.list = [...root.list, newNotifObject];
+                    root.saveNotifications();
+                });
+
+                // Popup (notch or corner toasts), rules, DND and sound: NotificationPolicy.js
+                root.admit(newNotifObject, {
+                    "appName": notification.appName,
+                    "desktopEntry": notification.desktopEntry,
+                    "urgency": notification.urgency,
+                    "expireTimeout": notification.expireTimeout,
+                    "hints": notification.hints
+                });
+
+                root.notify(newNotifObject);
             }
-
-            notification.tracked = true;
-            const newNotifObject = notifComponent.createObject(root, {
-                "id": notification.id + root.idOffset,
-                "notification": notification,
-                "time": Date.now()
-            });
-
-            // Usar Qt.callLater para evitar race conditions al actualizar la lista
-            Qt.callLater(() => {
-                root.list = [...root.list, newNotifObject];
-                saveNotifications();
-            });
-
-            // Popup (notch or corner toasts), rules, DND and sound: NotificationPolicy.js
-            root.admit(newNotifObject, {
-                "appName": notification.appName,
-                "desktopEntry": notification.desktopEntry,
-                "urgency": notification.urgency,
-                "expireTimeout": notification.expireTimeout,
-                "hints": notification.hints
-            });
-
-            root.notify(newNotifObject);
         }
     }
 
     function notifyInternal(options) {
         if (!options || (!options.summary && !options.body)) {
+            return null;
+        }
+        if (!ProcessRole.primary) {
+            BackendService.call("notify.send", NotifyRequest.toSend(options));
             return null;
         }
 
@@ -477,7 +491,7 @@ Singleton {
 
     function discardNotification(id) {
         const index = root.list.findIndex(notif => notif.id === id);
-        const notifServerIndex = notifServer.trackedNotifications.values.findIndex(notif => notif.id + root.idOffset === id);
+        const notifServerIndex = root._liveNotifs().findIndex(notif => notif.id + root.idOffset === id);
         if (index !== -1) {
             const removed = root.list[index];
             root.list.splice(index, 1);
@@ -486,7 +500,7 @@ Singleton {
             root.retire([removed]);
         }
         if (notifServerIndex !== -1) {
-            notifServer.trackedNotifications.values[notifServerIndex].dismiss();
+            root._liveNotifs()[notifServerIndex].dismiss();
         }
         root.discard(id);
     }
@@ -509,9 +523,9 @@ Singleton {
         }
 
         ids.forEach(id => {
-            const notifServerIndex = notifServer.trackedNotifications.values.findIndex(notif => notif.id + root.idOffset === id);
+            const notifServerIndex = root._liveNotifs().findIndex(notif => notif.id + root.idOffset === id);
             if (notifServerIndex !== -1) {
-                notifServer.trackedNotifications.values[notifServerIndex].dismiss();
+                root._liveNotifs()[notifServerIndex].dismiss();
             }
             root.discard(id);
         });
@@ -523,7 +537,7 @@ Singleton {
         triggerListChange();
         saveNotifications();
         root.retire(removed);
-        notifServer.trackedNotifications.values.forEach(notif => {
+        root._liveNotifs().forEach(notif => {
             notif.dismiss();
         });
         root.discardAll();
@@ -554,7 +568,7 @@ Singleton {
             localHandler(id);
             invoked = true;
         } else if (!notif?.isCached) {
-            const live = notifServer.trackedNotifications.values.find(notif => notif.id + root.idOffset === id);
+            const live = root._liveNotifs().find(notif => notif.id + root.idOffset === id);
             const action = live?.actions.find(action => action.identifier === notifIdentifier);
             if (action) {
                 action.invoke();
@@ -709,6 +723,11 @@ Singleton {
     }
 
     Component.onCompleted: {
+        // A separate window shows no notifications: no history, no stream.
+        if (!ProcessRole.primary) {
+            root.initDone();
+            return;
+        }
         // Defer notification history reload to not block boot.
         // The DBus notification server is registered above and live notifications work.
         notifDeferTimer.start();

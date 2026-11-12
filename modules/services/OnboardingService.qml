@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.modules.services
+import qs.modules.globals
 import qs.modules.onboarding
 import qs.config
 
@@ -24,6 +25,9 @@ Singleton {
     property bool peek: false
     // The user closed the wizard this session: the auto-show never reopens it.
     property bool dismissedThisSession: false
+    // A separate wizard process (onboarding-window.qml): a panel of the main
+    // shell is open (relayed by its SeparateWindows; the keybind tour waits).
+    property bool shellPanelOpen: false
     // Restoring saved progress: wizard changes must not be persisted.
     property bool _restoring: false
     // open() was asked before StateService loaded: restore once it has.
@@ -35,6 +39,14 @@ Singleton {
     readonly property bool done: Config.general ? Config.general.onboardingDone === true : true
 
     function open() {
+        // A separate Settings window (Settings > About): the main shell opens it.
+        if (ProcessRole.settings) {
+            BackendService.call("windows.relay", {
+                "to": "shell",
+                "topic": "onboarding.open"
+            });
+            return;
+        }
         if (!StateService.initialized) {
             _openPending = true;
             return;
@@ -126,9 +138,10 @@ Singleton {
         }
     }
 
+    // The main shell's; a separate window process never shows it by itself.
     property Timer autoShow: Timer {
         interval: 3500
-        running: Config.initialLoadComplete && StateService.initialized && !root.done && !root.visible && !root.dismissedThisSession
+        running: ProcessRole.primary && Config.initialLoadComplete && StateService.initialized && !root.done && !root.visible && !root.dismissedThisSession
         onTriggered: {
             if (!root.done && !root.dismissedThisSession)
                 root.open();

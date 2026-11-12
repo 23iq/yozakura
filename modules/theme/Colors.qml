@@ -157,7 +157,8 @@ FileView {
             }
             // Dry run: the terminal configs (and their live reload) stay as
             // they are (not journaled: a follow-up of the journaled change).
-            if (DryRun.active)
+            // A separate window process (ProcessRole): the main shell writes them.
+            if (DryRun.active || !ProcessRole.primary)
                 return;
             // Same opacity/font inputs as kitty.
             const names = ["kitty", "ghostty", "foot", "alacritty"].filter(id => colors.appThemed(id)).map(id => id + "Generator");
@@ -294,8 +295,9 @@ FileView {
                 return;
             }
             // Dry run: no app theme file is written (not journaled: a
-            // follow-up of the journaled change, also runs at startup).
-            if (DryRun.active)
+            // follow-up of the journaled change, also runs at startup). A
+            // separate window process (ProcessRole): the main shell writes them.
+            if (DryRun.active || !ProcessRole.primary)
                 return;
             const names = AppThemes.generatorsFor(Config.apps ? Config.apps.theming : null).filter(n => !!colors[n]);
             const force = colors._forceGeneration;

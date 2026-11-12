@@ -32,6 +32,8 @@ Singleton {
     id: root
 
     Component.onCompleted: {
+        if (!ProcessRole.primary)
+            return;
         BackendService.addSubscription(["wallpaper"], (service, data) => {
             if (service === "wallpaper.set" && data) {
                 root.apply(data);

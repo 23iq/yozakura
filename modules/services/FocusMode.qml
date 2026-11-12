@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.services
+import qs.modules.globals
 import Quickshell
 import qs.config
 import "timers/FocusSummary.js" as FocusSummary
@@ -150,6 +151,8 @@ Singleton {
     }
 
     function restore() {
+        if (!ProcessRole.primary)
+            return;
         const s = StateService.get("focusMode", null);
         if (!s || !s.active || root.active)
             return;
@@ -177,13 +180,13 @@ Singleton {
     property Connections timersWatch: Connections {
         target: TimersService
         function onFired(ev) {
-            if (root.active && ev && ev.done && ev.id === root.timerId)
+            if (root.active && ProcessRole.primary && ev && ev.done && ev.id === root.timerId)
                 root.stop(true);
         }
         // The focus timer went away (cancelled from the panel, CLI...)
         function onTimersChanged() {
             // Looked up here: the `timer` binding may not have caught up yet
-            if (root.active && TimersService.ready && root.timerId !== "" && !TimersService.timers.some(t => t.id === root.timerId))
+            if (root.active && ProcessRole.primary && TimersService.ready && root.timerId !== "" && !TimersService.timers.some(t => t.id === root.timerId))
                 root.stop(false);
         }
     }

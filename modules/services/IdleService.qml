@@ -24,6 +24,8 @@ Singleton {
 
     // Keep the daemon command config in sync.
     function syncSleepCommands() {
+        if (!ProcessRole.primary)
+            return;
         BackendService.call("sleep.setCommands", {
             before: root.beforeSleepCmd,
             after: root.afterSleepCmd,
@@ -52,6 +54,9 @@ Singleton {
     }
 
     Component.onCompleted: {
+        // idle hooks and the lock-before-sleep run in the main shell only
+        if (!ProcessRole.primary)
+            return;
         root.sleepSubscription = BackendService.addSubscription(["sleep"], (service, data) => root.handleSleepEvent(service, data));
         syncSleepCommands();
     }
@@ -80,6 +85,7 @@ Singleton {
     // Master Monitor: Detects "absence of activity" almost immediately
     property var masterMonitor: IdleMonitor {
         id: masterMonitor
+        enabled: ProcessRole.primary
         timeout: 1 // 1 second threshold to consider the session "idle"
         respectInhibitors: true
 

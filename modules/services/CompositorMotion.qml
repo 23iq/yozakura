@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.services
+import qs.modules.globals
 import qs.modules.bar.panels
 import "../../config/motion/MotionSpec.js" as MotionSpec
 
@@ -42,7 +43,7 @@ Singleton {
     }
 
     function apply(force) {
-        if (!Config.loader.loaded || GameModeClient.toggled)
+        if (!Config.loader.loaded || GameModeClient.toggled || !ProcessRole.primary)
             return;
         if (!force && root.chunk === root._applied)
             return;

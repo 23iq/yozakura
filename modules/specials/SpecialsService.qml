@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.services
+import qs.modules.globals
 import qs.modules.bar.workspaces
 import "Specials.js" as Specials
 
@@ -119,7 +120,7 @@ Singleton {
     }
 
     function _adopt() {
-        if (Object.keys(root.pending).length === 0)
+        if (Object.keys(root.pending).length === 0 || !ProcessRole.primary)
             return;
         const res = Specials.adopt(root.pending, root.windows, Date.now());
         res.moves.forEach(m => YozdService.moveToWorkspaceSilent(m.address, "special:" + m.name));
@@ -132,7 +133,7 @@ Singleton {
 
     function _migrateRenames() {
         const now = root.names;
-        if (root.active)
+        if (root.active && ProcessRole.primary)
             Specials.renames(root._lastNames, now).forEach(r => {
                 Specials.windowsOn(root.windows, r.from).forEach(a => YozdService.moveToWorkspaceSilent(a, "special:" + r.to));
             });
@@ -142,6 +143,8 @@ Singleton {
     function _openedChanged() {
         const before = root._lastOpen;
         root._lastOpen = root.openNames.slice();
+        if (!ProcessRole.primary)
+            return;
         root.openNames.forEach(n => {
             if (before.indexOf(n) === -1)
                 root.ensure(root.forHyprName(n));
@@ -172,7 +175,7 @@ Singleton {
     property Timer preloadTimer: Timer {
         interval: root.ready ? Config.specials.preloadDelay : 4000
         onTriggered: {
-            if (!root.active || root._preloaded)
+            if (!root.active || root._preloaded || !ProcessRole.primary)
                 return;
             root._preloaded = true;
             root.items.filter(it => it.preload).forEach(it => root.ensure(it));
