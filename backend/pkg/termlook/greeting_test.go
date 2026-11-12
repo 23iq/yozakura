@@ -523,7 +523,9 @@ func TestGreetingScriptInATerminal(t *testing.T) {
 	run := func(extra ...string) string {
 		t.Helper()
 		cmd := exec.Command(script, "-qec", bash+" --norc --noprofile -i -c '. "+file+"'", "/dev/null")
-		cmd.Env = append([]string{"PATH=" + bin + ":/usr/bin:/bin", "HOME=" + dir}, extra...)
+		// script(1) runs the command with $SHELL (else the passwd shell, which
+		// may reset PATH, e.g. fish on NixOS); the inherited PATH supplies tty.
+		cmd.Env = append([]string{"PATH=" + bin + ":" + os.Getenv("PATH"), "HOME=" + dir, "SHELL=" + bash}, extra...)
 		out, _ := cmd.Output()
 		return string(out)
 	}
