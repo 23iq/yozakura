@@ -29,6 +29,8 @@
 .import "sidebar.js" as Sidebar
 .import "presets.js" as Presets
 .import "power.js" as Power
+.import "network.js" as Network
+.import "bluetooth.js" as Bluetooth
 
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
@@ -150,8 +152,8 @@ var categories = [
     Routines.category,
     Updates.category,
     Power.category,
-    page("network", "wifiHigh", "Network", "network wifi internet ethernet connection"),
-    page("bluetooth", "bluetooth", "Bluetooth", "bluetooth devices pairing headphones"),
+    Network.category,
+    Bluetooth.category,
     page("sound", "speakerHigh", "Sound", "sound audio volume mixer output input microphone speaker"),
     page("effects", "waveform", "Effects", "equalizer easyeffects bass audio effects"),
     withSections(Ai.category, Sidebar.sections),
