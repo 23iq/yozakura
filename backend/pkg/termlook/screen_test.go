@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 func screenText(lines [][]Span) []string {
@@ -184,5 +186,61 @@ func TestFetchArgvRunsUnderTheLoginShell(t *testing.T) {
 		if err != nil || string(out) != "a b|$(x)|" {
 			t.Errorf("bash ran %q: %v", out, err)
 		}
+	}
+}
+
+// Cursor moves come from a logo or config of the user's: the screen stays
+// a fixed box whatever they ask for.
+func TestRenderScreenIsBounded(t *testing.T) {
+	for name, in := range map[string]string{
+		"forward":   "\x1b[20000000Cx",
+		"down":      "\x1b[20000000Bx",
+		"position":  "\x1b[99999;99999Hx",
+		"overflow":  "\x1b[99999999999999999999999Gx\x1b[99999999999999999999999;1Hy",
+		"newlines":  strings.Repeat("\n", 1<<20) + "x",
+		"repeated":  strings.Repeat("\x1b[9999C\x1b[9999B", 1<<14) + "x",
+		"wide line": strings.Repeat("ab", 1<<16),
+	} {
+		t.Run(name, func(t *testing.T) {
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			start := time.Now()
+			lines := RenderScreen(in, ANSI16)
+			runtime.ReadMemStats(&after)
+			if d := time.Since(start); d > 2*time.Second {
+				t.Errorf("took %v", d)
+			}
+			if alloc := after.TotalAlloc - before.TotalAlloc; alloc > 64<<20 {
+				t.Errorf("allocated %d MiB", alloc>>20)
+			}
+			if len(lines) > screenRows {
+				t.Errorf("%d rows", len(lines))
+			}
+			for _, l := range lines {
+				n := 0
+				for _, sp := range l {
+					n += len([]rune(sp.Text))
+				}
+				if n > screenCols {
+					t.Errorf("a row of %d cells", n)
+				}
+			}
+		})
+	}
+	// inside the box the moves still work
+	if got := screenText(RenderScreen("\x1b[3;5Hx", ANSI16)); len(got) != 3 || got[2] != "    x" {
+		t.Errorf("CUP: %q", got)
+	}
+}
+
+func TestCappedBufferKeepsTheHead(t *testing.T) {
+	b := &cappedBuffer{max: 4}
+	for _, s := range []string{"ab", "cdef", "gh"} {
+		if n, err := b.Write([]byte(s)); n != len(s) || err != nil {
+			t.Fatalf("write %q: %d %v", s, n, err)
+		}
+	}
+	if b.String() != "abcd" {
+		t.Errorf("%q", b.String())
 	}
 }

@@ -1,12 +1,17 @@
 package termlook
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 // RenderScreen draws terminal output on a small virtual screen and returns
 // its lines as styled spans. Unlike ParseANSI it follows the cursor moves
 // fastfetch uses to align columns (CHA "\e[<n>G", CUF/CUB, CUU/CUD, CUP)
 // and carriage returns; other sequences are dropped, colours come from
-// table. Cells never written are blanks of the default style.
+// table. Cells never written are blanks of the default style. The screen is
+// a fixed box (screenRows x screenCols): the input may be a logo or config
+// of the user's, so cursor moves are capped and writes outside are dropped.
 func RenderScreen(s string, table [16]string) [][]Span {
 	sc := &screen{p: ansiParser{table: table, lines: [][]Span{nil}}}
 	rs := []rune(s)
@@ -17,7 +22,7 @@ func RenderScreen(s string, table [16]string) [][]Span {
 		case r == 0x1b:
 			i = sc.p.escape(rs, i)
 		case r == '\n':
-			sc.row++
+			sc.row = min(sc.row+1, screenRows)
 			sc.col = 0
 			i++
 		case r == '\r':
@@ -33,6 +38,13 @@ func RenderScreen(s string, table [16]string) [][]Span {
 	return sc.lines()
 }
 
+// The box of the virtual screen and the largest CSI parameter honoured.
+const (
+	screenRows = 300
+	screenCols = 512
+	maxCSIArg  = 9999
+)
+
 type cell struct {
 	r     rune
 	style Span
@@ -46,6 +58,10 @@ type screen struct {
 }
 
 func (sc *screen) put(r rune) {
+	if sc.row >= screenRows || sc.col >= screenCols {
+		sc.col = min(sc.col+1, screenCols)
+		return
+	}
 	for len(sc.grid) <= sc.row {
 		sc.grid = append(sc.grid, nil)
 	}
@@ -74,7 +90,10 @@ func (sc *screen) csi(rs []rune, i int) int {
 		parts := splitParams(params)
 		if k < len(parts) {
 			if v, err := strconv.Atoi(parts[k]); err == nil && v > 0 {
-				return v
+				return min(v, maxCSIArg)
+			}
+			if len(parts[k]) > 4 && strings.Trim(parts[k], "0123456789") == "" {
+				return maxCSIArg // too large for an int
 			}
 		}
 		return 1
@@ -94,10 +113,10 @@ func (sc *screen) csi(rs []rune, i int) int {
 		sc.row += n(0)
 	case 'H', 'f':
 		sc.row, sc.col = n(0)-1, n(1)-1
-	case 'K':
-		if sc.row < len(sc.grid) && sc.col < len(sc.grid[sc.row]) {
-			sc.grid[sc.row] = sc.grid[sc.row][:sc.col]
-		}
+	}
+	sc.row, sc.col = min(sc.row, screenRows), min(sc.col, screenCols)
+	if rs[j] == 'K' && sc.row < len(sc.grid) && sc.col < len(sc.grid[sc.row]) {
+		sc.grid[sc.row] = sc.grid[sc.row][:sc.col]
 	}
 	return j + 1
 }

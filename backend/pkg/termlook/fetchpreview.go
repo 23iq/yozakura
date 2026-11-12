@@ -23,6 +23,26 @@ type FetchPreviewResult struct {
 	ImageLogo bool
 }
 
+// maxFetchOutput caps what is kept of fastfetch's output: a logo or config
+// of the user's could make it print without end.
+const maxFetchOutput = 256 << 10
+
+// cappedBuffer keeps the first max bytes written and discards the rest
+// (the writer never fails, so the process is not cut off mid-write).
+type cappedBuffer struct {
+	buf bytes.Buffer
+	max int
+}
+
+func (c *cappedBuffer) Write(p []byte) (int, error) {
+	if room := c.max - c.buf.Len(); room > 0 {
+		c.buf.Write(p[:min(len(p), room)])
+	}
+	return len(p), nil
+}
+
+func (c *cappedBuffer) String() string { return c.buf.String() }
+
 // fetchBudget bounds one fastfetch run (it probes the GPU, packages, ...).
 const fetchBudget = 6 * time.Second
 
@@ -111,8 +131,8 @@ func runFetch(ctx context.Context, bin string, args []string, shell string) (str
 	}
 	// the preview is a kitty window: fastfetch names kitty as the terminal
 	cmd.Env = append(env, "TERM=xterm-256color", "COLORTERM=truecolor", "COLUMNS=120", "TERM_PROGRAM=kitty")
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	stdout, stderr := &cappedBuffer{max: maxFetchOutput}, &cappedBuffer{max: 4 << 10}
+	cmd.Stdout, cmd.Stderr = stdout, stderr
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() != nil {
 			err = ctx.Err()
