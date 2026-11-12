@@ -752,7 +752,8 @@ ask() {
 # distribution a user with sudo rights, for a system where only root exists
 # yet or sudo is missing. Arch: a full upgrade with it (no partial upgrades).
 sudo_setup_lines() {
-  local who="${1:-yourname}" wheel="echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel"
+  local who="${1:-yourname}" wheel
+  wheel="$(wheel_line)"
   case "$DISTRO" in
   arch) printf '%s
 ' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
@@ -767,12 +768,20 @@ sudo_setup_lines() {
   esac
 }
 
+# wheel_line: the command that lets the wheel group use sudo: a new
+# sudoers.d file, mode 0440 like the rest, never replacing one already there.
+wheel_line() {
+  printf '%s' "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+}
+
+# admin_group: the group whose members may use sudo here.
+admin_group() { if [[ "$DISTRO" == debian ]]; then echo sudo; else echo wheel; fi; }
+
 # sudo_grant_lines USER: the commands (as root) that let USER use sudo.
 sudo_grant_lines() {
   case "$DISTRO" in
-  debian) printf '%s\n' "usermod -aG sudo $1" ;;
-  fedora) printf '%s\n' "usermod -aG wheel $1" ;;
-  *) printf '%s\n' "usermod -aG wheel $1" "echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel" ;;
+  debian | fedora) printf '%s\n' "usermod -aG $(admin_group) $1" ;;
+  *) printf '%s\n' "usermod -aG wheel $1" "$(wheel_line)" ;;
   esac
 }
 
@@ -802,9 +811,15 @@ need_sudo() {
   [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
   SUDO_FAILED=0
   if ! try_sudo; then
-    local lines=() l
-    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$(id -un)")
-    die "sudo authentication failed." "A wrong password, or $(id -un) may not use sudo yet. To allow it, as root:" \
+    local lines=() l me group
+    me="$(id -un)" group="$(admin_group)"
+    # Debian and Fedora let the admin group use sudo out of the box: a
+    # member was refused for the password.
+    if [[ "$DISTRO" == debian || "$DISTRO" == fedora ]] && [[ " $(id -nG "$me" 2>/dev/null) " == *" $group "* ]]; then
+      die "sudo authentication failed: the password was not accepted." "$me is in the $group group; run the installer again and retype it."
+    fi
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$me")
+    die "sudo authentication failed." "If the password was right, $me may not use sudo yet. To allow it, as root:" \
       "${lines[@]}" "Then log in again and re-run the installer."
   fi
 }

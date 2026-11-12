@@ -946,6 +946,30 @@ def test_root_and_missing_sudo_give_guidance():
         sb.os_release.write_text(OS_RELEASE["debian"])
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check("apt install sudo" in err and f"usermod -aG sudo {me}" in err, "debian guidance wrong", err)
+        wheel = "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+        sb.os_release.write_text(OS_RELEASE["arch"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(wheel in err and "> /etc/sudoers.d" not in err, "sudoers line is not 0440 and non-clobbering", err)
+    finally:
+        sb.cleanup()
+
+
+def test_refused_sudo_password_guidance():
+    sb = Sandbox("arch")
+    try:
+        me = subprocess.run(["id", "-un"], capture_output=True, text=True).stdout.strip()
+        sb.extra_env["STUB_SUDO_DENY"] = "1"
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "sudo authentication failed." in err, f"refused sudo exit {rc}", err + shown)
+        check("If the password was right" in err and "install -m 0440" in err, "arch guidance lacks the wheel line", err)
+        # Debian, the user already in the sudo group: only the password was wrong.
+        sb.os_release.write_text(OS_RELEASE["debian"])
+        real_id = shutil.which("id")
+        (sb.bin / "id").unlink()
+        Sandbox._script(sb.bin / "id", f'#!/bin/bash\n[[ "$1" == -nG ]] && {{ echo "{me} sudo"; exit 0; }}\nexec {real_id} "$@"\n')
+        rc, err, shown = sb.run("--compositor", "niri", "--no-sddm", answers="y\n")
+        check(rc == 1 and "password was not accepted" in err, f"debian wrong password exit {rc}", err + shown)
+        check("usermod" not in err, "a sudo group member is told to join it", err)
     finally:
         sb.cleanup()
 
@@ -973,6 +997,7 @@ def main():
         test_dangling_display_manager_link,
         test_suse_display_manager_unit_is_left_alone,
         test_root_and_missing_sudo_give_guidance,
+        test_refused_sudo_password_guidance,
         test_missing_required_component_exits_2,
         test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
