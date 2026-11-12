@@ -45,6 +45,9 @@ Singleton {
     property int _generation: 0
     // "Make fish my default shell" waits for the fish install to finish.
     property bool _chshAfterInstall: false
+    // A prompt switched on before term.status arrived: its engine check
+    // waits for the status instead of being dropped.
+    property bool _engineAfterStatus: false
     property string _paletteSig: ""
     property string _enginesSig: ""
 
@@ -85,6 +88,10 @@ Singleton {
         if (root._chshAfterInstall && st.fishInstalled) {
             root._chshAfterInstall = false;
             ExtrasService.setLoginShell(root.fishPath);
+        }
+        if (root._engineAfterStatus && st.engineInstalled) {
+            root._engineAfterStatus = false;
+            root.ensureEngine();
         }
     }
 
@@ -173,7 +180,16 @@ Singleton {
     // never from config changes made elsewhere.
     function ensureEngine() {
         const st = root.status;
-        if (!Config.terminal || !Config.terminal.enabled || !st || !st.engineInstalled || st.engineInstalled[root.engine])
+        if (!st || !st.engineInstalled) {
+            // Not known yet (a card clicked before term.status came back):
+            // decide once it arrives.
+            if (!root._engineAfterStatus) {
+                root._engineAfterStatus = true;
+                root.refreshStatus();
+            }
+            return;
+        }
+        if (!Config.terminal || !Config.terminal.enabled || st.engineInstalled[root.engine])
             return;
         if (ExtrasService.cardState(TermModel.engineExtra(root.engine)) !== "installing")
             root.installEngine(root.engine);
