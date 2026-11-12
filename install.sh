@@ -51,6 +51,7 @@ COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 CHANNEL="" REF="" CHANNEL_SET=0 RELEASE_TAG="" ALLOW_DOWNGRADE=0
 # The options `<app> update` may pass (it reads this line from the checkout's
 # install.sh; keep it a single quoted literal).
+# shellcheck disable=SC2034 # read by the Go side only
 INSTALLER_FEATURES="channels allow-downgrade"
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
