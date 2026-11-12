@@ -54,10 +54,21 @@ func runTermGreeting(env termEnv, pos []string, asJSON bool, logo string, out io
 		return termGreetingShow(env, asJSON, out)
 	case sub == "on" && len(pos) == 0:
 		// switched on by the user: bash and zsh too (term.fetch.allow)
-		if _, err := env.Call("term.fetch.allow", nil); err != nil {
+		raw, err := env.Call("term.fetch.allow", nil)
+		if err != nil {
 			return err
 		}
-		return termGreetingSet(env, out, "greeting on", kv{"terminal.greeting", "fastfetch"})
+		kvs := []kv{{"terminal.greeting", "fastfetch"}}
+		// like the Settings switch: "own" without a fastfetch config of the
+		// user's would be plain fastfetch, so the sakura look is used
+		var st struct {
+			Greeting termlook.GreetingStatus `json:"greeting"`
+		}
+		preset, _ := env.GetConfig("terminal.fastfetchPreset")
+		if p, _ := preset.(string); (p == "" || p == termlook.FetchOwn) && json.Unmarshal(raw, &st) == nil && !st.Greeting.OwnConfig {
+			kvs = append([]kv{{"terminal.fastfetchPreset", "sakura"}}, kvs...)
+		}
+		return termGreetingSet(env, out, "greeting on", kvs...)
 	case sub == "off" && len(pos) == 0:
 		return termGreetingSet(env, out, "greeting off", kv{"terminal.greeting", "none"})
 	case sub == "preset" && len(pos) == 1:

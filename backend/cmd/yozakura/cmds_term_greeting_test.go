@@ -24,11 +24,25 @@ func TestTermGreetingOnOffAndLook(t *testing.T) {
 	f := greetFake()
 	code, out, errOut := termRun(t, f, "greeting", "on")
 	assert.Equal(t, 0, code, errOut)
-	assert.Equal(t, [][2]any{{"terminal.greeting", "fastfetch"}}, f.sets)
+	// no fastfetch config of the user's (status): the sakura look, like Settings
+	assert.Equal(t, [][2]any{{"terminal.fastfetchPreset", "sakura"}, {"terminal.greeting", "fastfetch"}}, f.sets)
 	assert.Equal(t, "term.apply", f.calls[len(f.calls)-1])
 	assert.Contains(t, f.calls, "term.fetch.allow", "switched on by the user: every shell")
 	assert.Contains(t, out, "extras install fastfetch")
 	assert.Contains(t, out, "cannot be read")
+
+	// a look chosen already, or a config of the user's: kept
+	f = greetFake()
+	f.sets = [][2]any{{"terminal.fastfetchPreset", "boxed"}}
+	code, _, errOut = termRun(t, f, "greeting", "on")
+	assert.Equal(t, 0, code, errOut)
+	assert.Equal(t, [][2]any{{"terminal.fastfetchPreset", "boxed"}, {"terminal.greeting", "fastfetch"}}, f.sets)
+	f = greetFake()
+	f.results["term.fetch.allow"] = `{"greeting":{"on":false,"ownConfig":true,"shells":[]}}`
+	f.sets = [][2]any{{"terminal.fastfetchPreset", "own"}}
+	code, _, errOut = termRun(t, f, "greeting", "on")
+	assert.Equal(t, 0, code, errOut)
+	assert.Equal(t, [][2]any{{"terminal.fastfetchPreset", "own"}, {"terminal.greeting", "fastfetch"}}, f.sets)
 
 	f = greetFake()
 	code, _, _ = termRun(t, f, "greeting", "off")
