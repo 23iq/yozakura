@@ -22,6 +22,9 @@ Item {
     property bool backdrop: true
     // The wallpaper's zoom (a home tile drifts it a little while hovered).
     property real imageScale: 1
+    // Parallax: the wallpaper's offset in px (a hovered home tile follows
+    // the pointer a little).
+    property point imageShift: Qt.point(0, 0)
     default property alias content: area.data
     property real radius: Look.radius("surface", stage.height)
     // The wallpaper as a file URL ("" while there is none).
@@ -68,6 +71,24 @@ Item {
             cache: true
             sourceSize.width: Math.max(1, stage.width * 1.5)
             scale: stage.imageScale
+            transform: Translate {
+                x: stage.imageShift.x
+                y: stage.imageShift.y
+                Behavior on x {
+                    enabled: Motion.glide.duration > 0
+                    NumberAnimation {
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                }
+                Behavior on y {
+                    enabled: Motion.glide.duration > 0
+                    NumberAnimation {
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                }
+            }
             Behavior on scale {
                 enabled: Motion.pan.duration > 0
                 NumberAnimation {

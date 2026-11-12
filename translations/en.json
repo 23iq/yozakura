@@ -4506,5 +4506,10 @@
   "prefs.home.sub.displays": "Monitors and scale",
   "prefs.home.sub.assistant": "Models and providers",
   "prefs.home.sub.system": "Language and updates",
-  "prefs.home.sub.wallpaper": "Your wallpapers"
+  "prefs.home.sub.wallpaper": "Your wallpapers",
+  "prefs.home.move_here": "Move here",
+  "prefs.undo.bar_moved": "Bar moved",
+  "prefs.undo.island_moved": "Island moved",
+  "prefs.undo.dock_moved": "Dock moved",
+  "prefs.undo.notif_moved": "Notifications moved"
 }

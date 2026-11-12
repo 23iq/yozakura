@@ -4534,5 +4534,10 @@
   "prefs.home.sub.displays": "Мониторы и масштаб",
   "prefs.home.sub.assistant": "Модели и провайдеры",
   "prefs.home.sub.system": "Язык и обновления",
-  "prefs.home.sub.wallpaper": "Ваши обои"
+  "prefs.home.sub.wallpaper": "Ваши обои",
+  "prefs.home.move_here": "Сюда",
+  "prefs.undo.bar_moved": "Панель перемещена",
+  "prefs.undo.island_moved": "Остров перемещён",
+  "prefs.undo.dock_moved": "Док перемещён",
+  "prefs.undo.notif_moved": "Уведомления перемещены"
 }

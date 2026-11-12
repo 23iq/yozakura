@@ -12,9 +12,10 @@ import "HomeStatus.js" as HomeStatus
 // One destination on the home bento: a kit Card that is live content, not
 // an icon with a name. Desktop layout is the real screen miniature (the
 // same ScreenMini the page's stage uses), Wallpaper is your wallpaper
-// (drifting a little while hovered), Look shows the palette; every other
-// tile carries its icon. All carry the name and one live status line
-// (HomeStatus.js). Hover lifts the tile; a click / Enter opens it.
+// (it swells and follows the pointer while hovered, a parallax), Look
+// shows the palette; every other tile carries its icon. All carry the name
+// and one live status line (HomeStatus.js). Hover lifts the tile (and
+// slides windows into the miniature); a click / Enter opens it.
 Card {
     id: tile
 
@@ -43,16 +44,21 @@ Card {
             anchors.fill: parent
             stageHeight: parent.height
             radius: tile.radius
-            // the wallpaper drifts a little while the tile is hovered
-            imageScale: tile.hovered ? 1.06 : 1
+            // hovered: the wallpaper swells a little and follows the pointer
+            imageScale: tile.hovered ? 1.08 : 1
+            imageShift: Qt.point(-tile.pointer.x * Space.m, -tile.pointer.y * Space.s)
 
             ScreenMini {
                 anchors.fill: parent
+                // the dock stays clear of the name under it
+                anchors.bottomMargin: tile.padding + Space.controlM
+                corners: false
                 visible: tile.kind === "screen"
                 barOpacity: stage.barOpacity
                 cornerRadius: tile.radius
-                // the windows would only crowd a tile
-                showWindows: false
+                // at rest the windows would crowd the tile; hovered, they
+                // slide in and the miniature comes alive
+                showWindows: tile.hovered
             }
             // a scrim so the name reads on any wallpaper
             Mark {

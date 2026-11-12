@@ -42,12 +42,18 @@ Flickable {
     FrameAnimation {
         running: !page.complete
         onTriggered: {
-            if (!page.filled && page.height > 0 && body.y + bento.height >= page.height)
+            // filled: every column reaches below the viewport, so the cards
+            // still to come land out of sight (masonry puts a card at the
+            // top of the shortest column)
+            bento.relayout();
+            if (!page.filled && page.height > 0 && body.y + bento.floor >= page.height)
                 page.filled = true;
             const start = Date.now();
             do {
                 page.builtSections++;
             } while (!page.complete && Date.now() - start < 6)
+            if (page.complete)
+                bento.relayout();
         }
     }
 
@@ -148,11 +154,15 @@ Flickable {
             id: bento
             objectName: "pageBento"
             readonly property real gap: Space.l
-            readonly property int cols: BentoLayout.columns(width, Space.px(300))
-            readonly property real colW: (width - gap * (cols - 1)) / cols
+            readonly property int fullCols: BentoLayout.columns(parent.width, Space.px(300))
+            readonly property real colW: (parent.width - gap * (fullCols - 1)) / fullCols
+            readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
+            readonly property int cols: BentoLayout.fit(fullCols, spans)
             // card heights and spans -> places (re-run when one changes)
             property var places: []
-            width: parent.width
+            property real floor: 0
+            width: colW * cols + gap * (cols - 1)
+            x: (parent.width - width) / 2
             height: 0
 
             function relayout() {
@@ -160,13 +170,14 @@ Flickable {
                 for (let i = 0; i < sections.count; i++) {
                     const s = sections.itemAt(i);
                     items.push({
-                        "span": BentoLayout.spanOf(page.category.sections[i], SchemaUtil.inWindow),
+                        "span": bento.spans[i] || 1,
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
                 }
                 const r = BentoLayout.place(items, bento.cols, bento.gap);
                 bento.places = r.places;
                 bento.height = r.height;
+                bento.floor = r.floor;
             }
             onColsChanged: Qt.callLater(bento.relayout)
             onWidthChanged: Qt.callLater(bento.relayout)

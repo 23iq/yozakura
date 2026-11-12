@@ -8,7 +8,7 @@ import qs.modules.components.kit
 // visual language (unlike Group, which ink leaves unboxed), so a grid of
 // cards reads as a bento. `interactive` makes the whole card a button:
 // it lifts and brightens on hover (Motion.micro), springs on press
-// (Motion.spring), takes Tab focus with the FocusRing, `clicked()` on
+// (Motion.spring), reports the `pointer` over it, takes Tab focus with the FocusRing, `clicked()` on
 // click / Enter / Space. `fill: false` drops the box (a picture tile that
 // paints itself, `background` content under everything).
 //
@@ -25,6 +25,9 @@ Item {
     readonly property real radius: Look.bigRadius(Space.controlXL)
     readonly property bool hovered: area.containsMouse || root.highlighted
     readonly property real contentWidth: root.width - root.padding * 2
+    // Where the pointer is over an interactive card, -1..1 on each axis
+    // (0, 0 when it is away): for a picture that follows it (parallax).
+    readonly property point pointer: area.containsMouse && root.width > 0 && root.height > 0 ? Qt.point(area.mouseX / root.width * 2 - 1, area.mouseY / root.height * 2 - 1) : Qt.point(0, 0)
     default property alias content: body.data
     // Painted under the label and content, clipped to the card (a picture).
     property alias background: backdrop.data
@@ -46,7 +49,7 @@ Item {
     Item {
         id: shell
         anchors.fill: parent
-        y: root.interactive && root.hovered && !area.pressed ? -Space.hairline * 2 : 0
+        y: root.interactive && root.hovered && !area.pressed ? -Space.xs : 0
         scale: area.pressed ? 0.985 : 1
         Behavior on y {
             enabled: Motion.micro.duration > 0

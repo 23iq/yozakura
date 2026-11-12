@@ -11,7 +11,10 @@
   no row to show has no header (R1), a waiting row offers its switch
   instead of a grey dead end, the home search finds window rows only,
   names their destination and lands on the row with focus and a flash.
-* Stage: the page's miniature is built; a hovered row lights its part.
+* Stage: the page's miniature is built; a hovered row lights its part; a
+  click on an edge of the tiny screen moves the bar (one undo step), a
+  click on the island opens its tab, a click on a corner moves the
+  notifications.
 """
 import sys
 from pathlib import Path
@@ -141,6 +144,33 @@ check(lit > 0, f"...and the stage lights the bar ({lit} parts)")
 QTest.mouseMove(win, QPoint(4, 4))
 QTest.qWait(80)
 check(ev("SettingsStore.focusKeys.length") == 0, "leaving the row clears it")
+
+# direct manipulation: an edge of the tiny screen moves the bar
+edges = ev('w.findItem("barEdgePicker", w.findItem("settingsPage").item)')
+check(edges is not None, "the Bar stage has edge targets")
+h.eval(edges, 'preview = "left"')
+QTest.qWait(30)
+check(h.eval(edges, "hovered") == "left", "a hovered edge shows its ghost")
+h.eval(edges, 'preview = ""')
+h.eval(edges, 'picked("left")')
+check(ev("Config.bar.position") == "left", "a click on the left edge moves the bar there")
+check(ev('w.findItem("undoText").text') == "Bar moved", "...as one named undo step")
+ev("SettingsStore.undo()")
+check(ev("Config.bar.position") == "top", "and one undo puts it back")
+part = ev('w.findItem("stagePart:island", w.findItem("settingsPage").item)')
+check(part is not None, "the island on the Bar stage is a button")
+h.eval(part, "clicked(null)")
+check(env.wait_page(win) and sev("currentCategory") == "notch", "a click on the island opens the Island tab")
+select("notifications")
+ev("SettingsStore.set('notifications.presentation', 'corner')")
+QTest.qWait(50)
+corner = ev('w.findItem("notifPlace:bottom-left", w.findItem("settingsPage").item)')
+check(corner is not None and h.eval(corner, "visible") is True, "with corner toasts every other corner is a target")
+h.eval(corner, "children[1].clicked(null)")
+check(ev("Config.notifications.position") == "bottom-left", "a click on a corner moves the notifications there")
+ev("SettingsStore.undo()")
+ev("SettingsStore.set('notifications.presentation', 'auto')")
+select("bar")
 
 # several bars: the stage draws them all; a click on one picks it for the editor
 PANELS = ('[{id: "top", edge: "top", style: "classic", groups: {start: ["launcher"], end: ["clock"]}},'

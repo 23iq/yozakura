@@ -22,7 +22,8 @@ import "../../bar/workspaces/indicators/IndicatorStyles.js" as IndicatorStyles
 // `islandRect`, `edgeDepth(edge)`). A page turns layers on and off
 // (`showWindows`, `showDock`, `showIsland`) and marks parts with
 // StageSpot (keys below). With `selectable`, a click on a panel emits
-// `panelPicked(index)` and `selectedPanel` is ringed in the accent.
+// `panelPicked(index)` and `selectedPanel` is ringed in the accent; with
+// `partsClickable` the island and the dock emit `partPicked(part)`.
 // Any change of the arrangement settles it in again (a soft fade).
 Item {
     id: screen
@@ -38,8 +39,11 @@ Item {
     // A part ringed in the accent: "island" | "dock" | "" (the page that
     // controls it).
     property string emphasis: ""
+    // The island and the dock answer clicks (`partPicked`).
+    property bool partsClickable: false
     default property alias overlay: overlayLayer.data
     signal panelPicked(int index)
+    signal partPicked(string part)
 
     function get(key, fallback) {
         const v = SettingsStore.get(key);
@@ -96,7 +100,8 @@ Item {
     readonly property bool dockFloating: screen.get("dock.theme", "default") === "floating"
     readonly property real dockThick: Math.round(screen.unit * Math.max(1.2, Number(screen.get("dock.height", 48)) / 30))
     readonly property real dockGap: Math.round(screen.unit * (screen.dockFloating ? 0.5 : 0.2))
-    readonly property bool corners: screen.get("theme.enableCorners", true) !== false
+    // the shell's rounded screen corners (a tile that crops the screen sets false)
+    property bool corners: screen.get("theme.enableCorners", true) !== false
     readonly property string islandEdge: screen.get("notch.position", "top") === "bottom" ? "bottom" : "top"
     // Room taken on an edge by the bars, the frame and the dock.
     function edgeDepth(edge) {
@@ -137,7 +142,25 @@ Item {
     Item {
         id: windows
         readonly property real gap: Math.round(screen.unit * 0.5)
-        visible: screen.showWindows
+        visible: opacity > 0
+        opacity: screen.showWindows ? 1 : 0
+        transform: Translate {
+            y: screen.showWindows ? 0 : Space.m
+            Behavior on y {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+        }
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
         x: screen.freeRect.x + gap
         y: screen.freeRect.y + gap
         width: screen.freeRect.w - gap * 2
@@ -483,5 +506,51 @@ Item {
     Item {
         id: overlayLayer
         anchors.fill: parent
+    }
+
+    // With `partsClickable`: the island and the dock are buttons over
+    // everything (a hover ring, then `partPicked("island" | "dock")`); the
+    // part the page is about (`emphasis`) is not.
+    Repeater {
+        model: screen.partsClickable ? [
+            {
+                "part": "island",
+                "item": island
+            },
+            {
+                "part": "dock",
+                "item": dock
+            }
+        ] : []
+        delegate: MouseArea {
+            id: partArea
+            required property var modelData
+            readonly property Item target: modelData.item
+            objectName: "stagePart:" + modelData.part
+            visible: partArea.target.visible && screen.emphasis !== modelData.part
+            x: partArea.target.x
+            y: partArea.target.y
+            width: partArea.target.width
+            height: partArea.target.height
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: screen.partPicked(partArea.modelData.part)
+
+            Mark {
+                anchors.fill: parent
+                anchors.margins: -Space.xs
+                radius: Math.min(width, height) / 2
+                color: "transparent"
+                border.width: Space.stroke - 1
+                border.color: Type.accent
+                opacity: partArea.containsMouse ? 0.8 : 0
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Motion.micro.duration
+                        easing.type: Motion.micro.easing
+                    }
+                }
+            }
+        }
     }
 }

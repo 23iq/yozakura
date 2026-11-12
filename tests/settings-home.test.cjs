@@ -59,7 +59,7 @@ test('page cards: 1 to 3 columns, masonry without overlap', () => {
     assert.equal(BentoLayout.columns(800, 340), 2);
     assert.equal(BentoLayout.columns(2000, 340), 3);
     const items = [{ span: 2, height: 100 }, { span: 1, height: 50 }, { span: 1, height: 200 }, { span: 1, height: 30 }];
-    const { places, height } = BentoLayout.place(items, 3, 10);
+    const { places, height, floor } = BentoLayout.place(items, 3, 10);
     assert.deepEqual(plain(places[0]), { col: 0, span: 2, y: 0 });
     assert.deepEqual(plain(places[1]), { col: 2, span: 1, y: 0 });
     // the next card goes under the shortest column
@@ -67,8 +67,16 @@ test('page cards: 1 to 3 columns, masonry without overlap', () => {
     assert.equal(places[2].y, 60);
     assert.equal(places[3].y, 110);
     assert.equal(height, 260);
+    // the shortest column ends at 100: a next card lands at or below it
+    assert.equal(floor, 100);
     // a span wider than the grid is clamped
     assert.equal(BentoLayout.place([{ span: 2, height: 10 }], 1, 0).places[0].span, 1);
+});
+
+test('a page of wide cards uses two columns, not an empty third', () => {
+    assert.equal(BentoLayout.fit(3, [2, 2, 2]), 2);
+    assert.equal(BentoLayout.fit(3, [2, 1, 2]), 3);
+    assert.equal(BentoLayout.fit(1, [2]), 1);
 });
 
 test('a section with picture cards or an editor spans two columns', () => {

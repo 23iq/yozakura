@@ -11,8 +11,10 @@ function columns(width, minCard) {
     return Math.max(1, Math.min(3, n));
 }
 
-// items: [{span, height}] -> [{col, span, y}] and the total height, as
-// {places, height}. `gap` between cards in both directions.
+// items: [{span, height}] -> [{col, span, y}], the total height and the
+// floor (where the shortest column ends: any card placed after these lands
+// at or below it), as {places, height, floor}. `gap` between cards in both
+// directions.
 function place(items, cols, gap) {
     var tops = [];
     for (var c = 0; c < cols; c++)
@@ -39,26 +41,38 @@ function place(items, cols, gap) {
             for (var k = best; k < best + span; k++)
                 tops[k] = bestTop + it.height + gap;
     });
-    var height = 0;
+    var height = 0, floor = Infinity;
     tops.forEach(function (t) {
         height = Math.max(height, t);
+        floor = Math.min(floor, t);
     });
     return {
         "places": places,
-        "height": Math.max(0, height - gap)
+        "height": Math.max(0, height - gap),
+        "floor": Math.max(0, floor - gap)
     };
 }
 
 // The span a schema section asks for: `span` when it sets one, else two
 // columns when it holds a full-width control (picture cards, an editor, a
-// list, a macro slider), one otherwise.
+// list), one otherwise.
 function spanOf(section, inWindow) {
     if (section && section.span)
         return section.span;
     var wide = (section && section.entries || []).some(function (e) {
         if (inWindow && !inWindow(e, section))
             return false;
-        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role" || e.type === "macro" || e.display === "cards";
+        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role" || e.display === "cards";
     });
     return wide ? 2 : 1;
+}
+
+// Columns a page uses out of `cols`: when every card is wide (spans >= 2)
+// a third column would stay empty, so it takes two (and the page centres
+// the narrower bento).
+function fit(cols, spans) {
+    var narrow = (spans || []).some(function (s) {
+        return s < 2;
+    });
+    return narrow ? cols : Math.min(cols, 2);
 }

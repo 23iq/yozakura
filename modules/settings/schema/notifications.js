@@ -91,6 +91,7 @@ var category = {
     "title": "prefs.cat.notifications",
     "description": "prefs.cat.notifications.desc",
     "keywords": "notifications popups toasts do not disturb dnd alerts rules mute history sound",
+    "stage": "NotifStage",
     "sections": [
         {
             "id": "presentation",
