@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.modules.services
+import qs.modules.components
 import qs.modules.theme
 import qs.config
 import qs.modules.bar.workspaces // For CompositorData
@@ -8,8 +9,12 @@ import qs.modules.bar.workspaces // For CompositorData
 // Rounded screen corners of one output: four corner-sized layer surfaces
 // (ScreenCornerWindow), not one transparent full-screen window, so the
 // compositor blends four small squares instead of a whole extra screen-size
-// buffer (8 / 15 / 33 MB per buffer at 1080p / 1440p / 4K). Hidden under a
-// fullscreen window and while corners are off.
+// buffer (8 / 15 / 33 MB per buffer at 1080p / 1440p / 4K). Hidden (unmapped,
+// so a fullscreen window can still be scanned out directly) under a fullscreen
+// window and while corners are off. The four windows flip together, once the
+// wanted state has held for `settleInterval` ms: a quick fullscreen toggle
+// does not unmap and remap four surfaces (bursts of surface create/destroy
+// are a QtWayland crash source).
 Item {
     id: root
 
@@ -26,7 +31,15 @@ Item {
     }
     // The corner reaches past the frame when it is on.
     readonly property int cornerSize: Styling.radius(4) + (frameEnabled ? thickness : 0)
-    readonly property bool shown: Config.theme.enableCorners && Config.roundness > 0 && !activeWindowFullscreen
+    readonly property bool wanted: Config.theme.enableCorners && Config.roundness > 0 && !activeWindowFullscreen
+    property int settleInterval: 250
+    readonly property bool shown: shownGate.output === true
+
+    SettleGate {
+        id: shownGate
+        value: root.wanted
+        interval: root.settleInterval
+    }
 
     function updateFullscreen() {
         const mon = YozdService.monitorFor(root.screen);

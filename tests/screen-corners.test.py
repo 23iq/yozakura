@@ -4,7 +4,8 @@ Loads the real modules/corners/ScreenCorners.qml (+ ScreenCornerWindow,
 RoundCorner) with the layer-shell boundary turned into plain properties, and
 checks each window's anchors, size, layer, namespace and empty input mask
 with the frame on and off, that nothing is shown under a fullscreen window
-or with corners disabled, and that the four windows placed at their anchors
+or with corners disabled once the state has settled, that a quick
+fullscreen on/off inside the settle interval flips no window at all, and that the four windows placed at their anchors
 draw exactly the pixels of the former full-screen layout (four RoundCorners
 anchored to the corners of a screen-size item).
 """
@@ -13,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from lib.waits import settle  # noqa: E402
+from lib.waits import pump, settle, wait_until  # noqa: E402
 
 import shiboken6  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402
@@ -67,6 +68,8 @@ h.copy("modules/corners/ScreenCornerWindow.qml", replace={
     "WlrLayershell.namespace:": "property string layerNamespace:",
     "WlrLayershell.layer:": "property int layerShellLayer:",
 })
+h.copy("modules/components/SettleGate.qml", "qs/modules/components")
+h.module("qs.modules.components", {})
 h.copy("modules/corners/ScreenCorners.qml")
 
 root = h.load(f"""import QtQuick
@@ -113,6 +116,12 @@ Window {{
         }})));
     }}
     function setFullscreen(on) {{ CompositorData.fullscreen = on; CompositorData.windowListChanged(); }}
+    // Every visibility change of any corner window (a map or unmap).
+    property int flips: 0
+    Component.onCompleted: {{
+        for (const w of windows())
+            w.visibleChanged.connect(() => win.flips++);
+    }}
 }}""", auto_stub=False)
 
 ok_all = True
@@ -181,16 +190,36 @@ ev("Config.bar.frameThickness = 'x'")
 check("non-numeric thickness uses 6", all(w["w"] == 26 for w in windows()))
 ev("Config.bar.frameEnabled = false; Config.bar.frameThickness = 6")
 
+SETTLE = ev("corners.settleInterval")
+check("settle interval in the 150-300 ms range", 150 <= SETTLE <= 300, str(SETTLE))
+
+
+def all_visible(v):
+    return all(w["visible"] is v for w in windows())
+
+
+ev("flips = 0")
 ev("setFullscreen(true)")
-check("fullscreen window: nothing shown", all(w["visible"] is False for w in windows()))
+check("fullscreen window: still shown before the state settles", all_visible(True))
+check("fullscreen window: nothing shown once settled", wait_until(lambda: all_visible(False)))
+check("fullscreen window: the four windows flipped once each", ev("flips") == 4, str(ev("flips")))
 ev("setFullscreen(false)")
-check("fullscreen gone: shown again", all(w["visible"] is True for w in windows()))
+check("fullscreen gone: shown again once settled", wait_until(lambda: all_visible(True)))
+
+# A quick fullscreen on/off inside the interval: no window is unmapped.
+ev("flips = 0")
+ev("setFullscreen(true)")
+pump(SETTLE // 3)
+ev("setFullscreen(false)")
+pump(SETTLE * 2)
+check("quick fullscreen on/off: no visibility change", ev("flips") == 0 and all_visible(True), str(ev("flips")))
 
 ev("Config.theme.enableCorners = false")
-check("corners disabled: nothing shown", all(w["visible"] is False for w in windows()))
+check("corners disabled: nothing shown", wait_until(lambda: all_visible(False)))
 ev("Config.theme.enableCorners = true")
+check("corners enabled: shown again", wait_until(lambda: all_visible(True)))
 ev("Config.roundness = 0")
 check("roundness 0: nothing shown, no 0 px surface",
-      all(w["visible"] is False and w["w"] >= 1 and w["h"] >= 1 for w in windows()))
+      wait_until(lambda: all_visible(False)) and all(w["w"] >= 1 and w["h"] >= 1 for w in windows()))
 
 sys.exit(0 if ok_all else 1)
