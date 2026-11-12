@@ -1,12 +1,13 @@
 package daemon
 
 import (
+	"context"
 	"log"
 	"os"
-	"os/exec"
 	"syscall"
 
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/svc/compositor"
 )
 
@@ -56,7 +57,7 @@ func selfLauncher() string {
 // spawnDetached starts argv in its own session, outliving the daemon
 // (which exits right after a crash loop).
 func spawnDetached(argv []string) error {
-	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd := proc.Command(context.Background(), argv[0], argv[1:]...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if home, err := os.UserHomeDir(); err == nil {
 		cmd.Dir = home
