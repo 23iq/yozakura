@@ -25,7 +25,7 @@ import "../theme/AppThemes.js" as AppThemes
  *
  * This singleton only:
  *   1. Assembles the input JSON from Config + Theme + GlobalStates.
- *   2. Calls "compositor.write" on the daemon.
+ *   2. Calls "compositor.write" on the daemon (BackendService socket).
  *   3. Re-fires the call whenever one of the upstream signals changes.
  */
 Singleton {
@@ -33,16 +33,20 @@ Singleton {
 
     property string outputPath: Brand.dataDir + "/" + Brand.daemon + ".toml"
 
-    property Process ipcProcess: Process {
-        stdout: SplitParser {}
-        onExited: code => root._onWriteExited(code)
+    // One compositor.write in flight at a time (`_writeSeq` numbers them).
+    property bool _writing: false
+    property int _writeSeq: 0
+    // An answer lost with the socket (daemon restart) must not block every
+    // later write: give up on it after this long.
+    property Timer writeWatchdog: Timer {
+        interval: 30000
+        onTriggered: root._onWriteDone(root._writeSeq, "no answer from the daemon")
     }
 
     // Writes are coalesced: a preset load or a slider drag changes many
-    // compositor keys in a burst, and each write spawns the yozakura CLI and
-    // makes yozd regenerate the compositor config. A write that
-    // arrives while one is in flight is queued instead of dropped (Process
-    // ignores `running = true` while running, which lost the newest payload).
+    // compositor keys in a burst, and each write makes yozd regenerate the
+    // compositor config. A write that arrives while one is in flight is
+    // queued instead of dropped, and sent once the first one is answered.
     // The values are already applied live (CompositorConfig, CompositorMotion),
     // so the persisted write waits until a drag settles; yozd then applies
     // appearance-only changes live and reloads only for binds/rules/monitors.
@@ -286,26 +290,29 @@ Singleton {
         };
     }
 
-    // Fallback writer used when the yozakura daemon is unreachable.
-    // Reproduces the [target] block the Go service produces so the
-    // yozd watcher still finds a valid TOML during daemon restarts
-    // or when the IPC socket is stale. The QML previously had the
-    // full generator in-tree; this is a deliberately minimal subset
-    // covering the [target] section only — enough to keep the chain
-    // alive, not enough to compete with the Go service.
+    // First start during a daemon outage: no TOML exists yet, so yozd would
+    // have nothing to watch. A minimal [target] block (the hyprland target
+    // line the Go service writes, relative to the TOML directory) keeps the
+    // chain alive until the daemon answers. It is only ever created, never
+    // written over an existing TOML (noclobber): replacing the last good file
+    // would drop every generated keybind, window rule, monitor and keyboard
+    // setting from the live session because of one failed write.
     property Process fallbackProcess: Process {
         stdout: SplitParser {}
+        onExited: code => {
+            if (code === 0)
+                console.warn("CompositorTomlWriter: no compositor TOML existed; wrote a minimal [target] one until the daemon answers");
+        }
     }
 
+    readonly property string fallbackContent: "[target]\nhyprland = \"hyprland.lua\"\n"
+
     function fallbackWrite() {
-        // The Go service writes relative paths so the wiring follows
-        // the TOML directory. The minimal fallback reproduces the
-        // same hyprland target line so yozd at least resolves a
-        // valid path during the outage.
-        const content = "[target]\nhyprland = \"hyprland.lua\"\n";
-        fallbackProcess.command = ["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf "%s" "$2" > "$1"', "toml-fallback", root.outputPath, content];
+        if (fallbackProcess.running)
+            return;
+        // $1 the TOML path, $2 its content. Exits non-zero when it exists.
+        fallbackProcess.command = ["sh", "-c", 'mkdir -p "$(dirname "$1")" && { set -C; printf "%s" "$2" > "$1"; } 2>/dev/null', "toml-fallback", root.outputPath, root.fallbackContent];
         fallbackProcess.running = true;
-        console.warn("CompositorTomlWriter: daemon unreachable, wrote fallback [target] only");
     }
 
     // A pending (unconfirmed) display change must not be undone by a rewrite
@@ -318,42 +325,50 @@ Singleton {
         writeDebounce.restart();
     }
 
-    function _onWriteExited(code) {
-        if (code !== 0) {
-            console.warn("CompositorTomlWriter: daemon call failed, using fallback");
-            fallbackWrite();
+    // The answer of the write in flight (`seq`); a late answer of a write the
+    // watchdog gave up on is ignored.
+    function _onWriteDone(seq, error) {
+        if (!root._writing || seq !== root._writeSeq)
+            return;
+        root._writing = false;
+        writeWatchdog.stop();
+        if (error) {
+            console.warn("CompositorTomlWriter: compositor.write failed, the last written " + root.outputPath + " is kept:", typeof error === "string" ? error : JSON.stringify(error));
+            root.fallbackWrite();
         }
-        if (_writeQueued)
-            _flushWrite();
+        if (root._writeQueued)
+            root._flushWrite();
     }
 
     function _flushWrite() {
         if (!WriteGate.request(root._gate, DisplaysService.pending))
             return;
-        // Dry run: the CLI call below bypasses BackendService's interception.
-        // Journaled only for changes made in the wizard (not the start-up write).
+        // Dry run: nothing is sent (BackendService would journal every write,
+        // also the start-up one). Journaled only for changes made in the wizard.
         if (DryRun.active) {
             if (OnboardingService.visible)
                 DryRun.journal("write the compositor config");
             return;
         }
-        if (ipcProcess.running) {
+        if (root._writing) {
             _writeQueued = true;
             return;
         }
         _writeQueued = false;
         const input = gatherInput();
         root._lastDisplays = JSON.stringify(input.displays);
-        const payload = JSON.stringify(input);
-        // The daemon exposes a unix socket; Quickshell.Io.Process doesn't
-        // speak the JSON-RPC framing directly, so we run the yozakura CLI
-        // with a transient request. If the daemon is down (e.g. socket
-        // file is stale), the CLI exits with code 1; we then fall back
-        // to a minimal direct write so yozd still has a valid TOML
-        // to watch and the rest of the shell keeps working.
-        ipcProcess.command = [Brand.appBin, "ipc", "call", "compositor.write", payload];
-        ipcProcess.running = true;
-        console.log("CompositorTomlWriter: requested compositor.write via yozakura CLI");
+        // Sent over the daemon socket (BackendService), not as a CLI
+        // argument: one argv element is limited to 128 KiB (E2BIG), which
+        // a large keybind set can reach. While the socket is down the call
+        // waits in BackendService's queue; only a missing TOML gets the
+        // minimal fallback meanwhile.
+        if (!BackendService.socketAvailable)
+            root.fallbackWrite();
+        const seq = ++root._writeSeq;
+        root._writing = true;
+        writeWatchdog.restart();
+        BackendService.call("compositor.write", input, (result, error) => root._onWriteDone(seq, error));
+        console.log("CompositorTomlWriter: requested compositor.write");
     }
 
     // Tracks whether the QML's keybind adapter is ready. We hold the
