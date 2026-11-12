@@ -2051,13 +2051,24 @@ hyprland_bootstrap() {
 # '$APP_ID goodbye' removes exactly that line (backend/cmd/yozakura: the
 # same text as polkitEntryLine).
 polkit_autostart() {
-  local entry cmd="$BIN_DIR/$APP_ID $POLKIT_FALLBACK" marker="$APP_ID: polkit"
+  local entry cmd bin="$BIN_DIR/$APP_ID" q="'\\''" marker="$APP_ID: polkit"
   entry="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)"
   grep -qsi polkit "$entry" && return 0
+  # One sh word for the launcher path, quoted only when sh would split or
+  # expand it (the binary's compositor.ShellWord writes the same text).
+  if [[ "$bin" =~ ^[A-Za-z0-9_@%+=:,./-]+$ ]]; then
+    cmd="$bin $POLKIT_FALLBACK"
+  else
+    cmd="'${bin//\'/$q}' $POLKIT_FALLBACK"
+  fi
   if [[ "$entry" == *.lua ]]; then
+    # a Lua string: \ and " escaped
+    cmd="${cmd//\\/\\\\}"
+    cmd="${cmd//\"/\\\"}"
     printf '\nhl.on("hyprland.start", function() hl.exec_cmd("%s") end) -- %s\n' "$cmd" "$marker" >>"$entry"
   else
-    printf '\nexec-once = %s # %s\n' "$cmd" "$marker" >>"$entry"
+    # hyprlang: # starts a comment unless doubled
+    printf '\nexec-once = %s # %s\n' "${cmd//#/##}" "$marker" >>"$entry"
   fi
 }
 

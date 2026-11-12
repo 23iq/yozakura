@@ -3,6 +3,7 @@ package compositor
 import (
 	"encoding/json"
 	"os"
+	"strings"
 )
 
 // FallbackVerb is the CLI verb that starts the external polkit agent only
@@ -12,14 +13,48 @@ import (
 // `<app> polkit-fallback`.
 const FallbackVerb = "polkit-fallback"
 
-// FallbackCommand is the startup command for bin (the launcher path):
-// `<bin> polkit-fallback`, or "" when no external agent is installed (the
-// verb would have nothing to start).
+// FallbackCommand is the startup shell command for bin (the launcher
+// path): `<bin> polkit-fallback` with bin quoted for sh when it needs it,
+// or "" when no external agent is installed (the verb would have nothing
+// to start). Lines that spawn argv (niri) use FallbackArgv.
 func FallbackCommand(bin string) string {
 	if PolkitCommand() == "" {
 		return ""
 	}
-	return bin + " " + FallbackVerb
+	return FallbackShellCommand(bin)
+}
+
+// FallbackShellCommand is `<bin> polkit-fallback` as an sh command line,
+// whether or not an external agent is installed.
+func FallbackShellCommand(bin string) string {
+	return ShellWord(bin) + " " + FallbackVerb
+}
+
+// FallbackArgv is FallbackCommand as argv: nil when no external agent is
+// installed.
+func FallbackArgv(bin string) []string {
+	if PolkitCommand() == "" {
+		return nil
+	}
+	return []string{bin, FallbackVerb}
+}
+
+// ShellWord quotes s as one sh word: unchanged when it holds only
+// characters sh never splits or expands, else single-quoted (install.sh's
+// polkit_autostart writes the same text).
+func ShellWord(s string) string {
+	if s != "" && strings.Trim(s, shellSafe) == "" {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+const shellSafe = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_@%+=:,./-"
+
+// HyprlangValue escapes a value for a hyprlang line, where # starts a
+// comment unless doubled.
+func HyprlangValue(s string) string {
+	return strings.ReplaceAll(s, "#", "##")
 }
 
 // startupPolkit is the external agent the generated config starts: none

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 const (
@@ -131,6 +132,24 @@ func TestRepairMigratesExclusiveEntryPolkitLine(t *testing.T) {
 	repairHyprlandEntry(home, "/opt/bin/yozakura")
 	if got := readText(t, path); got != user {
 		t.Fatalf("a user entry changed:\n%s", got)
+	}
+}
+
+// A CRLF entry keeps its line ends; a launcher path with a space or a #
+// stays one sh word and is not cut by a hyprlang comment.
+func TestRepairPolkitLineCRLFAndQuoting(t *testing.T) {
+	home := t.TempDir()
+	body := "monitor = , preferred, auto, 1\r\n" + oldConfPolkit + "\r\nbind = SUPER, Q, killactive\r\n"
+	path := writeHypr(t, home, "hyprland.conf", body)
+	repairHyprlandEntry(home, "/opt/bin/yozakura")
+	if got, want := readText(t, path), strings.Replace(body, oldConfPolkit, newConfPolkit, 1); got != want {
+		t.Fatalf("got %q\nwant %q", got, want)
+	}
+	if got := polkitEntryLine(false, compositor.FallbackShellCommand("/home/a b/#1/yozakura")); got != "exec-once = '/home/a b/##1/yozakura' polkit-fallback # yozakura: polkit" {
+		t.Errorf("conf: %s", got)
+	}
+	if got := polkitEntryLine(true, compositor.FallbackShellCommand(`/home/a "b"/yozakura`)); got != `hl.on("hyprland.start", function() hl.exec_cmd("'/home/a \"b\"/yozakura' polkit-fallback") end) -- yozakura: polkit` {
+		t.Errorf("lua: %s", got)
 	}
 }
 

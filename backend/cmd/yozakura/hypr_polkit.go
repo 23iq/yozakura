@@ -14,14 +14,14 @@ import (
 // login, so the shell's agent could never register.
 const oldPolkitCommand = "systemctl --user start hyprpolkitagent"
 
-// polkitEntryLine is the installer's polkit line running cmd, in the form of
-// the entry's language, with our marker (see polkitSuffixes). install.sh
-// writes the same text.
+// polkitEntryLine is the installer's polkit line running cmd (an sh command
+// line), in the form of the entry's language, with our marker (see
+// polkitSuffixes). install.sh writes the same text.
 func polkitEntryLine(lua bool, cmd string) string {
 	if lua {
 		return fmt.Sprintf("hl.on(\"hyprland.start\", function() hl.exec_cmd(%q) end) %s", cmd, polkitSuffixes()[1])
 	}
-	return "exec-once = " + cmd + " " + polkitSuffixes()[0]
+	return "exec-once = " + compositor.HyprlangValue(cmd) + " " + polkitSuffixes()[0]
 }
 
 // migratePolkitLine rewrites, in place, the installer's old polkit line in
@@ -40,7 +40,11 @@ func migratePolkitLine(path, bin string) (bool, error) {
 	n := 0
 	for i, l := range lines {
 		if strings.TrimRight(l, " \t\r") == old {
-			lines[i] = polkitEntryLine(lua, bin+" "+compositor.FallbackVerb)
+			eol := ""
+			if strings.HasSuffix(l, "\r") {
+				eol = "\r"
+			}
+			lines[i] = polkitEntryLine(lua, compositor.FallbackShellCommand(bin)) + eol
 			n++
 		}
 	}

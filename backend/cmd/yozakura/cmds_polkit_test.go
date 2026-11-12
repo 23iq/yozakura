@@ -143,12 +143,24 @@ func TestPolkitFallbackFailures(t *testing.T) {
 }
 
 func TestBootstrapStartsTheFallbackVerb(t *testing.T) {
-	niri := bootstrapBody(niriConfig, "/opt/bin/yozakura", "/opt/bin/yozakura polkit-fallback")
+	argv := []string{"/opt/bin/yozakura", "polkit-fallback"}
+	niri := bootstrapBody(niriConfig, "/opt/bin/yozakura", argv)
 	if !strings.Contains(niri, `spawn-at-startup "/opt/bin/yozakura" "polkit-fallback"`+"\n") {
 		t.Fatalf("niri bootstrap:\n%s", niri)
 	}
-	mango := bootstrapBody(mangoConfig, "/opt/bin/yozakura", "/opt/bin/yozakura polkit-fallback")
+	mango := bootstrapBody(mangoConfig, "/opt/bin/yozakura", argv)
 	if !strings.Contains(mango, "exec-once = /opt/bin/yozakura polkit-fallback\n") {
 		t.Fatalf("mango bootstrap:\n%s", mango)
+	}
+	// A launcher path with a space stays one argument / one sh word.
+	spaced := []string{"/home/a b/bin/yozakura", "polkit-fallback"}
+	if niri := bootstrapBody(niriConfig, spaced[0], spaced); !strings.Contains(niri, `spawn-at-startup "/home/a b/bin/yozakura" "polkit-fallback"`+"\n") {
+		t.Fatalf("niri bootstrap with a space:\n%s", niri)
+	}
+	if mango := bootstrapBody(mangoConfig, spaced[0], spaced); !strings.Contains(mango, "exec-once = '/home/a b/bin/yozakura' polkit-fallback\n") {
+		t.Fatalf("mango bootstrap with a space:\n%s", mango)
+	}
+	if body := bootstrapBody(mangoConfig, "/opt/bin/yozakura", nil); strings.Contains(body, "polkit") {
+		t.Fatalf("no external agent: no polkit line:\n%s", body)
 	}
 }

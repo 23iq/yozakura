@@ -145,3 +145,23 @@ func TestPolkitStateKeepsTheShellsLastReport(t *testing.T) {
 		t.Fatalf("a rejected report replaced the state: %+v", got)
 	}
 }
+
+func TestShellWordQuotesOnlyWhatShSplits(t *testing.T) {
+	for in, want := range map[string]string{
+		"/opt/bin/yozakura":         "/opt/bin/yozakura",
+		"/home/a b/.local/bin/yoz":  "'/home/a b/.local/bin/yoz'",
+		"/home/o'neil/bin/yozakura": `'/home/o'\''neil/bin/yozakura'`,
+		`/x/"q"\$HOME/yozakura`:     `'/x/"q"\$HOME/yozakura'`,
+		"":                          "''",
+	} {
+		if got := ShellWord(in); got != want {
+			t.Errorf("ShellWord(%q) = %s, want %s", in, got, want)
+		}
+	}
+	if got := FallbackShellCommand("/a b/yozakura"); got != "'/a b/yozakura' polkit-fallback" {
+		t.Errorf("fallback: %s", got)
+	}
+	if got := HyprlangValue("'/x#1/yozakura' polkit-fallback"); got != "'/x##1/yozakura' polkit-fallback" {
+		t.Errorf("hyprlang: %s", got)
+	}
+}

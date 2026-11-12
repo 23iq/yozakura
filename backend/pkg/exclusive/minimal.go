@@ -97,12 +97,14 @@ func minimalEntry(lua bool, backup, hypr, polkit string) string {
 	return strings.Join(append(lines, user, ""), "\n")
 }
 
-// polkitStart is the minimal entry's line that runs the polkit command.
+// polkitStart is the minimal entry's line that runs the polkit command (an
+// sh command line).
 func polkitStart(lua bool, polkit string) string {
 	if lua {
 		return fmt.Sprintf("hl.on(\"hyprland.start\", function() hl.exec_cmd(%q) end)", polkit)
 	}
-	return "exec-once = " + polkit
+	// hyprlang: # starts a comment unless doubled
+	return "exec-once = " + strings.ReplaceAll(polkit, "#", "##")
 }
 
 // UpdatePolkit brings the polkit line of the active exclusive entry in hypr

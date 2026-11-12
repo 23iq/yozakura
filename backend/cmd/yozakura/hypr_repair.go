@@ -45,7 +45,7 @@ func repairHyprlandEntry(home, bin string) {
 		}
 	}
 	// Exclusive mode's minimal entry started the external agent itself.
-	if _, err := exclusive.UpdatePolkit(hypr, compositor.ExternalPolkitCommands(), bin+" "+compositor.FallbackVerb); err != nil {
+	if _, err := exclusive.UpdatePolkit(hypr, compositor.ExternalPolkitCommands(), compositor.FallbackShellCommand(bin)); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not update the polkit line of the exclusive mode entry: %v\n", err)
 	}
 
