@@ -146,7 +146,10 @@ var category = {
                     "description": "prefs.lockscreen.pam_service.desc",
                     "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
                     "placeholder": "prefs.lockscreen.pam_service.placeholder",
-                    "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$"
+                    "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
+                    // A page or section reset must not clear it: an account
+                    // that only this service can verify would be locked out.
+                    "resettable": false
                 }
             ]
         },
