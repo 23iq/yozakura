@@ -221,7 +221,42 @@ QtObject {
     function loadInputPreset(n) { calls = calls.concat([["input", n]]); activeInputPreset = n }
 }"""
 
+# KeyboardService: English (US) and Russian, Alt+Shift switches, Caps as
+# Esc; the catalog of tests/lib/keyboard_env.py.
+KEYBOARD = """pragma Singleton
+import QtQuick
+QtObject {
+    property var catalog: %s
+    property var active: ({ "name": "English (US)", "index": 0, "code": "us", "short": "EN" })
+    readonly property string shortLabel: active.short
+    readonly property bool indicatorVisible: true
+    property bool managed: true
+    property var current: null
+    property bool known: true
+    property bool unreadable: false
+    property bool readFailed: false
+    property string readError: ""
+    property string applyError: ""
+    property var effective: ({ "layouts": [{ "layout": "us", "variant": "" }, { "layout": "ru", "variant": "" }],
+                               "switchBind": "alt_shift", "options": ["caps:escape"], "repeatRate": 30, "repeatDelay": 400 })
+    property var calls: []
+    function loadCatalog() {}
+    function next() {}
+    function refreshCurrent() {}
+    function retryRead() {}
+    function edit(patch) { calls = calls.concat([patch]); effective = Object.assign({}, effective, patch) }
+    function takeOver() {}
+    function apply() {}
+}"""
+
+
+def _catalog() -> str:
+    from keyboard_env import CATALOG
+    return json.dumps(CATALOG)
+
+
 SERVICES = {
+    "KeyboardService": KEYBOARD % _catalog(),
     "Audio": AUDIO,
     "CavaService": CAVA,
     "EasyEffectsService": EASY_EFFECTS,

@@ -42,7 +42,6 @@ var EDITORS = {
     "GlassAmountEditor": "editors/GlassAmountEditor.qml",
     "GlassSurfacesEditor": "editors/GlassSurfacesEditor.qml",
     "KeybindsOverview": "editors/KeybindsOverview.qml",
-    "KeybindGroupEditor": "editors/KeybindGroupEditor.qml",
     "LockStyleGallery": "editors/LockStyleGallery.qml",
     "LoginScreenCard": "editors/LoginScreenCard.qml",
     "LauncherProvidersEditor": "editors/LauncherProvidersEditor.qml",
@@ -72,6 +71,7 @@ var EDITORS = {
     "AudioDevices": "connect/AudioDevices.qml",
     "AppVolumes": "connect/AppVolumes.qml",
     "EffectPresets": "connect/EffectPresets.qml",
+    "ShortcutList": "editors/ShortcutList.qml",
     "SleepSwitches": "editors/SleepSwitches.qml"
 };
 
@@ -123,7 +123,8 @@ var STAGES = {
     "NetworkBand": "stages/NetworkBand.qml",
     "BluetoothBand": "stages/BluetoothBand.qml",
     "SoundBand": "stages/SoundBand.qml",
-    "EffectsBand": "stages/EffectsBand.qml"
+    "EffectsBand": "stages/EffectsBand.qml",
+    "KeysBand": "stages/KeysBand.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

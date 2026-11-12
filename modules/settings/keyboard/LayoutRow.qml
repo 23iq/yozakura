@@ -80,9 +80,12 @@ Item {
         }
     }
 
+    // a narrow row (a row card): no variant picker, no code line
+    readonly property bool narrow: row.width < Space.px(420)
+
     LayoutBadge {
         id: badge
-        x: 52
+        x: row.narrow ? Space.xxl + Space.m : 52
         anchors.verticalCenter: parent.verticalCenter
         code: row.code
         lit: row.active
@@ -120,6 +123,7 @@ Item {
         }
         KitText {
             role: "caption"
+            visible: !row.narrow
             text: row.code + (row.variant !== "" ? "  ·  " + row.variant : "")
             color: Colors.overSurfaceVariant
         }
@@ -135,7 +139,7 @@ Item {
         VariantCombo {
             id: combo
             objectName: "variantCombo"
-            visible: row.variantChoices.length > 1
+            visible: row.variantChoices.length > 1 && !row.narrow
             variants: row.variantChoices
             chosen: row.variant
             onPicked: v => row.variantPicked(v)
@@ -146,7 +150,7 @@ Item {
         id: removeButton
         objectName: "removeButton"
         anchors.right: parent.right
-        anchors.rightMargin: Space.xl
+        anchors.rightMargin: row.narrow ? 0 : Space.xl
         anchors.verticalCenter: parent.verticalCenter
         width: 34
         height: 34

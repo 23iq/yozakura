@@ -47,6 +47,11 @@ ColumnLayout {
                 onSaved: uid => KeybindsStore.expandedUid = ""
             }
         }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Space.m
 
         PillButton {
             objectName: "keybindsAdd"
@@ -157,4 +162,9 @@ ColumnLayout {
     }
 
     Component.onCompleted: KeybindsStore.refreshNative()
+
+    // in a card taller than the toolbar: the toolbar stays at the top
+    Item {
+        Layout.fillHeight: true
+    }
 }
