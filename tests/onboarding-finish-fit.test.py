@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from exclusive_env import PLAN, STATUS_OFF  # noqa: E402
 from languages import LANGUAGES  # noqa: E402
 from onboarding_env import OnboardingEnv  # noqa: E402
+from qmlharness import hard_exit  # noqa: E402
 
 from PySide6.QtTest import QTest  # noqa: E402
 
@@ -81,8 +82,11 @@ Window {
         check(h.eval(flick, "ScrollBar.vertical.policy === ScrollBar.AlwaysOn") is True,
               f"{language} 1280x720 expanded: no scrollbar while content {column} > viewport {height}")
     win.close()
+    if h.type_errors:
+        failures.append(f"{language} type errors: " + "; ".join(h.type_errors))
+        h.type_errors.clear()
 
-if h is not None and h.type_errors:
-    failures.append("type errors: " + "; ".join(h.type_errors))
 print("onboarding-finish-fit:", "FAIL" if failures else "ok", f"({len(failures)} failure(s))")
-sys.exit(1 if failures else 0)
+# os._exit: tearing down one engine per language crashed now and then after
+# a passing run (the type errors are checked above)
+hard_exit(1 if failures else 0)
