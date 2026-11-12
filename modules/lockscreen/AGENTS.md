@@ -28,6 +28,9 @@ system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` (grep, ar
 `LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
 `*-autologin` name, a missing/unreadable file, a file with an `auth ... pam_permit.so` line or
 a check that has not answered yet keeps the bundled file, with a warning in the log (`LockPam.js`).
+A system stack with `pam_faillock` (Arch `system-auth`, `login`, ...) counts lock-screen failures:
+3 wrong passwords lock the account for ~10 min (`/etc/security/faillock.conf`), which the key's
+description says; the bundled `password.conf` has no faillock.
 Only an empty field is ignored on submit; the text reaches PAM exactly as typed (spaces too).
 
 Lock across restarts: `LockStateMarker.qml` (in `shell.qml` next to `WlSessionLock`) mirrors

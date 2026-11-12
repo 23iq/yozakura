@@ -67,7 +67,7 @@ var lockscreen = {
             // never save, export, import, apply or reset it.
             "local": true,
             "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
-            "description": "PAM service the lock screen authenticates against: the named service decides who can unlock. Empty = the bundled config/pam/password.conf (pam_unix). A plain service name uses /etc/pam.d/<name> (LDAP/sssd, systemd-homed, fingerprint) when that file is readable; autologin services and stacks with an auth line using pam_permit.so are refused (bundled config). Machine-local: never in presets."
+            "description": "PAM service the lock screen authenticates against: the named service decides who can unlock. Empty = the bundled config/pam/password.conf (pam_unix). A plain service name uses /etc/pam.d/<name> (LDAP/sssd, systemd-homed, fingerprint) when that file is readable; autologin services and stacks with an auth line using pam_permit.so are refused (bundled config). A stack with pam_faillock (e.g. Arch system-auth) counts lock-screen failures too: 3 wrong passwords lock the account for about 10 minutes, even for the correct one. Machine-local: never in presets."
         }
     }
 };
