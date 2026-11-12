@@ -72,15 +72,7 @@ func TestManagerBacksOffWhenNoCompositor(t *testing.T) {
 	setVar(t, &daemonRestartDelay, 10*time.Millisecond)
 	setVar(t, &noCompositorRetry, 300*time.Millisecond)
 	setVar(t, &noCompositorMax, 300*time.Millisecond)
-	var logMu sync.Mutex
-	var logs []string
-	oldLog := logf
-	logf = func(format string, args ...any) {
-		logMu.Lock()
-		logs = append(logs, fmt.Sprintf(format, args...))
-		logMu.Unlock()
-	}
-	t.Cleanup(func() { logf = oldLog })
+	logs := captureLogs(t)
 
 	starts := filepath.Join(t.TempDir(), "starts")
 	bin := t.TempDir()
@@ -106,18 +98,65 @@ func TestManagerBacksOffWhenNoCompositor(t *testing.T) {
 	if n < 4 || n > 7 {
 		t.Fatalf("%d starts in 1s, want 4..7", n)
 	}
-	logMu.Lock()
-	defer logMu.Unlock()
 	noComp := 0
-	for _, l := range logs {
+	for _, l := range logs() {
 		if strings.Contains(l, "no supported compositor") {
 			noComp++
-		} else {
+		} else if !strings.Contains(l, "did not appear") {
 			t.Errorf("unexpected log line %q", l)
 		}
 	}
 	if noComp != 1 {
-		t.Fatalf("logged %d times, want once: %q", noComp, logs)
+		t.Fatalf("logged %d times, want once: %q", noComp, logs())
+	}
+}
+
+// A yozd socket that never appears (no supported compositor) is logged
+// once, not every socketWaitTimeout for the rest of the session.
+func TestSubscribeLoopLogsMissingSocketOnce(t *testing.T) {
+	setVar(t, &socketWaitTimeout, 50*time.Millisecond)
+	logs := captureLogs(t)
+
+	bin := t.TempDir()
+	if err := os.WriteFile(filepath.Join(bin, brand.Daemon), []byte("#!/bin/sh\nexec sleep 300\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	t.Setenv("XDG_RUNTIME_DIR", t.TempDir()) // no socket in it, ever
+
+	m := NewManager(tomlPath(filepath.Join(t.TempDir(), brand.DaemonConfigFile())))
+	if err := m.Start(); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(600 * time.Millisecond)
+	m.Close()
+
+	missing := 0
+	for _, l := range logs() {
+		if strings.Contains(l, "did not appear") {
+			missing++
+		}
+	}
+	if missing != 1 {
+		t.Fatalf("missing socket logged %d times, want once: %q", missing, logs())
+	}
+}
+
+// captureLogs swaps logf for the test and returns the lines logged so far.
+func captureLogs(t *testing.T) func() []string {
+	var mu sync.Mutex
+	var lines []string
+	old := logf
+	logf = func(format string, args ...any) {
+		mu.Lock()
+		lines = append(lines, fmt.Sprintf(format, args...))
+		mu.Unlock()
+	}
+	t.Cleanup(func() { logf = old })
+	return func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), lines...)
 	}
 }
 

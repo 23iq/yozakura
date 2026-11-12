@@ -39,7 +39,9 @@ const subscribeRetryDelay = 500 * time.Millisecond
 // is then re-established.
 const maxSubscribeLine = 8 * 1024 * 1024
 const socketWaitStep = 100 * time.Millisecond
-const socketWaitTimeout = 5 * time.Second
+
+// socketWaitTimeout is a variable so tests can shorten it.
+var socketWaitTimeout = 5 * time.Second
 
 // daemonHeldRecheck is how often the supervisor re-checks a lock held by
 // a foreign daemon instance.
@@ -235,6 +237,9 @@ func (m *Manager) waitForSocket(path string, timeout time.Duration) error {
 // transient disconnect, an oversized line).
 func (m *Manager) subscribeLoop() {
 	defer m.wg.Done()
+	// a missing socket is logged once per outage, not every socketWaitTimeout
+	// (a session without a supported compositor never gets one)
+	warned := false
 	for {
 		select {
 		case <-m.stopCh:
@@ -251,9 +256,13 @@ func (m *Manager) subscribeLoop() {
 			}
 			// The daemon may be restarting; keep trying rather than leaving
 			// the shell without compositor state for the rest of the session.
-			fmt.Fprintf(os.Stderr, "[compositor] %v, retrying\n", err)
+			if !warned {
+				logf("[compositor] %v, retrying\n", err)
+				warned = true
+			}
 			continue
 		}
+		warned = false
 
 		_ = client.Subscribe(m.stopCtx, path, maxSubscribeLine, m.handleLine)
 		m.idle.streamDown()
