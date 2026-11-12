@@ -221,7 +221,9 @@ window reopens at once). Off, everything is as before.
   daemon connection, `qs -p shell.qml` alone, no answer within 3 s, or a
   process that exits before its window showed, unless the daemon stopped
   it at shutdown / reload or its connection is gone; the wizard then does
-  not count as dismissed); a window open
+  not count as dismissed). A process that exited before it showed is not
+  started again: that window opens in-process for the rest of the session
+  (until the setting is turned off), logged once; a window open
   in-process stays so when the setting changes. `OpeningPill` shows until
   the window reports `windows.ready`; the frame maps first
   (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).
@@ -251,14 +253,17 @@ window reopens at once). Off, everything is as before.
   positions, dashboard cells, live activities), so those are written too,
   as with one in-process Config; the windows follow the files. Only when no
   main shell answers (2 s in the daemon, 4 s without the daemon) does the
-  window write, and only the domains it changed (`StagedDomains.js`); it
-  does not quit while that answer is pending. A window process gone (crash,
+  window write, and only the domains it changed, each as only its own
+  changes over the current file (`StagedDomains.js`,
+  `ConfigFile.writeMerged`); it does not quit while that answer is pending. A window process gone (crash,
   kill, closed without applying) while the other window runs leaves the
   staging to that one; the last one gone discards it. The daemon keeps the
   staged values, so a process (re)started meanwhile gets them again.
   Unstaged settings are written by the window at once; the main shell
   follows the file, and every process follows `config set`, MCP and presets
-  through its file watchers.
+  through its file watchers. Two processes auto-saving one domain do not
+  lose each other's edits: an edit still waiting for its write when the file
+  changes is merged into the new contents (`config/ConfigMerge.js`).
 - What the window cannot own is asked of the main shell
   (`windows.relay {to: "shell", topic}`): wallpaper changes
   (`RemoteWallpapers`, which reads wallpapers.json and scans the library like
