@@ -183,6 +183,24 @@ func TestLoginShellOther(t *testing.T) {
 	}
 }
 
+func TestTerminalShellOnlyAfterAChsh(t *testing.T) {
+	f := newFixture(t, "")
+	f.s.o.Executable = func(p string) bool { return p != "/gone/zsh" }
+	passwd := "alice:x:1000:1000::/home/alice:/usr/bin/fish\n"
+	f.s.o.Passwd = func() ([]byte, error) { return []byte(passwd), nil }
+	if st := f.s.currentStatus(); st.TerminalShell != "" {
+		t.Errorf("unchanged since start: %+v", st)
+	}
+	passwd = "alice:x:1000:1000::/home/alice:/bin/zsh\n"
+	if st := f.s.currentStatus(); st.TerminalShell != "/bin/zsh" {
+		t.Errorf("chsh this session: %+v", st)
+	}
+	passwd = "alice:x:1000:1000::/home/alice:/gone/zsh\n"
+	if st := f.s.currentStatus(); st.TerminalShell != "" {
+		t.Errorf("missing shell: %+v", st)
+	}
+}
+
 func TestPreviewApproximateAndValidation(t *testing.T) {
 	f := newFixture(t, "")
 	out, err := f.s.preview(json.RawMessage(`{"engine":"starship","prompt":"zen","width":80}`))

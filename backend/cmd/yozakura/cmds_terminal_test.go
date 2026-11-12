@@ -60,8 +60,7 @@ func TestTerminalRunDefaultsAndErrors(t *testing.T) {
 
 func TestTerminalRunStartsTheLoginShell(t *testing.T) {
 	env, got := termTestEnv(termrun.Config{Terminal: "foot"})
-	env.loginShell = func() string { return "/usr/bin/fish" }
-	env.shell = func() string { return "/bin/bash" }
+	env.sessionShell = func() string { return "/usr/bin/fish" }
 	if code := runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{}); code != 0 {
 		t.Fatalf("exit %d", code)
 	}
@@ -75,5 +74,11 @@ func TestTerminalRunStartsTheLoginShell(t *testing.T) {
 	runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{})
 	if (*got)[2] != "kitty" || (*got)[3] != "zsh" {
 		t.Fatalf("template argv changed: %q", *got)
+	}
+	// No chsh this session: the session's $SHELL stays.
+	env.sessionShell = func() string { return "" }
+	runTerminal([]string{"run", "htop"}, env, &bytes.Buffer{})
+	if (*got)[0] != "kitty" {
+		t.Fatalf("wrapped without a chsh: %q", *got)
 	}
 }

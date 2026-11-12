@@ -18,10 +18,12 @@ type Status struct {
 	FishInstalled    bool   `json:"fishInstalled"`
 	FishPath         string `json:"fishPath"`
 	FishIsLoginShell bool   `json:"fishIsLoginShell"`
-	// LoginShell is the user's shell in /etc/passwd now: after a chsh in
-	// this session it differs from the $SHELL the session started with,
-	// which terminals launched from the shell would otherwise inherit.
-	LoginShell        string          `json:"loginShell,omitempty"`
+	// LoginShell is the user's shell in /etc/passwd now.
+	LoginShell string `json:"loginShell,omitempty"`
+	// TerminalShell is the $SHELL new terminals get ("" = the session's
+	// own): the passwd shell after a chsh during this session, which the
+	// session's $SHELL does not follow (termrun.ChangedShell).
+	TerminalShell     string          `json:"terminalShell,omitempty"`
 	EngineInstalled   map[string]bool `json:"engineInstalled"`
 	ForeignPromptInit bool            `json:"foreignPromptInit"`
 	ForeignFile       string          `json:"foreignFile,omitempty"`
@@ -49,6 +51,7 @@ func (s *Service) currentStatus() Status {
 	st.HookPresent = err == nil
 	st.LoginShell = s.loginShell()
 	st.FishIsLoginShell = filepath.Base(st.LoginShell) == "fish"
+	st.TerminalShell = termrun.ChangedShell(s.startShell, st.LoginShell, s.o.Executable)
 	st.ForeignFile = s.foreignFile()
 	st.ForeignPromptInit = st.ForeignFile != ""
 	st.HookSkipped = cfg.Enabled && st.ForeignPromptInit

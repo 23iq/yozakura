@@ -177,7 +177,7 @@ Singleton {
     }
     
 
-    // A terminal emulator starts the login shell chosen this session
+    // A terminal emulator starts the login shell of a chsh made this session
     // (TerminalService.withLoginShell); every other app is started as is.
     function isTerminal(app) {
         return Array.from(app.categories || []).indexOf("TerminalEmulator") >= 0;
