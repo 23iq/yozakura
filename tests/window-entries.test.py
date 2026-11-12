@@ -59,7 +59,7 @@ QtObject {
     }
     function count(m) { return calls.filter(c => c.method === m).length }
 }"""
-PREVIEW = "pragma Singleton\nQtObject { property int links: 0; function link() { links++ } }"
+PREVIEW = "pragma Singleton\nQtObject { property int links: 0; property bool applying: false; function link() { links++ } }"
 QUICKSHELL = """pragma Singleton
 QtObject {
     property var screens: [{ "name": "DP-1" }, { "name": "HDMI-A-1" }]
@@ -171,7 +171,11 @@ ev("entry.win.visible = false")
 ev("entry.win.visible = true")
 settle()
 check(ev("BackendService.count('windows.ready')") == 2, "...and reports ready again")
+ev("PreviewSink.applying = true")  # an Apply waits for the main shell
 ev("GlobalStates.settingsWindowVisible = false")
+pump(450)
+check(quits == [], "closed while an Apply waits for its answer: still running")
+ev("PreviewSink.applying = false")
 wait_until(lambda: quits != [])
 check(quits != [], "closed: it quits")
 

@@ -100,7 +100,13 @@ ShellRoot {
         id: quitTimer
         interval: 1000
         onTriggered: {
-            if (!GlobalStates.settingsWindowVisible)
+            if (GlobalStates.settingsWindowVisible)
+                return;
+            // an Apply waiting for the main shell (bounded): it may have
+            // to write itself
+            if (PreviewSink.applying)
+                restart();
+            else
                 Qt.quit();
         }
     }

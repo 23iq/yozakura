@@ -79,8 +79,8 @@ ShellRoot {
             }
         }
     }
-    // Closed: quit once the last config writes went out and a pending
-    // exclusive-mode switch answered (its failure is notified from here,
+    // Closed: quit once the last config writes went out (an Apply waiting
+    // for the main shell) and a pending exclusive-mode switch answered (its failure is notified from here,
     // through the daemon); at most a minute.
     Timer {
         id: quitTimer
@@ -90,7 +90,7 @@ ShellRoot {
             if (OnboardingService.visible)
                 return;
             waited += interval;
-            const pending = ExclusiveService.busy || OnboardingService.wizard._exclusivePending;
+            const pending = ExclusiveService.busy || OnboardingService.wizard._exclusivePending || PreviewSink.applying;
             if (pending && waited < 60000)
                 restart();
             else

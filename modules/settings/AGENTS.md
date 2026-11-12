@@ -240,17 +240,22 @@ window reopens at once). Off, everything is as before.
   desktop previews it, the other window shows it as unsaved, and nothing of
   it is written. In-process Settings and the wizard share one set of
   snapshots, so here too it is one staging: Apply or Discard by either ends
-  all of it (`preview.commit` drops the other processes' snapshots without
-  restoring, `preview.discard` restores them). Apply: the window writes the
-  files (`apply*Changes`) and sends `preview.commit`. A window process gone
-  (crash, kill, closed without applying) while the other window runs leaves
-  the staging to that one; the last one gone discards it. The daemon keeps
-  the staged values, so a process (re)started meanwhile gets them again.
+  all of it (`preview.discard` restores every process's snapshots).
+  Apply (`PreviewSink.applyOwn`): the window drops its snapshots and sends
+  `preview.commit`; the main shell runs the same `apply*Changes` as
+  in-process and answers `preview.written`. Its Config holds every staged
+  value plus what the desktop changed meanwhile in a staged domain (widget
+  positions, dashboard cells, live activities), so those are written too,
+  as with one in-process Config; the windows follow the files. Only when no
+  main shell answers (2 s in the daemon, 4 s without the daemon) does the
+  window write, and only the domains it changed (`StagedDomains.js`); it
+  does not quit while that answer is pending. A window process gone (crash,
+  kill, closed without applying) while the other window runs leaves the
+  staging to that one; the last one gone discards it. The daemon keeps the
+  staged values, so a process (re)started meanwhile gets them again.
   Unstaged settings are written by the window at once; the main shell
   follows the file, and every process follows `config set`, MCP and presets
-  through its file watchers. Known gap: a change the desktop itself makes to
-  a staged domain while a preview is pending is replaced by the window's
-  Apply (in-process, Apply saved it too).
+  through its file watchers.
 - What the window cannot own is asked of the main shell
   (`windows.relay {to: "shell", topic}`): wallpaper changes
   (`RemoteWallpapers`, which reads wallpapers.json and scans the library like

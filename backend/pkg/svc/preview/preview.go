@@ -13,7 +13,12 @@
 // it with the same staging, so nothing of it is written and every window
 // shows it as unsaved. Commit (Apply) or Discard by any owner ends the
 // whole staging: preview.commit / preview.discard {owner} tells every
-// other process to drop / restore its snapshots. When a window process is
+// other process to drop / restore its snapshots. On commit the main shell
+// writes the files: its Config holds every staged value and the changes
+// the desktop made meanwhile (widget positions, dashboard cells), exactly
+// what Apply writes in-process. It answers preview.written {id}, which
+// preview.commit returns to the window as "written"; with no answer within
+// AckWait (no main shell) the window writes what it changed itself. When a window process is
 // gone (crash, kill, closed without applying) and no other window runs,
 // the staging is discarded; while another window runs it stays, shown
 // there as unsaved changes, to apply or discard. The daemon keeps the
@@ -25,6 +30,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"time"
 
 	"yozakura/backend/pkg/ipc"
 )
@@ -36,21 +42,33 @@ type Entry struct {
 	Value json.RawMessage `json:"value"`
 }
 
-// Event payload of preview.discard / preview.commit.
+// Event payload of preview.discard / preview.commit (ID: the commit the
+// main shell answers with preview.written).
 type Done struct {
 	Owner string `json:"owner"`
+	ID    uint64 `json:"id,omitempty"`
 }
+
+// Written is preview.written: the main shell wrote the files of commit ID.
+type Written struct {
+	ID uint64 `json:"id"`
+}
+
+// AckWait is how long preview.commit waits for the main shell to write.
+var AckWait = 2 * time.Second
 
 // Service is the "preview" IPC service.
 type Service struct {
 	mu     sync.Mutex
 	staged []Entry // in the order they were set, one per (owner, key)
 	subs   map[*ipc.Subscriber]struct{}
+	acks   map[uint64]chan struct{}
+	nextID uint64
 }
 
 // NewService returns an empty relay.
 func NewService() *Service {
-	return &Service{subs: map[*ipc.Subscriber]struct{}{}}
+	return &Service{subs: map[*ipc.Subscriber]struct{}{}, acks: map[uint64]chan struct{}{}}
 }
 
 // Register exposes preview.set/discard/commit/state and the stream.
@@ -60,11 +78,36 @@ func (s *Service) Register(srv *ipc.Server) {
 		Methods: map[string]ipc.HandlerFunc{
 			"set":     s.handleSet,
 			"discard": s.handleDone(s.Discard),
-			"commit":  s.handleDone(s.Commit),
+			"commit":  s.handleCommit,
+			"written": s.handleWritten,
 			"state":   func(json.RawMessage) (any, error) { return map[string]any{"staged": s.Staged()}, nil },
 		},
 		Subscribe: s.subscribe,
+		// waits for the main shell's preview.written
+		Async: map[string]bool{"commit": true},
 	})
+}
+
+func (s *Service) handleCommit(raw json.RawMessage) (any, error) {
+	var d Done
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &d); err != nil {
+			return nil, err
+		}
+	}
+	if d.Owner == "" {
+		return nil, errors.New("preview: missing owner")
+	}
+	had, written := s.CommitAndWait(d.Owner)
+	return map[string]any{"ok": had, "written": written}, nil
+}
+
+func (s *Service) handleWritten(raw json.RawMessage) (any, error) {
+	var w Written
+	if err := json.Unmarshal(raw, &w); err != nil {
+		return nil, err
+	}
+	return map[string]any{"ok": s.Ack(w.ID)}, nil
 }
 
 func (s *Service) handleSet(raw json.RawMessage) (any, error) {
@@ -120,8 +163,60 @@ func (s *Service) Set(e Entry) {
 func (s *Service) Discard(owner string) bool { return s.end(owner, "preview.discard") }
 
 // Commit ends the staging (every owner's: it is one); the other processes
-// keep the values (they were written).
-func (s *Service) Commit(owner string) bool { return s.end(owner, "preview.commit") }
+// keep the values and the main shell writes them. It does not wait.
+func (s *Service) Commit(owner string) bool {
+	had, _ := s.commit(owner)
+	return had
+}
+
+// CommitAndWait is Commit, then waits up to AckWait for the main shell to
+// report it wrote the files (written). Nobody subscribed: false at once.
+func (s *Service) CommitAndWait(owner string) (had, written bool) {
+	had, id := s.commit(owner)
+	s.mu.Lock()
+	ch, ok := s.acks[id]
+	s.mu.Unlock()
+	if !ok {
+		return had, false
+	}
+	t := time.NewTimer(AckWait)
+	defer t.Stop()
+	select {
+	case <-ch:
+		written = true
+	case <-t.C:
+	}
+	s.mu.Lock()
+	delete(s.acks, id)
+	s.mu.Unlock()
+	return had, written
+}
+
+// Ack records the main shell's preview.written for commit id.
+func (s *Service) Ack(id uint64) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ch, ok := s.acks[id]
+	if ok {
+		delete(s.acks, id)
+		close(ch)
+	}
+	return ok
+}
+
+func (s *Service) commit(owner string) (bool, uint64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	had := len(s.staged) > 0
+	s.staged = nil
+	s.nextID++
+	id := s.nextID
+	if len(s.subs) > 0 {
+		s.acks[id] = make(chan struct{})
+	}
+	s.sendLocked("preview.commit", Done{Owner: owner, ID: id})
+	return had, id
+}
 
 // OwnerGone is called when the window process of owner exited. With
 // another window still running the staging stays (that window shows it and

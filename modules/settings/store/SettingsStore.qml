@@ -285,22 +285,26 @@ Singleton {
     }
 
     function apply() {
-        const had = root.hasChanges;
+        // A separate window: the main shell writes the files (its Config
+        // holds the staged values and its own edits, as one in-process
+        // Config would), the window follows them (PreviewSink).
+        if (ProcessRole.secondary) {
+            PreviewSink.applyOwn();
+            return;
+        }
         GlobalStates.applyThemeChanges();
         GlobalStates.applyShellChanges();
         GlobalStates.applyCompositorChanges();
-        // written here; the main shell keeps its preview (the files say the same)
-        if (had && ProcessRole.secondary)
-            BackendService.call("preview.commit", root._owned({}));
     }
 
     function discard() {
-        const had = root.hasChanges;
+        if (ProcessRole.secondary) {
+            PreviewSink.discardOwn();
+            return;
+        }
         GlobalStates.discardThemeChanges();
         GlobalStates.discardShellChanges();
         GlobalStates.discardCompositorChanges();
-        if (had && ProcessRole.secondary)
-            BackendService.call("preview.discard", root._owned({}));
     }
 
     // preview.* params of a separate window: who staged them.

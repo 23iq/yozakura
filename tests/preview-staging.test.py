@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from qmlharness import REPO, Harness, hard_exit, process_role_qml  # noqa: E402
 from settings_env import DEFAULT_PALETTE, colors_qml, config_qml, load_defaults  # noqa: E402
 
-from waits import settle  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -52,7 +52,12 @@ QtObject {
         calls = calls.concat([{ "method": m, "params": p || null }]);
         if (cb) held = held.concat([{ "method": m, "params": p || null, "cb": cb }]);
     }
-    function answer(i, result, error) { const h = held[i]; if (h && h.cb) h.cb(result, error || null) }
+    function answerLast(m, result) {
+        for (let i = held.length - 1; i >= 0; i--) {
+            if (held[i].method === m) { const cb = held[i].cb; held = held.filter((x, j) => j !== i); cb(result, null); return true }
+        }
+        return false
+    }
     function emit(service, data) {
         const group = service.split(".")[0];
         cbs.forEach(c => { if (c.s.indexOf(group) >= 0) c.cb(service, data); });
@@ -116,12 +121,9 @@ Item {
         ConfigWrite.assign(Config, key, value, PreviewSink.stage);
         BackendService.call("preview.set", { "owner": ProcessRole.role, "key": key, "value": value });
     }
-    // SettingsStore.discard in a window
-    function discardHere() {
-        const had = GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges;
-        PreviewSink.discard();
-        if (had) BackendService.call("preview.discard", { "owner": ProcessRole.role });
-    }
+    // SettingsStore.apply / discard in a window
+    function applyHere() { PreviewSink.applyOwn() }
+    function discardHere() { PreviewSink.discardOwn() }
     readonly property bool unsaved: GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
     Component.onCompleted: PreviewSink.link()
 }""", auto_stub=False)
@@ -149,11 +151,14 @@ class Proc:
 
 
 class Daemon:
-    """backend/pkg/svc/preview: one shared staging."""
+    """backend/pkg/svc/preview: one shared staging; preview.commit answers
+    "written" once the main shell reported preview.written for it."""
 
     def __init__(self, procs):
         self.procs = procs
         self.staged: list[dict] = []
+        self.next_id = 0
+        self.written: set[int] = set()
 
     def broadcast(self, service, data):
         for p in self.procs:
@@ -172,9 +177,19 @@ class Daemon:
                         self.staged = [e for e in self.staged if not (e["owner"] == par["owner"] and e["key"] == par["key"])]
                         self.staged.append(par)
                         self.broadcast("preview.set", par)
-                    elif m in ("preview.commit", "preview.discard"):
+                    elif m == "preview.discard":
                         self.staged = []
                         self.broadcast(m, {"owner": par["owner"]})
+                    elif m == "preview.commit":
+                        self.staged = []
+                        self.next_id += 1
+                        cid = self.next_id
+                        self.broadcast(m, {"owner": par["owner"], "id": cid})
+                        self.pump()  # the main shell's preview.written
+                        p.ev(f"BackendService.answerLast('preview.commit', {{ ok: true, written: {json.dumps(cid in self.written)} }})")
+                        settle()
+                    elif m == "preview.written":
+                        self.written.add(par["id"])
 
     def gone(self, proc, others_running):
         self.procs.remove(proc)
@@ -222,17 +237,17 @@ for p, name in ((main, "main shell"), (settings, "Settings"), (wizard, "wizard")
     check(p.ev("Config.saved.length") == 0, f"{name}: nothing written while staged")
 
 # ---- Settings applies, the wizard discards after it: nothing comes back ----
-# (the window writes the files: SettingsStore.apply)
-settings.ev("GlobalStates.applyThemeChanges(); GlobalStates.applyShellChanges(); GlobalStates.applyCompositorChanges()")
-settings.ev("BackendService.call('preview.commit', { owner: 'settings' })")
+settings.ev("applyHere()")
 d.pump()
 for p, name in ((main, "main shell"), (wizard, "wizard")):
     check(p.ev("unsaved") is False, f"Settings applied: {name} has no unsaved changes left")
     check(p.ev("Config.theme.roundness") == rnd + 5 and p.ev("Config.bar.position") == moved,
           f"Settings applied: {name} keeps both values")
-disk = json.loads(settings.ev("JSON.stringify(Config.disk)"))
+disk = json.loads(main.ev("JSON.stringify(Config.disk)"))
 check(json.loads(disk.get("theme", "{}")).get("roundness") == rnd + 5 and json.loads(disk.get("bar", "{}")).get("position") == moved,
       "Settings' Apply wrote the wizard's value too (as in-process)")
+check(settings.ev("Config.saved.length") == 0 and settings.ev("PreviewSink.applying") is False,
+      "...written by the main shell, not by the window")
 wizard.ev("discardHere()")
 d.pump()
 check(main.ev("Config.theme.roundness") == rnd + 5, "the wizard's later Discard restores nothing: it was applied")
@@ -285,6 +300,52 @@ check(late.ev("Config.theme.roundness") == rnd + 7 and late.ev("unsaved") is Tru
 late.ev("Config.bar.position = 'bottom'")
 late.emit("preview.set", {"owner": "settings", "key": "bar.position", "value": "top"})
 check(late.ev("Config.bar.position") == "bottom", "a window ignores its own relayed values")
+
+# ---- Apply keeps what the desktop changed meanwhile (the main shell writes) ----
+d.procs = [main, settings]
+reset()
+widgets = json.loads(main.ev("JSON.stringify(Config.desktop.widgets)"))
+enabled = main.ev("Config.desktop.widgetsEnabled")
+settings.ev(f"stageHere('desktop.widgetsEnabled', {json.dumps(not enabled)})")
+d.pump()
+check(main.ev("GlobalStates.shellHasChanges") is True, "a desktop key staged in the window pauses the main shell's desktop domain")
+# the main shell moves a widget meanwhile (DesktopWidgets edit mode)
+moved_widgets = widgets + [{"id": "clock-test", "type": "clock", "x": 3, "y": 4}]
+main.ev(f"Config.desktop.widgets = {json.dumps(moved_widgets)}")
+check("desktop" not in json.loads(main.ev("JSON.stringify(Config.disk)")), "...so its edit is not written yet")
+settings.ev("applyHere()")
+d.pump()
+on_disk = json.loads(json.loads(main.ev("JSON.stringify(Config.disk)")).get("desktop", "{}"))
+check(on_disk.get("widgetsEnabled") == (not enabled), "Apply: the window's staged desktop value is on disk")
+check(on_disk.get("widgets") == moved_widgets, "Apply: the main shell's widget move is on disk too")
+check(settings.ev("Config.saved.length") == 0, "...the window wrote nothing (it follows the files)")
+check(main.ev("GlobalStates.shellHasChanges") is False and settings.ev("unsaved") is False, "nothing staged afterwards")
+
+# ---- no main shell answers: the window writes only what it changed ----
+d.procs = [settings]
+reset()
+settings.ev(f"stageHere('dock.enabled', {json.dumps(not settings.ev('Config.dock.enabled'))})")
+d.pump()
+settings.ev("applyHere()")
+d.pump()
+saved = json.loads(settings.ev("JSON.stringify(Config.saved)"))
+check(saved == ["dock"], f"no main shell: the window writes the one domain it changed, got {saved}")
+# no daemon at all: at once, the same
+reset()
+settings.ev("BackendService.socketAvailable = false")
+settings.ev("stageHere('theme.roundness', 3)")
+settings.ev("applyHere()")
+saved = json.loads(settings.ev("JSON.stringify(Config.saved)"))
+check(saved == ["theme"], f"no daemon: the window writes what it changed, got {saved}")
+settings.ev("BackendService.socketAvailable = true")
+# the daemon never answers: written after the bound
+reset()
+settings.ev("stageHere('bar.position', 'bottom')")
+settings.ev("applyHere()")
+check(settings.ev("PreviewSink.applying") is True and settings.ev("Config.saved.length") == 0, "waiting for the answer")
+wait_until(lambda: settings.ev("PreviewSink.applying") is False, timeout_ms=8000)
+saved = json.loads(settings.ev("JSON.stringify(Config.saved)"))
+check(saved == ["bar"], f"no answer in time: the window writes what it changed, got {saved}")
 
 if failures:
     print(f"{len(failures)} failure(s)")

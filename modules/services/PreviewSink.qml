@@ -5,6 +5,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import "../settings/ConfigWrite.js" as ConfigWrite
+import "../settings/StagedDomains.js" as StagedDomains
 
 // performance.separateWindows: the one staging of Settings and the setup
 // wizard, shared between processes through the daemon's `preview` relay
@@ -17,9 +18,14 @@ import "../settings/ConfigWrite.js" as ConfigWrite
 // it as unsaved and nothing of it is written:
 //   set     ConfigWrite.assign, staged like SettingsStore.set
 //   discard the snapshots are restored (Discard, the last window gone)
-//   commit  the snapshots are dropped without restoring (the files hold
-//           the values)
-// Events of this process's own owner (its echo) are ignored. The main shell
+//   commit  the main shell writes the files (apply*Changes, as Apply does
+//           in-process: its Config holds every staged value and what the
+//           desktop changed meanwhile, widget positions, dashboard cells)
+//           and answers preview.written; a window drops its snapshots
+//           without restoring (it follows the written files)
+// Events of this process's own owner (its echo) are ignored. A window's
+// own Apply (applyOwn) leaves the writing to the main shell and writes the
+// domains it changed itself only when no main shell answers. The main shell
 // links it from SeparateWindows once the setting is on; a window process
 // links it from its entry file. Events wait until this process has read
 // its config (a replay arrives on subscribe).
@@ -69,6 +75,76 @@ Singleton {
         GlobalStates.discardCompositorChanges();
     }
 
+    // The main shell: a window applied, the files are written here.
+    function write(id) {
+        GlobalStates.applyThemeChanges();
+        GlobalStates.applyShellChanges();
+        GlobalStates.applyCompositorChanges();
+        if (id)
+            BackendService.call("preview.written", {
+                "id": id
+            });
+    }
+
+    // ---- a window's own Apply / Discard (SettingsStore) ----
+    // How long a window's Apply waits for the daemon's answer (which itself
+    // waits up to 2 s for the main shell) before writing itself.
+    readonly property int answerTimeout: 4000
+    // Applies waiting for their answer: {domains, until}.
+    property var _applying: []
+    // An Apply is waiting for its answer (the window process does not quit).
+    readonly property bool applying: root._applying.length > 0
+
+    function applyOwn() {
+        if (!GlobalStates.themeHasChanges && !GlobalStates.shellHasChanges && !GlobalStates.compositorHasChanges)
+            return;
+        const domains = StagedDomains.changed(GlobalStates);
+        root.drop();
+        if (!BackendService.socketAvailable) {
+            StagedDomains.write(Config, domains);
+            return;
+        }
+        const entry = {
+            "domains": domains,
+            "until": Date.now() + root.answerTimeout
+        };
+        root._applying = root._applying.concat([entry]);
+        applyGuard.start();
+        BackendService.call("preview.commit", {
+            "owner": root.self
+        }, (result, error) => root._answered(entry, !error && !!result && result.written === true));
+    }
+
+    // Written by the main shell, or (no answer, no main shell) here: only
+    // the domains this window changed, never its older copy of the others.
+    function _answered(entry, written) {
+        if (root._applying.indexOf(entry) === -1)
+            return;
+        root._applying = root._applying.filter(e => e !== entry);
+        if (!written)
+            StagedDomains.write(Config, entry.domains);
+    }
+
+    property Timer applyGuard: Timer {
+        interval: 250
+        repeat: true
+        onTriggered: {
+            const now = Date.now();
+            root._applying.filter(e => e.until <= now).forEach(e => root._answered(e, false));
+            if (root._applying.length === 0)
+                stop();
+        }
+    }
+
+    function discardOwn() {
+        const had = GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges;
+        root.discard();
+        if (had)
+            BackendService.call("preview.discard", {
+                "owner": root.self
+            });
+    }
+
     // The staging ends without restoring: the values stay (they are written).
     function drop() {
         GlobalStates.themeSnapshot = null;
@@ -107,6 +183,8 @@ Singleton {
             root.set(data.key, data.value);
         else if (service === "preview.discard")
             root.discard();
+        else if (service === "preview.commit" && root.self === "")
+            root.write(data && data.id ? data.id : 0);
         else if (service === "preview.commit")
             root.drop();
     }

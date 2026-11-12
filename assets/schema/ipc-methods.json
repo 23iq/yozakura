@@ -277,7 +277,8 @@
     "commit",
     "discard",
     "set",
-    "state"
+    "state",
+    "written"
    ],
    "subscribe": true
   },

@@ -2,6 +2,7 @@ package preview
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -96,10 +97,9 @@ func TestCommitAndDiscardClearAndTellTheShell(t *testing.T) {
 	call(t, s.handleSet, `{"owner":"settings","key":"bar.position","value":"bottom"}`)
 	drain(t, sub, 1)
 
-	res := call(t, s.handleDone(s.Commit), `{"owner":"settings"}`)
-	assert.Equal(t, map[string]any{"ok": true}, res)
+	assert.True(t, s.Commit("settings"))
 	got := drain(t, sub, 1)
-	assert.Equal(t, ev{"preview.commit", `{"owner":"settings"}`}, got[0])
+	assert.Equal(t, ev{"preview.commit", `{"owner":"settings","id":1}`}, got[0])
 	assert.Empty(t, s.Staged())
 
 	call(t, s.handleSet, `{"owner":"settings","key":"dock.enabled","value":false}`)
@@ -110,7 +110,7 @@ func TestCommitAndDiscardClearAndTellTheShell(t *testing.T) {
 	assert.Empty(t, s.Staged())
 
 	// nothing staged: still told (the shell may hold a staging the daemon lost)
-	res = call(t, s.handleDone(s.Discard), `{"owner":"settings"}`)
+	res := call(t, s.handleDone(s.Discard), `{"owner":"settings"}`)
 	assert.Equal(t, map[string]any{"ok": false}, res)
 	drain(t, sub, 1)
 	noMore(t, sub)
@@ -131,7 +131,8 @@ func TestCommitOrDiscardEndsEveryOwnersStaging(t *testing.T) {
 		}
 		assert.True(t, fn("settings"), first)
 		got := drain(t, sub, 1)
-		assert.Equal(t, ev{"preview." + first, `{"owner":"settings"}`}, got[0])
+		assert.Equal(t, "preview."+first, got[0].name)
+		assert.Contains(t, got[0].data, `"owner":"settings"`)
 		assert.Empty(t, s.Staged(), "%s by one owner ends the other's too", first)
 		noMore(t, sub)
 		// the other window's later Apply / Discard has nothing left
@@ -158,6 +159,55 @@ func TestOwnerGone(t *testing.T) {
 	s.OwnerGone("onboarding", false)
 	assert.Equal(t, ev{"preview.discard", `{"owner":"onboarding"}`}, drain(t, sub, 1)[0])
 	assert.Empty(t, s.Staged())
+}
+
+// Apply: the main shell writes the files (its Config holds the staged
+// values and the desktop's own edits) and answers preview.written; the
+// window is told "written" and writes nothing itself. No answer in time,
+// or no main shell at all: not written, the window writes.
+func TestCommitWaitsForTheMainShellToWrite(t *testing.T) {
+	old := AckWait
+	AckWait = 100 * time.Millisecond
+	t.Cleanup(func() { AckWait = old })
+
+	s := NewService()
+	// nobody subscribed: not written, at once
+	start := time.Now()
+	had, written := s.CommitAndWait("settings")
+	assert.False(t, had)
+	assert.False(t, written)
+	assert.Less(t, time.Since(start), 50*time.Millisecond)
+
+	sub := subscribed(t, s)
+	s.Set(Entry{Owner: "settings", Key: "desktop.widgetsEnabled", Value: json.RawMessage("true")})
+	drain(t, sub, 1)
+	type result struct{ res any }
+	done := make(chan result, 1)
+	go func() {
+		res, err := s.handleCommit(json.RawMessage(`{"owner":"settings"}`))
+		assert.NoError(t, err)
+		done <- result{res}
+	}()
+	got := drain(t, sub, 1)
+	var d Done
+	must(t, assert.NoError(t, json.Unmarshal([]byte(got[0].data), &d)))
+	assert.Equal(t, "settings", d.Owner)
+	must(t, assert.NotZero(t, d.ID))
+	call(t, s.handleWritten, fmt.Sprintf(`{"id":%d}`, d.ID))
+	select {
+	case r := <-done:
+		assert.Equal(t, map[string]any{"ok": true, "written": true}, r.res)
+	case <-time.After(time.Second):
+		t.Fatal("commit did not return after preview.written")
+	}
+	assert.Empty(t, s.Staged())
+
+	// the main shell does not answer: not written, after AckWait
+	had, written = s.CommitAndWait("settings")
+	assert.False(t, had)
+	assert.False(t, written)
+	drain(t, sub, 1)
+	assert.False(t, s.Ack(99), "an unknown or late answer is ignored")
 }
 
 func TestSubscribeReplaysStagedValues(t *testing.T) {

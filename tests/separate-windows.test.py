@@ -9,8 +9,9 @@ that records calls and lets the test push the daemon's `windows` and
 Preview relay: a staged value from the Settings process is applied to the
 in-memory Config through the GlobalStates snapshot (staged, auto-save
 paused); discard (Discard, closing, the process dying) restores what was
-there; commit (Apply: the window wrote the files) keeps the values and
-drops the snapshots without restoring; an unstaged key is refused.
+there; commit (Apply) writes the files here, as Apply does in-process, and
+answers preview.written; an unstaged key is refused (two windows and the
+shared staging: tests/preview-staging.test.py).
 
 Window flow with performance.separateWindows off: nothing is asked of the
 daemon, the in-process window is used. On: opening asks windows.open with
@@ -329,10 +330,13 @@ check(ev("GlobalStates.shellHasChanges") is False and ev("GlobalStates.themeHasC
 saved_before = ev("Config.saved.length")
 emit("preview.set", {"owner": "settings", "key": "bar.position", "value": moved})
 emit("preview.set", {"owner": "settings", "key": "notch.activities", "value": [{"id": "media"}]})
-emit("preview.commit", {"owner": "settings"})
+emit("preview.commit", {"owner": "settings", "id": 7})
 check(ev("Config.bar.position") == moved, "commit keeps the previewed values")
 check(ev("GlobalStates.shellHasChanges") is False and ev("GlobalStates.shellSnapshot") is None, "...drops the snapshot")
-check(ev("Config.saved.length") == saved_before, "...and writes nothing here (the window wrote the files)")
+saved = json.loads(ev("JSON.stringify(Config.saved)"))[saved_before:]
+check("bar" in saved and "notch" in saved, f"...and writes the files here, as Apply in-process, got {saved}")
+check(json.loads(ev("JSON.stringify(BackendService.last('preview.written'))")) == {"id": 7},
+      "...then tells the daemon it wrote them (the window writes nothing)")
 
 # ---- the wizard ----
 ev("OnboardingService.visible = true")
