@@ -109,14 +109,6 @@ ColumnLayout {
 
     Component.onCompleted: RoutinesService.refresh()
 
-    KitText {
-        role: "caption"
-        Layout.fillWidth: true
-        text: I18n.t("routines.hint")
-        wrapMode: Text.WordWrap
-        color: Colors.overSurfaceVariant
-    }
-
     Flow {
         Layout.fillWidth: true
         spacing: Space.s
@@ -173,5 +165,10 @@ ColumnLayout {
             onDiscardRequested: root.setMap("drafts", card.key, undefined)
             onRemoveRequested: root.remove(card.key)
         }
+    }
+
+    // in a tall card: the list from the top, the room below
+    Item {
+        Layout.fillHeight: true
     }
 }

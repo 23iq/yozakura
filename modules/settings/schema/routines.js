@@ -12,6 +12,12 @@ var category = {
     "title": "prefs.cat.routines",
     "description": "prefs.cat.routines.desc",
     "keywords": "routine routines macro automation scene steps shortcut one key several actions workflow",
+    "form": "list",
+    "stage": "RoutinesBand",
+    "hero": {
+        "hint": "prefs.routines.hero_hint"
+    },
+    "row": ["list"],
     "sections": [
         {
             "id": "list",

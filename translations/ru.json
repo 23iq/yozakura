@@ -3180,7 +3180,6 @@
   "routines.discard": "Отменить изменения",
   "routines.delete": "Удалить сценарий",
   "routines.delete_confirm": "Нажмите ещё раз, чтобы удалить",
-  "routines.hint": "Сценарий выполняет несколько шагов по порядку: действия сочетаний клавиш, инструменты оболочки (не беспокоить, громкость, таймеры, приложения…) и паузы. Запускайте его сочетанием клавиш (Сочетания → Утилиты), из лаунчера, автоматизацией ИИ или попросите ИИ.",
   "routines.new": "Новый сценарий",
   "routines.new_name": "Мой сценарий",
   "routines.empty": "Сценариев пока нет: начните с шаблона или с чистого листа.",
@@ -4628,5 +4627,11 @@
   "prefs.timers.min": "мин",
   "prefs.timers.stage.break": "перерыв %1 мин",
   "prefs.timers.stage.focus": "Режим фокуса · %1 мин",
-  "prefs.undo.timer_seconds": "Секунды изменены"
+  "prefs.undo.timer_seconds": "Секунды изменены",
+  "prefs.routines.hero_hint": "Запуск выполняет её сейчас · новая начинается с шаблона",
+  "prefs.routines.band.example": "Пример",
+  "prefs.routines.band.when": "Запуск",
+  "prefs.routines.band.key": "Клавиша",
+  "prefs.routines.band.launcher": "Лаунчер",
+  "prefs.routines.band.keep": "Сохранить как мою рутину"
 }

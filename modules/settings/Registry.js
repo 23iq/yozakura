@@ -124,7 +124,8 @@ var STAGES = {
     "OverviewStage": "stages/OverviewStage.qml",
     "TerminalStage": "stages/TerminalStage.qml",
     "VoiceStage": "stages/VoiceStage.qml",
-    "TimersStage": "stages/TimersStage.qml"
+    "TimersStage": "stages/TimersStage.qml",
+    "RoutinesBand": "stages/RoutinesBand.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
