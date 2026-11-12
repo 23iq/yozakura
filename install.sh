@@ -2104,6 +2104,11 @@ hyprland_bootstrap() {
 # run just before, and every start of the shell). The line ends in "<comment> $APP_ID: polkit" so
 # '$APP_ID goodbye' removes exactly that line (backend/cmd/yozakura: the
 # same text as polkitEntryLine).
+# Written whether or not an external agent is installed: the verb looks for
+# one at every login (compositor.PolkitCommand: more places than this
+# script could check, the polkit-agent package may be skipped now and
+# installed later) and, finding none, only logs a line and exits; it never
+# starts anything next to the shell's registered agent.
 polkit_autostart() {
   local entry cmd bin="$BIN_DIR/$APP_ID" q="'\\''" marker="$APP_ID: polkit"
   entry="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)"

@@ -17,7 +17,14 @@ import (
 
 // How long polkit-fallback waits for the shell's own agent to register.
 // It runs from the compositor's autostart, while the backend and the shell
-// are still starting; past this the external agent starts.
+// are still starting; past this the external agent starts. 12 s covers a
+// cold first start (Quickshell compiles every QML file on each start, the
+// config and the agent load after it, registration is asynchronous) with
+// room to spare, and bounds how long a session without a working shell
+// agent has none at all: a polkit request in that window fails at once
+// ("no authentication agent"), it is not queued. The daemon's crash-loop
+// takeover (pkg/daemon/polkitfallback.go) waits the same, so a quick
+// `reload` gets the session back for the shell's agent.
 const (
 	polkitWait = 12 * time.Second
 	polkitPoll = 250 * time.Millisecond
