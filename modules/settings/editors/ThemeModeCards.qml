@@ -59,27 +59,24 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: Space.m
+        spacing: Space.l
 
         Repeater {
             model: [
                 {
                     "id": "dark",
                     "icon": "moon",
-                    "title": "prefs.appearance.mode.dark",
-                    "subtitle": "prefs.appearance.mode.dark.desc"
+                    "title": "prefs.appearance.mode.dark"
                 },
                 {
                     "id": "oled",
                     "icon": "circleHalf",
-                    "title": "prefs.appearance.mode.oled",
-                    "subtitle": "prefs.appearance.mode.oled.desc"
+                    "title": "prefs.appearance.mode.oled"
                 },
                 {
                     "id": "light",
                     "icon": "sun",
-                    "title": "prefs.appearance.mode.light",
-                    "subtitle": "prefs.appearance.mode.light.desc"
+                    "title": "prefs.appearance.mode.light"
                 }
             ]
 
@@ -91,7 +88,6 @@ Item {
                 selected: root.mode === modelData.id
                 icon: modelData.icon
                 title: I18n.t(modelData.title)
-                subtitle: I18n.t(modelData.subtitle)
                 onClicked: root.choose(modelData.id)
 
                 MiniDesktop {

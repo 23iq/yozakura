@@ -83,7 +83,9 @@ Item {
                 objectName: "undoText"
                 role: "secondary"
                 color: Type.text
-                text: I18n.t(pill.undone ? "prefs.undo.undone" : (pill.step && pill.step.kind === "redone" ? "prefs.undo.redone" : "prefs.undo.changed")).arg(pill.what)
+                // "Roundness changed"; a step that names itself ("Page reset")
+                // is said as is.
+                text: pill.step && pill.step.kind === "changed" && pill.step.label === "prefs.undo.reset_page" ? pill.what : I18n.t(pill.undone ? "prefs.undo.undone" : (pill.step && pill.step.kind === "redone" ? "prefs.undo.redone" : "prefs.undo.changed")).arg(pill.what)
                 elide: Text.ElideRight
                 Layout.maximumWidth: Space.px(340)
             }

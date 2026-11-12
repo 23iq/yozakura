@@ -41,13 +41,18 @@ Item {
     onQueryChanged: resultIndex = 0
 
     // "Bar › Clock": the destination, then the tab when it has several.
+    // "Bar › Clock": the destination, the tab when it is not the first one,
+    // then the section (the schema context is "page › section").
     function contextOf(it) {
         const g = Categories.groupOf(it.categoryId);
         if (!g)
             return it.context;
-        const dest = I18n.t(g.title);
+        const parts = [I18n.t(g.title)];
         const cat = Categories.byId(it.categoryId);
-        return g.categories.length > 1 && cat ? dest + " › " + I18n.t(cat.title) : dest;
+        if (cat && g.categories.indexOf(cat.id) > 0)
+            parts.push(I18n.t(cat.title));
+        const sec = String(it.context || "").split(" › ").slice(1);
+        return parts.concat(sec).join(" › ");
     }
 
     function focusSearch() {

@@ -208,7 +208,9 @@ Singleton {
     property bool _replaying: false
 
     function _record(key, before, after) {
-        if (root._replaying)
+        // Only what the open window changes is its history (the dashboard,
+        // the AI service and the wizard write through here too).
+        if (root._replaying || !GlobalStates.settingsWindowVisible)
             return;
         if (root._txn) {
             root._txn.changes = UndoModel.addChange(root._txn.changes, key, before, after);

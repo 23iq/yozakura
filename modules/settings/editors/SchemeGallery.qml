@@ -22,7 +22,7 @@ Item {
     readonly property string mode: Config.theme.lightMode ? "light" : "dark"
     readonly property var presets: GlobalStates.wallpaperManager ? (GlobalStates.wallpaperManager.colorPresets || []) : []
     readonly property int columns: Math.max(2, Math.min(4, Math.floor((width + Space.m) / 170)))
-    readonly property real cardWidth: (width - grid.spacing * (columns - 1)) / columns
+    readonly property real cardWidth: (width - grid.columnSpacing * (columns - 1)) / columns
 
     implicitHeight: column.implicitHeight
 
@@ -33,39 +33,21 @@ Item {
         width: parent.width
         spacing: Space.l
 
-        // Source wallpaper + status
-        Row {
-            spacing: Space.m
+        // Only what is worth a line: loading, unavailable, a preset in use.
+        KitText {
             width: parent.width
-
-            Art {
-                width: Space.controlM * 1.5
-                height: Space.controlM
-                icon: Icons.image
-                source: SchemePreviews.source ? "file://" + SchemePreviews.source : ""
-            }
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - Space.controlM * 1.5 - Space.m
-                KitText {
-                    width: parent.width
-                    role: "body"
-                    text: I18n.t("prefs.scheme.from_wallpaper")
-                }
-                KitText {
-                    width: parent.width
-                    role: "caption"
-                    text: SchemePreviews.loading ? I18n.t("prefs.scheme.loading") : (SchemePreviews.failed ? I18n.t("prefs.scheme.unavailable") : (root.preset ? I18n.t("prefs.scheme.preset_active", root.preset) : I18n.t("prefs.scheme.hint")))
-                    color: SchemePreviews.failed ? Colors.error : Type.muted
-                }
-            }
+            visible: text !== ""
+            role: "caption"
+            text: SchemePreviews.loading ? I18n.t("prefs.scheme.loading") : (SchemePreviews.failed ? I18n.t("prefs.scheme.unavailable") : (root.preset ? I18n.t("prefs.scheme.preset_active", root.preset) : ""))
+            color: SchemePreviews.failed ? Colors.error : Type.muted
         }
 
         Grid {
             id: grid
             width: parent.width
             columns: root.columns
-            spacing: Space.m
+            rowSpacing: Space.l
+            columnSpacing: Space.l
 
             Repeater {
                 model: root.schemes
@@ -78,7 +60,6 @@ Item {
                     previewHeight: Space.controlL + Space.s
                     selected: !root.preset && root.current === modelData
                     title: I18n.t("wallpapers." + modelData.replace(/-/g, "_"))
-                    subtitle: I18n.t("prefs.scheme." + modelData.replace("scheme-", "").replace(/-/g, "_"))
                     onClicked: SettingsStore.set("wallpaper.matugenScheme", modelData)
 
                     SchemeSwatch {

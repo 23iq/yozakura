@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +40,20 @@ from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
 
 CACHE = Path.home() / ".cache" / "yozakura"
+
+# Light counterpart of DEFAULT_PALETTE (the same rose seed), used for light
+# renders on a machine without matugen.
+LIGHT_PALETTE = {
+    "background": "#fff8f7", "surface": "#fff8f7", "surfaceDim": "#e8d6d6", "surfaceBright": "#fff8f7",
+    "surfaceContainerLowest": "#ffffff", "surfaceContainerLow": "#fff0f0", "surfaceContainer": "#fceaea",
+    "surfaceContainerHigh": "#f6e4e4", "surfaceContainerHighest": "#f0dede", "surfaceVariant": "#f4dddd",
+    "primary": "#8f4a51", "overPrimary": "#ffffff", "primaryContainer": "#ffdadb", "overPrimaryContainer": "#3b0811",
+    "secondary": "#765657", "overSecondary": "#ffffff", "secondaryContainer": "#ffdadb",
+    "overSecondaryContainer": "#2c1516", "tertiary": "#775a2f", "overTertiary": "#ffffff",
+    "tertiaryContainer": "#ffddb5", "overTertiaryContainer": "#2a1800", "overBackground": "#22191a",
+    "overSurface": "#22191a", "overSurfaceVariant": "#524344", "outline": "#857374", "outlineVariant": "#d7c1c2",
+    "error": "#ba1a1a", "overError": "#ffffff", "shadow": "#000000",
+}
 
 
 def camel(role: str) -> str:
@@ -86,6 +101,8 @@ def seed_palette(mode: str, seed: str) -> dict:
 
 
 def palette(mode: str, state: dict, seed: str = "") -> dict:
+    if not shutil.which("matugen"):
+        return DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE
     if seed:
         return seed_palette(mode, seed)
     if mode == "dark":
@@ -200,8 +217,6 @@ Window {{
     SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
 }}""")
     shell = env.h.find(win, "shell")
-    # the pointer rests on the brand, not on a row (a hovered row lights its stage part)
-    QTest.mouseMove(win, QPoint(4, 4))
     env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
     for cat in args.categories:
@@ -213,6 +228,11 @@ Window {{
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)
+        # the pointer rests on the brand, not on a row (a hovered row
+        # lights its stage part)
+        QTest.mouseMove(win, QPoint(w - 2, 2))
+        QTest.mouseMove(win, QPoint(4, 4))
+        QTest.qWait(150)
         if args.scroll:
             page = env.h.find(win, "settingsPage").property("item")
             page.setProperty("contentY", args.scroll)
