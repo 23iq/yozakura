@@ -121,6 +121,7 @@ QtObject {
             case "powermenu": toggleSimpleModule("powermenu"); break;
             case "tools": toggleSimpleModule("tools"); break;
             case "keybinds": toggleSimpleModule("keybinds"); break;
+            case "converter": GlobalStates.converterWindowVisible = !GlobalStates.converterWindowVisible; break;
             case "desktop-edit": DesktopWidgets.toggleEditMode(); break;
             case "config": toggleSettings(); break;
             case "onboarding": OnboardingService.toggle(); break;

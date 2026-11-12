@@ -75,4 +75,9 @@ JsonAdapter {
     property JsonObject clipboard: JsonObject {
         property bool tmpfs: false
     }
+    property JsonObject converter: JsonObject {
+        property string outputDir: ""
+        property string quality: "balanced"
+        property bool openFolder: false
+    }
 }

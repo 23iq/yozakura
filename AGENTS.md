@@ -46,6 +46,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ├── modules/
 │   ├── bar/              # Panel widgets: clock, systray, workspaces, indicators
 │   ├── components/       # Reusable UI primitives + GLSL shaders; kit/ = the UI kit every screen uses
+│   ├── converter/        # File converter window (backend: pkg/convert + svc/convert)
 │   ├── corners/          # Rounded screen corners (drawn by the unified panel)
 │   ├── desktop/          # Desktop background + icon grid
 │   ├── dock/             # App dock (standalone or integrated into bar)
@@ -107,6 +108,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Settings catalog** | `config/meta/*.js` + `tools/schema/` -> `assets/schema/` | Descriptions/enums/ranges of keys the settings UI does not declare; `make schema`; read by `backend/pkg/catalog` (CLI + MCP) |
 | **Config CLI / MCP** | `backend/cmd/yozakura/cmds_config.go`, `cmds_preset.go`, `backend/pkg/mcp/yozakura/` | `yozakura config ...`, `yozakura preset ...`, `yozakura mcp` |
 | **Displays / Keyboard** | `backend/pkg/svc/displays`, `backend/pkg/svc/keyboard`, `modules/services/DisplaysService.qml`, `modules/settings/{displays,keyboard}/` | `yozakura display ...`, `yozakura keyboard ...`; live apply with 15 s keep/revert |
+| **File converter** | `backend/pkg/convert` (formats, routes, smart defaults, argv, native data/images), `backend/pkg/svc/convert`, `modules/converter/` | `yozakura convert <file>... [--to F]`, `convert formats`; window from the tools menu / Super+Alt+C (`run converter`), loaded by URL; every conversion runs in the backend, never from QML; `system.converter.*` |
 | **Extras catalog** | `assets/catalog/extras.json`, `backend/pkg/svc/extras`, `modules/extras/` | `yozakura extras ...`; installs queue in the backend, never run from QML |
 | **App hooks / env** | `backend/pkg/apphooks`, `backend/pkg/svc/apphooks`, `backend/pkg/envclean` | Third-party app theming hooks; PATH-like var dedupe |
 | **Terminal prompt** | `backend/pkg/termlook`, `backend/pkg/svc/term`, `assets/terminal/prompts/` | `yozakura term ...`; fish + Starship / oh-my-posh |

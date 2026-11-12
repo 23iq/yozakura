@@ -151,6 +151,14 @@ JsonAdapter {
                         "args": {}
                     })
             }
+            property JsonObject converter: JsonObject {
+                property list<string> modifiers: ["SUPER", "ALT"]
+                property string key: "C"
+                property var action: ({
+                        "id": BrandActions.action("converter"),
+                        "args": {}
+                    })
+            }
             property JsonObject reload: JsonObject {
                 property list<string> modifiers: ["SUPER", "ALT"]
                 property string key: "B"

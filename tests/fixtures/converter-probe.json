@@ -1,0 +1,705 @@
+{
+ "holiday-photo.jpg": {
+  "path": "/home/user/Downloads/holiday-photo.jpg",
+  "name": "holiday-photo.jpg",
+  "size": 4823411,
+  "kind": "image",
+  "format": "jpg",
+  "formatLabel": "JPEG",
+  "targets": [
+   {
+    "id": "png",
+    "label": "PNG",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "webp",
+    "label": "WebP",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "avif",
+    "label": "AVIF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "gif",
+    "label": "GIF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "bmp",
+    "label": "BMP",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "tiff",
+    "label": "TIFF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "ico",
+    "label": "ICO",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "jxl",
+    "label": "JPEG XL",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "tga",
+    "label": "TGA",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "pdf",
+    "label": "PDF",
+    "kind": "document",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   }
+  ],
+  "default": "png"
+ },
+ "meeting-notes.md": {
+  "path": "/home/user/Downloads/meeting-notes.md",
+  "name": "meeting-notes.md",
+  "size": 3021,
+  "kind": "ebook",
+  "format": "md",
+  "formatLabel": "Markdown",
+  "targets": [
+   {
+    "id": "pdf",
+    "label": "PDF",
+    "kind": "document",
+    "engine": "pandoc+soffice",
+    "available": false,
+    "needs": "pandoc",
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "docx",
+    "label": "Word",
+    "kind": "document",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "odt",
+    "label": "ODT",
+    "kind": "document",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "html",
+    "label": "HTML",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "epub",
+    "label": "EPUB",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "txt",
+    "label": "Text",
+    "kind": "document",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "rst",
+    "label": "reStructuredText",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "org",
+    "label": "Org",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "tex",
+    "label": "LaTeX",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   }
+  ],
+  "default": "pdf"
+ },
+ "podcast-episode.flac": {
+  "path": "/home/user/Downloads/podcast-episode.flac",
+  "name": "podcast-episode.flac",
+  "size": 48233120,
+  "kind": "audio",
+  "format": "flac",
+  "formatLabel": "FLAC",
+  "targets": [
+   {
+    "id": "mp3",
+    "label": "MP3",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "wav",
+    "label": "WAV",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "ogg",
+    "label": "Ogg Vorbis",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "opus",
+    "label": "Opus",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "m4a",
+    "label": "M4A",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "aac",
+    "label": "AAC",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "aiff",
+    "label": "AIFF",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   }
+  ],
+  "default": "mp3"
+ },
+ "quarterly-report.docx": {
+  "path": "/home/user/Downloads/quarterly-report.docx",
+  "name": "quarterly-report.docx",
+  "size": 82344,
+  "kind": "document",
+  "format": "docx",
+  "formatLabel": "Word",
+  "targets": [
+   {
+    "id": "pdf",
+    "label": "PDF",
+    "kind": "document",
+    "engine": "soffice",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "odt",
+    "label": "ODT",
+    "kind": "document",
+    "engine": "soffice",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "rtf",
+    "label": "RTF",
+    "kind": "document",
+    "engine": "soffice",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "doc",
+    "label": "Word 97",
+    "kind": "document",
+    "engine": "soffice",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "txt",
+    "label": "Text",
+    "kind": "document",
+    "engine": "soffice",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "html",
+    "label": "HTML",
+    "kind": "ebook",
+    "engine": "soffice",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "md",
+    "label": "Markdown",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "epub",
+    "label": "EPUB",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "rst",
+    "label": "reStructuredText",
+    "kind": "ebook",
+    "engine": "pandoc",
+    "available": false,
+    "needs": "pandoc",
+    "popular": false,
+    "lossy": false
+   }
+  ],
+  "default": "pdf"
+ },
+ "screen-recording.mkv": {
+  "path": "/home/user/Downloads/screen-recording.mkv",
+  "name": "screen-recording.mkv",
+  "size": 182342343,
+  "kind": "video",
+  "format": "mkv",
+  "formatLabel": "MKV",
+  "targets": [
+   {
+    "id": "mp4",
+    "label": "MP4",
+    "kind": "video",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "webm",
+    "label": "WebM",
+    "kind": "video",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "mov",
+    "label": "MOV",
+    "kind": "video",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "avi",
+    "label": "AVI",
+    "kind": "video",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "gif",
+    "label": "GIF",
+    "kind": "image",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "mp3",
+    "label": "MP3",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "wav",
+    "label": "WAV",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "flac",
+    "label": "FLAC",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "ogg",
+    "label": "Ogg Vorbis",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "opus",
+    "label": "Opus",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "m4a",
+    "label": "M4A",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "aac",
+    "label": "AAC",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   }
+  ],
+  "default": "mp4"
+ },
+ "screenshot.png": {
+  "path": "/home/user/Downloads/screenshot.png",
+  "name": "screenshot.png",
+  "size": 1204322,
+  "kind": "image",
+  "format": "png",
+  "formatLabel": "PNG",
+  "targets": [
+   {
+    "id": "jpg",
+    "label": "JPEG",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "webp",
+    "label": "WebP",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "avif",
+    "label": "AVIF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "gif",
+    "label": "GIF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "bmp",
+    "label": "BMP",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "tiff",
+    "label": "TIFF",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "ico",
+    "label": "ICO",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "jxl",
+    "label": "JPEG XL",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "tga",
+    "label": "TGA",
+    "kind": "image",
+    "engine": "magick",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   },
+   {
+    "id": "pdf",
+    "label": "PDF",
+    "kind": "document",
+    "engine": "magick",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   }
+  ],
+  "default": "jpg"
+ },
+ "settings.json": {
+  "path": "/home/user/Downloads/settings.json",
+  "name": "settings.json",
+  "size": 1820,
+  "kind": "data",
+  "format": "json",
+  "formatLabel": "JSON",
+  "targets": [
+   {
+    "id": "yaml",
+    "label": "YAML",
+    "kind": "data",
+    "engine": "native",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "toml",
+    "label": "TOML",
+    "kind": "data",
+    "engine": "native",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "csv",
+    "label": "CSV",
+    "kind": "data",
+    "engine": "native",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   }
+  ],
+  "default": "yaml"
+ },
+ "voice-memo.wav": {
+  "path": "/home/user/Downloads/voice-memo.wav",
+  "name": "voice-memo.wav",
+  "size": 9123456,
+  "kind": "audio",
+  "format": "wav",
+  "formatLabel": "WAV",
+  "targets": [
+   {
+    "id": "mp3",
+    "label": "MP3",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "flac",
+    "label": "FLAC",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": false
+   },
+   {
+    "id": "ogg",
+    "label": "Ogg Vorbis",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": true,
+    "lossy": true
+   },
+   {
+    "id": "opus",
+    "label": "Opus",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "m4a",
+    "label": "M4A",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "aac",
+    "label": "AAC",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": true
+   },
+   {
+    "id": "aiff",
+    "label": "AIFF",
+    "kind": "audio",
+    "engine": "ffmpeg",
+    "available": true,
+    "popular": false,
+    "lossy": false
+   }
+  ],
+  "default": "mp3"
+ }
+}

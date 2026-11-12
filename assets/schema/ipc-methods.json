@@ -86,6 +86,19 @@
    "subscribe": false
   },
   {
+   "name": "convert",
+   "methods": [
+    "cancel",
+    "clear",
+    "copy",
+    "formats",
+    "paste",
+    "probe",
+    "start"
+   ],
+   "subscribe": true
+  },
+  {
    "name": "displays",
    "methods": [
     "apply",

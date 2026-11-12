@@ -1,7 +1,8 @@
 .pragma library
 
 // System: language, weather, performance, idle
-// listeners, power/sleep commands, monitored disks and clipboard storage.
+// listeners, power/sleep commands, monitored disks, clipboard storage and
+// the file converter.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -280,6 +281,43 @@ var category = {
                     "keywords": "disks mount points storage metrics usage home root"
                 },
                 toggle("system.clipboard.tmpfs", "prefs.sys.clipboard_tmpfs", "prefs.sys.clipboard_tmpfs.desc", "clipboard history tmp tmpfs ram memory reboot privacy")
+            ]
+        },
+        {
+            "id": "converter",
+            "title": "prefs.sys.section.converter",
+            "entries": [
+                {
+                    "key": "system.converter.outputDir",
+                    "type": "path",
+                    "pathKind": "dir",
+                    "placeholder": "prefs.sys.converter_dir.placeholder",
+                    "label": "prefs.sys.converter_dir",
+                    "description": "prefs.sys.converter_dir.desc",
+                    "keywords": "converter convert output folder directory save results files"
+                },
+                {
+                    "key": "system.converter.quality",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "small",
+                            "label": "converter.quality.small"
+                        },
+                        {
+                            "value": "balanced",
+                            "label": "converter.quality.balanced"
+                        },
+                        {
+                            "value": "best",
+                            "label": "converter.quality.best"
+                        }
+                    ],
+                    "label": "prefs.sys.converter_quality",
+                    "description": "prefs.sys.converter_quality.desc",
+                    "keywords": "converter convert quality size compression mp3 jpg video bitrate"
+                },
+                toggle("system.converter.openFolder", "prefs.sys.converter_open", "prefs.sys.converter_open.desc", "converter convert open folder show files done finished")
             ]
         }
     ]
