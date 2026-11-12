@@ -28,8 +28,12 @@ QtObject {
     // restart. The one-shot empty write gets tail past its blocking open of
     // the FIFO at once, so the pid check also runs before any command came.
     // A tail without --pid (busybox) keeps the plain reader.
+    // An existing FIFO of ours is kept, not replaced: a keybind that wrote
+    // while Quickshell was restarting blocks in open() on it and its command
+    // arrives when this reader opens it (a replaced FIFO left that writer
+    // hung for good). Anything else at the path is replaced by a fresh one.
     property Process pipeListener: Process {
-        command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; if tail --pid="$PPID" --version >/dev/null 2>&1; then ( : >"$p" & ); exec tail --pid="$PPID" -f "$p"; fi; exec tail -f "$p"', "ipc-pipe", root.ipcName]
+        command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; { [ -p "$p" ] && [ -O "$p" ]; } || { rm -f "$p"; mkfifo -m 600 "$p"; }; if tail --pid="$PPID" --version >/dev/null 2>&1; then ( : >"$p" & ); exec tail --pid="$PPID" -f "$p"; fi; exec tail -f "$p"', "ipc-pipe", root.ipcName]
         // a dry-run instance must not take over the live shell's FIFO
         running: !DryRun.active
 

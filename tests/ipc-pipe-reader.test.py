@@ -7,6 +7,11 @@ under a stand-in parent and checks that commands still arrive, that the
 reader is gone shortly after the parent dies (also before any command was
 written, while tail would otherwise block in open()), and that a tail
 without --pid still reads commands.
+
+The FIFO itself is kept across restarts: a writer that opened it while no
+reader ran (a keybind pressed while Quickshell restarts) is released by
+the next reader and its command arrives; anything else at the path (a
+regular file, a FIFO of another user) is replaced by a fresh 0600 FIFO.
 """
 
 import os
@@ -33,9 +38,9 @@ def reader_script():
     return m.group(1)
 
 
-def start(tmp, env_extra=None):
+def start(tmp, env_extra=None, out_name="out.txt"):
     """A stand-in Quickshell (sh) that starts the reader and then waits."""
-    out = tmp / "out.txt"
+    out = tmp / out_name
     env = dict(os.environ, XDG_RUNTIME_DIR=str(tmp / "rt"))
     env.update(env_extra or {})
     parent = subprocess.Popen(
@@ -45,7 +50,7 @@ def start(tmp, env_extra=None):
     )
     fifo = tmp / "rt" / "test_ipc.pipe"
     deadline = time.monotonic() + 5
-    while not fifo.exists():
+    while not fifo.is_fifo():
         assert time.monotonic() < deadline, "the FIFO never appeared"
         time.sleep(0.02)
     return parent, fifo, out
@@ -93,9 +98,11 @@ def cleanup(fifo):
             pass
 
 
-def case(name, fn, env_extra=None):
+def case(name, fn, env_extra=None, prepare=None):
     tmp = Path(tempfile.mkdtemp(prefix="ipc-pipe-"))
     (tmp / "rt").mkdir()
+    if prepare:
+        prepare(tmp / "rt" / "test_ipc.pipe")
     parent, fifo, out = start(tmp, env_extra(tmp) if env_extra else None)
     try:
         wait_for(lambda: readers(fifo), "the reader to start")
@@ -125,6 +132,47 @@ def exits_with_parent_after_commands(parent, fifo, out):
     wait_for(lambda: not readers(fifo), "the reader to exit with its parent")
 
 
+def blocked_writer_released_by_next_reader(parent, fifo, out):
+    """The restart window: the reader is gone, a keybind writes, the next
+    Quickshell starts its reader on the same FIFO."""
+    send(fifo, out, "launcher")
+    kill_parent(parent)
+    wait_for(lambda: not readers(fifo), "the old reader to exit")
+    writer = subprocess.Popen(["sh", "-c", 'echo brightness-up > "$1"', "writer", str(fifo)])
+    time.sleep(0.3)
+    assert writer.poll() is None, "the writer should block while no reader runs"
+    tmp = fifo.parent.parent
+    parent2, fifo2, out2 = start(tmp, out_name="out2.txt")
+    try:
+        assert fifo2 == fifo
+        writer.wait(timeout=5)
+        wait_for(lambda: "brightness-up" in out2.read_text().splitlines(), "the blocked command to arrive")
+        send(fifo, out2, "dashboard")
+    finally:
+        if writer.poll() is None:
+            writer.kill()
+            writer.wait()
+        kill_parent(parent2)
+    wait_for(lambda: not readers(fifo), "the new reader to exit with its parent")
+
+
+def fresh_private_fifo(parent, fifo, out):
+    assert fifo.is_fifo()
+    st = fifo.stat()
+    assert st.st_uid == os.getuid(), "the FIFO is not ours"
+    assert st.st_mode & 0o777 == 0o600, oct(st.st_mode)
+    send(fifo, out, "launcher")
+
+
+def leftover_file(path):
+    path.write_text("not a fifo\n")
+
+
+def foreign_fifo(path):
+    os.mkfifo(path, 0o622)
+    os.chown(path, 65534, 65534)
+
+
 def tail_without_pid(tmp):
     """A PATH where tail rejects --pid (busybox), else the real tail."""
     real = shutil.which("tail")
@@ -147,6 +195,13 @@ def main():
     case("the reader exits with its parent before any command", exits_with_parent_before_any_command)
     case("the reader exits with its parent after commands", exits_with_parent_after_commands)
     case("a tail without --pid still reads commands", commands_arrive, tail_without_pid)
+    case("a writer blocked between two readers is released, its command arrives", blocked_writer_released_by_next_reader)
+    case("a new FIFO is private", fresh_private_fifo)
+    case("a regular file at the path is replaced by a FIFO", fresh_private_fifo, prepare=leftover_file)
+    if os.getuid() == 0:
+        case("a FIFO of another user is replaced", fresh_private_fifo, prepare=foreign_fifo)
+    else:
+        print("skip - a FIFO of another user (needs root to chown)")
     return 0
 
 
