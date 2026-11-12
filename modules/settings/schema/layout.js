@@ -94,8 +94,8 @@ var category = {
                     "component": "LayoutBuilder",
                     // Edits the parts' edge/style/align keys too, but those
                     // live on the bar, notch and dock pages (one page per
-                    // setting); notch.enabled is the builder's own
-                    "keys": ["notch.enabled"],
+                    // setting; notch.enabled is the Island tab's switch)
+                    "keys": [],
                     "label": "prefs.layout.builder",
                     "description": "prefs.layout.builder.desc",
                     "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
