@@ -897,7 +897,7 @@
   "prefs.lockscreen.section.login": "Login screen",
   "prefs.lockscreen.section.auth": "Authentication",
   "prefs.lockscreen.pam_service": "PAM service",
-  "prefs.lockscreen.pam_service.desc": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. Kept on this computer: presets never change it.",
+  "prefs.lockscreen.pam_service.desc": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. A stack with pam_faillock (such as Arch \"system-auth\") counts wrong passwords here as well: after 3 the account is locked for about 10 minutes, even with the right password. Kept on this computer: presets never change it.",
   "prefs.lockscreen.pam_service.placeholder": "Built-in password check",
   "prefs.lockscreen.style": "Lock screen style",
   "prefs.lockscreen.style.desc": "Live previews with your wallpaper and palette. The SDDM login screen follows the same style.",

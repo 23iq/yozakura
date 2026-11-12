@@ -23,6 +23,12 @@ QtObject {
     property string verdict: ""
     // The service file the running check looks at.
     property string checkingPath: ""
+    // The configured service file has no verdict yet: a password submitted
+    // now waits for settled() instead of falling back to the bundled config.
+    readonly property bool pending: root.path !== "" && root.checkedPath !== root.path
+
+    // A check for the configured service file finished (any verdict).
+    signal settled
 
     // A result only counts for the path it was taken for (LockPam.target),
     // so the previous one can stand until the new check finishes.
@@ -65,6 +71,7 @@ QtObject {
         root.verdict = LockPam.checkResult(exitCode);
         if (root.verdict !== "usable")
             console.warn("LockScreen: " + LockPam.warning(root.service, root.checkedPath, root.verdict));
+        root.settled();
     }
 
     property Process check: Process {

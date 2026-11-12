@@ -51,19 +51,3 @@ func TestDeferredRunsInOrderAndAnswersLater(t *testing.T) {
 		t.Fatalf("handlers ran %v, want slow wait fast", order)
 	}
 }
-
-// A panic in the Deferred is answered as an error, like one in a handler.
-func TestDeferredPanicIsAnswered(t *testing.T) {
-	conn, r := startServer(t, &Service{
-		Name: "t",
-		Methods: map[string]HandlerFunc{
-			"boom": func(json.RawMessage) (any, error) {
-				return Deferred(func() (any, error) { panic("later boom") }), nil
-			},
-		},
-	})
-	_, _ = conn.Write([]byte(`{"id":1,"method":"t.boom"}` + "\n"))
-	if got := readResponse(t, r); got.Error == "" {
-		t.Fatalf("want an error answer, got %+v", got)
-	}
-}

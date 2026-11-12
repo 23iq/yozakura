@@ -171,11 +171,34 @@ assert submit("a") == BUNDLED
 lev('Config.lockscreen.pamService = "system-auth"')
 assert lev("JSON.stringify(pamTarget.check.command)") == check_cmd("system-auth")
 assert lev("pamTarget.check.running")
-assert submit("b") == BUNDLED, "until the check answers, the bundled config is used"
+assert lev("pamTarget.pending")
+
+
+def submit_pending(text: str) -> int:
+    """Submit while the service check has not answered; PAM must not start yet."""
+    before = lev("pamAuth.starts")
+    lev(f"passwordInput.text = {json.dumps(text)}; passwordInput.accepted()")
+    pump(100)
+    assert lev("pamAuth.starts") == before, "a submit waits for the pending service check"
+    assert lev("authenticating") and lev("pamWait.running")
+    return before
+
+
+def finish_submit(before: int, text: str) -> str:
+    wait_until(lambda: lev("pamAuth.starts") == before + 1 and lev("errorMessage") != "")
+    assert lev("pamAuth.received") == text, f"PAM must receive {text!r} verbatim"
+    wait_until(lambda: not lev("authenticating"))
+    return lev("pamAuth.startedWith")
+
+
+# Typed before the check answered: the submit waits and uses its verdict.
+b = submit_pending("b")
 lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
-assert submit("c") == "/etc/pam.d|system-auth", "a usable service file selects the system stack"
+assert finish_submit(b, "b") == "/etc/pam.d|system-auth", "a submit waits for the check, then uses its verdict"
 # A failure re-checks the file; the result for that path stands meanwhile.
 assert lev("pamTarget.check.running"), "a failed attempt re-checks the service file"
+assert not lev("pamTarget.pending"), "a re-check of a checked file does not hold a submit"
+assert submit("c") == "/etc/pam.d|system-auth", "a usable service file selects the system stack"
 lev(f"pamTarget.check.running = false; pamTarget.check.exited({UNREADABLE}, 0)")
 assert submit("d") == BUNDLED, "a missing or unreadable service file falls back to the bundled config"
 assert lev("pamTarget.check.running")
@@ -184,11 +207,20 @@ assert submit("d2") == BUNDLED, "a service whose auth uses pam_permit.so is refu
 lev("pamTarget.check.running = false")
 lev('Config.lockscreen.pamService = "login"')
 lev('Config.lockscreen.pamService = "sddm"')  # changed while the check for "login" runs
+e = submit_pending("e")
 lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
-assert submit("e") == BUNDLED, "a result for another name does not count"
+pump(100)
+assert lev("pamAuth.starts") == e, "a result for another name does not count"
 wait_until(lambda: lev("JSON.stringify(pamTarget.check.command)") == check_cmd("sddm"))
 lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
+assert finish_submit(e, "e") == "/etc/pam.d|sddm"
 assert submit("f") == "/etc/pam.d|sddm"
+# A check that never answers: the submit goes ahead with the bundled config.
+lev("pamTarget.check.running = false")
+lev('Config.lockscreen.pamService = "login"')
+lev("pamWait.interval = 200")
+g = submit_pending("f2")
+assert finish_submit(g, "f2") == BUNDLED, "a check that never answers falls back to the bundled config"
 lev("pamTarget.check.running = false")
 for bad in ("../shadow", "/etc/shadow", "pam.d/login", ".hidden", "-x", "a b", "gdm-autologin", "sddm-autologin"):
     lev(f"Config.lockscreen.pamService = {json.dumps(bad)}")

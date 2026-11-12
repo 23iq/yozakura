@@ -145,10 +145,40 @@ WlSessionLockSurface {
 
             authenticating = true;
             errorMessage = "";
-            const target = pamTarget.resolve();
-            pamAuth.configDirectory = target.configDirectory;
-            pamAuth.config = target.config;
-            pamAuth.start();
+            // The configured service is not checked yet (the password came
+            // right after a lock or a settings change): wait for its verdict,
+            // or a system-only account (sssd, homed) fails its first try.
+            if (pamTarget.pending) {
+                pamTarget.refresh();
+                pamWait.restart();
+                return;
+            }
+            root.startPam();
+        }
+    }
+
+    // Starts PAM with the stack resolved now (bundled while still pending).
+    function startPam() {
+        pamWait.stop();
+        const target = pamTarget.resolve();
+        pamAuth.configDirectory = target.configDirectory;
+        pamAuth.config = target.config;
+        pamAuth.start();
+    }
+
+    // A submit waiting for the service check: starts once it settles, or
+    // with the bundled config when it never answers.
+    Timer {
+        id: pamWait
+        interval: 3000
+        onTriggered: root.startPam()
+    }
+
+    Connections {
+        target: pamTarget
+        function onSettled() {
+            if (pamWait.running && !pamTarget.pending)
+                root.startPam();
         }
     }
 
