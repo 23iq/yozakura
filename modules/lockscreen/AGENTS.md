@@ -31,9 +31,13 @@ a check that has not answered yet keeps the bundled file, with a warning in the 
 Only an empty field is ignored on submit; the text reaches PAM exactly as typed (spaces too).
 
 Lock across restarts: `LockStateMarker.qml` (in `shell.qml` next to `WlSessionLock`) mirrors
-`GlobalStates.lockscreenVisible` to `$XDG_RUNTIME_DIR/<app>-locked` (written on lock, removed on
-any unlock, one operation at a time) and, at startup, locks again when the marker for this
-`WAYLAND_DISPLAY` exists (`LockRestore.js`). No `XDG_RUNTIME_DIR` = no marker. Hyprland needs
+`GlobalStates.lockscreenVisible` to `$XDG_RUNTIME_DIR/<app>-locked-<display>` (written on lock,
+removed on any unlock, one operation at a time) and, at startup, locks again when the marker was
+written by this compositor instance (`HYPRLAND_INSTANCE_SIGNATURE`, else `NIRI_SOCKET`, else
+`XDG_SESSION_ID`: equal for a shell restarted in the session, new after a re-login); a marker of
+another instance is removed (`LockRestore.js`). The marker is read synchronously and, if it only
+arrives later, on `loaded` (unless the user locked/unlocked meanwhile); `loadFailed` = no marker.
+No `XDG_RUNTIME_DIR`, display or instance token = no marker. Hyprland needs
 `misc:allow_session_lock_restore` (set by the generated config) to accept the new lock.
 Tests: `tests/lockscreen-marker.test.py`, `tests/lockscreen-restore.test.cjs`, `tests/lockscreen-pam.test.cjs`.
 
