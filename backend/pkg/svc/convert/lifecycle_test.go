@@ -46,6 +46,14 @@ func TestSpecialFilesNeverBlockTheService(t *testing.T) {
 	}
 }
 
+func TestMissingFileIsNotFound(t *testing.T) {
+	s, _ := newTest(t, &fakeClip{})
+	jobs, _ := s.Start(StartParams{Items: []Item{{Path: filepath.Join(t.TempDir(), "gone.json"), Target: "yaml"}}})
+	if len(jobs) != 1 || jobs[0].State != StateFailed || jobs[0].Error != "not found" {
+		t.Fatalf("%+v", jobs)
+	}
+}
+
 func jsonFile(t *testing.T, dir, name string) string {
 	t.Helper()
 	p := filepath.Join(dir, name)

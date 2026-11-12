@@ -106,6 +106,9 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 	switch fm, ok := conv.Detect(path); {
 	case !conv.IsRegular(path):
 		state, msg = StateFailed, "not a regular file"
+		if _, err := os.Stat(path); err != nil {
+			msg = "not found"
+		}
 	case !ok:
 		state, msg = StateFailed, "unknown format"
 	default:
