@@ -122,12 +122,27 @@ func (h *idleHub) sendLocked(u IdleUpdate) {
 			continue
 		default:
 		}
-		for len(c) > 0 {
-			<-c
-		}
+		drainIdle(c)
 		h.status.Epoch++
 		st := h.status
-		c <- IdleUpdate{Status: &st}
+		// Only producers (holding h.mu) send, and c was just drained: this
+		// cannot block, but stay non-blocking all the same.
+		select {
+		case c <- IdleUpdate{Status: &st}:
+		default:
+		}
+	}
+}
+
+// drainIdle empties c without ever blocking: its reader may take the last
+// update between a length check and a receive.
+func drainIdle(c <-chan IdleUpdate) {
+	for {
+		select {
+		case <-c:
+		default:
+			return
+		}
 	}
 }
 
