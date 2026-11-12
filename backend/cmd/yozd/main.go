@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +14,9 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/gotune"
 	"yozakura/backend/pkg/instancelock"
+	"yozakura/backend/pkg/yozd/client"
 	"yozakura/backend/pkg/yozd/config"
 	"yozakura/backend/pkg/yozd/ipc"
 	"yozakura/backend/pkg/yozd/ipc/hyprland"
@@ -58,6 +61,7 @@ func main() {
 	remainingArgs := os.Args[i:]
 	switch remainingArgs[0] {
 	case "daemon":
+		gotune.Apply(gotune.CompositorDaemon, os.Getenv)
 		runDaemon(customConfigPath)
 	case "subscribe":
 		runSubscribe()
@@ -215,8 +219,13 @@ func runDaemon(customConfigPath string) {
 			if err == nil {
 				fmt.Println("Detected compositor:", comp)
 			} else {
-				fmt.Println("Error: no supported compositor detected")
-				os.Exit(1)
+				status := detectFailureStatus()
+				if status == client.ExitNoCompositor {
+					fmt.Println("Error: no supported compositor detected")
+				} else {
+					fmt.Println("Error: compositor not reachable:", err)
+				}
+				os.Exit(status)
 			}
 		}
 	}
@@ -283,35 +292,21 @@ func runDaemon(customConfigPath string) {
 }
 
 func runSubscribe() {
-	socketPath := defaultSocketPath()
-	conn, err := net.Dial("unix", socketPath)
-	if err != nil {
-		fmt.Printf("Error connecting to daemon: %v\n", err)
-		os.Exit(1)
-	}
-	defer conn.Close()
-
-	req := map[string]interface{}{
-		"id":     1,
-		"method": "System.Subscribe",
-		"params": map[string]interface{}{},
-	}
-	json.NewEncoder(conn).Encode(req)
-
-	dec := json.NewDecoder(conn)
-	for {
-		var msg json.RawMessage
-		if err := dec.Decode(&msg); err != nil {
-			fmt.Printf("Connection closed or error: %v\n", err)
-			os.Exit(1)
-		}
+	err := client.Subscribe(context.Background(), defaultSocketPath(), 0, func(msg []byte) {
 		var notif struct {
 			JSONRPC string `json:"jsonrpc"`
 		}
 		if err := json.Unmarshal(msg, &notif); err == nil && notif.JSONRPC == "2.0" {
 			fmt.Println(string(msg))
 		}
+	})
+	var opErr *net.OpError
+	if errors.As(err, &opErr) && opErr.Op == "dial" {
+		fmt.Printf("Error connecting to daemon: %v\n", err)
+	} else {
+		fmt.Printf("Connection closed or error: %v\n", err)
 	}
+	os.Exit(1)
 }
 
 func handleRPC(category string, args []string) {

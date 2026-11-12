@@ -22,7 +22,7 @@ from pathlib import Path
 os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 os.environ.pop("QT_QPA_PLATFORMTHEME", None)
 
-from qmlharness import REPO, Harness  # noqa: I001  (imports headless before PySide6)
+from qmlharness import BATTERY_SAVER_STUB, REPO, Harness  # noqa: I001  (imports headless before PySide6)
 from PySide6.QtGui import QImage
 from PySide6.QtQuick import QQuickImageProvider
 from settings_env import SPECIALS_STUB, DEFAULT_PALETTE, _merge, colors_qml, config_qml, i18n_qml, load_defaults
@@ -159,7 +159,7 @@ class PanelsEnv:
         services = {"I18n": i18n_qml(), **stubs.services(icon_path), **timers_stubs.services()}
         timers_stubs.copy_js(self.root)
         self.h.module("qs.modules.services", services)
-        self.h.module("qs.modules.globals", {"GlobalStates": stubs.GLOBAL_STATES})
+        self.h.module("qs.modules.globals", {"GlobalStates": stubs.GLOBAL_STATES, "BatterySaver": BATTERY_SAVER_STUB})
         for module, types in stubs.quickshell_modules(icon_path).items():
             self.h.module(module, types)
         self.h.module("qs.modules.shell.osd.styles", {"OsdBarInline": "Item { opacity: 0; visible: false; property real radius: 0; property bool vertical; property bool available: true; property var screen; property real reveal: 0 }"})

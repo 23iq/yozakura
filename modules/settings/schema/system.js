@@ -121,6 +121,27 @@ var category = {
                 },
                 toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
                 toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
+                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
+                {
+                    "key": "performance.visualizerFps",
+                    "type": "number",
+                    "advanced": true,
+                    "min": 15,
+                    "max": 60,
+                    "step": 5,
+                    "unit": "fps",
+                    "label": "system.performance.visualizer_fps",
+                    "description": "system.performance.visualizer_fps_desc",
+                    "keywords": "visualizer cava audio bars frame rate fps cpu"
+                },
+                {
+                    "key": "performance.warmViews",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.warm_views",
+                    "description": "system.performance.warm_views_desc",
+                    "keywords": "warm preload prepare startup launcher memory"
+                },
                 {
                     "key": "performance.settingsKeepAliveMinutes",
                     "type": "number",

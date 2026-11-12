@@ -14,7 +14,7 @@ import (
 // name a restore command that exists and load user.* from the real dir.
 func TestMinimalEntry(t *testing.T) {
 	for _, lua := range []bool{true, false} {
-		got := minimalEntry(lua, "/b/1", "/x/hypr", "/usr/lib/polkit-kde-authentication-agent-1")
+		got := minimalEntry(lua, "/b/1", "/x/hypr", "/usr/lib/polkit-kde-authentication-agent-1", "/home/u", "/home/u/.local/share/yozakura")
 		if !strings.Contains(got, brand.Command("install", "--restore")) {
 			t.Errorf("lua=%v: no working restore command:\n%s", lua, got)
 		}
@@ -32,7 +32,7 @@ func TestMinimalEntry(t *testing.T) {
 			t.Errorf("lua=%v: no polkit agent start (%s):\n%s", lua, want, got)
 		}
 	}
-	if got := minimalEntry(false, "/b", "/x/hypr", ""); strings.Contains(got, "exec-once") {
+	if got := minimalEntry(false, "/b", "/x/hypr", "", "/home/u", "/home/u/.local/share/yozakura"); strings.Contains(got, "exec-once") {
 		t.Errorf("no agent found: nothing started:\n%s", got)
 	}
 }
@@ -53,7 +53,7 @@ func TestUpdatePolkitRewritesTheGeneratedLine(t *testing.T) {
 			name = luaEntry
 		}
 		path := filepath.Join(hypr, name)
-		body := minimalEntry(c.lua, "/b/1", hypr, c.polkit)
+		body := minimalEntry(c.lua, "/b/1", hypr, c.polkit, "/home/u", "/home/u/.local/share/yozakura")
 		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +61,7 @@ func TestUpdatePolkitRewritesTheGeneratedLine(t *testing.T) {
 			t.Fatalf("lua=%v %q: wrote %v, %v", c.lua, c.polkit, wrote, err)
 		}
 		got, _ := os.ReadFile(path)
-		if want := minimalEntry(c.lua, "/b/1", hypr, fallback); string(got) != want {
+		if want := minimalEntry(c.lua, "/b/1", hypr, fallback, "/home/u", "/home/u/.local/share/yozakura"); string(got) != want {
 			t.Errorf("lua=%v %q:\n%s\nwant\n%s", c.lua, c.polkit, got, want)
 		}
 		if info, _ := os.Stat(path); info.Mode().Perm() != 0o600 {
@@ -75,7 +75,7 @@ func TestUpdatePolkitRewritesTheGeneratedLine(t *testing.T) {
 	// CRLF
 	hypr := t.TempDir()
 	path := filepath.Join(hypr, confEntry)
-	crlf := strings.ReplaceAll(minimalEntry(false, "/b", hypr, old[0]), "\n", "\r\n")
+	crlf := strings.ReplaceAll(minimalEntry(false, "/b", hypr, old[0], "/home/u", "/home/u/.local/share/yozakura"), "\n", "\r\n")
 	if err := os.WriteFile(path, []byte(crlf), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestUpdatePolkitRewritesTheGeneratedLine(t *testing.T) {
 	// Left alone: an edited line, an entry that is not exclusive mode's, a symlink.
 	for name, setup := range map[string]func(hypr string){
 		"edited": func(hypr string) {
-			body := strings.Replace(minimalEntry(false, "/b", hypr, old[0]), "exec-once = "+old[0], "exec-once = "+old[0]+" --verbose", 1)
+			body := strings.Replace(minimalEntry(false, "/b", hypr, old[0], "/home/u", "/home/u/.local/share/yozakura"), "exec-once = "+old[0], "exec-once = "+old[0]+" --verbose", 1)
 			os.WriteFile(filepath.Join(hypr, confEntry), []byte(body), 0o644)
 		},
 		"user entry": func(hypr string) {
@@ -97,7 +97,7 @@ func TestUpdatePolkitRewritesTheGeneratedLine(t *testing.T) {
 		},
 		"symlink": func(hypr string) {
 			real := filepath.Join(t.TempDir(), "hyprland.conf")
-			os.WriteFile(real, []byte(minimalEntry(false, "/b", hypr, old[0])), 0o644)
+			os.WriteFile(real, []byte(minimalEntry(false, "/b", hypr, old[0], "/home/u", "/home/u/.local/share/yozakura")), 0o644)
 			os.Symlink(real, filepath.Join(hypr, confEntry))
 		},
 	} {

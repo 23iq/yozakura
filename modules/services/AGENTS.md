@@ -20,7 +20,7 @@ Backend singletons bridging Wayland protocols, CLI tools (nmcli, upower, wpctl, 
 | **Compositor** | `YozdService.qml` + `YozdClients.js` | Compositor abstraction. State arrives via `BackendService` subscription to the Go-owned `compositor` service (coalesced to one push per ~16 ms in Go); clients are diffed by address so unchanged ones keep their object identity; `dispatch()` is an IPC call to the backend that runs `yozd` one-shots |
 | **Compositor appearance** | `CompositorConfig.qml`, `CompositorAppearance.js`, `CompositorTomlWriter.qml` | One hl.config() table applied live (eval) and persisted (backend renders hyprland.{lua,conf}); smart gaps = a `w[tv1]` workspace rule |
 | **Motion profile** | `CompositorMotion.qml` + `config/motion/` | Resolves `compositor.motionProfile` + overrides into curves/animations; applied live, persisted via the TOML payload (`motion`) |
-| **Music-reactive border** | `BorderPulse.qml` + `BorderPulse.js` | Owned by `CompositorConfig`. Idle unless enabled + a player is playing; cava (shared `CavaService` consumer) → quantized level → one `eval` on Hyprland's request socket per level change (≤30 Hz) |
+| **Music-reactive border** | `BorderPulse.qml` + `BorderPulse.js` | Owned by `CompositorConfig`. Idle unless enabled + a player is playing (and off in GameMode or while `BatterySaver.active`); cava (shared `CavaService` consumer) → quantized level → one `eval` on Hyprland's request socket per level change (≤30 Hz) |
 | **Visibility** | `Visibilities.qml` | Per-screen UI visibility/layering orchestration |
 | **State** | `StateService.qml` | JSON persistence for session state (tab positions, etc.) |
 | **Focus** | `FocusGrabManager.qml` | Input focus coordination across overlays |

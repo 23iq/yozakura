@@ -7123,6 +7123,22 @@
             "control": "toggle",
             "keywords": "lock screen status user network wifi battery"
           }
+        },
+        "pamService": {
+          "title": "PAM service",
+          "type": "string",
+          "default": "",
+          "description": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. A stack with pam_faillock (such as Arch \"system-auth\") counts wrong passwords here as well: after 3 the account is locked for about 10 minutes, even with the right password. Kept on this computer: presets never change it.",
+          "x-settings": {
+            "category": "lockscreen",
+            "section": "auth",
+            "label": "prefs.lockscreen.pam_service",
+            "control": "text",
+            "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
+            "advanced": true
+          },
+          "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
+          "x-local": true
         }
       },
       "additionalProperties": false
@@ -8698,6 +8714,53 @@
           },
           "minimum": 0,
           "maximum": 120
+        },
+        "visualizerFps": {
+          "title": "Visualizer Frame Rate",
+          "type": "number",
+          "default": 30,
+          "description": "Frames per second of the audio visualizer; lower uses less CPU",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.visualizer_fps",
+            "control": "number",
+            "step": 5,
+            "unit": "fps",
+            "keywords": "visualizer cava audio bars frame rate fps cpu",
+            "advanced": true,
+            "min": 15,
+            "max": 60
+          },
+          "minimum": 15,
+          "maximum": 60
+        },
+        "batterySaver": {
+          "title": "Battery Saver",
+          "type": "boolean",
+          "default": false,
+          "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.battery_saver",
+            "control": "toggle",
+            "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
+          }
+        },
+        "warmViews": {
+          "title": "Prepare Launcher in Background",
+          "type": "boolean",
+          "default": true,
+          "description": "Create the launcher a few seconds after startup so it opens instantly the first time. Turn off to save the memory it holds until you first open it",
+          "x-settings": {
+            "category": "system",
+            "section": "performance",
+            "label": "system.performance.warm_views",
+            "control": "toggle",
+            "keywords": "warm preload prepare startup launcher memory",
+            "advanced": true
+          }
         }
       },
       "additionalProperties": false

@@ -27,6 +27,10 @@ import (
 // maxUnpinnedItems caps the unpinned history (pinned items are exempt).
 const maxUnpinnedItems = 50
 
+// dbIdleTimeout closes a store's connection (and frees its SQLite instance)
+// after this long without clipboard activity; the next access reopens it.
+var dbIdleTimeout = 2 * time.Minute
+
 // schemaSQL creates the item table + FTS5 index + sync triggers. Both
 // stores share it; the pinned column is kept for parity (always 1 in the
 // pinned store, 0 in the unpinned one) so reindex SQL stays uniform.
@@ -198,6 +202,13 @@ func openDB(path, hexKey string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Every connection is a separate SQLite (Wasm) instance with its own
+	// memory. The store serialises all access under one mutex and never
+	// runs a nested query on the same DB (transactions go through tx), so
+	// one connection is enough; it is released while the clipboard is idle.
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxIdleTime(dbIdleTimeout)
 	if _, err := db.Exec(schemaSQL); err != nil {
 		db.Close()
 		return nil, err
@@ -208,7 +219,7 @@ func openDB(path, hexKey string) (*sql.DB, error) {
 // openDatabases opens (or reopens) both stores. The unpinned store lives
 // in tmpfs when tmpMode is on.
 func (s *store) openDatabases(tmpMode bool) error {
-	pinned, err := openDB(s.paths.ClipboardPinnedDB(), s.hexKey)
+	pinned, err := openStoreDB(s.paths.ClipboardPinnedDB(), s.hexKey)
 	if err != nil {
 		return fmt.Errorf("pinned db: %w", err)
 	}
@@ -216,7 +227,7 @@ func (s *store) openDatabases(tmpMode bool) error {
 	if tmpMode {
 		unpinnedPath = s.paths.ClipboardTmpDB()
 	}
-	unpinned, err := openDB(unpinnedPath, s.hexKey)
+	unpinned, err := openStoreDB(unpinnedPath, s.hexKey)
 	if err != nil {
 		pinned.Close()
 		return fmt.Errorf("unpinned db: %w", err)
@@ -275,7 +286,7 @@ func (s *store) setTmpMode(enabled bool) error {
 // moveRowsTo copies every row of src into the store at dstPath (existing
 // rows win) and empties src.
 func (s *store) moveRowsTo(src *sql.DB, dstPath string) error {
-	dst, err := openDB(dstPath, s.hexKey)
+	dst, err := openStoreDB(dstPath, s.hexKey)
 	if err != nil {
 		return err
 	}

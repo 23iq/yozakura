@@ -16,6 +16,7 @@ import (
 	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
+	"yozakura/backend/pkg/gotune"
 	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/migrate"
 
@@ -23,6 +24,7 @@ import (
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/proc"
+	"yozakura/backend/pkg/procscan"
 	"yozakura/backend/pkg/svc/compositor"
 )
 
@@ -129,17 +131,9 @@ func main() {
 		refuseWithoutWayland(errNoWaylandStart)
 		refuseIfLegacyRunning() // before migration touches user files
 	}
-	migrateLegacy()
-	if len(args) == 0 {
-		migrateDaemonFiles() // the shell start owns the daemon's files
+	if !skipsStartupMigrations(args, isAlive) {
+		runStartupMigrations(len(args) == 0)
 	}
-	markExistingInstallOnboarded()
-	markLegacyKeyboard()
-	migrateNotchStyle()
-	migrateTerminalGreeting()
-	markLegacyAppHooks()
-	shiftDefaults()
-	ensureConfigFiles()
 
 	if len(args) == 0 {
 		runShell()
@@ -423,6 +417,7 @@ func runShell() {
 		os.Exit(1)
 	}
 	defer lock.Release()
+	gotune.Apply(gotune.Daemon, os.Getenv)
 	// We own the lock, so only a build that predates it can still be up.
 	if legacyAlive() {
 		pid := readPIDFile()
@@ -449,7 +444,7 @@ func runShell() {
 		repairHyprlandEntry(home, paths.Launcher(currentExecutable()))
 	}
 
-	runDetached("pkill -f 'dunst|mako|swaync'")
+	stopNotificationDaemons(procscan.Default())
 	runDetached("pkill -f 'easyeffects.*gapplication-service' ; nohup easyeffects --gapplication-service >/dev/null 2>&1 &")
 
 	if iconTheme, err := proc.Run(context.Background(), "gsettings", "get", "org.gnome.desktop.interface", "icon-theme"); err == nil {
@@ -518,8 +513,10 @@ func shellDir() string {
 	return filepath.Join(os.Getenv("HOME"), ".local/src", brand.AppID)
 }
 
+// runDetached runs a shell command line without waiting for it; it is
+// reaped in the background so it never stays a zombie of the daemon.
 func runDetached(cmd string) {
-	exec.CommandContext(context.Background(), "sh", "-c", cmd).Start()
+	_ = proc.StartReaped(exec.CommandContext(context.Background(), "sh", "-c", cmd))
 }
 
 func execCommand(name string, args ...string) {
@@ -692,17 +689,6 @@ func quitShell() {
 	}
 	cleanupOrphans()
 	fmt.Println(brand.DisplayName + " stopped.")
-}
-
-func cleanupOrphans() {
-	proc.Do(context.Background(), "pkill", "-f", `tail -f .*`+brand.AppID+`_ipc\.pipe`)
-	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+".*daemon")
-	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+" subscribe")
-	migrate.StopLegacyDaemon()
-	proc.Do(context.Background(), "pkill", "-f", "qs.*shell.qml")
-	proc.Do(context.Background(), "pkill", "-f", "wl-paste --watch")
-	_ = os.Remove(ipcPipePath())
-	_ = os.Remove("/tmp/" + brand.AppID + "_ipc.pipe")
 }
 
 // ipcPipePath resolves the per-user FIFO the Quickshell keybind listener

@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import qs.modules.globals
 import qs.modules.services
 import qs.config
@@ -23,8 +24,20 @@ QtObject {
     readonly property string ipcName: Brand.appId + "_ipc.pipe"
 
     // High-performance Pipe Listener (Daemon mode)
+    // The reader exits with this Quickshell (tail --pid=$PPID): a restarted
+    // or crashed shell used to leave its tail behind for good, one per
+    // restart. The one-shot empty write gets tail past its blocking open of
+    // the FIFO at once, so the pid check also runs before any command came.
+    // A tail without --pid (busybox) keeps the plain reader.
+    // An existing FIFO of ours is kept, not replaced: a keybind that wrote
+    // while Quickshell was restarting blocks in open() on it and its command
+    // arrives when this reader opens it (a replaced FIFO left that writer
+    // hung for good). Anything else at the path is replaced by a fresh one.
+    // A reader whose Quickshell died before it started (its parent is no
+    // longer this Quickshell but init or a subreaper, which --pid would
+    // follow for good) has nothing to deliver and exits at once.
     property Process pipeListener: Process {
-        command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; exec tail -f "$p"', "ipc-pipe", root.ipcName]
+        command: ["sh", "-c", '[ "$PPID" = "$2" ] || exit 0; d="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; { [ -p "$p" ] && [ -O "$p" ]; } || { rm -f "$p"; mkfifo -m 600 "$p"; }; if tail --pid="$PPID" --version >/dev/null 2>&1; then ( : >"$p" & ); exec tail --pid="$PPID" -f "$p"; fi; exec tail -f "$p"', "ipc-pipe", root.ipcName, String(Quickshell.processId)]
         // a dry-run instance must not take over the live shell's FIFO
         running: !DryRun.active
 

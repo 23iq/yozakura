@@ -20,7 +20,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from qmlharness import HARNESS_HOME, REPO, Harness, brand_qml
+from qmlharness import BATTERY_SAVER_STUB, HARNESS_HOME, REPO, Harness, brand_qml
 
 DEFAULT_PALETTE = {
     "background": "#120c0d", "surface": "#1a1112", "surfaceDim": "#1a1112", "surfaceBright": "#413737",
@@ -519,8 +519,10 @@ QUICKSHELL_IO = {
     "Process": "QtObject { property var command: []; property bool running: false; property var stdout; property var stderr; "
                "signal exited(int exitCode, int exitStatus) }",
     "StdioCollector": "QtObject { property string text: ''; property bool waitForEnd: false; signal streamFinished() }",
-    "FileView": "QtObject { property string path; property bool blockLoading; signal loaded(); function reload() {} "
-                "function text() { return '' } }",
+    "FileView": "QtObject { property string path; property bool blockLoading; property bool blockAllReads; "
+                "property bool blockWrites; property bool atomicWrites; property bool preload: true; "
+                "property bool printErrors: true; signal loaded(); signal saved(); signal saveFailed(var error); "
+                "function reload() {} function text() { return '' } function setText(t) {} }",
 }
 QUICKSHELL_WIDGETS = {
     "ClippingRectangle": "Rectangle { clip: true; property bool contentUnderBorder: false }",
@@ -812,7 +814,7 @@ class SettingsEnv:
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
-                                             "Brand": brand_qml()})
+                                             "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})
         self.h.module("Quickshell", QUICKSHELL)
         self.h.module("Quickshell.Io", QUICKSHELL_IO)
         self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)

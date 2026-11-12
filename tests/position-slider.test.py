@@ -73,4 +73,13 @@ QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, QPoint(x0 + int(area * 0.2
 QTest.qWait(20)
 assert player.property("seeks") == 0, "no seek without canSeek"
 
+# The wave follows performance.wavyLine and is drawn straight while the
+# battery saver is active.
+assert seek.property("wavy") is True, "wavy by default"
+saver = h.engine.singletonInstance("qs.modules.globals", "BatterySaver")
+saver.setProperty("active", True)
+assert seek.property("wavy") is False, "straight while the battery saver is active"
+saver.setProperty("active", False)
+assert seek.property("wavy") is True, "wavy again when the saver ends"
+
 print("position-slider: ok")

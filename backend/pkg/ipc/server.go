@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"runtime/debug"
 	"sync"
 
 	"yozakura/backend/pkg/instancelock"
@@ -58,10 +60,19 @@ func NewSubscriber(buf int) *Subscriber {
 	return &Subscriber{Events: make(chan ServiceEvent, buf), stop: make(chan struct{})}
 }
 
+// Push queues event without blocking; it is dropped when the buffer is full.
 func (s *Subscriber) Push(event ServiceEvent) {
+	s.TryPush(event)
+}
+
+// TryPush is Push reporting whether event was queued, for streams that must
+// recover from a drop (resend their state) instead of losing it silently.
+func (s *Subscriber) TryPush(event ServiceEvent) bool {
 	select {
 	case s.Events <- event:
+		return true
 	default:
+		return false
 	}
 }
 
@@ -74,6 +85,11 @@ func (s *Subscriber) StopCh() <-chan struct{} { return s.stop }
 
 func (s *Subscriber) Send(service string, data any) {
 	s.Push(ServiceEvent{Service: service, Data: data})
+}
+
+// TrySend is Send reporting whether the event was queued (see TryPush).
+func (s *Subscriber) TrySend(service string, data any) bool {
+	return s.TryPush(ServiceEvent{Service: service, Data: data})
 }
 
 // Server is a line-delimited JSON server over a Unix socket.
@@ -259,25 +275,55 @@ func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) {
 		return
 	}
 
-	result, err := hdl(req.Params)
-	if err != nil {
-		w.write(Response{ID: req.ID, Error: err.Error()})
+	raw, errMsg := invoke(req.Method, hdl, req.Params)
+	if errMsg != "" {
+		w.write(Response{ID: req.ID, Error: errMsg})
 		return
-	}
-	var raw json.RawMessage
-	if result != nil {
-		data, merr := json.Marshal(result)
-		if merr != nil {
-			w.write(Response{ID: req.ID, Error: "result marshal failed"})
-			return
-		}
-		raw = data
 	}
 	w.write(Response{ID: req.ID, Result: raw})
 }
 
+// crashOnPanic, deferred around service code, logs a panic with the stack
+// of the goroutine that raised it and then panics again, so the daemon
+// still dies exactly as an unrecovered panic would. It must not swallow
+// the panic: most services take their mutex without a deferred Unlock, so
+// a handler that panics mid-section leaves the lock held and every later
+// call to that service would block forever. A dead daemon is recoverable
+// (the next CLI call or keybind starts it again through ensureDaemon, which
+// sweeps the children of the old one); a half-deadlocked one is not.
+func crashOnPanic(what string) {
+	if r := recover(); r != nil {
+		log.Printf("[ipc] panic in %s: %v\n%s", what, r, debug.Stack())
+		panic(r)
+	}
+}
+
+// invoke runs one handler and marshals its result.
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (json.RawMessage, string) {
+	defer crashOnPanic(method)
+	result, err := hdl(params)
+	if err != nil {
+		return nil, err.Error()
+	}
+	if result == nil {
+		return nil, ""
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return nil, "result marshal failed"
+	}
+	return data, ""
+}
+
+// runSubscribe registers a stream with one service.
+func runSubscribe(svc *Service, sub *Subscriber) {
+	defer crashOnPanic(svc.Name + " subscribe")
+	svc.Subscribe(sub)
+}
+
 // marshalEvent serializes a ServiceEvent for the result field.
 func marshalEvent(event ServiceEvent) json.RawMessage {
+	defer crashOnPanic("marshalling a " + event.Service + " event")
 	data, err := json.Marshal(event)
 	if err != nil {
 		return json.RawMessage(`{"error":"marshal failed"}`)

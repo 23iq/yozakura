@@ -22,6 +22,8 @@ cmd/yozd/            CLI: daemon, subscribe, window|workspace|monitor|layout|
                      config|system|darkmode|brightness|overview <action>
                      (client side builds "Group.Method" requests)
 pkg/yozd/
+├── client/          System.Subscribe stream client, shared by `yozd subscribe`
+│                    and the backend's in-process subscriber (pkg/svc/compositor)
 ├── ipc/             Compositor interface (interface.go), shared types,
 │   │                config payloads (config.go), cache, colors
 │   ├── hyprland/    socket2 events + dispatch, conf/Lua generators
@@ -33,7 +35,9 @@ pkg/yozd/
 │                    (LoadAndWatch: watches the directories, so a TOML
 │                    created after the start is applied)
 ├── server/          socket server + method dispatch (server.go), idle
-│                    monitors/inhibitors (idle.go), brightness, darkmode,
+│                    monitors/inhibitors (idle.go; flips are broadcast with
+│                    a seq, idle_events.go, and reach the shell's
+│                    IdleMonitor via pkg/svc/compositor/idle.go), brightness, darkmode,
 │                    config state and generated-file paths
 └── keymon/          physical input monitor (idle resume, modifier-only binds)
 ```

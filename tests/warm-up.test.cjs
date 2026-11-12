@@ -4,6 +4,7 @@ const path = require('node:path');
 const qmljs = require('./lib/qmljs.cjs');
 
 const W = qmljs.loadLibrary(path.join(__dirname, '../modules/shell/hosts/WarmUp.js'));
+const defaults = qmljs.loadLibrary(path.join(__dirname, '../config/defaults/performance.js')).data;
 
 test('targetScreen prefers the focused screen, else the first one', () => {
     assert.equal(W.targetScreen(['A', 'B'], 'B'), 'B');
@@ -28,4 +29,13 @@ test('only the target screen warms', () => {
     assert.equal(W.shouldWarm('hosts', 'spotlight', 'B', screens, 'B'), true);
     assert.equal(W.shouldWarm('hosts', 'spotlight', '', screens, ''), false);
     assert.equal(W.shouldWarm('hosts', '', 'A', screens, ''), false);
+});
+
+test('performance.warmViews gates the launcher pre-creation, on by default', () => {
+    assert.equal(defaults.warmViews, true);
+    assert.equal(W.enabled(defaults), true);
+    assert.equal(W.enabled({ ...defaults, warmViews: false }), false);
+    assert.equal(W.enabled({}), true);
+    assert.equal(W.enabled(undefined), true);
+    assert.equal(W.enabled({ warmViews: null }), true);
 });

@@ -92,6 +92,11 @@ def _qml_body(body: str, singleton: bool = False) -> str:
 # (YOZAKURA_HARNESS_HOME) so parallel tests never share or wipe one.
 HARNESS_HOME = os.environ.get("YOZAKURA_HARNESS_HOME", "/tmp/qmlharness-home")
 
+# modules/globals/BatterySaver.qml as an inactive stub (no UPower): for test
+# modules that stub qs.modules.globals and load a reader of it
+# (NotchVisualizer, PositionSlider, Wallpaper).
+BATTERY_SAVER_STUB = "pragma Singleton\nimport QtQuick\nQtObject { property bool active: false }"
+
 
 def brand_qml(home: str = HARNESS_HOME) -> str:
     """The real modules/globals/Brand.qml without its Quickshell dependency:

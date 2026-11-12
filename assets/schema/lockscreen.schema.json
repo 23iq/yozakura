@@ -148,6 +148,22 @@
         "control": "toggle",
         "keywords": "lock screen status user network wifi battery"
       }
+    },
+    "pamService": {
+      "title": "PAM service",
+      "type": "string",
+      "default": "",
+      "description": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. A stack with pam_faillock (such as Arch \"system-auth\") counts wrong passwords here as well: after 3 the account is locked for about 10 minutes, even with the right password. Kept on this computer: presets never change it.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "auth",
+        "label": "prefs.lockscreen.pam_service",
+        "control": "text",
+        "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
+        "advanced": true
+      },
+      "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
+      "x-local": true
     }
   },
   "additionalProperties": false

@@ -22,7 +22,36 @@ modules/lockscreen/
     ├── LockStyle.qml         # the interface: slots, arrangement, wallpaper treatment, palette
     └── GlassStyle / PaperStyle / TerminalStyle / AuroraStyle / NeonStyle / PosterStyle .qml
 ```
-PAM config: `config/pam/password.conf`.
+PAM config: `config/pam/password.conf` by default. `lockscreen.pamService` (advanced, empty by
+default, machine-local: presets never carry or change it, the assistant must ask) names a
+system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` (grep, argv) and
+`LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
+`*-autologin` name, a missing/unreadable file or a file with an `auth ... pam_permit.so` line
+keeps the bundled file, with a warning in the log (`LockPam.js`). A password submitted before the
+check of the configured file answered waits for it (`pamTarget.pending` / `settled`, at most
+`pamWait` = 3 s, then the bundled file), so an sssd/homed account does not fail its first try.
+A system stack with `pam_faillock` (Arch `system-auth`, `login`, ...) counts lock-screen failures:
+3 wrong passwords lock the account for ~10 min (`/etc/security/faillock.conf`), which the key's
+description says; the bundled `password.conf` has no faillock.
+Only an empty field is ignored on submit; the text reaches PAM exactly as typed (spaces too).
+
+Lock across restarts: `LockStateMarker.qml` (in `shell.qml` next to `WlSessionLock`) mirrors
+`GlobalStates.lockscreenVisible` to `$XDG_RUNTIME_DIR/<app>-locked-<display>` (written on lock,
+removed on any unlock, one operation at a time) and, at startup, locks again when the marker was
+written by this compositor instance (`HYPRLAND_INSTANCE_SIGNATURE`, else `NIRI_SOCKET`, else
+`XDG_SESSION_ID`: equal for a shell restarted in the session, new after a re-login); a marker of
+another instance is removed (`LockRestore.js`). The marker is read synchronously and, if it only
+arrives later, on `loaded` (unless the user locked/unlocked meanwhile); `loadFailed` = no marker.
+No `XDG_RUNTIME_DIR`, display or instance token = no marker. Hyprland needs
+`misc:allow_session_lock_restore` (set by the generated config, `backend/pkg/yozd/ipc/hyprland/
+generator.go` `miscConf` / `generator_lua.go` `miscLua`) to accept the new lock. Caveats: it only
+takes effect once the compositor config is regenerated (and Hyprland reloads it), so a session
+started on an older generated config still shows the "locker died" screen; and it is not ours
+alone: while the lock's owner is dead, *any* Wayland client may take the session lock over
+(Hyprland does not check who), so a client already running in the session could unlock it once
+the shell has died. The restore path was only tested offscreen (marker + `LockRestore.js`) and in the
+generator tests; it has not been verified on a real Hyprland session.
+Tests: `tests/lockscreen-marker.test.py`, `tests/lockscreen-restore.test.cjs`, `tests/lockscreen-pam.test.cjs`.
 
 ## STYLES (adding one = one file + one registry entry)
 A style extends `styles/LockStyle.qml` and fills five slots with Components declared in the
@@ -42,7 +71,7 @@ password and full auth checks against every registered style; `tests/lockscreen-
 checks the registry and layout; `tools/render/lockscreen_render.py` renders every style dark/light.
 
 Config (`config/defaults/lockscreen.js`): `style`, `tone` (style|theme|light|dark), `blur`
-(-1 = style's own), `position`, `showStatus`, `showMedia`, `showVisualizer`. Settings:
+(-1 = style's own), `position`, `showStatus`, `showMedia`, `showVisualizer`, `pamService`. Settings:
 `modules/settings/schema/lockscreen.js` (gallery: `editors/LockStyleGallery.qml`, live LockViews).
 
 Sizes, gaps, text and motion come from the kit (`Type` roles via `KitText`, `Space`,

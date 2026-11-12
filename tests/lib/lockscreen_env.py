@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import shutil
 
-from qmlharness import REPO
+from qmlharness import BATTERY_SAVER_STUB, REPO
 from settings_env import SettingsEnv
 from PySide6.QtCore import qInstallMessageHandler
 
@@ -69,15 +69,16 @@ PAM = {
     "PamResult": "QtObject { enum Values { Success, Failed, Error, MaxTries } }",
     "PamContext": """Item { id: pam; property string configDirectory; property string config; property string message: "Password: "
  property int messageType; property bool responseRequired: true
- property int starts: 0; property string received: "__none__"
+ property int starts: 0; property string received: "__none__"; property string startedWith: ""
  signal pamMessage; signal completed(int result)
  function respond(r) { received = r; }
- function start() { starts++; Qt.callLater(function() { pam.pamMessage(); pam.completed(pam.received === "correct" ? PamResult.Success : PamResult.Failed); }); } }""",
+ function start() { starts++; startedWith = configDirectory + "|" + config; Qt.callLater(function() { pam.pamMessage(); pam.completed(pam.received === "correct" ? PamResult.Success : PamResult.Failed); }); } }""",
 }
 GLOBALS = {
     "GlobalStates": """pragma Singleton
 QtObject { property bool lockscreenVisible: true; property var wallpaperManager: null; property int videoSyncTick: 0
  function wallpaperForScreen(n) { return null; } }""",
+    "BatterySaver": BATTERY_SAVER_STUB,
 }
 
 

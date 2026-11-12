@@ -34,6 +34,7 @@ func Host() exclusive.Options {
 	return exclusive.Options{
 		Home:       home,
 		HyprDir:    paths.HyprDir(),
+		DataDir:    paths.New().DataDir,
 		Compositor: binds.DetectCompositor(),
 		Polkit:     compositor.FallbackCommand(paths.Launcher(brand.AppID)),
 		Systemd:    exclusive.ExecSystemd{},

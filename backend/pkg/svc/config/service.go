@@ -1,8 +1,11 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"sync"
 
@@ -185,9 +188,9 @@ func (s *Service) patch(params json.RawMessage) (any, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	doc := map[string]any{}
-	if data, err := os.ReadFile(path); err == nil {
-		json.Unmarshal(data, &doc)
+	doc, err := readDoc(path)
+	if err != nil {
+		return nil, fmt.Errorf("config.patch %s: %w", p.Domain, err)
 	}
 	var val any
 	if err := json.Unmarshal(p.Value, &val); err != nil {
@@ -229,7 +232,10 @@ func (s *Service) stateSet(params json.RawMessage) (any, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	doc := loadJSON(s.paths.StatesFile())
+	doc, err := readDoc(s.paths.StatesFile())
+	if err != nil {
+		return nil, fmt.Errorf("config.stateSet: %w", err)
+	}
 	var val any
 	if err := json.Unmarshal(p.Value, &val); err != nil {
 		val = nil
@@ -276,6 +282,31 @@ func loadJSON(path string) map[string]any {
 		json.Unmarshal(data, &doc)
 	}
 	return doc
+}
+
+// readDoc loads a JSON object for a read-modify-write: {} when the file is
+// missing, empty or null. A file that cannot be read or parsed, or holds
+// something other than an object, is an error: writing back only the
+// patched key would wipe a recoverable file, so the caller refuses.
+func readDoc(path string) (map[string]any, error) {
+	data, err := os.ReadFile(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return map[string]any{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return map[string]any{}, nil
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return nil, fmt.Errorf("%s is not a valid JSON object, not overwriting it (fix or remove it): %w", path, err)
+	}
+	if doc == nil {
+		doc = map[string]any{}
+	}
+	return doc, nil
 }
 
 func setPath(doc map[string]any, keyPath []string, val any) {

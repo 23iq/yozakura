@@ -47,3 +47,19 @@ func TestExtrasInstallAlwaysConfirms(t *testing.T) {
 		t.Fatal("extras_list is read-only")
 	}
 }
+
+func TestCommandConfigSetAlwaysAsks(t *testing.T) {
+	m := &Manager{}
+	tool := "mcp__" + YozakuraMCPName + "__config_set"
+	cmd := PermissionRequest{Tool: tool, Input: map[string]any{"key": "system.idle.general.lock_cmd", "value": "sh -c x"}}
+	if !m.confirmLocked(cmd) {
+		t.Fatal("config_set of a command key must always ask")
+	}
+	plain := PermissionRequest{Tool: tool, Input: map[string]any{"key": "bar.position", "value": "top"}}
+	if m.confirmLocked(plain) {
+		t.Fatal("a harmless config_set follows the policy")
+	}
+	if m.confirmLocked(PermissionRequest{Tool: "config_set", Input: cmd.Input}) {
+		t.Fatal("only the built-in server's tool is gated")
+	}
+}

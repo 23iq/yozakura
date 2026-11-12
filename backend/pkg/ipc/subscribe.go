@@ -85,7 +85,7 @@ func (s *Server) streamSubscribe(conn net.Conn, w *bufio.Writer, req *Request) {
 		wg.Add(1)
 		go func(svc *Service) {
 			defer wg.Done()
-			svc.Subscribe(sub)
+			runSubscribe(svc, sub)
 		}(svc)
 	}
 	s.mu.RUnlock()

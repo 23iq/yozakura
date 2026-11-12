@@ -3,13 +3,14 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.modules.services
 import qs.modules.globals
 import qs.config
 import "../notifications/NotificationPolicy.js" as Policy
 import "../notifications/NotifyRequest.js" as NotifyRequest
+import "NotificationImage.js" as NotificationImage
+import "NotificationHistory.js" as NotificationHistory
 
 Singleton {
     id: root
@@ -45,6 +46,8 @@ Singleton {
 
         // Indica si esta notificación fue cargada desde cache
         property bool isCached: false
+        // closed() handler on `notification`, disconnected on destruction
+        property var closedHandler: null
 
         // Inicializar valores cuando se asigna la notification
         onNotificationChanged: {
@@ -70,43 +73,25 @@ Singleton {
                 }
 
                 // Escuchar cuando la notificación es cerrada por la aplicación
-                notification.closed.connect(function (reason) {
-                    // CloseRequested = 3: la aplicación solicitó cerrar la notificación
-                    if (reason === 3) {
-                        root.discardNotification(id);
-                    }
-                });
+                // (CloseRequested = 3: la aplicación solicitó cerrar la notificación)
+                const notifId = id;
+                closedHandler = reason => {
+                    if (reason === 3)
+                        root.discardNotification(notifId);
+                };
+                notification.closed.connect(closedHandler);
             }
         }
 
         Component.onDestruction: {
+            if (notification && closedHandler)
+                notification.closed.disconnect(closedHandler);
             if (timer) {
                 timer.stop();
                 timer.destroy();
                 timer = null;
             }
         }
-    }
-
-    function notifToJSON(notif) {
-        return {
-            "id": notif.id,
-            "actions": notif.actions,
-            "appIcon": notif.appIcon,
-            "appName": notif.appName,
-            "desktopEntry": notif.desktopEntry,
-            "body": notif.body,
-            "image": notif.image,
-            "summary": notif.summary,
-            "time": notif.time,
-            "urgency": notif.urgency,
-            "historyPriority": notif.historyPriority,
-            "replaceKey": notif.replaceKey,
-            "actionData": notif.actionData,
-            "cachedAppIcon": notif.cachedAppIcon,
-            "cachedImage": notif.cachedImage,
-            "isCached": notif.isCached
-        };
     }
 
     component NotifTimer: Timer {
@@ -196,11 +181,7 @@ Singleton {
             const n = root.list.find(x => x.id === id);
             if (n) {
                 n.popup = false;
-                if (n.timer) {
-                    n.timer.stop();
-                    n.timer.destroy();
-                    n.timer = null;
-                }
+                root.dropTimer(n);
             }
         });
         const drop = Policy.trimHistory(root.list, root.cfg ? root.cfg.historySize : 100);
@@ -227,20 +208,52 @@ Singleton {
         NotifTimer {}
     }
 
-    FileView {
-        id: notifFileView
-        // QUICKSHELL-GIT: path: Quickshell.cachePath("notifications.json")
+    // Debounced, compact saves; flushed on destruction
+    NotificationHistoryFile {
+        id: historyFile
         path: Brand.cacheDir + "/notifications.json"
-        onLoaded: loadNotifications()
+        // At most 5 per app + summary, compact
+        serialize: () => NotificationHistory.serialize(root.list)
+        onLoaded: root.loadNotifications(false)
+        onMissing: root.loadNotifications(true)
     }
 
-    function stringifyList(list) {
-        return JSON.stringify(list.map(notif => notifToJSON(notif)), null, 2);
+    // A popup's hide step after its timeout animation (one deadline per id)
+    NotificationHideQueue {
+        id: hideQueue
+        onExpired: id => {
+            const n = root.list.find(notif => notif.id === id);
+            if (n) {
+                n.popup = false;
+                root.dropTimer(n);
+            }
+            root.timeout(id);
+        }
     }
 
-    function jsonToNotif(json) {
+    // Destroys dropped notification objects after a grace period
+    NotificationReaper {
+        id: reaper
+        isLive: obj => root.list.indexOf(obj) !== -1
+    }
+
+    // Stop tracking notifications dropped from the list (timers now, objects later)
+    function retire(notifs) {
+        notifs.forEach(n => root.dropTimer(n));
+        reaper.retire(notifs);
+    }
+
+    function dropTimer(n) {
+        if (n && n.timer) {
+            n.timer.stop();
+            n.timer.destroy();
+            n.timer = null;
+        }
+    }
+
+    function jsonToNotif(json, id) {
         return notifComponent.createObject(root, {
-            "id": json.id,
+            "id": id,
             "actions": json.actions,
             "appIcon": json.cachedAppIcon || json.appIcon  // Usar cached si disponible
             ,
@@ -265,50 +278,37 @@ Singleton {
     }
 
     function saveNotifications() {
-        // Limitar notificaciones almacenadas a 5 por summary para evitar almacenamiento excesivo
-        const limitedList = limitNotificationsPerSummary(root.list);
-        notifFileView.setText(stringifyList(limitedList));
+        historyFile.save();
     }
 
-    function limitNotificationsPerSummary(notifications) {
-        var groups = {};
-
-        notifications.forEach(notif => {
-            const key = notif.appName + '|' + (notif.summary || '');
-            if (!groups[key]) {
-                groups[key] = [];
+    // Once, merged under the live notifications (NotificationHistory.merge):
+    // the ones that arrived before the history was read stay as they are
+    // (popup, actions, ids). A missing or unreadable file is an empty
+    // history, so a later reload never replaces live state.
+    property bool historyLoaded: false
+    function loadNotifications(missing) {
+        if (root.historyLoaded)
+            return;
+        root.historyLoaded = true;
+        let data = [];
+        if (!missing) {
+            try {
+                data = JSON.parse(historyFile.text());
+            } catch (e) {
+                console.log("No saved notifications or error loading:", e);
             }
-            groups[key].push(notif);
-        });
-
-        const limitedNotifications = [];
-        for (const key in groups) {
-            const group = groups[key];
-            group.sort((a, b) => b.time - a.time);
-            limitedNotifications.push(...group.slice(0, 5));
         }
-
-        return limitedNotifications;
-    }
-
-    function loadNotifications() {
-        try {
-            const data = JSON.parse(notifFileView.text());
-            root.list = data.map(jsonToNotif);
-            // Set idOffset to max id + 1
-            let maxId = 0;
-            root.list.forEach(notif => {
-                if (notif.id > maxId)
-                    maxId = notif.id;
-                if (notif.id <= -1000000)
-                    root.internalIdCounter = Math.max(root.internalIdCounter, Math.abs(notif.id) - 999999);
-            });
-            root.idOffset = maxId + 1;
-        } catch (e) {
-            console.log("No saved notifications or error loading:", e);
-            root.list = [];
-            root.idOffset = 0;
-        }
+        const live = root.list.map(n => ({
+                    "id": n.id,
+                    "time": n.time,
+                    "summary": n.summary
+                }));
+        const fixed = root.list.some(n => n.notification !== null) || notifServer.trackedNotifications.values.length > 0;
+        const m = NotificationHistory.merge(data, live, root.idOffset, root.internalIdCounter, fixed);
+        root.idOffset = m.idOffset;
+        root.internalIdCounter = m.internalIdCounter;
+        if (m.entries.length > 0)
+            root.list = [...m.entries.map(e => jsonToNotif(e.json, e.id)), ...root.list];
     }
 
     onListChanged: {
@@ -479,9 +479,11 @@ Singleton {
         const index = root.list.findIndex(notif => notif.id === id);
         const notifServerIndex = notifServer.trackedNotifications.values.findIndex(notif => notif.id + root.idOffset === id);
         if (index !== -1) {
+            const removed = root.list[index];
             root.list.splice(index, 1);
             triggerListChange();
             saveNotifications();
+            root.retire([removed]);
         }
         if (notifServerIndex !== -1) {
             notifServer.trackedNotifications.values[notifServerIndex].dismiss();
@@ -498,13 +500,12 @@ Singleton {
             idsMap[id] = true;
         });
 
-        const newList = root.list.filter(notif => !idsMap[notif.id]);
-        const removedCount = root.list.length - newList.length;
-
-        if (removedCount > 0) {
-            root.list = newList;
+        const removed = root.list.filter(notif => idsMap[notif.id]);
+        if (removed.length > 0) {
+            root.list = root.list.filter(notif => !idsMap[notif.id]);
             triggerListChange();
             saveNotifications();
+            root.retire(removed);
         }
 
         ids.forEach(id => {
@@ -517,9 +518,11 @@ Singleton {
     }
 
     function discardAllNotifications() {
+        const removed = root.list.slice();
         root.list = [];
         triggerListChange();
         saveNotifications();
+        root.retire(removed);
         notifServer.trackedNotifications.values.forEach(notif => {
             notif.dismiss();
         });
@@ -528,24 +531,9 @@ Singleton {
 
     signal timeoutWithAnimation(id: var)
 
-    Timer {
-        id: timeoutAnimationTimer
-        interval: 350
-        running: false
-        repeat: false
-        property int notificationId: -1
-        onTriggered: {
-            const index = root.list.findIndex(notif => notif.id === notificationId);
-            if (index !== -1 && root.list[index] != null)
-                root.list[index].popup = false;
-            root.timeout(notificationId);
-        }
-    }
-
     function timeoutNotification(id) {
         root.timeoutWithAnimation(id);
-        timeoutAnimationTimer.notificationId = id;
-        timeoutAnimationTimer.restart();
+        hideQueue.schedule(id);
     }
 
     function timeoutAll() {
@@ -554,6 +542,7 @@ Singleton {
         });
         root.popupList.forEach(notif => {
             notif.popup = false;
+            root.dropTimer(notif);
         });
     }
 
@@ -649,11 +638,7 @@ Singleton {
     function hideAllPopups() {
         root.popupList.forEach(notif => {
             notif.popup = false;
-            if (notif.timer) {
-                notif.timer.stop();
-                notif.timer.destroy();
-                notif.timer = null;
-            }
+            root.dropTimer(notif);
         });
     }
 
@@ -699,26 +684,8 @@ Singleton {
         xhr.onload = function () {
             if (xhr.status === 200 && xhr.response) {
                 try {
-                    var arrayBuffer = xhr.response;
-                    var bytes = new Uint8Array(arrayBuffer);
-                    var binary = '';
-                    var len = Math.min(bytes.byteLength, 1024 * 1024);
-                    for (var i = 0; i < len; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    var base64 = btoa(binary);
-
-                    var mimeType = "image/png";
-                    var lowerUrl = imageUrl.toLowerCase();
-                    if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg")) {
-                        mimeType = "image/jpeg";
-                    } else if (lowerUrl.includes(".gif")) {
-                        mimeType = "image/gif";
-                    } else if (lowerUrl.includes(".webp")) {
-                        mimeType = "image/webp";
-                    }
-
-                    callback("data:" + mimeType + ";base64," + base64);
+                    // Over 1 MiB or empty: keep the URL, never a cut (corrupt) image
+                    callback(NotificationImage.dataUrl(new Uint8Array(xhr.response), imageUrl, btoa) || imageUrl);
                 } catch (e) {
                     callback(imageUrl);
                 }
@@ -793,6 +760,6 @@ Singleton {
         interval: 2000
         running: false
         repeat: false
-        onTriggered: notifFileView.reload()
+        onTriggered: historyFile.reload()
     }
 }

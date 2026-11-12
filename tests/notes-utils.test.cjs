@@ -36,3 +36,46 @@ test('row heights and scrolling', () => {
     assert.equal(U.scrollToShow(280, 60, 100, 200, 500), 140);
     assert.equal(U.scrollToShow(480, 60, 100, 200, 500), 300);
 });
+
+test('strict index parse: empty is empty, unreadable is null, fields kept', () => {
+    assert.deepEqual(plain(U.parseIndexStrict('')), { order: [], notes: {} });
+    assert.equal(U.parseIndexStrict('{"order": ['), null);
+    assert.equal(U.parseIndexStrict('[1]'), null);
+    assert.deepEqual(plain(U.parseIndexStrict('{"version": 2}')), { version: 2, order: [], notes: {} });
+});
+
+test('index entries follow the order and skip ids without metadata', () => {
+    const entries = plain(U.indexEntries({ order: ['b', 'x', 'a'], notes: { a: { title: 'A', isMarkdown: true }, b: {} } }));
+    assert.deepEqual(entries.map(e => [e.id, e.title, e.isMarkdown]), [['b', 'Untitled', false], ['a', 'A', true]]);
+});
+
+test('merge keeps notes added elsewhere, drops removed ones, disk metadata wins', () => {
+    const disk = {
+        version: 3,
+        order: ['ext', 'a', 'gone'],
+        notes: { ext: { title: 'Ext', pinned: true }, a: { title: 'A renamed', modified: 'm2', extra: 1 }, gone: { title: 'G' } }
+    };
+    const tabNotes = [{ id: 'new', title: 'New', created: 'c', modified: 'c', isMarkdown: true },
+        { id: 'a', title: 'A', created: 'c0', modified: 'm1' }];
+    const out = plain(U.mergeIndex(disk, tabNotes, ['gone']));
+    assert.deepEqual(out.order, ['ext', 'new', 'a']);
+    assert.equal(out.version, 3);
+    assert.deepEqual(out.notes.ext, { title: 'Ext', pinned: true });
+    assert.deepEqual(out.notes.new, { title: 'New', created: 'c', modified: 'c', isMarkdown: true });
+    assert.deepEqual(out.notes.a, { title: 'A renamed', created: 'c0', modified: 'm2', isMarkdown: false, extra: 1 });
+    assert.equal(out.notes.gone, undefined);
+});
+
+test('merge over an unreadable index writes the tab notes', () => {
+    const out = plain(U.mergeIndex(null, [{ id: 'a', title: 'A', created: '', modified: '' }], []));
+    assert.deepEqual(out.order, ['a']);
+});
+
+test('updateNote changes a listed note only', () => {
+    const idx = { order: ['a'], notes: { a: { title: 'A', modified: 'old' } } };
+    const out = U.updateNote(idx, 'a', { title: 'B' });
+    assert.equal(out.notes.a.title, 'B');
+    assert.notEqual(out.notes.a.modified, 'old');
+    assert.equal(U.updateNote(idx, 'zz', { title: 'B' }), null);
+    assert.equal(U.updateNote(null, 'a', {}), null);
+});

@@ -1,7 +1,6 @@
 package compositor
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,10 +16,11 @@ import (
 	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/yozd/client"
 )
 
-// State is the snapshot pushed to subscribers on every `yozd subscribe`
-// event (yozd = brand.Daemon). Mirrors the shape the QML service consumed
+// State is the snapshot pushed to subscribers on every event of the daemon's
+// System.Subscribe stream (yozd = brand.Daemon). Mirrors the shape the QML service consumed
 // before the refactor.
 type State struct {
 	Windows      []json.RawMessage `json:"windows,omitempty"`
@@ -33,23 +33,28 @@ type State struct {
 }
 
 const subscribeRetryDelay = 500 * time.Millisecond
-const socketWaitStep = 100 * time.Millisecond
-const socketWaitTimeout = 5 * time.Second
 
-// daemonRestartDelay throttles restarts of a compositor daemon that exited
-// while the Manager was still running.
-const daemonRestartDelay = 500 * time.Millisecond
+// maxSubscribeLine bounds one event line of the subscribe stream (a full
+// state dump with every window); a longer line drops the connection, which
+// is then re-established.
+const maxSubscribeLine = 8 * 1024 * 1024
+const socketWaitStep = 100 * time.Millisecond
+
+// socketWaitTimeout is a variable so tests can shorten it.
+var socketWaitTimeout = 5 * time.Second
 
 // daemonHeldRecheck is how often the supervisor re-checks a lock held by
 // a foreign daemon instance.
 const daemonHeldRecheck = 3 * time.Second
 
-// Manager owns the long-running daemon children (yozd daemon, yozd subscribe)
-// and exposes their state to the rest of the compositor service. The Manager
-// is started once by the daemon and shut down on daemon exit; child processes
-// are placed in their own process group so a single SIGKILL cleans them up.
-// Both children are supervised: each is reaped by its own goroutine and
-// restarted if it exits before Close (e.g. killed from outside).
+// Manager owns the long-running compositor daemon child (yozd daemon) and
+// its event stream, and exposes the state to the rest of the compositor
+// service. The Manager is started once by the daemon and shut down on daemon
+// exit; the child is placed in its own process group so a single SIGKILL
+// cleans it up. The child is supervised: it is reaped by its own goroutine
+// and restarted if it exits before Close (e.g. killed from outside). The
+// event stream is read in-process from the daemon socket and re-established
+// whenever it drops.
 type Manager struct {
 	tomlPath  string
 	configDir string
@@ -62,14 +67,17 @@ type Manager struct {
 	daemonMu  sync.Mutex
 	daemonCmd *exec.Cmd
 	stopping  bool // set by Close under daemonMu; no restarts after it
-	subCmdMu  sync.Mutex
-	subCmd    *exec.Cmd
 
 	subsMu      sync.Mutex
 	subscribers map[chan State]struct{}
 
+	idle *idleHub // idle monitor flips (idle.go)
+
 	stopCh chan struct{}
-	wg     sync.WaitGroup
+	// stopCtx is cancelled by Close; it aborts a blocked socket read.
+	stopCtx    context.Context
+	stopCancel context.CancelFunc
+	wg         sync.WaitGroup
 }
 
 // NewManager constructs a Manager. nil defaults to the same XDG layout the
@@ -78,7 +86,9 @@ func NewManager(p PathResolver) *Manager {
 	m := &Manager{
 		stopCh:      make(chan struct{}),
 		subscribers: make(map[chan State]struct{}),
+		idle:        newIdleHub(),
 	}
+	m.stopCtx, m.stopCancel = context.WithCancel(context.Background())
 	if p == nil {
 		m.tomlPath = defaultTomlPath()
 	} else {
@@ -90,8 +100,8 @@ func NewManager(p PathResolver) *Manager {
 }
 
 // Start ensures the daemon config dir exists, then launches `yozd daemon`
-// followed by `yozd subscribe`. Both children run in their own process group
-// so Close() can SIGKILL the whole group in one shot.
+// and the goroutine that subscribes to its socket. The child runs in its own
+// process group so Close() can SIGKILL the whole group in one shot.
 func (m *Manager) Start() error {
 	if _, err := exec.LookPath(m.bin); err != nil {
 		return fmt.Errorf("%s not found next to the executable or in PATH: %w", brand.Daemon, err)
@@ -144,34 +154,43 @@ func (m *Manager) startDaemonLocked() (*exec.Cmd, error) {
 }
 
 // superviseDaemon reaps the daemon and restarts it whenever it exits
-// before Close. Without it a daemon killed from outside stayed a zombie and
-// every daemon client failed with "connection refused" until a full restart.
+// before Close, with a backoff (restart.go). Without it a daemon killed from
+// outside stayed a zombie and every daemon client failed with "connection
+// refused" until a full restart.
 func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 	defer m.wg.Done()
+	var policy restartPolicy
+	started := time.Now()
 	for {
-		err := cmd.Wait()
-
+		// Forget the daemon before reaping it: Close signals daemonCmd
+		// under daemonMu, so it only ever sees a process not yet reaped.
+		waitExited(cmd.Process.Pid)
 		m.daemonMu.Lock()
 		if m.daemonCmd == cmd {
 			m.daemonCmd = nil
 		}
 		m.daemonMu.Unlock()
+		err := cmd.Wait()
+
+		noComp := exitedNoCompositor(err)
+		delay, first := policy.next(time.Since(started), noComp)
+		switch {
+		case !noComp:
+			logf("[compositor] %s daemon exited (%v), restarting in %v\n", brand.Daemon, err, delay)
+		case first:
+			logf("[compositor] %s found no supported compositor; retrying with a backoff of up to %v (compositor features are off meanwhile)\n", brand.Daemon, noCompositorMax)
+		}
 
 		for {
 			select {
 			case <-m.stopCh:
 				return
-			case <-time.After(daemonRestartDelay):
+			case <-time.After(delay):
 			}
 			// Another daemon owns the instance lock: respawning would only
 			// make it refuse again, so keep waiting until it is gone.
 			if _, held := instancelock.Held(instancelock.DaemonPath(brand.DaemonSocketPath())); held {
-				err = fmt.Errorf("another %s instance holds the lock", brand.Daemon)
-				select {
-				case <-m.stopCh:
-					return
-				case <-time.After(daemonHeldRecheck):
-				}
+				delay = daemonHeldRecheck
 				continue
 			}
 			m.daemonMu.Lock()
@@ -179,14 +198,15 @@ func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 				m.daemonMu.Unlock()
 				return
 			}
-			fmt.Fprintf(os.Stderr, "[compositor] %s daemon exited (%v), restarting\n", brand.Daemon, err)
 			next, startErr := m.startDaemonLocked()
 			m.daemonMu.Unlock()
 			if startErr == nil {
 				cmd = next
+				started = time.Now()
 				break
 			}
-			err = startErr
+			delay, _ = policy.next(0, false)
+			logf("[compositor] %v, retrying in %v\n", startErr, delay)
 		}
 	}
 }
@@ -218,11 +238,15 @@ func (m *Manager) waitForSocket(path string, timeout time.Duration) error {
 	return fmt.Errorf("%s socket %s did not appear", brand.Daemon, path)
 }
 
-// subscribeLoop keeps a `yozd subscribe` process alive. It waits for the
-// daemon socket before launching, and re-launches on premature exit (e.g.
-// the daemon being restarted, a transient disconnect).
+// subscribeLoop keeps a System.Subscribe connection to the daemon socket
+// open. It waits for the socket before connecting, and reconnects after a
+// short delay whenever the stream ends (the daemon being restarted, a
+// transient disconnect, an oversized line).
 func (m *Manager) subscribeLoop() {
 	defer m.wg.Done()
+	// a missing socket is logged once per outage, not every socketWaitTimeout
+	// (a session without a supported compositor never gets one)
+	warned := false
 	for {
 		select {
 		case <-m.stopCh:
@@ -230,7 +254,8 @@ func (m *Manager) subscribeLoop() {
 		default:
 		}
 
-		if err := m.waitForSocket(brand.DaemonSocketPath(), socketWaitTimeout); err != nil {
+		path := brand.DaemonSocketPath()
+		if err := m.waitForSocket(path, socketWaitTimeout); err != nil {
 			select {
 			case <-m.stopCh:
 				return
@@ -238,39 +263,16 @@ func (m *Manager) subscribeLoop() {
 			}
 			// The daemon may be restarting; keep trying rather than leaving
 			// the shell without compositor state for the rest of the session.
-			fmt.Fprintf(os.Stderr, "[compositor] %v, retrying\n", err)
+			if !warned {
+				logf("[compositor] %v, retrying\n", err)
+				warned = true
+			}
 			continue
 		}
+		warned = false
 
-		cmd := exec.CommandContext(context.Background(), m.bin, "subscribe")
-		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			time.Sleep(subscribeRetryDelay)
-			continue
-		}
-		cmd.Stderr = io.Discard
-		if err := cmd.Start(); err != nil {
-			time.Sleep(subscribeRetryDelay)
-			continue
-		}
-
-		m.subCmdMu.Lock()
-		m.subCmd = cmd
-		m.subCmdMu.Unlock()
-		select {
-		case <-m.stopCh: // Close ran between our stop check and Start
-			killGroup(cmd)
-		default:
-		}
-
-		m.readSubscribe(stdout)
-
-		m.subCmdMu.Lock()
-		m.subCmd = nil
-		m.subCmdMu.Unlock()
-
-		_ = cmd.Wait()
+		_ = client.Subscribe(m.stopCtx, path, maxSubscribeLine, m.handleLine)
+		m.idle.streamDown()
 
 		select {
 		case <-m.stopCh:
@@ -280,25 +282,38 @@ func (m *Manager) subscribeLoop() {
 	}
 }
 
+// readSubscribe feeds every line of r to handleLine (tests drive it with a
+// recorded stream).
 func (m *Manager) readSubscribe(r io.Reader) {
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
-	for sc.Scan() {
-		line := sc.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-		// One decode per line: the state is unmarshalled straight into State
-		// (it used to go through a json.RawMessage and a second Unmarshal).
-		var payload struct {
-			State *State `json:"state"`
-		}
-		if err := json.Unmarshal(line, &payload); err != nil || payload.State == nil {
-			continue
-		}
-		m.setState(*payload.State)
-		m.broadcast(*payload.State)
+	_ = client.ReadLines(r, maxSubscribeLine, m.handleLine)
+}
+
+// handleLine applies one line of the subscribe stream; lines without a
+// state (the subscribe reply, garbage) are ignored. The State.Dump opening
+// a stream and idle monitor flips also go to the idle hub (idle.go).
+func (m *Manager) handleLine(line []byte) {
+	// One decode per line: the state is unmarshalled straight into State
+	// (it used to go through a json.RawMessage and a second Unmarshal).
+	var payload struct {
+		Method   string          `json:"method"`
+		Params   json.RawMessage `json:"params"`
+		Features []string        `json:"features"`
+		State    *State          `json:"state"`
 	}
+	if err := json.Unmarshal(line, &payload); err != nil {
+		return
+	}
+	switch payload.Method {
+	case client.StateDumpMethod:
+		m.idle.streamUp(payload.Features)
+	case client.IdleMonitorChangedEvent:
+		m.idle.change(payload.Params)
+	}
+	if payload.State == nil {
+		return
+	}
+	m.setState(*payload.State)
+	m.broadcast(*payload.State)
 }
 
 func (m *Manager) setState(st State) {
@@ -394,8 +409,9 @@ func (m *Manager) Eval(expression string) (string, int, error) {
 	return m.Dispatch([]string{"config", "raw-batch", "eval " + expression})
 }
 
-// Close kills the daemon process groups, then waits for the supervising
-// goroutines to reap them. Safe to call multiple times.
+// Close kills the daemon process group and drops the event stream, then
+// waits for the supervising goroutines to finish. Safe to call multiple
+// times.
 func (m *Manager) Close() {
 	m.mu.Lock()
 	started := m.started
@@ -405,20 +421,15 @@ func (m *Manager) Close() {
 		return
 	}
 
+	// superviseDaemon owns Wait() for the daemon and clears daemonCmd
+	// before it reaps it, so under daemonMu a daemon that already exited
+	// is never signalled (its pid may belong to another process by now).
 	m.daemonMu.Lock()
 	m.stopping = true
-	daemonCmd := m.daemonCmd
+	killGroup(m.daemonCmd)
 	m.daemonMu.Unlock()
 	close(m.stopCh)
-
-	m.subCmdMu.Lock()
-	sub := m.subCmd
-	m.subCmd = nil
-	m.subCmdMu.Unlock()
-
-	// subscribeLoop and superviseDaemon own Wait() for their children.
-	killGroup(sub)
-	killGroup(daemonCmd)
+	m.stopCancel() // closes the subscribe connection
 
 	done := make(chan struct{})
 	go func() { m.wg.Wait(); close(done) }()
@@ -433,6 +444,7 @@ func (m *Manager) Close() {
 		delete(m.subscribers, c)
 	}
 	m.subsMu.Unlock()
+	m.idle.closeAll()
 }
 
 // killGroup SIGKILLs the child's process group; the goroutine that started

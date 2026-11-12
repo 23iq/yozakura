@@ -12,8 +12,9 @@ import "JsonUtil.js" as JsonUtil
 FileView {
     id: file
 
-    // The Config singleton: configDir, presetDir, the derived pauseAutoSave,
-    // autoSaveDelay (ms, optional) and configReloaded(name) (optional).
+    // The Config singleton: configDir, presetDir, autoSavePausedFor(name)
+    // (or the derived pauseAutoSave for every domain), autoSaveDelay (ms,
+    // optional) and configReloaded(name) (optional).
     required property var store
     required property string name
     required property var defaults
@@ -106,8 +107,17 @@ FileView {
         }
     }
     onAdapterUpdated: {
-        if (file.ready && !file.broken && !file.reloading && !file.store.pauseAutoSave)
+        if (file.ready && !file.broken && !file.reloading && !file.paused())
             file.scheduleWrite();
+    }
+
+    // The store pauses per domain when it can (Config.autoSavePausedFor:
+    // only staged domains wait for Apply), else all of them at once.
+    function paused() {
+        const s = file.store;
+        if (typeof s.autoSavePausedFor === "function")
+            return !!s.autoSavePausedFor(file.name);
+        return !!s.pauseAutoSave;
     }
 
     function autoSaveDelay() {
@@ -123,7 +133,7 @@ FileView {
     }
 
     function autoSave() {
-        if (file.ready && !file.broken && !file.store.pauseAutoSave)
+        if (file.ready && !file.broken && !file.paused())
             file.writeAdapter();
     }
 
@@ -133,7 +143,7 @@ FileView {
         if (!raw || raw.trim().length === 0) {
             // File is missing or empty — create with defaults
             console.log(name + ".json missing or empty, creating default...");
-            file.setText(JSON.stringify(ConfigValidator.validate(migrated, defaults), null, 2));
+            file.setText(JSON.stringify(ConfigValidator.validateDomain(migrated, defaults, file.name), null, 2));
             onComplete();
             return;
         }
@@ -145,7 +155,7 @@ FileView {
                 source = ConfigValidator.overlay(current, file.pendingOverlay);
                 file.pendingOverlay = undefined;
             }
-            var validated = ConfigValidator.validate(migrated !== undefined ? migrated : source, defaults);
+            var validated = ConfigValidator.validateDomain(migrated !== undefined ? migrated : source, defaults, file.name);
 
             if (!JsonUtil.deepEqual(current, validated)) {
                 console.log("Merging and updating " + name + ".json...");
@@ -217,7 +227,7 @@ FileView {
                     file.reload();
                 } else {
                     console.log("Using defaults for " + name + ".json");
-                    file.setText(JSON.stringify(migrated !== undefined ? ConfigValidator.validate(migrated, defaults) : defaults, null, 2));
+                    file.setText(JSON.stringify(migrated !== undefined ? ConfigValidator.validateDomain(migrated, defaults, file.name) : defaults, null, 2));
                     onComplete();
                 }
             }

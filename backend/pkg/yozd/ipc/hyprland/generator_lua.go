@@ -41,6 +41,9 @@ func luaBool(v bool) string {
 	return "false"
 }
 
+// miscLua is the Lua form of miscConf.
+const miscLua = "hl.config({\n    misc = {\n        allow_session_lock_restore = true,\n    },\n})\n\n"
+
 func (g *LuaGenerator) GenerateAppearanceLua(config ipc.ConfigAppearance) string {
 	var b strings.Builder
 
@@ -147,6 +150,8 @@ func (g *LuaGenerator) GenerateAppearanceLua(config ipc.ConfigAppearance) string
 	if needsGeneral || needsDecoration {
 		b.WriteString("})\n\n")
 	}
+
+	b.WriteString(miscLua)
 
 	if config.Animations != nil && config.Animations.Enabled != nil {
 		b.WriteString("hl.config({\n")

@@ -43,7 +43,8 @@ type IdleManager struct {
 
 	systemInhibitor systemInhibitor
 
-	onIdleMonitorChanged func(id uint32, isIdle bool)
+	onIdleMonitorChanged func(id uint32, isIdle bool, seq uint64)
+	idleSeq              uint64 // idle_events.go
 }
 
 type idleMonitor struct {
@@ -242,12 +243,6 @@ func isBrokenPipeErr(err error) bool {
 	return strings.Contains(s, "broken pipe") ||
 		strings.Contains(s, "connection reset") ||
 		strings.Contains(s, "use of closed network connection")
-}
-
-func (im *IdleManager) SetIdleMonitorCallback(cb func(id uint32, isIdle bool)) {
-	im.mu.Lock()
-	im.onIdleMonitorChanged = cb
-	im.mu.Unlock()
 }
 
 func (im *IdleManager) Inhibit(on bool) error {
@@ -660,26 +655,6 @@ func (im *IdleManager) refreshMonitor(mon *idleMonitor) error {
 	mon.notification = notif
 	im.mu.Unlock()
 	return nil
-}
-
-func (im *IdleManager) setMonitorIdle(mon *idleMonitor, isIdle bool) {
-	im.mu.Lock()
-	if mon.deleted {
-		im.mu.Unlock()
-		return
-	}
-	if mon.isIdle == isIdle {
-		im.mu.Unlock()
-		return
-	}
-	mon.isIdle = isIdle
-	cb := im.onIdleMonitorChanged
-	id := mon.id
-	im.mu.Unlock()
-
-	if cb != nil {
-		cb(id, isIdle)
-	}
 }
 
 func (im *IdleManager) CreateIdleInhibitor(enabled bool) (IdleInhibitorState, error) {
