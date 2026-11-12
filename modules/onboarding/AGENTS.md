@@ -66,7 +66,10 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
 - Password prompts of app installs: with the shell's own polkit agent
   (`PolkitService.registered`, modules/polkit) its dialog maps above the wizard and
   the wizard hands it the keyboard while `PolkitService.dialogOpen`; with an external
-  agent the window unmaps while `ExtrasService.awaitingAuth` (its dialog is a normal window).
+  agent OnboardingWindow unmaps while any extras task awaits the pkexec password
+  (`ExtrasService.awaitingAuth`, the backend sees a pkexec still running in the
+  task's process group), so the agent's dialog (a normal window) is not hidden
+  behind the Overlay card; it comes back once the password is given or cancelled.
 
 ## DRY RUN
 `<app> onboarding --dry-run [--keep]` (`backend/cmd/yozakura/cmds_onboarding_dryrun.go`)

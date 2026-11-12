@@ -55,7 +55,7 @@ COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 DOCTOR_FAILED=0
 # DM: the login manager found; DM_STATE: enabled, disabled, managed or unknown;
 # DM_ENABLE: its unit when this run enables it (choose_login).
-TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
+TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" DM_STALE_LINK=0 SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
 # UNAVAILABLE: planned packages this distribution release does not carry;
@@ -767,16 +767,16 @@ sudo_setup_lines() {
   local who="${1:-yourname}" wheel
   wheel="$(wheel_line)"
   case "$DISTRO" in
-  arch) printf '%s
-' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
-  fedora) printf '%s
-' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
-  suse) printf '%s
-' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
-  debian) printf '%s
-' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
-  *) printf '%s
-' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  arch) printf '%s\n' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  fedora) printf '%s\n' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
+  suse) printf '%s\n' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  debian) printf '%s\n' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
+  # Users and sudo are declared in the system configuration; wheel may use
+  # sudo out of the box.
+  nixos) printf '%s\n' "# in /etc/nixos/configuration.nix:" \
+    "users.users.$who = { isNormalUser = true; extraGroups = [ \"wheel\" ]; };" \
+    "nixos-rebuild switch" "passwd $who" ;;
+  *) printf '%s\n' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
   esac
 }
 
@@ -793,6 +793,7 @@ admin_group() { if [[ "$DISTRO" == debian ]]; then echo sudo; else echo wheel; f
 sudo_grant_lines() {
   case "$DISTRO" in
   debian | fedora) printf '%s\n' "usermod -aG $(admin_group) $1" ;;
+  nixos) printf '%s\n' "users.users.$1.extraGroups = [ \"wheel\" ];" "nixos-rebuild switch" ;;
   *) printf '%s\n' "usermod -aG wheel $1" "$(wheel_line)" ;;
   esac
 }
@@ -945,6 +946,14 @@ dm_unit() {
   if [[ "$1" == ly && "$(dm_unit_file ly)" == *@.service ]]; then echo "ly@tty2.service"; else echo "$1.service"; fi
 }
 
+# dm_enable UNIT: the systemctl command that enables login manager UNIT.
+# Over a dangling display-manager.service link (DM_STALE_LINK) systemd
+# refuses a plain enable ("already exists and is a symlink to gdm.service");
+# --force replaces that link, which points nowhere anyway.
+dm_enable() {
+  if [[ "$DM_STALE_LINK" == 1 ]]; then echo "systemctl enable --force $1"; else echo "systemctl enable $1"; fi
+}
+
 # detect_login: DM = the login manager found, DM_STATE = enabled (it starts
 # at boot), disabled (installed, nothing starts it), managed (the
 # distribution's own display-manager.service unit picks it) or unknown (no
@@ -953,13 +962,15 @@ dm_unit() {
 # ly@ttyN (or ly.service) is wanted by a target directly.
 detect_login() {
   local link="$SYSROOT/etc/systemd/system/display-manager.service" v w u
-  DM="" DM_STATE=""
+  DM="" DM_STATE="" DM_STALE_LINK=0
   if has_systemd; then
-    # A dangling link (its login manager removed) enables nothing.
+    # A dangling link (its login manager removed) enables nothing, but
+    # systemd still refuses a plain enable of another one over it.
     if [[ -L "$link" && -e "$link" ]]; then
       DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
       return 0
     fi
+    [[ -L "$link" ]] && DM_STALE_LINK=1
     # openSUSE: display-manager.service is a unit file of its own that
     # starts the login manager update-alternatives selects; left to it.
     for u in "$SYSROOT"/{usr/lib,lib,etc}/systemd/system/display-manager.service; do
@@ -1147,7 +1158,7 @@ choose_login() {
   fi
   if [[ -z "$TTY" || "$ASSUME_YES" == 1 ]]; then
     warn "$DM is installed but not enabled: no login screen comes up at boot."
-    info "Left as it is (another login manager is only enabled when you choose it). Start the session from a console, or enable it: sudo systemctl enable $(dm_unit "$DM")"
+    info "Left as it is (another login manager is only enabled when you choose it). Start the session from a console, or enable it: sudo $(dm_enable "$(dm_unit "$DM")")"
     return 0
   fi
   local opts=(enable) reply
@@ -1185,7 +1196,7 @@ login_menu() {
     i=$((i + 1))
     ui_box_row ""
     case "$c" in
-    enable) ui_box_row "$(printf '%s%d%s  %sEnable %s%s  %s(sudo systemctl enable %s)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DM" "$C_OFF" "$C_DIM" "$(dm_unit "$DM")" "$C_OFF")" ;;
+    enable) ui_box_row "$(printf '%s%d%s  %sEnable %s%s  %s(sudo %s)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DM" "$C_OFF" "$C_DIM" "$(dm_enable "$(dm_unit "$DM")")" "$C_OFF")" ;;
     sddm) ui_box_row "$(printf '%s%d%s  %sInstall SDDM with the %s theme instead%s  %s(%s stays installed, not enabled)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DISPLAY_NAME" "$C_OFF" "$C_DIM" "$DM" "$C_OFF")" ;;
     leave) ui_box_row "$(printf '%s%d%s  %sLeave it%s  %s(log in on a console and start %s there)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$C_OFF" "$C_DIM" "$(comp_name "${COMPOSITOR:-hyprland}")" "$C_OFF")" ;;
     esac
@@ -1468,7 +1479,7 @@ login_plan() {
     elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
       echo "$DM is installed but not enabled: SDDM with the theme instead ($DM stays as it is)"
     else
-      echo "$DM is installed but not enabled: left as it is, start from a console (or: sudo systemctl enable $unit)"
+      echo "$DM is installed but not enabled: left as it is, start from a console (or: sudo $(dm_enable "$unit"))"
     fi
     ;;
   *)
@@ -1789,13 +1800,14 @@ phosphor_user_font() {
 }
 
 configure_system() {
-  local svc
+  local svc cmd
   # One service that cannot start (no adapter, a unit renamed upstream)
   # must not keep the others, the login screen among them, disabled.
   for svc in "${SERVICES[@]}"; do
     if [[ "$svc" == sddm || "$svc" == "$DM_ENABLE" ]]; then
       # Starting a display manager now would take over the screen mid-install.
-      run_optional "$svc" "Enabling ${svc%.service} (from the next boot)" "Enable it later: sudo systemctl enable $svc" sudo systemctl enable "$svc"
+      read -ra cmd <<<"$(dm_enable "$svc")"
+      run_optional "$svc" "Enabling ${svc%.service} (from the next boot)" "Enable it later: sudo ${cmd[*]}" sudo "${cmd[@]}"
     else
       run_optional "$svc" "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
     fi
@@ -2308,7 +2320,7 @@ next_steps() {
     numbered 1 "Log in on a text console (after a reboot, or Ctrl+Alt+F2 now)."
     numbered 2 "Run ${C_PINK}$(console_cmd)${C_OFF} there to start $name."
     numbered 3 "The setup wizard greets you there. Super opens the launcher."
-    [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo systemctl enable $(dm_unit "$DM")"
+    [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo $(dm_enable "$(dm_unit "$DM")")"
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
   if [[ ${#FAILED[@]} -gt 0 || "$DOCTOR_FAILED" == 1 ]]; then

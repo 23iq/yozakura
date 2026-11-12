@@ -35,9 +35,16 @@ LOGGER = 'l="${0##*/}"; for a in "$@"; do l+=$\'\\t\'"$a"; done; printf "%s\\n" 
 STUBS = {
     # STUB_SUDO_DENY: no cached credentials and no password accepted.
     # STUB_SUDO_FAIL: a command line (e.g. "systemctl enable sddm") that fails.
+    # Like systemd, a plain enable of a login manager fails while
+    # display-manager.service (under YOZAKURA_SYSROOT) links to another unit,
+    # even a removed one; --force replaces the link.
     "sudo": (
         '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\n'
-        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\nexit 0\n'
+        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\n'
+        'dml="${YOZAKURA_SYSROOT:-/nonexistent}/etc/systemd/system/display-manager.service"\n'
+        'if [[ "$1 $2" == "systemctl enable" && "$3" =~ ^(sddm|gdm|lightdm|lxdm|greetd) && -L "$dml" ]]; then\n'
+        '  t="$(readlink "$dml")"; [[ "${t##*/}" == "${3%.service}.service" ]] || exit 1\n'
+        'fi\nexit 0\n'
     ),
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
@@ -152,6 +159,7 @@ OS_RELEASE = {
     "fedora": 'ID=fedora\nPRETTY_NAME="Fedora Linux 42"\n',
     "suse": 'ID="opensuse-tumbleweed"\nID_LIKE="opensuse suse"\nPRETTY_NAME="openSUSE Tumbleweed"\n',
     "debian": 'ID=debian\nPRETTY_NAME="Debian GNU/Linux 13 (trixie)"\n',
+    "nixos": 'ID=nixos\nPRETTY_NAME="NixOS 25.05 (Warbler)"\n',
 }
 FAMILY_STUBS = {"arch": ARCH_STUBS, "fedora": FEDORA_STUBS, "suse": SUSE_STUBS, "debian": DEBIAN_STUBS}
 
@@ -854,10 +862,13 @@ def test_dangling_display_manager_link():
         (sb.root / "sysroot/usr/lib/systemd/system/gdm.service").unlink()
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and re.search(r"Login\s+none: SDDM", err), "dangling link counted as an enabled gdm", err)
-        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not set up behind a dangling link", sb.log.read_text())
+        # systemd refuses a plain enable over the stale link: --force.
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "SDDM not enabled over the dangling link", sb.log.read_text())
+        check("sddm: failed" not in err, "enabling SDDM over the dangling link failed", err)
         installed_unit(sb, "sddm.service")
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and "sddm is installed but not enabled" in err, "installed sddm behind a dangling link not reported", err)
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "installed sddm not enabled over the dangling link", sb.log.read_text())
     finally:
         sb.cleanup()
 
@@ -1028,6 +1039,30 @@ def test_root_and_missing_sudo_give_guidance():
         sb.cleanup()
 
 
+def test_root_guidance_per_distribution():
+    """Run as root (an unprivileged user namespace maps us to uid 0): how to
+    create a user with sudo rights; on NixOS through the configuration."""
+    unshare = shutil.which("unshare")
+    if not unshare or subprocess.run([unshare, "-r", "true"], capture_output=True).returncode != 0:
+        print("skip  test_root_guidance_per_distribution (no unprivileged user namespaces)")
+        return
+    sb = Sandbox("arch")
+    try:
+
+        def as_root():
+            p = subprocess.run([unshare, "-r", "bash", str(INSTALL), "-y"], env=sb.env(), capture_output=True, text=True, timeout=60)
+            return p.returncode, p.stderr
+
+        rc, err = as_root()
+        check(rc == 1 and "not root" in err and "useradd -m -G wheel yourname" in err, f"arch root guidance (exit {rc})", err)
+        sb.os_release.write_text(OS_RELEASE["nixos"])
+        rc, err = as_root()
+        check(rc == 1 and 'extraGroups = [ "wheel" ]' in err and "nixos-rebuild switch" in err, f"nixos root guidance (exit {rc})", err)
+        check("useradd" not in err and "sudoers.d" not in err, "nixos root guidance suggests useradd/sudoers.d", err)
+    finally:
+        sb.cleanup()
+
+
 def test_refused_sudo_password_guidance():
     sb = Sandbox("arch")
     try:
@@ -1071,6 +1106,7 @@ def main():
         test_dangling_display_manager_link,
         test_suse_display_manager_unit_is_left_alone,
         test_root_and_missing_sudo_give_guidance,
+        test_root_guidance_per_distribution,
         test_refused_sudo_password_guidance,
         test_missing_required_component_exits_2,
         test_dry_run_without_git,
