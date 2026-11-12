@@ -4,8 +4,9 @@ import qs.modules.services
 import qs.modules.components.kit
 import "ConverterModel.js" as Model
 
-// Over two or more files of one kind: "Images · 3" and a chip that sets
-// the target of all of them at once (their shared target, or "Mixed").
+// The header of one kind's rows: "Images · 3" and, over two or more files
+// that can still change, a chip that sets the target of all of them at
+// once (their shared target, or "All to...").
 Item {
     id: root
 
@@ -31,7 +32,7 @@ Item {
     Chip {
         id: chip
         objectName: "kindChip"
-        visible: root.editable
+        visible: root.editable && root.group !== null && root.group.count > 1
         anchors.right: parent.right
         anchors.rightMargin: Look.rowInset + Space.controlS + Space.s
         anchors.verticalCenter: parent.verticalCenter

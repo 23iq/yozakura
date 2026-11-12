@@ -38,11 +38,13 @@ test('a row target changes only to one of its targets', () => {
 
 test('a kind header changes every row of that kind', () => {
     let rows = M.addFiles([], [jpg, png, flac]);
-    assert.deepStrictEqual(plain(M.kindGroups(rows)), [{ kind: 'image', count: 2, target: '' }]);
+    assert.deepStrictEqual(plain(M.kindGroups(rows)), [{ kind: 'image', count: 2, target: '' }, { kind: 'audio', count: 1, target: 'mp3' }]);
     assert.deepStrictEqual(plain(M.commonTargets(rows, 'image').map(x => x.id)), ['webp', 'ico']);
     rows = M.setKindTarget(rows, 'image', 'webp');
     assert.deepStrictEqual(plain(rows.map(r => r.target)), ['webp', 'webp', 'mp3']);
-    assert.deepStrictEqual(plain(M.kindGroups(rows)), [{ kind: 'image', count: 2, target: 'webp' }]);
+    assert.deepStrictEqual(plain(M.kindGroups(rows)), [{ kind: 'image', count: 2, target: 'webp' }, { kind: 'audio', count: 1, target: 'mp3' }]);
+    assert.deepStrictEqual(plain(M.entryKeys(M.addFiles(rows, [bad]))),
+        ['h:image', 'r:/p/a.jpg', 'r:/p/b.png', 'h:audio', 'r:/p/c.flac', 'r:/p/x.bin']);
 });
 
 test('picker: popular first, then the rest by kind', () => {

@@ -5,9 +5,10 @@ Xvfb, never the desktop) over the wallpaper.
     tools/render/converter_render.py [--out DIR] [--mode dark|light] [--scale N]
                                      [--wallpaper FILE] [LANGUAGE ...]
 
-States: `empty` (the drop zone), `files` (mixed kinds: two images under a
-kind header, audio, video, a document, markup whose targets need pandoc,
-data), `picker` (the target picker of a photo), `converting` (progress),
+States: `empty` (the drop zone), `drag` (files dragged over it), `files`
+(the proposed targets of mixed kinds under a header per kind: two images,
+audio, video, a document, markup that needs pandoc, data), `picker` (the
+target picker of a photo; webp is chosen after it), `converting` (progress),
 `done` (results with show / copy) and `error` (a failed conversion and its
 short message). Writes <out>/converter-<state>-<language>[-light].png, every
 visual language by default (tests/lib/languages.py). The backend is the
@@ -127,15 +128,19 @@ Window {{
     win.requestActivate()
     QTest.qWait(300)
     snap("empty")
+    zone = h.find(win, "dropZone")
+    zone.setProperty("dragging", True)  # files dragged over the window
+    snap("drag")
+    zone.setProperty("dragging", False)
 
+    # the proposed targets, untouched
     ev("converter.add(%s)" % json.dumps([str(files / f) for f in FILES]))
     QTest.qWait(200)
-    ev("converter.setTarget(%s, 'webp')" % json.dumps(str(files / "holiday-photo.jpg")))
     snap("files")
 
     ev("pickRow(%s, null)" % json.dumps(str(files / "holiday-photo.jpg")))
     snap("picker")
-    ev("picker.close()")
+    ev("picker.chosen('webp'); picker.shown = false")
 
     for name in ("meeting-notes.md", "quarterly-report.docx", "settings.json"):
         ev("converter.remove(%s)" % json.dumps(str(files / name)))

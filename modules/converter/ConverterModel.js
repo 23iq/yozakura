@@ -92,8 +92,9 @@ function setKindTarget(rows, kind, id) {
     });
 }
 
-// Kinds with two or more rows: [{kind, count, target}] where target is the
-// shared target ("" when the rows differ). Order: KINDS.
+// Every kind with rows: [{kind, count, target}] where target is the shared
+// target ("" when the rows differ). Order: KINDS. The list shows a header
+// per kind; its "all to" control only where count > 1.
 function kindGroups(rows) {
     var by = {};
     (rows || []).forEach(function (r) {
@@ -110,15 +111,15 @@ function kindGroups(rows) {
     });
     var out = [];
     KINDS.forEach(function (k) {
-        if (by[k.id] && by[k.id].count > 1)
+        if (by[k.id])
             out.push(by[k.id]);
     });
     return out;
 }
 
 // The list's keys: rows grouped by kind (KINDS order, unknown files last),
-// a "h:<kind>" header before a kind with two or more rows, "r:<path>" per
-// row. Keys only change when files come or go, so rows keep their items.
+// a "h:<kind>" header before each kind, "r:<path>" per row. Keys only
+// change when files come or go, so rows keep their items.
 function entryKeys(rows) {
     var groups = {};
     kindGroups(rows).forEach(function (g) {

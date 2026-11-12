@@ -70,6 +70,7 @@ FocusScope {
         anchors.centerIn: parent
         width: Math.min(parent.width - Space.xl * 2, Space.controlXL * 4)
         floating: false
+        variant: "bg"
         padding: Math.max(Look.surfacePadding, Space.l)
 
         Column {

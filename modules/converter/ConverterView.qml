@@ -180,7 +180,22 @@ FocusScope {
             RowLayout {
                 Layout.fillWidth: true
                 visible: !conv.empty
-                spacing: Space.m
+                spacing: Space.s
+
+                // quality of lossy targets (jpg, webp, mp3, video...) only
+                Icon {
+                    visible: conv.showQuality
+                    icon: Icons.faders
+                    role: "secondary"
+                    tone: "muted"
+                }
+
+                KitText {
+                    visible: conv.showQuality
+                    role: "secondary"
+                    color: Type.secondary
+                    text: I18n.t("converter.quality")
+                }
 
                 Segmented {
                     id: quality
