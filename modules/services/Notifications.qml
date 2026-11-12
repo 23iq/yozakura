@@ -46,6 +46,8 @@ Singleton {
 
         // Indica si esta notificación fue cargada desde cache
         property bool isCached: false
+        // closed() handler on `notification`, disconnected on destruction
+        property var closedHandler: null
 
         // Inicializar valores cuando se asigna la notification
         onNotificationChanged: {
@@ -71,16 +73,19 @@ Singleton {
                 }
 
                 // Escuchar cuando la notificación es cerrada por la aplicación
-                notification.closed.connect(function (reason) {
-                    // CloseRequested = 3: la aplicación solicitó cerrar la notificación
-                    if (reason === 3) {
-                        root.discardNotification(id);
-                    }
-                });
+                // (CloseRequested = 3: la aplicación solicitó cerrar la notificación)
+                const notifId = id;
+                closedHandler = reason => {
+                    if (reason === 3)
+                        root.discardNotification(notifId);
+                };
+                notification.closed.connect(closedHandler);
             }
         }
 
         Component.onDestruction: {
+            if (notification && closedHandler)
+                notification.closed.disconnect(closedHandler);
             if (timer) {
                 timer.stop();
                 timer.destroy();
@@ -244,6 +249,18 @@ Singleton {
         }
     }
 
+    // Destroys dropped notification objects after a grace period
+    NotificationReaper {
+        id: reaper
+        isLive: obj => root.list.indexOf(obj) !== -1
+    }
+
+    // Stop tracking notifications dropped from the list (timers now, objects later)
+    function retire(notifs) {
+        notifs.forEach(n => root.dropTimer(n));
+        reaper.retire(notifs);
+    }
+
     function dropTimer(n) {
         if (n && n.timer) {
             n.timer.stop();
@@ -312,7 +329,9 @@ Singleton {
     function loadNotifications() {
         try {
             const data = JSON.parse(notifFileView.text());
+            const before = root.list.slice();
             root.list = data.map(jsonToNotif);
+            root.retire(before);
             // Set idOffset to max id + 1
             let maxId = 0;
             root.list.forEach(notif => {
@@ -497,9 +516,11 @@ Singleton {
         const index = root.list.findIndex(notif => notif.id === id);
         const notifServerIndex = notifServer.trackedNotifications.values.findIndex(notif => notif.id + root.idOffset === id);
         if (index !== -1) {
+            const removed = root.list[index];
             root.list.splice(index, 1);
             triggerListChange();
             saveNotifications();
+            root.retire([removed]);
         }
         if (notifServerIndex !== -1) {
             notifServer.trackedNotifications.values[notifServerIndex].dismiss();
@@ -516,13 +537,12 @@ Singleton {
             idsMap[id] = true;
         });
 
-        const newList = root.list.filter(notif => !idsMap[notif.id]);
-        const removedCount = root.list.length - newList.length;
-
-        if (removedCount > 0) {
-            root.list = newList;
+        const removed = root.list.filter(notif => idsMap[notif.id]);
+        if (removed.length > 0) {
+            root.list = root.list.filter(notif => !idsMap[notif.id]);
             triggerListChange();
             saveNotifications();
+            root.retire(removed);
         }
 
         ids.forEach(id => {
@@ -535,9 +555,11 @@ Singleton {
     }
 
     function discardAllNotifications() {
+        const removed = root.list.slice();
         root.list = [];
         triggerListChange();
         saveNotifications();
+        root.retire(removed);
         notifServer.trackedNotifications.values.forEach(notif => {
             notif.dismiss();
         });
