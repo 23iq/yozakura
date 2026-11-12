@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -38,8 +37,6 @@ type orphanTargets struct {
 	generations string
 	// qsBin is a custom Quickshell binary ($<APP>_QS), "" for the default.
 	qsBin string
-	// qsPID is the pid of the supervised Quickshell from its pid file.
-	qsPID int
 }
 
 func defaultOrphanTargets() orphanTargets {
@@ -51,9 +48,6 @@ func defaultOrphanTargets() orphanTargets {
 	}
 	if home := os.Getenv("HOME"); home != "" {
 		t.shellQMLs = append(t.shellQMLs, filepath.Join(home, ".local/src", brand.AppID, "shell.qml"))
-	}
-	if data, err := os.ReadFile(p.QsPidFile()); err == nil {
-		t.qsPID, _ = strconv.Atoi(strings.TrimSpace(string(data)))
 	}
 	return t
 }
@@ -98,16 +92,10 @@ func isClipboardWatcher(p procscan.Proc) bool {
 	return true
 }
 
-// isOurShell matches Quickshell running one of our shell.qml files, or the
-// supervised pid from the pid file while it still runs a shell.qml.
+// isOurShell matches Quickshell running one of our shell.qml files. The pid
+// in the Quickshell pid file is not trusted on its own: after a daemon crash
+// it can be stale and name an unrelated process that reused the pid.
 func (t orphanTargets) isOurShell(p procscan.Proc) bool {
-	if t.qsPID > 0 && p.PID == t.qsPID {
-		for i := 1; i < len(p.Argv); i++ {
-			if filepath.Base(p.Argv[i]) == "shell.qml" {
-				return true
-			}
-		}
-	}
 	if !t.isQuickshell(p) {
 		return false
 	}

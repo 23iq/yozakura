@@ -72,15 +72,13 @@ func TestSweepOrphansOnlyOurs(t *testing.T) {
 	root := t.TempDir()
 	shell := "/opt/yz/shell.qml"
 	gens := "/home/u/.local/share/yz/mods/generations"
-	ours := []int{200, 201, 202, 203, 204, 205, 206}
+	ours := []int{200, 201, 202, 203, 204, 205}
 	writeFakeProc(t, root, 200, "tail", "tail", "-f", "/run/user/1000/"+brand.AppID+"_ipc.pipe")
 	writeFakeProc(t, root, 201, brand.Daemon, "/usr/bin/"+brand.Daemon, "-c", "/x/"+brand.Daemon+".toml", "daemon")
 	writeFakeProc(t, root, 202, brand.Daemon, brand.Daemon, "subscribe")
 	writeFakeProc(t, root, 203, "qs", "qs", "-p", shell)
 	writeFakeProc(t, root, 204, ".quickshell-wra", "/nix/store/q/bin/qs", "-p", gens+"/g42/shell.qml")
 	writeFakeProc(t, root, 205, "wl-paste", clipboardWatchArgv...)
-	// pid file names it; another binary name (a wrapper) still counts
-	writeFakeProc(t, root, 206, "custom-qs", "custom-qs", "-p", "/elsewhere/shell.qml")
 
 	writeFakeProc(t, root, 300, "wl-paste", "wl-paste", "--watch", "cliphist", "store")
 	writeFakeProc(t, root, 301, "qs", "qs", "-p", "/home/u/.config/quickshell/other/shell.qml")
@@ -88,12 +86,35 @@ func TestSweepOrphansOnlyOurs(t *testing.T) {
 	writeFakeProc(t, root, 303, "nvim", "nvim", "backend/cmd/"+brand.Daemon+"/daemon.go")
 	writeFakeProc(t, root, 304, brand.Daemon, brand.Daemon, "monitor", "list")
 	writeFakeProc(t, root, 305, "tail", "tail", "-f", "/var/log/syslog")
+	// a stale Quickshell pid file names a pid an editor now has: not ours
+	writeFakeProc(t, root, 306, "nvim", "nvim", "/home/u/.config/quickshell/other/shell.qml")
+	writeFakeProc(t, root, 307, "custom-qs", "custom-qs", "-p", "/elsewhere/shell.qml")
 
-	tg := orphanTargets{shellQMLs: []string{shell}, generations: gens, qsPID: 206}
+	tg := orphanTargets{shellQMLs: []string{shell}, generations: gens}
 	var got []int
 	sweepOrphans(recordingKiller(root, 1, &got), tg)
 	slices.Sort(got)
 	if !slices.Equal(got, ours) {
 		t.Fatalf("signalled %v, want %v", got, ours)
+	}
+}
+
+// A stale Quickshell pid file (the daemon crashed) can name a pid another
+// process reused, here an editor on some shell.qml: it is not signalled.
+func TestSweepOrphansIgnoresStaleQsPidFile(t *testing.T) {
+	runtime := t.TempDir()
+	t.Setenv("XDG_RUNTIME_DIR", runtime)
+	root := t.TempDir()
+	writeFakeProc(t, root, 400, "nvim", "nvim", "/home/u/.config/quickshell/other/shell.qml")
+	writeFakeProc(t, root, 401, "custom-qs", "custom-qs", "-p", "/elsewhere/shell.qml")
+	for _, pid := range []string{"400", "401"} {
+		if err := os.WriteFile(filepath.Join(runtime, brand.AppID+"-qs.pid"), []byte(pid+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var got []int
+		sweepOrphans(recordingKiller(root, 1, &got), defaultOrphanTargets())
+		if len(got) != 0 {
+			t.Fatalf("pid file %s: signalled %v, want none", pid, got)
+		}
 	}
 }
