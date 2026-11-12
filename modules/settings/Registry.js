@@ -61,7 +61,8 @@ var EDITORS = {
     "NotificationsStatus": "editors/NotificationsStatus.qml",
     "LayoutBuilder": "layout/LayoutBuilder.qml",
     "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml",
-    "PomodoroEditor": "editors/PomodoroEditor.qml"
+    "PomodoroEditor": "editors/PomodoroEditor.qml",
+    "AiStripChips": "editors/AiStripChips.qml"
 };
 
 var PREVIEWS = {
@@ -94,7 +95,9 @@ var THUMBS = {
     "IndicatorThumb": "thumbs/IndicatorThumb.qml",
     "NumeralThumb": "thumbs/NumeralThumb.qml",
     "WeightThumb": "thumbs/WeightThumb.qml",
-    "ActivationThumb": "thumbs/ActivationThumb.qml"
+    "ActivationThumb": "thumbs/ActivationThumb.qml",
+    "AiSizeThumb": "thumbs/AiSizeThumb.qml",
+    "AiMessageThumb": "thumbs/AiMessageThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -110,7 +113,10 @@ var STAGES = {
     "LockStage": "stages/LockStage.qml",
     "VoiceStage": "stages/VoiceStage.qml",
     "TimersStage": "stages/TimersStage.qml",
-    "RoutinesBand": "stages/RoutinesBand.qml"
+    "RoutinesBand": "stages/RoutinesBand.qml",
+    "AssistantStage": "stages/AssistantStage.qml",
+    "ProvidersBand": "stages/ProvidersBand.qml",
+    "TasksStage": "stages/TasksStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

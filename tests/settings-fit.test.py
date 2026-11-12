@@ -8,7 +8,7 @@ row card ends inside the page, the stage ends above the row, the side
 columns end above the row, and a picture card's strip is one row.
 
 Destinations still exempt (no `row` yet, they keep the scrolling bento):
-wallpapers, presets, changes, ai, ai-providers, ai-code, launcher,
+wallpapers, presets, changes, launcher,
 dashboard, desktop, overview, keyboard, input, displays, windows, specials,
 system, updates, about, network, bluetooth, sound,
 effects, power, terminal, extras, mods. A test below fails when
@@ -28,7 +28,7 @@ from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
 CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
-             "voice", "timers", "routines"]
+             "voice", "timers", "routines", "ai", "ai-providers", "ai-code"]
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 

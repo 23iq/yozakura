@@ -84,7 +84,7 @@
       "x-file": "config/ai.json",
       "properties": {
         "enabled": {
-          "title": "Enable the AI center",
+          "title": "Assistant",
           "type": "boolean",
           "default": true,
           "description": "Sidebar, quick ask and how answers are shown.",
@@ -116,7 +116,7 @@
           "description": "Extra chat models added to the model picker."
         },
         "defaultModel": {
-          "title": "Default engine (Assistant)",
+          "title": "Answers come from",
           "type": "string",
           "default": "",
           "description": "Engine of new Assistant chats, e.g. anthropic:claude-sonnet-4-5, ollama:qwen3 or agent:codex. Empty uses your last choice.",
@@ -205,7 +205,7 @@
           "maximum": 2400
         },
         "showThinking": {
-          "title": "Show model thinking",
+          "title": "Show thinking",
           "type": "boolean",
           "default": true,
           "description": "Show the reasoning stream of models that expose it (collapsed when done).",
@@ -629,7 +629,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_claude",
                 "control": "toggle",
-                "keywords": "mcp import claude"
+                "keywords": "mcp import claude",
+                "advanced": true
               }
             },
             "importCodex": {
@@ -642,7 +643,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_codex",
                 "control": "toggle",
-                "keywords": "mcp import codex"
+                "keywords": "mcp import codex",
+                "advanced": true
               }
             },
             "importOpencode": {
@@ -655,7 +657,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_opencode",
                 "control": "toggle",
-                "keywords": "mcp import opencode"
+                "keywords": "mcp import opencode",
+                "advanced": true
               }
             },
             "disabled": {
@@ -683,7 +686,7 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "title": "Quick ask in the notch",
+              "title": "Quick ask in the island",
               "type": "boolean",
               "default": true,
               "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
@@ -705,7 +708,8 @@
                 "section": "quickask",
                 "label": "ai.quick_model",
                 "control": "text",
-                "keywords": "quick ask model"
+                "keywords": "quick ask model",
+                "advanced": true
               }
             },
             "width": {
@@ -758,7 +762,8 @@
                 "section": "selection",
                 "label": "ai.translate_to",
                 "control": "text",
-                "keywords": "translate language"
+                "keywords": "translate language",
+                "advanced": true
               }
             },
             "output": {
@@ -981,7 +986,7 @@
               "description": "Size of the AI bar when the shell starts. Switch with the size button or Ctrl+W.",
               "x-settings": {
                 "category": "ai",
-                "section": "bar_appearance",
+                "section": "size",
                 "label": "prefs.ai.default_size",
                 "control": "selector",
                 "keywords": "size compact wide fullscreen width layout"
@@ -1004,7 +1009,7 @@
               "description": "Bubbles on the right, or flat blocks like the answers.",
               "x-settings": {
                 "category": "ai",
-                "section": "bar_appearance",
+                "section": "messages",
                 "label": "prefs.ai.message_style",
                 "control": "selector",
                 "keywords": "message bubble flat chat style"
@@ -1094,7 +1099,8 @@
                 "section": "bar_appearance",
                 "label": "prefs.ai.animations",
                 "control": "toggle",
-                "keywords": "animation motion transition"
+                "keywords": "animation motion transition",
+                "advanced": true
               }
             },
             "glass": {
@@ -1107,7 +1113,8 @@
                 "section": "bar_appearance",
                 "label": "prefs.ai.glass",
                 "control": "toggle",
-                "keywords": "glass blur translucent surface"
+                "keywords": "glass blur translucent surface",
+                "advanced": true
               }
             },
             "opacity": {
@@ -1223,7 +1230,8 @@
                 "visibleWhen": {
                   "key": "ai.behavior.suggestions",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "uniqueItems": true,
               "x-itemLabels": {
@@ -1261,7 +1269,8 @@
                 "section": "bar_behavior",
                 "label": "prefs.ai.auto_scroll",
                 "control": "toggle",
-                "keywords": "scroll follow stream bottom"
+                "keywords": "scroll follow stream bottom",
+                "advanced": true
               }
             },
             "thinkingExpanded": {
@@ -1278,7 +1287,8 @@
                 "visibleWhen": {
                   "key": "ai.showThinking",
                   "equals": true
-                }
+                },
+                "advanced": true
               }
             },
             "collapseTools": {
@@ -1291,7 +1301,8 @@
                 "section": "bar_behavior",
                 "label": "prefs.ai.collapse_tools",
                 "control": "toggle",
-                "keywords": "tool action details collapse expand"
+                "keywords": "tool action details collapse expand",
+                "advanced": true
               }
             }
           },
@@ -1312,7 +1323,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_engine",
                 "control": "toggle",
-                "keywords": "status strip engine model effort"
+                "keywords": "status strip engine model effort",
+                "advanced": true
               }
             },
             "effort": {
@@ -1325,7 +1337,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_effort",
                 "control": "toggle",
-                "keywords": "status strip reasoning effort thinking level"
+                "keywords": "status strip reasoning effort thinking level",
+                "advanced": true
               }
             },
             "context": {
@@ -1338,7 +1351,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_context",
                 "control": "toggle",
-                "keywords": "status strip context window tokens"
+                "keywords": "status strip context window tokens",
+                "advanced": true
               }
             },
             "cost": {
@@ -1351,7 +1365,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_cost",
                 "control": "toggle",
-                "keywords": "status strip cost tokens price"
+                "keywords": "status strip cost tokens price",
+                "advanced": true
               }
             },
             "limit": {
@@ -1364,7 +1379,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_limit",
                 "control": "toggle",
-                "keywords": "status strip subscription limit usage"
+                "keywords": "status strip subscription limit usage",
+                "advanced": true
               }
             }
           },
@@ -1515,7 +1531,8 @@
                 "section": "context",
                 "label": "prefs.ai.compact_model",
                 "control": "text",
-                "keywords": "compact summary model cheap fast"
+                "keywords": "compact summary model cheap fast",
+                "advanced": true
               }
             },
             "overrides": {
@@ -1546,7 +1563,7 @@
               "description": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_num_ctx",
                 "control": "number",
                 "step": 1024,
@@ -1571,7 +1588,7 @@
               "description": "Where Ollama is probed and asked. Empty uses http://127.0.0.1:11434.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_endpoint",
                 "control": "text",
                 "keywords": "ollama endpoint url host port server remote local",
@@ -1586,7 +1603,7 @@
               "description": "How long a model stays in memory after a reply (5m, 1h, -1 = forever, 0 = unload at once). Empty uses Ollama's default.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_keep_alive",
                 "control": "text",
                 "keywords": "ollama keep alive unload memory vram minutes",
@@ -1609,7 +1626,7 @@
               "description": "LM Studio's local server. Empty uses http://127.0.0.1:1234/v1.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.lmstudio_endpoint",
                 "control": "text",
                 "keywords": "lm studio lmstudio endpoint url server port local",
@@ -1632,7 +1649,7 @@
               "description": "Longest time one chat request may take, streaming included.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.timeout",
                 "control": "number",
                 "step": 30,
@@ -1658,7 +1675,7 @@
               "description": "Extra attempts after a network error, rate limit or overloaded server, only before any text arrived.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.retries",
                 "control": "number",
                 "keywords": "retry retries rate limit 429 overloaded network error",
@@ -1706,7 +1723,7 @@
               "description": "While the AI bar is open, Ollama and LM Studio are checked again at this interval (they are always checked when the model picker opens). No model is loaded.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.providers.probe_interval",
                 "control": "number",
                 "step": 15,
@@ -1732,7 +1749,7 @@
               "description": "Extra HTTP headers sent to the Custom (OpenAI-compatible) provider, e.g. a proxy's auth header.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.headers",
                 "control": "list",
                 "keywords": "custom endpoint headers proxy auth authorization openai compatible",
@@ -1747,7 +1764,7 @@
               "description": "Sends the optional HTTP-Referer and X-Title headers so requests show up under this app in OpenRouter.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.openrouter_attribution",
                 "control": "toggle",
                 "keywords": "openrouter referer title attribution headers app",
@@ -1791,7 +1808,7 @@
               }
             },
             "planFirst": {
-              "title": "Plan first by default",
+              "title": "Plan first",
               "type": "boolean",
               "default": false,
               "description": "The agent writes a plan you can edit before it changes any file",
@@ -1804,7 +1821,7 @@
               }
             },
             "inPlace": {
-              "title": "Work in the current branch by default",
+              "title": "Work in place",
               "type": "boolean",
               "default": false,
               "description": "Off: every task gets its own git worktree and branch, your checkout stays untouched",
@@ -1823,7 +1840,7 @@
               "description": "Further tasks wait in the queue",
               "x-settings": {
                 "category": "ai-code",
-                "section": "queue",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.max_parallel",
                 "control": "number",
                 "keywords": "parallel concurrent slots queue",
@@ -1840,7 +1857,7 @@
               "description": "Continues a task when its agent hits a usage limit; none = wait for the reset",
               "x-settings": {
                 "category": "ai-code",
-                "section": "queue",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.fallback",
                 "control": "selector",
                 "keywords": "fallback limit usage rate agent"
@@ -1859,7 +1876,7 @@
               }
             },
             "notifications": {
-              "title": "Desktop notifications",
+              "title": "Notifications",
               "type": "boolean",
               "default": true,
               "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
@@ -1939,7 +1956,7 @@
               "description": "Auto: columns when the bar is wide, a list otherwise",
               "x-settings": {
                 "category": "ai-code",
-                "section": "board",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.layout",
                 "control": "selector",
                 "keywords": "board columns list kanban layout"
@@ -2001,7 +2018,7 @@
               "description": "Newest finished tasks in the Done section",
               "x-settings": {
                 "category": "ai-code",
-                "section": "board",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.done_limit",
                 "control": "number",
                 "step": 5,
@@ -2025,7 +2042,7 @@
               "description": "Show the review of a task as soon as it is ready when no other task is open",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.auto_open_review",
                 "control": "toggle",
                 "keywords": "review open automatically finished"
@@ -2038,7 +2055,7 @@
               "description": "Ask once more before a task is committed to your branch",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.confirm_accept",
                 "control": "toggle",
                 "keywords": "confirm accept commit"
@@ -2051,7 +2068,7 @@
               "description": "Ask before a task's worktree and branch are deleted",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.confirm_discard",
                 "control": "toggle",
                 "keywords": "confirm discard delete worktree"
@@ -2087,7 +2104,8 @@
                 "section": "model_effort",
                 "label": "prefs.ai.picker_capabilities",
                 "control": "toggle",
-                "keywords": "model picker capabilities badges tools vision thinking context"
+                "keywords": "model picker capabilities badges tools vision thinking context",
+                "advanced": true
               }
             },
             "groupByProvider": {
@@ -2100,7 +2118,8 @@
                 "section": "model_effort",
                 "label": "prefs.ai.picker_group",
                 "control": "toggle",
-                "keywords": "model picker group provider sections"
+                "keywords": "model picker group provider sections",
+                "advanced": true
               }
             },
             "showUnconnected": {
@@ -2113,7 +2132,8 @@
                 "section": "model_effort",
                 "label": "prefs.ai.picker_unconnected",
                 "control": "toggle",
-                "keywords": "model picker providers not connected connect api key"
+                "keywords": "model picker providers not connected connect api key",
+                "advanced": true
               }
             },
             "showRecent": {
@@ -2126,7 +2146,8 @@
                 "section": "model_effort",
                 "label": "prefs.ai.picker_recent",
                 "control": "toggle",
-                "keywords": "model picker recent last used"
+                "keywords": "model picker recent last used",
+                "advanced": true
               }
             }
           },
@@ -2146,7 +2167,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_header_button",
                 "control": "toggle",
-                "keywords": "usage button header chart cost screen"
+                "keywords": "usage button header chart cost screen",
+                "advanced": true
               }
             },
             "claudeLimits": {
@@ -2159,7 +2181,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_claude_limits",
                 "control": "toggle",
-                "keywords": "claude subscription limits pro max usage oauth"
+                "keywords": "claude subscription limits pro max usage oauth",
+                "advanced": true
               }
             },
             "notify": {
@@ -2229,7 +2252,8 @@
                 "visibleWhen": {
                   "key": "ai.strip.limit",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "auto",
@@ -2256,7 +2280,8 @@
                 "visibleWhen": {
                   "key": "ai.strip.cost",
                   "equals": true
-                }
+                },
+                "advanced": true
               }
             },
             "currencyStyle": {
@@ -2269,7 +2294,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_currency",
                 "control": "selector",
-                "keywords": "cost currency dollar usd format price"
+                "keywords": "cost currency dollar usd format price",
+                "advanced": true
               },
               "enum": [
                 "symbol",
@@ -2309,7 +2335,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_default_range",
                 "control": "selector",
-                "keywords": "usage screen range today week month"
+                "keywords": "usage screen range today week month",
+                "advanced": true
               },
               "enum": [
                 "today",
@@ -2332,7 +2359,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_sparklines",
                 "control": "toggle",
-                "keywords": "usage chart sparkline per day graph"
+                "keywords": "usage chart sparkline per day graph",
+                "advanced": true
               }
             },
             "hiddenProviders": {
@@ -2345,7 +2373,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_hidden",
                 "control": "list",
-                "keywords": "hide providers usage screen ollama local"
+                "keywords": "hide providers usage screen ollama local",
+                "advanced": true
               }
             }
           },
