@@ -9491,8 +9491,20 @@
             "section": "language",
             "label": "prefs.label.interface_language",
             "control": "custom",
-            "component": "LanguagePicker",
+            "component": "LanguageCards",
             "keywords": "language locale translation i18n english spanish russian auto"
+          },
+          "enum": [
+            "auto",
+            "en",
+            "es",
+            "ru"
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "en": "English",
+            "es": "Español",
+            "ru": "Русский"
           }
         },
         "updateServiceEnabled": {
@@ -17800,14 +17812,14 @@
           }
         },
         "unit": {
-          "title": "Temperature Unit",
+          "title": "Unit",
           "type": "string",
           "default": "C",
           "description": "Unit used by the weather widgets.",
           "x-settings": {
             "category": "system",
             "section": "weather",
-            "label": "settings.system.temperature_unit",
+            "label": "prefs.sys.unit",
             "control": "selector",
             "keywords": "temperature unit celsius fahrenheit"
           },

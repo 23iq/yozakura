@@ -582,7 +582,6 @@
   "settings.system.language": "Язык",
   "settings.system.lock_command": "Команда блокировки",
   "settings.system.performance": "Производительность",
-  "settings.system.temperature_unit": "Единица температуры",
   "settings.system.weather": "Погода",
   "settings.theme.animation_duration": "Длительность анимации",
   "settings.theme.background_variant": "Вариант фона",
@@ -4679,5 +4678,12 @@
   "prefs.ai.tasks.stage.current": "текущая ветка",
   "prefs.ai.tasks.stage.ready": "Тёмная тема для документации готова к проверке",
   "prefs.undo.board_layout": "Вид доски изменён",
-  "prefs.ai.tasks.agents": "Агенты"
+  "prefs.ai.tasks.agents": "Агенты",
+  "prefs.sys.hero_hint": "Нажмите на температуру, чтобы переключить °C и °F",
+  "prefs.sys.unit": "Единицы",
+  "prefs.sys.stage.here": "Где вы сейчас",
+  "prefs.undo.unit_changed": "Единицы температуры изменены",
+  "prefs.sys.lang.en": "English",
+  "prefs.sys.lang.es": "Español",
+  "prefs.sys.lang.ru": "Русский"
 }

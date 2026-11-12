@@ -52,7 +52,7 @@ var EDITORS = {
     "LauncherPrefixList": "editors/LauncherPrefixList.qml",
     "MotionProfileCards": "editors/MotionProfileCards.qml",
     "PageLink": "editors/PageLink.qml",
-    "LanguagePicker": "editors/LanguagePicker.qml",
+    "LanguageCards": "editors/LanguageCards.qml",
     "ExclusiveCard": "system/ExclusiveCard.qml",
     "VoiceStatus": "editors/VoiceStatus.qml",
     "UpdatesStatus": "editors/UpdatesStatus.qml",
@@ -106,7 +106,8 @@ var THUMBS = {
     "OverviewStyleThumb": "thumbs/OverviewStyleThumb.qml",
     "ActivationThumb": "thumbs/ActivationThumb.qml",
     "AiSizeThumb": "thumbs/AiSizeThumb.qml",
-    "AiMessageThumb": "thumbs/AiMessageThumb.qml"
+    "AiMessageThumb": "thumbs/AiMessageThumb.qml",
+    "LocaleThumb": "thumbs/LocaleThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -131,7 +132,8 @@ var STAGES = {
     "RoutinesBand": "stages/RoutinesBand.qml",
     "AssistantStage": "stages/AssistantStage.qml",
     "ProvidersBand": "stages/ProvidersBand.qml",
-    "TasksStage": "stages/TasksStage.qml"
+    "TasksStage": "stages/TasksStage.qml",
+    "SystemStage": "stages/SystemStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

@@ -582,7 +582,6 @@
   "settings.system.language": "Language",
   "settings.system.lock_command": "Lock Command",
   "settings.system.performance": "Performance",
-  "settings.system.temperature_unit": "Temperature Unit",
   "settings.system.weather": "Weather",
   "settings.theme.animation_duration": "Animation Duration",
   "settings.theme.background_variant": "Background Variant",
@@ -4645,5 +4644,12 @@
   "prefs.ai.tasks.stage.current": "current branch",
   "prefs.ai.tasks.stage.ready": "Dark mode for the docs is ready to review",
   "prefs.undo.board_layout": "Board layout changed",
-  "prefs.ai.tasks.agents": "Agents"
+  "prefs.ai.tasks.agents": "Agents",
+  "prefs.sys.hero_hint": "Click the temperature to switch °C and °F",
+  "prefs.sys.unit": "Unit",
+  "prefs.sys.stage.here": "Where you are",
+  "prefs.undo.unit_changed": "Temperature unit changed",
+  "prefs.sys.lang.en": "English",
+  "prefs.sys.lang.es": "Español",
+  "prefs.sys.lang.ru": "Русский"
 }
