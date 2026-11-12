@@ -7,7 +7,7 @@
 // from its default, or from the active preset, grouped by settings page.
 // Pure, node-tested: tests/settings-changes.test.cjs.
 //
-// Group: {categoryId, title, icon, rows: [row]}, in sidebar page order.
+// Group: {categoryId, title, icon, rows: [row]}, in destination order.
 // Row:   {id, categoryId, sectionId, entryId, label, now, was, entry?, key?,
 //         target?}  label is display text; now / was are short value texts
 //         ("" for a composite editor); `target` = the preset's raw value.
@@ -89,7 +89,7 @@ function fromDefaults(categories, ctx, isModified, def, tr) {
 
 // Since the active preset: the backend's preset.status changes
 // ([{key, a: live, b: preset}]), each on the page of its settings entry
-// (`index`: the sidebar search index), the rest under "Other".
+// (`index`: the home search index), the rest under "Other".
 function fromPreset(changes, index, categories, tr) {
     var t = tr || function (k) {
         return k;
@@ -114,7 +114,7 @@ function fromPreset(changes, index, categories, tr) {
             "target": c.b
         }, t);
     });
-    // pages in sidebar order, "Other" last
+    // pages in destination order, "Other" last
     var order = (categories || []).map(function (c) {
         return c.id;
     });

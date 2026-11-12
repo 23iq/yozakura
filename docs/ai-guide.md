@@ -118,7 +118,7 @@ Applying never overwrites the user's own settings: `~/.local/share/yozakura/pres
 records what the last preset wrote. A key the new preset does not name is reset to its default
 only while it still holds that recorded value; anything the user changed is kept (reported as
 `keptUserValues` by `apply --json` / the MCP `preset_apply`). Without a record nothing is reset.
-System domains (keyboard, displays, general, ...) are never written. The settings sidebar footer
+System domains (keyboard, displays, general, ...) are never written. The settings home footer
 shows the active preset and its changes (`PresetStatusService`, pushed by the backend
 `preset.status` event); `general.autoSavePreset` (off by default) saves changes into an active
 user preset automatically, never into a built-in. Code: `backend/pkg/presets/{provenance,status}.go`,
@@ -702,7 +702,8 @@ ink,glass,tiles --mode dark|light`), and view the PNGs.
 **Add an activity source.** See `modules/services/activities/AGENTS.md`.
 
 **Add a settings category.** `modules/settings/schema/<id>.js` + import in
-`Categories.js`, as a tab of a destination (`groups`); its stage and picture
+`Categories.js`, as a tab of a destination (`groups`; a new destination also
+gets a home tile in `HOME` or a pill in `PILLS`); its stage and picture
 cards follow "CONVERTING A PAGE" in `modules/settings/AGENTS.md`.
 
 **Add an MCP tool.** `define(...)` in a `backend/pkg/mcp/yozakura/*_tools.go`

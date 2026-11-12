@@ -6,7 +6,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 
-// The ⋯ menu of the active preset (settings sidebar footer): save, save as
+// The ⋯ menu of the active preset (settings home footer): save, save as
 // new, show changes, revert. Opens above its parent (the footer sits at the
 // bottom of the window). Rows emit chosen(id).
 Popup {

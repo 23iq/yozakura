@@ -15,7 +15,7 @@ Item {
     id: root
 
     property bool open: false
-    property var index: [] // the sidebar search index (SchemaUtil.buildSearchIndex)
+    property var index: [] // the home search index (SchemaUtil.buildSearchIndex)
     readonly property var rows: open ? PresetStatusModel.rows(PresetStatusService.status, root.index, I18n.t("common.on"), I18n.t("common.off")) : []
     readonly property string action: PresetStatusModel.primaryAction(PresetStatusService.status)
     readonly property real scrimOpacity: 0.5
