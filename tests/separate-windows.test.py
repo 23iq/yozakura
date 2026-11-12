@@ -9,7 +9,8 @@ that records calls and lets the test push the daemon's `windows` and
 Preview relay: a staged value from the Settings process is applied to the
 in-memory Config through the GlobalStates snapshot (staged, auto-save
 paused); discard (Discard, closing, the process dying) restores what was
-there; commit (Apply) writes the files here, as Apply does in-process, and
+there; commit (Apply) applies every staged entry it carries (a dropped
+preview.set), writes the files here, as Apply does in-process, and
 answers preview.written; an unstaged key is refused (two windows and the
 shared staging: tests/preview-staging.test.py).
 
@@ -337,6 +338,18 @@ saved = json.loads(ev("JSON.stringify(Config.saved)"))[saved_before:]
 check("bar" in saved and "notch" in saved, f"...and writes the files here, as Apply in-process, got {saved}")
 check(json.loads(ev("JSON.stringify(BackendService.last('preview.written'))")) == {"id": 7},
       "...then tells the daemon it wrote them (the window writes nothing)")
+# a preview.set the stream dropped: the commit carries every staged entry
+saved_before = ev("Config.saved.length")
+dock = ev("Config.dock.position")
+other = "left" if dock != "left" else "right"
+emit("preview.commit", {"owner": "settings", "id": 8,
+                        "staged": [{"owner": "settings", "key": "dock.position", "value": other},
+                                   {"owner": "settings", "key": "general.onboardingDone", "value": "x"}]})
+check(ev("Config.dock.position") == other, "a staged value whose preview.set was lost is applied at the commit")
+check(ev("Config.general.onboardingDone") != "x", "...an unstaged key in it is still refused")
+saved = json.loads(ev("JSON.stringify(Config.saved)"))[saved_before:]
+check("dock" in saved, f"...and written, got {saved}")
+check(ev("GlobalStates.shellHasChanges") is False, "...with nothing left staged")
 
 # ---- the wizard ----
 ev("OnboardingService.visible = true")

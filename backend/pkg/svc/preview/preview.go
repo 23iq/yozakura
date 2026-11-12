@@ -43,10 +43,14 @@ type Entry struct {
 }
 
 // Event payload of preview.discard / preview.commit (ID: the commit the
-// main shell answers with preview.written).
+// main shell answers with preview.written). A commit carries every staged
+// entry, in order: the stream drops events when a subscriber's buffer is
+// full, so the main shell applies them before it writes and a lost
+// preview.set cannot lose its value.
 type Done struct {
-	Owner string `json:"owner"`
-	ID    uint64 `json:"id,omitempty"`
+	Owner  string  `json:"owner"`
+	ID     uint64  `json:"id,omitempty"`
+	Staged []Entry `json:"staged,omitempty"`
 }
 
 // Written is preview.written: the main shell wrote the files of commit ID.
@@ -227,7 +231,8 @@ func (s *Service) Ack(id uint64) bool {
 func (s *Service) commit(owner string) (bool, uint64, chan struct{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	had := len(s.staged) > 0
+	staged := s.staged
+	had := len(staged) > 0
 	s.staged = nil
 	s.nextID++
 	id := s.nextID
@@ -239,7 +244,7 @@ func (s *Service) commit(owner string) (bool, uint64, chan struct{}) {
 			break
 		}
 	}
-	s.sendLocked("preview.commit", Done{Owner: owner, ID: id})
+	s.sendLocked("preview.commit", Done{Owner: owner, ID: id, Staged: staged})
 	return had, id, ch
 }
 

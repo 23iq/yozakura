@@ -242,8 +242,9 @@ window reopens at once). Off, everything is as before.
   snapshots, so here too it is one staging: Apply or Discard by either ends
   all of it (`preview.discard` restores every process's snapshots).
   Apply (`PreviewSink.applyOwn`): the window drops its snapshots and sends
-  `preview.commit`; the main shell runs the same `apply*Changes` as
-  in-process and answers `preview.written`. Its Config holds every staged
+  `preview.commit`; the main shell applies the staged entries the commit
+  carries (a `preview.set` the stream dropped), runs the same
+  `apply*Changes` as in-process and answers `preview.written`. Its Config holds every staged
   value plus what the desktop changed meanwhile in a staged domain (widget
   positions, dashboard cells, live activities), so those are written too,
   as with one in-process Config; the windows follow the files. Only when no

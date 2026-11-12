@@ -109,7 +109,9 @@ func TestCommitAndDiscardClearAndTellTheShell(t *testing.T) {
 
 	assert.True(t, s.Commit("settings"))
 	got := drain(t, sub, 1)
-	assert.Equal(t, ev{"preview.commit", `{"owner":"settings","id":1}`}, got[0])
+	assert.Equal(t, "preview.commit", got[0].name)
+	assert.JSONEq(t, `{"owner":"settings","id":1,"staged":[{"owner":"settings","key":"bar.position","value":"bottom"}]}`, got[0].data,
+		"the commit carries what is staged (a dropped preview.set cannot lose it)")
 	assert.Empty(t, s.Staged())
 
 	call(t, s.handleSet, `{"owner":"settings","key":"dock.enabled","value":false}`)

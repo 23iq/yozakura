@@ -75,8 +75,14 @@ Singleton {
         GlobalStates.discardCompositorChanges();
     }
 
-    // The main shell: a window applied, the files are written here.
-    function write(id) {
+    // The main shell: a window applied, the files are written here. The
+    // commit carries every staged entry (`staged`): a preview.set the stream
+    // dropped is applied now, before writing.
+    function write(id, staged) {
+        (Array.isArray(staged) ? staged : []).forEach(e => {
+            if (e && typeof e.key === "string")
+                root.set(e.key, e.value);
+        });
         GlobalStates.applyThemeChanges();
         GlobalStates.applyShellChanges();
         GlobalStates.applyCompositorChanges();
@@ -184,7 +190,7 @@ Singleton {
         else if (service === "preview.discard")
             root.discard();
         else if (service === "preview.commit" && root.self === "")
-            root.write(data && data.id ? data.id : 0);
+            root.write(data && data.id ? data.id : 0, data ? data.staged : null);
         else if (service === "preview.commit")
             root.drop();
     }
