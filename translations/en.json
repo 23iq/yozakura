@@ -3185,7 +3185,6 @@
   "routines.discard": "Discard changes",
   "routines.delete": "Delete routine",
   "routines.delete_confirm": "Click again to delete",
-  "routines.hint": "A routine runs several steps in order: keybind actions, shell tools (do not disturb, volume, timers, apps…) and waits. Run it from a keybind (Keybinds → Utilities), the launcher, an AI automation, or ask the AI.",
   "routines.new": "New routine",
   "routines.new_name": "My routine",
   "routines.empty": "No routines yet: start from a template or a blank one.",
@@ -4572,5 +4571,11 @@
   "prefs.timers.min": "min",
   "prefs.timers.stage.break": "%1 min break",
   "prefs.timers.stage.focus": "Focus mode · %1 min",
-  "prefs.undo.timer_seconds": "Seconds changed"
+  "prefs.undo.timer_seconds": "Seconds changed",
+  "prefs.routines.hero_hint": "Play runs it now · a new one starts from a template",
+  "prefs.routines.band.example": "An example",
+  "prefs.routines.band.when": "Starts from",
+  "prefs.routines.band.key": "A key",
+  "prefs.routines.band.launcher": "The launcher",
+  "prefs.routines.band.keep": "Keep as my routine"
 }

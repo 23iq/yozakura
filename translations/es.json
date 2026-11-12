@@ -3185,7 +3185,6 @@
   "routines.discard": "Descartar cambios",
   "routines.delete": "Eliminar rutina",
   "routines.delete_confirm": "Pulsa otra vez para eliminar",
-  "routines.hint": "Una rutina ejecuta varios pasos en orden: acciones de atajos, herramientas del shell (no molestar, volumen, temporizadores, apps…) y esperas. Lánzala con un atajo (Atajos → Utilidades), el lanzador, una automatización de IA o pídeselo a la IA.",
   "routines.new": "Nueva rutina",
   "routines.new_name": "Mi rutina",
   "routines.empty": "Aún no hay rutinas: empieza con una plantilla o desde cero.",
@@ -4572,5 +4571,11 @@
   "prefs.timers.min": "min",
   "prefs.timers.stage.break": "%1 min de descanso",
   "prefs.timers.stage.focus": "Modo enfoque · %1 min",
-  "prefs.undo.timer_seconds": "Segundos cambiados"
+  "prefs.undo.timer_seconds": "Segundos cambiados",
+  "prefs.routines.hero_hint": "Reproducir la ejecuta ya · una nueva parte de una plantilla",
+  "prefs.routines.band.example": "Un ejemplo",
+  "prefs.routines.band.when": "Se inicia con",
+  "prefs.routines.band.key": "Una tecla",
+  "prefs.routines.band.launcher": "El lanzador",
+  "prefs.routines.band.keep": "Guardar como mi rutina"
 }

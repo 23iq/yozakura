@@ -112,6 +112,18 @@ h.eval(ev('w.findItem("pomodoroAutoSwitch")'), "toggled(true)")
 check(ev("Config.system.pomodoro.autoStart") is True, "timers: the switch starts the next phase on its own")
 check(ev('w.findItem("settingRow:system.pomodoro.workTime")') is None, "timers: the raw seconds are not a row")
 
+# ---- Routines: the band keeps the example, then runs your routine -----------
+select("routines")
+check(ev("RoutinesService.routines.length") == 0, "routines: none yet, the band shows an example")
+check(click("routinePlay"), "routines: the band's button is clickable")
+check(ev("RoutinesService.routines.length") == 1, "routines: + keeps the example as your routine")
+check(ev("RoutinesService.routines[0].steps.length") == 3, "routines: with its steps")
+QTest.qWait(50)
+click("routinePlay")
+calls = json.loads(ev("JSON.stringify(RoutinesService.calls)"))
+check(any(c[0] == "run" for c in calls), "routines: play runs the routine now")
+check(ev('w.findItem("routineStrip") !== null'), "routines: the when -> then strip")
+
 if failures:
     print(f"settings-system-pages: {len(failures)} failure(s)")
     h.exit(1)
