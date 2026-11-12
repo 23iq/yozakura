@@ -303,6 +303,22 @@ type_text(dlg, "second")
 h.eval(h.find(dlg, "polkitAuthenticate"), "clicked()")
 settle()
 check(ev("PolkitLog.submits") == 2 and h.eval(field, "text") == "", "Authenticate submits the retry and empties the field")
+check(h.eval(notice, "text") == "Waiting for the system…" and h.eval(d, "noticeIsError") is False,
+      f"while the retry is checked the old failure is not shown, got {h.eval(notice, 'text')!r}")
+# the retry fails: polkit's text and the failure are shown again
+h.eval(f, 'showError("Sorry, that did not work.")')
+h.eval(f, "completed(false)")
+h.eval(f, 'request("Password: ", false)')
+settle()
+check(h.eval(notice, "text") == "Sorry, that did not work." and h.eval(d, "noticeIsError") is True, "the second failure is shown")
+type_text(dlg, "third")
+QTest.keyClick(dlg, Qt.Key_Return)
+settle()
+check(h.eval(notice, "text") == "Waiting for the system…" and h.eval(d, "noticeIsError") is False,
+      "polkit's error from the last attempt is hidden while the next one is checked")
+h.eval(f, 'showInfo("Checking with the server")')
+settle()
+check(h.eval(notice, "text") == "Checking with the server", "a new polkit message while checking is shown")
 h.eval(f, "completed(true)")
 settle()
 check(h.eval(f, "isSuccessful") is True and ev("PolkitLog.cancels") == 0, "success: no cancel")
@@ -345,7 +361,7 @@ h.eval(picker, "selected(1)")
 check(h.eval(m, "selectedIdentity.string") == "admin" and h.eval(picker, "value") == 1, "a pick selects that identity")
 
 # ---- secrets: never logged ------------------------------------------------
-check(not any("hunter2" in x or "second" in x for x in logs), "the typed passwords never reach the log")
+check(not any("hunter2" in x or "second" in x or "third" in x for x in logs), "the typed passwords never reach the log")
 
 # ---- the dry-run instance has no host -------------------------------------
 dry = (REPO / "onboarding-dryrun.qml").read_text()

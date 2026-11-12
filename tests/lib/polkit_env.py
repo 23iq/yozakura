@@ -93,9 +93,10 @@ QtObject {
         supplementaryIsError = false;
     }
     // The QML API
+    // Like Quickshell's: `failed` stays set for the rest of the flow and
+    // polkit's last message stays until polkit sends another one.
     function submit(value) {
         isResponseRequired = false;
-        supplementaryMessage = "";
         PolkitLog.submitted(flow, value);
     }
     function cancelAuthenticationRequest() {

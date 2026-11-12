@@ -19,13 +19,25 @@ FocusScope {
     property bool shown: true
     readonly property var identities: root.identityList()
     readonly property bool canAnswer: root.flow !== null && root.flow.isResponseRequired && !root.flow.isCompleted
-    readonly property bool noticeIsError: root.flow !== null && (root.flow.supplementaryMessage !== "" ? root.flow.supplementaryIsError : root.flow.failed)
+    // An answer was submitted and its result is not in: AuthFlow keeps
+    // `failed` and polkit's last message from the previous attempt, so
+    // neither is shown again until the next result (a new message is).
+    property bool _checking: false
+    property string _staleMessage: ""
+    readonly property string _message: {
+        if (!root.flow)
+            return "";
+        const m = root.flow.supplementaryMessage;
+        return root._checking && m === root._staleMessage ? "" : m;
+    }
+    readonly property bool _failed: root.flow !== null && root.flow.failed && !root._checking
+    readonly property bool noticeIsError: root.flow !== null && (root._message !== "" ? root.flow.supplementaryIsError : root._failed)
     readonly property string notice: {
         if (!root.flow)
             return "";
-        if (root.flow.supplementaryMessage !== "")
-            return root.flow.supplementaryMessage;
-        if (root.flow.failed)
+        if (root._message !== "")
+            return root._message;
+        if (root._failed)
             return I18n.t("polkit.failed");
         return root.flow.isResponseRequired ? "" : I18n.t("polkit.waiting");
     }
@@ -78,6 +90,8 @@ FocusScope {
             return;
         const value = field.text;
         field.clear();
+        root._staleMessage = root.flow.supplementaryMessage;
+        root._checking = true;
         root.flow.submit(value);
     }
 
@@ -89,6 +103,7 @@ FocusScope {
     // A new request (the next in polkit's queue) starts clean.
     onFlowChanged: {
         field.clear();
+        root._checking = false;
         Qt.callLater(root.focusField);
     }
     Component.onCompleted: Qt.callLater(root.focusField)
@@ -96,6 +111,7 @@ FocusScope {
     Connections {
         target: root.flow
         function onAuthenticationFailed() {
+            root._checking = false;
             field.clear();
             root.focusField();
         }
