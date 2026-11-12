@@ -26,7 +26,7 @@ prompt). Without arguments it shows the greeting: on or off, the look, the
 logo and where it runs. A preset is a look (presets lists them; "own" runs
 plain fastfetch with your own ~/.config/fastfetch config). The logo is the
 distribution's, the sakura of the shell, none, or a file of yours: a text
-file (ASCII art, $1..$9 colour markers or ANSI escapes) or a PNG, shown in
+file (ASCII art, $1..$5 colour markers or ANSI colours) or a PNG, shown in
 kitty (the sakura text logo elsewhere). Install fastfetch with
 "{bin} extras install fastfetch".
 `
