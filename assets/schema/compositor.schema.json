@@ -62,11 +62,10 @@
       "description": "Palette colors of the other windows' borders.",
       "x-settings": {
         "category": "windows",
-        "section": "borders",
+        "section": "unfocused",
         "label": "prefs.windows.inactive_border",
         "control": "color-role",
-        "keywords": "inactive unfocused border color gradient role palette alpha",
-        "advanced": true
+        "keywords": "inactive unfocused border color gradient role palette alpha"
       }
     },
     "inactiveBorderAngle": {

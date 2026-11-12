@@ -2,8 +2,8 @@
 
 // Power: the battery and power profile (the stage), battery saver, what
 // happens while you are away (one idle timeline) and around sleep (two
-// switches). The raw idle listeners and sleep commands are out of the
-// window (`yozakura config`). Entry format: see modules/settings/AGENTS.md.
+// switches). The raw idle listeners are in the More sheet; the lock and
+// sleep commands are out of the window (`yozakura config`). Entry format: see modules/settings/AGENTS.md.
 
 function command(key, label, description, placeholder, keywords) {
     return {
@@ -55,10 +55,18 @@ var category = {
                     "keywords": "idle away timeout dim lock screen off sleep suspend minutes timeline hypridle"
                 },
                 toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
-                command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle"),
+                command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle")
+            ]
+        },
+        {
+            // the raw listeners (a command at a time), for what the timeline
+            // does not draw: in the More sheet
+            "id": "commands",
+            "title": "prefs.power.section.commands",
+            "entries": [
                 {
                     "key": "system.idle.listeners",
-                    "advanced": true,
+                    "part": true,
                     "type": "list",
                     "fields": [
                         {
