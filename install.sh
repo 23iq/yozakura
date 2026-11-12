@@ -927,12 +927,13 @@ detect_login() {
   local link="$SYSROOT/etc/systemd/system/display-manager.service" v w
   DM="" DM_STATE=""
   if has_systemd; then
-    if [[ -L "$link" ]]; then
+    # A dangling link (its login manager removed) enables nothing.
+    if [[ -L "$link" && -e "$link" ]]; then
       DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
       return 0
     fi
     for w in "$SYSROOT"/etc/systemd/system/*.wants/ly.service "$SYSROOT"/etc/systemd/system/*.wants/ly@*.service; do
-      [[ -e "$w" || -L "$w" ]] && DM=ly DM_STATE=enabled && return 0
+      [[ -e "$w" ]] && DM=ly DM_STATE=enabled && return 0
     done
     for v in "${LOGIN_MANAGERS[@]}"; do
       dm_installed "$v" && DM="$v" DM_STATE=disabled && return 0

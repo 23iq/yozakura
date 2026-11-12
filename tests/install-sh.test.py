@@ -773,6 +773,23 @@ def test_sddm_installed_but_disabled_is_set_up():
         sb.cleanup()
 
 
+def test_dangling_display_manager_link():
+    sb = Sandbox("arch")
+    try:
+        # display-manager.service still links to a removed gdm: no login
+        # manager is enabled; the installed sddm is found and set up.
+        systemd_root(sb, dm="gdm")
+        (sb.root / "sysroot/usr/lib/systemd/system/gdm.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+none: SDDM", err), "dangling link counted as an enabled gdm", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not set up behind a dangling link", sb.log.read_text())
+        installed_unit(sb, "sddm.service")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and "sddm is installed but not enabled" in err, "installed sddm behind a dangling link not reported", err)
+    finally:
+        sb.cleanup()
+
+
 def installed_unit(sb, name):
     """A login manager unit installed in the fake systemd root, not enabled."""
     unit = sb.root / "sysroot/usr/lib/systemd/system" / name
@@ -852,6 +869,11 @@ def test_ly_and_no_systemd_login_managers():
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and re.search(r"Login\s+ly\s", err), "enabled ly not detected", err)
         check("not enabled" not in err and "Log out (or reboot)" in err, "enabled ly reported as off", err)
+        # ly removed, its wants link left behind: nothing is enabled.
+        (sb.root / "sysroot/usr/lib/systemd/system/ly@.service").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and re.search(r"Login\s+none", err), "dangling ly link counted as enabled", err)
+        (wants / "ly@tty2.service").unlink()
 
         # No systemd: what was found is reported, nothing is guessed.
         sb.extra_env["YOZAKURA_SYSROOT"] = str(sb.root / "nosystemd")
@@ -918,6 +940,7 @@ def main():
         test_sddm_installed_but_disabled_is_set_up,
         test_other_login_manager_installed_but_disabled,
         test_ly_and_no_systemd_login_managers,
+        test_dangling_display_manager_link,
         test_root_and_missing_sudo_give_guidance,
         test_missing_required_component_exits_2,
         test_dry_run_without_git,
