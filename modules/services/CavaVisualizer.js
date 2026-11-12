@@ -43,19 +43,85 @@ function silence(count) {
 function parseFrame(line, expected) {
     if (typeof line !== "string")
         return null;
-    var parts = line.trim().split(";");
-    if (parts.length && parts[parts.length - 1] === "")
-        parts.pop();
-    if (parts.length === 0 || (expected > 0 && parts.length !== expected))
+    var out = [];
+    return parseInto(line, expected, out) > 0 ? out : null;
+}
+
+// Frame reader for the hot path (one call per cava frame): parses `line`
+// without temporary strings and returns `current` itself when the frame
+// equals it (silence, a held note), a new array when it differs, or null
+// for a malformed frame. Only a changed frame allocates.
+function readFrame(line, expected, current) {
+    if (typeof line !== "string")
         return null;
-    var out = new Array(parts.length);
-    for (var i = 0; i < parts.length; i++) {
-        var v = parseInt(parts[i], 10);
-        if (isNaN(v))
-            return null;
-        out[i] = Math.max(0, Math.min(1, v / MAX_RANGE));
+    var n = parseInto(line, expected, _scratch);
+    if (n <= 0)
+        return null;
+    if (current && current.length === n) {
+        var same = true;
+        for (var i = 0; i < n && same; i++)
+            same = current[i] === _scratch[i];
+        if (same)
+            return current;
     }
+    return _scratchCopy(n);
+}
+
+// Reused by readFrame: frames are parsed synchronously, one at a time.
+var _scratch = [];
+
+function _scratchCopy(n) {
+    var out = new Array(n);
+    for (var i = 0; i < n; i++)
+        out[i] = _scratch[i];
     return out;
+}
+
+// Parses `;`-separated integers (optional trailing `;`, surrounding
+// whitespace) into `out` as 0..1 levels. Returns the bar count, or 0 when
+// the line is malformed or does not hold `expected` bars (when > 0).
+function parseInto(line, expected, out) {
+    var len = line.length;
+    var i = 0;
+    var count = 0;
+    while (i < len && line.charCodeAt(i) <= 32)
+        i++;
+    while (len > i && line.charCodeAt(len - 1) <= 32)
+        len--;
+    if (i >= len)
+        return 0;
+    while (i < len) {
+        var neg = false;
+        var c = line.charCodeAt(i);
+        if (c === 45 || c === 43) { // - +
+            neg = c === 45;
+            i++;
+        }
+        var v = 0;
+        var digits = 0;
+        while (i < len) {
+            c = line.charCodeAt(i);
+            if (c < 48 || c > 57)
+                break;
+            v = v * 10 + (c - 48);
+            digits++;
+            i++;
+        }
+        if (digits === 0)
+            return 0;
+        if (i < len) {
+            if (c !== 59) // ;
+                return 0;
+            i++;
+        }
+        if (expected > 0 && count >= expected)
+            return 0;
+        out[count++] = neg ? 0 : Math.min(1, v / MAX_RANGE);
+    }
+    if (expected > 0 && count !== expected)
+        return 0;
+    out.length = count;
+    return count;
 }
 
 // Maps `values` onto `count` bars. Groups take their peak so narrow views stay

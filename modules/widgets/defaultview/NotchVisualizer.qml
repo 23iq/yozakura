@@ -31,21 +31,48 @@ Item {
     // Levels as drawn: eased once per cava frame instead of a height
     // Behavior. A Behavior retargeted by every frame keeps an animation
     // running nonstop, which repaints the window at the output refresh rate
-    // (240 Hz on a 240 Hz monitor) instead of cava's 60 fps.
+    // (240 Hz on a 240 Hz monitor) instead of cava's frame rate. A frame
+    // that moves no bar (settled silence) leaves `drawn` alone: no redraw.
     property var drawn: []
-    // Share of the distance covered per frame: matches the previous 70 ms
-    // OutQuad retargeted every 16.7 ms (1 - (1 - 16.7 / 70)^2 = 0.42).
-    readonly property real easing: Config.animDuration > 0 ? 0.42 : 1
-    onLevelsChanged: drawn = levels.length ? ease(drawn, levels, easing) : []
+    // Share of the distance covered per frame. The previous 70 ms OutQuad
+    // retargeted every 16.7 ms covered 0.42 per 60 fps frame
+    // (1 - (1 - 16.7 / 70)^2); scaled to cava's rate so the bars keep that
+    // speed (0.66 per frame at 30 fps).
+    readonly property real easing: Config.animDuration > 0 ? 1 - Math.pow(1 - 0.42, 60 / Math.max(1, CavaService.framerate || 60)) : 1
+    onLevelsChanged: {
+        if (!levels.length) {
+            if (drawn.length)
+                drawn = [];
+            return;
+        }
+        const next = ease(drawn, levels, easing);
+        if (next)
+            drawn = next;
+    }
+
+    // Bars closer than this to their target snap onto it (1/500 of the
+    // height), so the easing ends instead of creeping forever.
+    readonly property real settleEpsilon: 0.002
 
     // One frame of easing toward `target`; bars without a previous value
-    // start at the target.
+    // start at the target. Returns null when no bar moves, else a new array
+    // (allocated only then), so bindings on `drawn` see a fresh reference.
     function ease(prev, target, k) {
-        const out = new Array(target.length);
-        for (let i = 0; i < target.length; i++) {
-            const p = prev && i < prev.length ? prev[i] : target[i];
-            out[i] = k >= 1 ? target[i] : p + (target[i] - p) * k;
+        const n = target.length;
+        const p = prev || [];
+        let out = null;
+        for (let i = 0; i < n; i++) {
+            const has = i < p.length;
+            let v = !has || k >= 1 ? target[i] : p[i] + (target[i] - p[i]) * k;
+            if (Math.abs(target[i] - v) < settleEpsilon)
+                v = target[i];
+            if (out === null && (!has || v !== p[i]))
+                out = p.slice(0, i);
+            if (out !== null)
+                out.push(v);
         }
+        if (out === null && p.length !== n)
+            out = p.slice(0, n);
         return out;
     }
     property color startColor: Colors.primary

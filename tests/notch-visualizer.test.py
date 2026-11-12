@@ -6,7 +6,8 @@ a 240 Hz monitor) while music plays. The visualizer must instead change
 only when a frame arrives: this feeds a stub CavaService at 30 fps (below
 the 60 Hz offscreen refresh, so animation-driven frames would show up) and
 counts rendered frames. It also checks the bars still ease toward a new
-level (smooth look) and settle on it.
+level (smooth look) at the speed they had at 60 fps, settle on it, and that
+frames which move no bar (silence, a held level) cause no redraw.
 """
 import sys
 from pathlib import Path
@@ -25,6 +26,7 @@ h.singleton('qs.modules.theme', 'Colors', 'QtObject { property color primary: "#
 h.singleton('qs.modules.services', 'CavaService', '''QtObject {
     property bool available: true
     property var values: [0, 0, 0, 0, 0, 0]
+    property int framerate: 30
     property int frames: 0
     function levels(count) { return values.slice(0, count); }
     function setConsumer(key, active) {}
@@ -91,7 +93,53 @@ check('a jump eases in (not instant)', low < first < 60, f'({low:.1f} -> {first:
 for _ in range(15):
     h.eval(root, 'CavaService.push([1, 1, 1, 1, 1, 1])')
 pump(50)
-check('settles on the level', h.eval(root, 'vis.children[0].height') > 59, str(h.eval(root, 'vis.children[0].height')))
+check('settles on the level', h.eval(root, 'vis.children[0].height') == 60, str(h.eval(root, 'vis.children[0].height')))
+
+# Same speed as before: 0.42 of the way per 60 fps frame is 0.66 per 30 fps
+# frame (two 60 fps steps).
+k = h.eval(root, 'vis.easing')
+check('easing keeps the 60 fps speed at 30 fps', abs(k - (1 - 0.58 ** 2)) < 1e-9, f'({k})')
+
+# Settled: a frame that moves no bar leaves `drawn` (and the window) alone.
+root.setProperty('swaps', 0)
+pump(100)
+first_drawn = h.eval(root, 'vis.drawn')
+for _ in range(10):
+    h.eval(root, 'CavaService.push([1, 1, 1, 1, 1, 1])')
+    pump(20)
+check('settled frames keep the same drawn array', h.eval(root, 'vis.drawn').strictlyEquals(first_drawn))
+check('settled frames cause no redraw', root.property('swaps') == 0, f'({root.property("swaps")} redraws)')
+
+# Back to silence: the bars fall and stop at the flat level.
+for _ in range(15):
+    h.eval(root, 'CavaService.push([0, 0, 0, 0, 0, 0])')
+pump(50)
+check('falls back to silence', list(h.eval(root, 'vis.drawn').toVariant()) == [0] * 6, str(h.eval(root, 'vis.drawn').toVariant()))
+
+# Inactive: bars are dropped and frames are ignored.
+h.eval(root, 'vis.playing = false')
+check('inactive clears the bars', h.eval(root, 'vis.drawn.length') == 0)
+h.eval(root, 'CavaService.push([1, 1, 1, 1, 1, 1])')
+check('inactive ignores frames', h.eval(root, 'vis.drawn.length') == 0)
+h.eval(root, 'vis.playing = true')
+check('reactivating starts at the current level', list(h.eval(root, 'vis.drawn').toVariant()) == [1] * 6)
+
+
+def ease(expr):
+    v = h.eval(root, f'vis.ease({expr})')
+    return None if v is None or (hasattr(v, 'isNull') and v.isNull()) else list(v.toVariant() if hasattr(v, 'toVariant') else v)
+
+
+check('ease: no previous bars start at the target', ease('[], [0.2, 1], 0.5') == [0.2, 1])
+check('ease: one step of k', ease('[0, 0], [1, 1], 0.5') == [0.5, 0.5])
+check('ease: k >= 1 jumps', ease('[0, 0], [1, 1], 1') == [1, 1])
+check('ease: settled returns null', ease('[1, 0.5], [1, 0.5], 0.5') is None)
+check('ease: close enough snaps onto the target', ease('[0.999, 1], [1, 1], 0.5') == [1, 1])
+check('ease: only moving bars change', ease('[1, 0, 1], [1, 1, 1], 0.5') == [1, 0.5, 1])
+check('ease: fewer bars shrink', ease('[1, 1, 1], [1, 1], 0.5') == [1, 1])
+check('ease: more bars grow', ease('[1], [1, 1], 0.5') == [1, 1])
+check('ease: prev is never mutated', h.eval(root, '(function () { const p = [0, 0]; vis.ease(p, [1, 1], 0.5); '
+                                                  'return p[0] === 0 && p[1] === 0; })()') is True)
 
 print('NotchVisualizer:', 'PASS' if ok_all else 'FAIL')
 sys.exit(0 if ok_all else 1)

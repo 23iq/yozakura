@@ -14,13 +14,21 @@ Singleton {
     id: root
 
     readonly property int barCount: 24
-    readonly property int framerate: 60
+    // Frames per second cava delivers. Each frame redraws the screen-sized
+    // panel window that hosts the notch visualizer, so this is kept at 30
+    // (the bars ease between frames, see NotchVisualizer.easing). A future
+    // visualizer-rate setting binds here.
+    property int framerate: 30
+    // Identical frames (silence, a held note) are dropped, after this many
+    // repeats so eased consumers can settle on the last level first.
+    readonly property int settleFrames: Math.ceil(framerate * 0.4)
     // Flipped off when cava is missing so we never respawn in a loop.
     property bool available: true
     property var values: Cava.silence(barCount)
     readonly property bool running: cavaProcess.running
 
     property int _failures: 0
+    property int _repeats: 0
     property var _consumers: ({})
     property int consumerCount: 0
     readonly property bool wanted: available && consumerCount > 0
@@ -86,10 +94,18 @@ Singleton {
         command: ["sh", "-c", "umask 077 && printf '%s' \"$1\" > \"$2\" && exec cava -p \"$2\"", Brand.appId + "-cava", Cava.buildConfig(root.barCount, root.framerate), root.configPath]
         stdout: SplitParser {
             onRead: data => {
-                const frame = Cava.parseFrame(data, root.barCount);
-                if (frame) {
-                    root._failures = 0;
+                // Only a changed frame allocates and notifies; repeats stop
+                // after settleFrames, so a silent stream costs no redraws.
+                const frame = Cava.readFrame(data, root.barCount, root.values);
+                if (!frame)
+                    return;
+                root._failures = 0;
+                if (frame !== root.values) {
+                    root._repeats = 0;
                     root.values = frame;
+                } else if (root._repeats < root.settleFrames) {
+                    root._repeats++;
+                    root.values = frame.slice();
                 }
             }
         }
