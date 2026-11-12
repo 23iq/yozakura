@@ -357,11 +357,23 @@ settle()
 picker = h.find(dlg, "polkitIdentityPicker")
 check(h.eval(picker, "parent.visible") is True and h.eval(h.find(dlg, "polkitIdentity"), "visible") is False, "two identities: the picker")
 check(h.eval(picker, "options.map(o => o.text).join(',')") == "user,Admin", "identities by display name")
+check(h.eval(notice, "visible") is False, "no notice before anything happened")
 h.eval(picker, "selected(1)")
+settle()
 check(h.eval(m, "selectedIdentity.string") == "admin" and h.eval(picker, "value") == 1, "a pick selects that identity")
+check(h.eval(m, "failed") is True and h.eval(notice, "visible") is False,
+      f"switching identity restarts the session without a failure notice, got {h.eval(notice, 'text')!r}")
+check(h.eval(field, "enabled") is True, "the restarted session asks again")
+type_text(dlg, "fourth")
+QTest.keyClick(dlg, Qt.Key_Return)
+h.eval(m, 'showError("Sorry, that did not work.")')
+h.eval(m, "completed(false)")
+h.eval(m, 'request("Password: ", false)')
+settle()
+check(h.eval(notice, "text") == "Sorry, that did not work.", "a real failure after the pick is shown")
 
 # ---- secrets: never logged ------------------------------------------------
-check(not any("hunter2" in x or "second" in x or "third" in x for x in logs), "the typed passwords never reach the log")
+check(not any("hunter2" in x or "second" in x or "third" in x or "fourth" in x for x in logs), "the typed passwords never reach the log")
 
 # ---- the dry-run instance has no host -------------------------------------
 dry = (REPO / "onboarding-dryrun.qml").read_text()

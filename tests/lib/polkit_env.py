@@ -92,6 +92,14 @@ QtObject {
         supplementaryMessage = message;
         supplementaryIsError = false;
     }
+    // Like Quickshell's setSelectedIdentity: a started session is ended
+    // (completed(false) on the spot: `failed`) and a new one asks again.
+    onSelectedIdentityChanged: {
+        if (inputPrompt !== "" && !isCompleted) {
+            completed(false);
+            request(inputPrompt, responseVisible);
+        }
+    }
     // The QML API
     // Like Quickshell's: `failed` stays set for the rest of the flow and
     // polkit's last message stays until polkit sends another one.

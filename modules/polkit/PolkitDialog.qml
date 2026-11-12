@@ -23,14 +23,17 @@ FocusScope {
     // `failed` and polkit's last message from the previous attempt, so
     // neither is shown again until the next result (a new message is).
     property bool _checking: false
+    // Another identity was picked: Quickshell restarts the session, which
+    // ends the old one as failed; nothing failed until the next submit.
+    property bool _picked: false
     property string _staleMessage: ""
     readonly property string _message: {
         if (!root.flow)
             return "";
         const m = root.flow.supplementaryMessage;
-        return root._checking && m === root._staleMessage ? "" : m;
+        return (root._checking || root._picked) && m === root._staleMessage ? "" : m;
     }
-    readonly property bool _failed: root.flow !== null && root.flow.failed && !root._checking
+    readonly property bool _failed: root.flow !== null && root.flow.failed && !root._checking && !root._picked
     readonly property bool noticeIsError: root.flow !== null && (root._message !== "" ? root.flow.supplementaryIsError : root._failed)
     readonly property string notice: {
         if (!root.flow)
@@ -92,6 +95,7 @@ FocusScope {
         field.clear();
         root._staleMessage = root.flow.supplementaryMessage;
         root._checking = true;
+        root._picked = false;
         root.flow.submit(value);
     }
 
@@ -104,6 +108,7 @@ FocusScope {
     onFlowChanged: {
         field.clear();
         root._checking = false;
+        root._picked = false;
         Qt.callLater(root.focusField);
     }
     Component.onCompleted: Qt.callLater(root.focusField)
@@ -204,8 +209,11 @@ FocusScope {
                             }))
                     value: root.flow ? root.identities.indexOf(root.flow.selectedIdentity) : -1
                     onSelected: v => {
-                        if (root.flow && root.identities[v])
+                        if (root.flow && root.identities[v] && root.identities[v] !== root.flow.selectedIdentity) {
+                            root._staleMessage = root.flow.supplementaryMessage;
+                            root._picked = true;
                             root.flow.selectedIdentity = root.identities[v];
+                        }
                         root.focusField();
                     }
                 }
