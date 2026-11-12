@@ -21,4 +21,18 @@ Singleton {
     // The dialog is up: full-screen surfaces with exclusive keyboard focus
     // (the setup wizard) give the keyboard to it.
     property bool dialogOpen: false
+
+    // The shell's own surfaces never hold or take the keyboard from the
+    // dialog: while it is open Visibilities closes the open module and
+    // refuses to open one, and GlobalShortcuts runs only the commands that
+    // map no surface (allowsCommand). Locking stays possible (it cancels the
+    // request).
+    readonly property var _quietCommands: ["lockscreen"]
+    readonly property var _quietPrefixes: ["media-", "brightness-", "dnd-", "wallpaper-"]
+    function allowsCommand(command: string): bool {
+        if (!root.dialogOpen)
+            return true;
+        const c = String(command);
+        return root._quietCommands.indexOf(c) !== -1 || root._quietPrefixes.some(p => c.indexOf(p) === 0);
+    }
 }

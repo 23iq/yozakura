@@ -8,9 +8,11 @@ import qs.modules.components.kit
 // The password prompt's surface: a full-screen Overlay layer on the
 // screen the request opened on, with exclusive keyboard focus and a
 // dimmed backdrop. Created when a request needs the user, so it maps last
-// and sits above every other shell surface (the setup wizard gives its
-// keyboard focus up while it is open, PolkitService.dialogOpen). A click
-// on the backdrop keeps the request (it only refocuses the field).
+// and sits above every other shell surface. While it is open the setup
+// wizard gives its keyboard focus up, the open shell module closes and
+// none opens, and keybinds run only commands that map no surface
+// (PolkitService.dialogOpen / allowsCommand). A click on the backdrop keeps
+// the request (it only refocuses the field).
 PanelWindow {
     id: root
 
