@@ -23,8 +23,13 @@ QtObject {
     readonly property string ipcName: Brand.appId + "_ipc.pipe"
 
     // High-performance Pipe Listener (Daemon mode)
+    // The reader exits with this Quickshell (tail --pid=$PPID): a restarted
+    // or crashed shell used to leave its tail behind for good, one per
+    // restart. The one-shot empty write gets tail past its blocking open of
+    // the FIFO at once, so the pid check also runs before any command came.
+    // A tail without --pid (busybox) keeps the plain reader.
     property Process pipeListener: Process {
-        command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; exec tail -f "$p"', "ipc-pipe", root.ipcName]
+        command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; if tail --pid="$PPID" --version >/dev/null 2>&1; then ( : >"$p" & ); exec tail --pid="$PPID" -f "$p"; fi; exec tail -f "$p"', "ipc-pipe", root.ipcName]
         // a dry-run instance or a separate window must not take over the
         // live shell's FIFO
         running: !DryRun.active && ProcessRole.primary

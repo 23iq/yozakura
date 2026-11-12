@@ -503,8 +503,10 @@ func shellDir() string {
 	return filepath.Join(os.Getenv("HOME"), ".local/src", brand.AppID)
 }
 
+// runDetached runs a shell command line without waiting for it; it is
+// reaped in the background so it never stays a zombie of the daemon.
 func runDetached(cmd string) {
-	exec.CommandContext(context.Background(), "sh", "-c", cmd).Start()
+	_ = proc.StartReaped(exec.CommandContext(context.Background(), "sh", "-c", cmd))
 }
 
 func execCommand(name string, args ...string) {

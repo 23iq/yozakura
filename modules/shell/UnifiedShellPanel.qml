@@ -7,6 +7,7 @@ import qs.modules.bar
 import qs.modules.bar.panels
 import qs.modules.bar.activities
 import qs.modules.bar.workspaces
+import qs.modules.corners
 import qs.modules.notch
 import qs.modules.dock
 import qs.modules.frame
@@ -357,6 +358,18 @@ PanelWindow {
             panel: unifiedPanel
             screenName: unifiedPanel.targetScreen.name
             z: 5
+        }
+    }
+
+    // Rounded screen corners, last so above everything drawn here, and in no
+    // input region (clicks pass through). No window of their own: one more
+    // full-screen (or four corner-sized) layer surface costs far more than
+    // four small canvases in this one. Nothing is loaded while they are off.
+    Loader {
+        anchors.fill: parent
+        active: !!(Config.theme.enableCorners && Config.roundness > 0)
+        sourceComponent: ScreenCornersContent {
+            hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
         }
     }
 }

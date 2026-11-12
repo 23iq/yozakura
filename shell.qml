@@ -16,7 +16,6 @@ import qs.modules.widgets.overview
 import qs.modules.widgets.presets
 import qs.modules.widgets.menus
 import qs.modules.services
-import qs.modules.corners
 import qs.modules.frame
 import qs.modules.components
 import qs.modules.desktop
@@ -53,7 +52,7 @@ ShellRoot {
     }
 
     // Screens for the always-present per-screen windows (wallpaper, desktop,
-    // corners, panel, OSD): the outputs at startup pass at once, a hotplugged
+    // panel, OSD): the outputs at startup pass at once, a hotplugged
     // one only after the output list held still, so no window is created on
     // an output in the tick it appears (a QtWayland crash).
     SettledScreens {
@@ -115,19 +114,6 @@ ShellRoot {
             UnifiedShellPanel {
                 id: unifiedPanel
                 targetScreen: screenShellContainer.modelData
-            }
-
-            // Debounced like the desktop window above.
-            SettleGate {
-                id: cornersWanted
-                value: !!(Config.theme.enableCorners && Config.roundness > 0)
-                interval: 300
-            }
-            Loader {
-                active: cornersWanted.output === true
-                sourceComponent: ScreenCorners {
-                    screen: screenShellContainer.modelData
-                }
             }
 
             // The AI bar: its own window, sized to the panel

@@ -10,6 +10,7 @@ import (
 	"github.com/godbus/dbus/v5"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
 
 // Service monitors login1 PrepareForSleep and Session.Lock signals,
@@ -177,5 +178,6 @@ func runDetached(cmd string) {
 	if cmd == "" {
 		return
 	}
-	exec.CommandContext(context.Background(), "sh", "-c", cmd).Start()
+	// reaped in the background: the daemon outlives every command it runs
+	_ = proc.StartReaped(exec.CommandContext(context.Background(), "sh", "-c", cmd))
 }
