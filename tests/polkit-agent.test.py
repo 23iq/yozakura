@@ -270,6 +270,8 @@ title = h.find(dlg, "polkitTitle")
 check(h.eval(title, "text") == "Authentication required", "title")
 check(h.eval(h.find(dlg, "polkitMessage"), "text") == "Authentication is required to install software", "the polkit message is shown")
 check(h.eval(h.find(dlg, "polkitAction"), "text") == "org.freedesktop.policykit.exec", "the action id is shown under it")
+action = h.find(dlg, "polkitAction")
+check(h.eval(action, "lineCount") == 1, "a short action id takes one line")
 check(h.eval(h.find(dlg, "polkitIdentity"), "visible") is True and h.eval(h.find(dlg, "polkitIdentity"), "text") == "Authenticating as user",
       "one identity: named, no picker")
 check(h.eval(h.find(dlg, "polkitIdentityPicker"), "parent.visible") is False, "no picker with one identity")
@@ -322,6 +324,13 @@ check(h.eval(notice, "text") == "Checking with the server", "a new polkit messag
 h.eval(f, "completed(true)")
 settle()
 check(h.eval(f, "isSuccessful") is True and ev("PolkitLog.cancels") == 0, "success: no cancel")
+
+# a long action id wraps whole, nothing elided
+la = ev("scene.makeFlow({ actionId: 'org.example.very.long.vendor.namespace.application.subsystem.privileged-helper.run-maintenance-task' })")
+d.setProperty("flow", la)
+settle()
+check(h.eval(action, "lineCount") > 1 and h.eval(action, "truncated") is False and h.eval(action, "lineCount") <= 4,
+      f"a long action id wraps without eliding, got {h.eval(action, 'lineCount')} line(s), truncated {h.eval(action, 'truncated')}")
 
 # fingerprint-like info without an answer expected
 g = ev("scene.makeFlow()")

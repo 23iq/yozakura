@@ -184,7 +184,10 @@ FocusScope {
                     visible: text !== ""
                     role: "caption"
                     color: Type.muted
-                    elide: Text.ElideMiddle
+                    // Wrapped whole: an elided middle could hide the part
+                    // that tells two actions apart.
+                    wrapMode: Text.WrapAnywhere
+                    maximumLineCount: 4
                     font.family: Type.monoFont
                     text: root.flow ? root.flow.actionId : ""
                 }
