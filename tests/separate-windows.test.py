@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from qmlharness import REPO, Harness, hard_exit  # noqa: E402
 from settings_env import colors_qml, config_qml, load_defaults, DEFAULT_PALETTE  # noqa: E402
 
-from waits import settle  # noqa: E402
+from waits import pump, settle  # noqa: E402
 
 failures: list[str] = []
 
@@ -51,9 +51,14 @@ QtObject {
     // windows.open answers with this error (null: ok)
     property var openError: null
     property bool socketAvailable: true
+    // false: windows.open is not answered until answerHeld()
+    property bool answerOpen: true
+    property var held: null
+    function answerHeld() { const h = held; held = null; if (h) h({ "result": "started" }, null) }
     function addSubscription(s, cb) { subs = subs.concat(s); cbs = cbs.concat([{ "s": s, "cb": cb }]); return cbs.length }
     function call(m, p, cb) {
         calls = calls.concat([{ "method": m, "params": p || null }]);
+        if (cb && m === "windows.open" && !answerOpen) { held = cb; return }
         if (cb) Qt.callLater(() => cb(m === "windows.open" && openError ? null : { "result": "ok" }, m === "windows.open" ? openError : null));
     }
     function notify(m, p) { call(m, p) }
@@ -105,8 +110,9 @@ QtObject {
     function toggleSettings() { toggles++ }
 }""",
 })
-for f in ("SeparateWindows", "PreviewSink"):
-    h.copy(f"modules/services/{f}.qml", "qs/modules/services", siblings=False)
+h.copy("modules/services/SeparateWindows.qml", "qs/modules/services", siblings=False,
+       replace={"openTimeout: 3000": "openTimeout: 150"})
+h.copy("modules/services/PreviewSink.qml", "qs/modules/services", siblings=False)
 (qs / "modules/settings").mkdir(parents=True, exist_ok=True)
 (qs / "modules/settings/ConfigWrite.js").write_text((REPO / "modules/settings/ConfigWrite.js").read_text())
 h.copy("config/JsonUtil.js", "qs/config")
@@ -236,6 +242,39 @@ ev("GlobalStates.settingsWindowVisible = false")
 ev("BackendService.openError = null")
 settle()
 check(ev("SeparateWindows.settingsSeparate") is True, "closed: the next open tries the process again")
+
+# no daemon (qs -p shell.qml alone): the in-process window at once
+ev("BackendService.socketAvailable = false")
+opens = calls("windows.open")
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+check(calls("windows.open") == opens, "no daemon: nothing is asked of it")
+check(ev("SeparateWindows.settingsSeparate") is False and ev("GlobalStates.settingsWindowVisible") is True
+      and ev("SeparateWindows.settingsOpening") is False, "...the in-process window opens at once, no pill")
+ev("GlobalStates.settingsWindowVisible = false")
+settle()
+ev("OnboardingService.visible = true")
+settle()
+check(calls("windows.open") == opens and ev("SeparateWindows.wizardSeparate") is False
+      and ev("OnboardingService.visible") is True, "no daemon: the wizard opens in-process too")
+ev("OnboardingService.visible = false")
+settle()
+ev("BackendService.socketAvailable = true")
+# the daemon does not answer: in-process after the bound; a late answer closes that window
+ev("BackendService.answerOpen = false")
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+check(calls("windows.open") == opens + 1 and ev("SeparateWindows.settingsOpening") is True, "asked, waiting")
+pump(400)
+check(ev("SeparateWindows.settingsSeparate") is False and ev("GlobalStates.settingsWindowVisible") is True,
+      "no answer in time: the in-process window opens")
+closes = calls("windows.close")
+ev("BackendService.answerHeld()")
+settle()
+check(calls("windows.close") == closes + 1, "...and the window started late is closed again")
+ev("BackendService.answerOpen = true")
+ev("GlobalStates.settingsWindowVisible = false")
+settle()
 
 # ---- staged previews ----
 pos = ev("Config.bar.position")

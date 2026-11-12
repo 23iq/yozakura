@@ -216,7 +216,8 @@ window reopens at once). Off, everything is as before.
   first),
   the daemon reaps it, kills it on shutdown / reload / quit (SIGTERM, then
   SIGKILL of its group), never restarts it; the orphan sweep knows the entry
-  files. A start failure falls back to the in-process window; a window open
+  files. A start failure falls back to the in-process window (so does no
+  daemon connection, `qs -p shell.qml` alone, or no answer within 3 s); a window open
   in-process stays so when the setting changes. `OpeningPill` shows until
   the window reports `windows.ready`; the frame maps first
   (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).

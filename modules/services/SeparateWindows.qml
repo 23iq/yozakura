@@ -124,22 +124,59 @@ Singleton {
         }
     }
 
+    // windows.open: starts the process, or raises the running one. A start
+    // the daemon cannot make (no daemon: `qs -p shell.qml` alone; no answer
+    // within openTimeout; entry file missing, Quickshell failed) opens the
+    // in-process window instead.
+    readonly property int openTimeout: 3000
+    property bool _settingsPending: false // a start asked, not answered yet
     function _openSettings() {
         root._settingsAsked = true;
+        const start = !root.settingsRunning;
+        if (start && !BackendService.socketAvailable) {
+            root._settingsFallback("no daemon connection");
+            return;
+        }
+        if (start) {
+            root._settingsPending = true;
+            settingsGuard.restart();
+        }
         BackendService.call("windows.open", {
             "kind": "settings",
             "page": GlobalStates.settingsCategory || "",
             "screen": GlobalStates.settingsTargetScreenName || "",
             "workspace": GlobalStates.settingsTargetWorkspaceId || 0
         }, (result, error) => {
-            if (!error)
+            if (!start)
                 return;
-            // No window process (entry file missing, Quickshell failed to
-            // start): the in-process window opens instead.
-            console.warn("SeparateWindows: settings window failed to start, opening it in-process:", error);
-            root._settingsAsked = false;
-            root._settingsInProcess = GlobalStates.settingsWindowVisible;
+            // answered after the guard fell back: that window is not wanted
+            if (!root._settingsPending) {
+                if (!error)
+                    BackendService.call("windows.close", {
+                        "kind": "settings"
+                    });
+                return;
+            }
+            root._settingsPending = false;
+            settingsGuard.stop();
+            if (error)
+                root._settingsFallback(error);
         });
+    }
+    function _settingsFallback(why) {
+        console.warn("SeparateWindows: settings window not started (" + why + "), opening it in-process");
+        root._settingsPending = false;
+        settingsGuard.stop();
+        root._settingsAsked = false;
+        if (!root.settingsRunning)
+            root._settingsInProcess = GlobalStates.settingsWindowVisible;
+    }
+    property Timer settingsGuard: Timer {
+        interval: root.openTimeout
+        onTriggered: {
+            if (root._settingsPending && !root.settingsRunning)
+                root._settingsFallback("no answer from the daemon");
+        }
     }
 
     Connections {
@@ -223,18 +260,51 @@ Singleton {
             });
     }
 
+    property bool _wizardPending: false
     function _openWizard() {
         root._wizardAsked = true;
+        const start = !root.wizardRunning;
+        if (start && !BackendService.socketAvailable) {
+            root._wizardFallback("no daemon connection");
+            return;
+        }
+        if (start) {
+            root._wizardPending = true;
+            wizardGuard.restart();
+        }
         BackendService.call("windows.open", {
             "kind": "onboarding",
             "screen": OnboardingService.screenName || ""
         }, (result, error) => {
-            if (!error)
+            if (!start)
                 return;
-            console.warn("SeparateWindows: setup wizard failed to start, opening it in-process:", error);
-            root._wizardAsked = false;
-            root._wizardInProcess = OnboardingService.visible;
+            if (!root._wizardPending) {
+                if (!error)
+                    BackendService.call("windows.close", {
+                        "kind": "onboarding"
+                    });
+                return;
+            }
+            root._wizardPending = false;
+            wizardGuard.stop();
+            if (error)
+                root._wizardFallback(error);
         });
+    }
+    function _wizardFallback(why) {
+        console.warn("SeparateWindows: setup wizard not started (" + why + "), opening it in-process");
+        root._wizardPending = false;
+        wizardGuard.stop();
+        root._wizardAsked = false;
+        if (!root.wizardRunning)
+            root._wizardInProcess = OnboardingService.visible;
+    }
+    property Timer wizardGuard: Timer {
+        interval: root.openTimeout
+        onTriggered: {
+            if (root._wizardPending && !root.wizardRunning)
+                root._wizardFallback("no answer from the daemon");
+        }
     }
 
     Connections {
