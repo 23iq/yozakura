@@ -57,3 +57,57 @@ func TestWriteFileSafe(t *testing.T) {
 		}
 	}
 }
+
+// A marked block of another marker (the greeting line in ~/.bashrc) is
+// added and removed without touching the rest; a file it created goes.
+func TestMarkedBlockFile(t *testing.T) {
+	home := t.TempDir()
+	env := Env{Home: home, ConfigHome: filepath.Join(home, ".config"), DataDir: filepath.Join(home, "data"), AppID: "app"}
+	rc := filepath.Join(home, ".bashrc")
+	orig := "export A=1\n# >>> app >>>\nother\n# <<< app <<<\n"
+	if err := os.WriteFile(rc, []byte(orig), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	changed, err := UpsertMarkedBlock(env, "greet", "app fetch", rc, ". /x")
+	if err != nil || !changed {
+		t.Fatalf("upsert: %v %v", changed, err)
+	}
+	if again, _ := UpsertMarkedBlock(env, "greet", "app fetch", rc, ". /x"); again {
+		t.Error("second upsert changed the file")
+	}
+	data, _ := os.ReadFile(rc)
+	if want := orig + "\n# >>> app fetch >>>\n. /x\n# <<< app fetch <<<\n"; string(data) != want {
+		t.Errorf("got %q", data)
+	}
+	if _, err := RevertMarkedBlock(env, "greet", "app fetch", rc); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(rc); string(data) != orig {
+		t.Errorf("revert gave %q", data)
+	}
+	// created: removed again
+	zrc := filepath.Join(home, "z", ".zshrc")
+	if _, err := UpsertMarkedBlock(env, "greet-z", "app fetch", zrc, ". /x"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := RevertMarkedBlock(env, "greet-z", "app fetch", zrc); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(zrc); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("created file left: %v", err)
+	}
+	// read-only: refused, untouched
+	ro := filepath.Join(home, "ro")
+	if err := os.WriteFile(ro, []byte("x\n"), 0o444); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(home, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(home, 0o755)
+	if os.Geteuid() != 0 {
+		if _, err := UpsertMarkedBlock(env, "greet", "app fetch", ro, ". /x"); !errors.Is(err, ErrManaged) {
+			t.Errorf("read-only file: %v", err)
+		}
+	}
+}

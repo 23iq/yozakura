@@ -157,6 +157,10 @@ func checkWritable(path string) error {
 	return nil
 }
 
+// WriteCheck returns ErrManaged when writing path would be refused (Nix
+// store, read-only), nil when it can be written.
+func WriteCheck(path string) error { return checkWritable(path) }
+
 // isManaged reports whether writing path would be refused.
 func isManaged(path string) bool { return errors.Is(checkWritable(path), ErrManaged) }
 
