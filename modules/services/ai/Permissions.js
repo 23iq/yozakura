@@ -18,10 +18,12 @@ var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_lis
 var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true, notes_delete: true, extras_install: true };
 
 // Config keys whose value the shell or the backend runs as a command line
-// (or as the program it starts). MUST equal routines.CommandConfigKeys in
+// (or as the program it starts), or that switch a safeguard off: the PAM
+// service that decides who can unlock the lock screen, and the code agents'
+// auto-approval of every tool request (yolo). MUST equal routines.CommandConfigKeys in
 // Go (backend/pkg/svc/routines/confirm_calls.go; tests/ai-confirm-tools.test.cjs
 // enforces it). A "*" segment matches any key.
-var COMMAND_CONFIG_KEYS = ["general.terminalCommand", "system.idle.general.lock_cmd", "system.idle.general.before_sleep_cmd", "system.idle.general.after_sleep_cmd", "system.idle.listeners", "specials.workspaces", "ai.agents.*.binary", "ai.agents.*.extraArgs"];
+var COMMAND_CONFIG_KEYS = ["general.terminalCommand", "system.idle.general.lock_cmd", "system.idle.general.before_sleep_cmd", "system.idle.general.after_sleep_cmd", "system.idle.listeners", "specials.workspaces", "ai.agents.*.binary", "ai.agents.*.extraArgs", "ai.agents.*.yolo", "lockscreen.pamService"];
 
 function _fullConfigKey(domain, key) {
     var k = String(key || "").trim().replace(/\[/g, ".").replace(/\]/g, "").replace(/^\.+|\.+$/g, "");

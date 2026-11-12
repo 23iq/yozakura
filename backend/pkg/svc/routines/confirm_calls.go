@@ -4,7 +4,10 @@ import "strings"
 
 // CommandConfigKeys are the config keys whose value the shell or the
 // backend runs as a command line (or as the program it starts): an AI
-// writing one of them can run anything. A "*" segment matches any key.
+// writing one of them can run anything. Also the keys that switch a
+// safeguard off: the PAM service that decides who can unlock the lock
+// screen, and the code agents' auto-approval of every tool request (yolo).
+// A "*" segment matches any key.
 // modules/services/ai/Permissions.js keeps the same list
 // (tests/ai-confirm-tools.test.cjs enforces it).
 var CommandConfigKeys = []string{
@@ -16,6 +19,8 @@ var CommandConfigKeys = []string{
 	"specials.workspaces",
 	"ai.agents.*.binary",
 	"ai.agents.*.extraArgs",
+	"ai.agents.*.yolo",
+	"lockscreen.pamService",
 }
 
 // ConfirmCall reports whether a call of the built-in tool `tool` (bare
