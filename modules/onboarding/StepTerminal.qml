@@ -40,9 +40,14 @@ Item {
         wizard.remember("terminal", t);
     }
 
+    // "New terminals start in fish with this prompt": the previewed prompt
+    // is switched on too when no card was picked (enablePrompt also queues
+    // its engine).
     function makeFishDefault() {
         if (root.fish === "ok")
             return;
+        if (root.term && !root.term.enabled && TerminalLookService.prompt !== "")
+            TerminalLookService.enablePrompt(TerminalLookService.prompt);
         TerminalLookService.makeFishDefault();
         wizard.remember("fishDefault", true);
     }
@@ -270,6 +275,7 @@ Item {
                         id: gallery
                         objectName: "onboardingPromptGallery"
                         width: galleryFlick.width - Space.m
+                        markOnlyWhenOn: true
                     }
                 }
             }
