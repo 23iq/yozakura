@@ -17,7 +17,8 @@ colour (matugen), `--steps` keeps only those step ids (peek always).
 Writes <out>/<WxH>/<NN>-<step>-<mode>[-<language>].png plus a few
 in-progress states (wallpaper tab, preset picked, monitor details, apps
 installing, a model pull, tour half done, summary with installs running and
-the exclusive toggle on, summary when done).
+the exclusive toggle on, summary when done, summary with the beta update
+channel picked).
 """
 from __future__ import annotations
 
@@ -204,6 +205,9 @@ Window {{
                                 ' ["r1", "r2", "pull-1"].forEach(j => BackendService.emit("extras.progress", Object.assign({},'
                                 ' ExtrasService.jobs[j], {state: "done", percent: 100})))')
                     shot(f"{i + 1:02d}-{sid}-done", 700)
+                    h.eval(win, 'wizard.set("system.updateChannel", "beta")')
+                    shot(f"{i + 1:02d}-{sid}-channel-beta", 500)
+                    h.eval(win, 'wizard.set("system.updateChannel", "stable")')
                 elif sid == "keybinds":
                     h.eval(win, 'GlobalShortcuts.run("keybinds")')
                     h.eval(win, 'OnboardingService.peek = false')

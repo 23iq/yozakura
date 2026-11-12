@@ -18,6 +18,10 @@ var keys = {
     "updateServiceEnabled": {
         "description": "Check for updates in the background."
     },
+    "updateChannel": {
+        "enum": ["stable", "beta", "git"],
+        "description": "What `yozakura update` and the update notice follow: stable = X.Y.Z releases, beta = X.Y.Z-beta.N pre-releases and newer stable releases, git = every commit on main. Not used by Nix installs."
+    },
     "idle": {
         "description": "Idle handling (hypridle-like): lock/sleep commands and timed listeners."
     },

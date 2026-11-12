@@ -230,6 +230,13 @@ Item {
                 }
             }
 
+            // ---- update channel (after the summary and the only-shell choice) -----
+            UpdateChannelChoice {
+                objectName: "updateChannel"
+                width: parent.width
+                wizard: root.wizard
+            }
+
             KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter

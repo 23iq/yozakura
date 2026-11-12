@@ -4,6 +4,7 @@ var data = {
     "disks": ["/"],
     "language": "auto",
     "updateServiceEnabled": true,
+    "updateChannel": "stable",
     "idle": {
         "general": {
             "lock_cmd": "yozakura lock",

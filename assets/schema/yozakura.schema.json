@@ -9358,6 +9358,29 @@
             "keywords": "updates check background notify new version"
           }
         },
+        "updateChannel": {
+          "title": "Update channel",
+          "type": "string",
+          "default": "stable",
+          "description": "Which versions updates and the update notice follow. Stable: tested releases. Beta: pre-releases to try what comes next, plus every newer stable release. Git: every commit on main, the least stable. Nix installs update through their flake instead.",
+          "x-settings": {
+            "category": "updates",
+            "section": "updates",
+            "label": "prefs.updates.channel",
+            "control": "selector",
+            "keywords": "update channel stable beta git main pre-release prerelease nightly branch"
+          },
+          "enum": [
+            "stable",
+            "beta",
+            "git"
+          ],
+          "x-enumLabels": {
+            "stable": "Stable",
+            "beta": "Beta",
+            "git": "Git"
+          }
+        },
         "idle": {
           "title": "Idle",
           "type": "object",
