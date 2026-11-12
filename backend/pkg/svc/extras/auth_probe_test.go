@@ -56,17 +56,18 @@ func TestPkexecWaitingFakeProc(t *testing.T) {
 	}
 }
 
-// A process named pkexec in the command's group (here sleep under that
+// A process named pkexec in the command's group (here a script of that
 // name: comm is the executed file's name) counts as waiting for the
-// password until it is gone; the report ends with false.
+// password until it is gone; the report ends with false. The script runs
+// sleep as a child rather than a symlink to it (a multicall coreutils, as
+// on NixOS, picks the applet by argv[0]) or an exec (that renames comm).
 func TestExecRunnerRunAuthSeesPkexec(t *testing.T) {
-	sleep, err := exec.LookPath("sleep")
-	if err != nil {
+	if _, err := exec.LookPath("sleep"); err != nil {
 		t.Skip("no sleep")
 	}
 	dir := t.TempDir()
 	fake := filepath.Join(dir, "pkexec")
-	if err := os.Symlink(sleep, fake); err != nil {
+	if err := os.WriteFile(fake, []byte("#!/bin/sh\nsleep \"$@\"\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	old := authPoll
