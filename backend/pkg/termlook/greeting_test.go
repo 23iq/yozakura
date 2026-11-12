@@ -196,7 +196,7 @@ func TestGreetingCustomLogos(t *testing.T) {
 		return conf["logo"].(map[string]any)
 	}
 	applyGreeting(t, GreetingConfig{On: true, Preset: "sakura", Logo: LogoCustom, LogoPath: art}, env)
-	if l := logoOf(FetchConfigFile(env)); l["type"] != "file" || l["source"] != art {
+	if l := logoOf(FetchConfigFile(env)); l["type"] != "file" || l["source"] != fetchLogoFile(env) || readFile(t, fetchLogoFile(env)) != "$1<>\n" {
 		t.Errorf("text logo %v", l)
 	}
 	st := applyGreeting(t, GreetingConfig{On: true, Preset: "sakura", Logo: LogoCustom, LogoPath: pic}, env)

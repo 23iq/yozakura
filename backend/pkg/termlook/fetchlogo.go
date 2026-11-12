@@ -24,8 +24,8 @@ const (
 
 // Logo kinds of a checked custom logo.
 const (
-	LogoText  = "text"  // printed with $1..$9 colour markers
-	LogoANSI  = "ansi"  // carries its own escape sequences (printed as is)
+	LogoText  = "text"  // printed with $1..$5 colour markers
+	LogoANSI  = "ansi"  // carries its own colours (only SGR kept, logosafe.go)
 	LogoImage = "image" // a PNG: kitty graphics in kitty, the text logo elsewhere
 )
 
@@ -116,9 +116,20 @@ func hasControl(s string) bool {
 	return false
 }
 
+var logoErrors = []error{ErrLogoPath, ErrLogoMissing, ErrLogoNotFile, ErrLogoTooLarge, ErrLogoFormat}
+
+func isLogoError(err error) bool {
+	for _, e := range logoErrors {
+		if errors.Is(err, e) {
+			return true
+		}
+	}
+	return false
+}
+
 // LogoError is the UI key of a logo check error ("" for nil).
 func LogoError(err error) string {
-	for _, e := range []error{ErrLogoPath, ErrLogoMissing, ErrLogoNotFile, ErrLogoTooLarge, ErrLogoFormat} {
+	for _, e := range logoErrors {
 		if errors.Is(err, e) {
 			return e.Error()
 		}

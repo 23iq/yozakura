@@ -16,7 +16,7 @@ import (
 //
 //	<config>/<app>/fastfetch.jsonc        the generated fastfetch config
 //	<config>/<app>/fastfetch-kitty.jsonc  the same with a picture logo (kitty)
-//	<config>/<app>/fastfetch-logo.txt     the bundled text logo
+//	<config>/<app>/fastfetch-logo.txt     the text logo (bundled, or a sanitised copy of the user's)
 //	<config>/<app>/greeting.sh            sourced by bash and zsh
 //	<config>/fish/conf.d/<app>-greeting.fish
 //	~/.bashrc, ~/.zshrc                   one marked line sourcing greeting.sh
@@ -279,14 +279,24 @@ func writeFetchConfigs(cfg GreetingConfig, p FetchPreset, pal Palette, sakuraLog
 		case custom.Kind == LogoImage:
 			logo.Kind = LogoSakura // the text logo outside kitty
 			kitty = FetchLogo{Kind: "kitty-direct", Source: custom.Path, Width: custom.Width, Height: custom.Height}
-		case custom.Kind == LogoANSI:
-			logo = FetchLogo{Kind: "file-raw", Source: custom.Path}
 		default:
-			logo = FetchLogo{Kind: "file", Source: custom.Path}
+			logo = FetchLogo{Kind: "custom-text", Source: custom.Path}
 		}
 	}
 	if !p.Logo {
 		logo, kitty = FetchLogo{}, FetchLogo{}
+	}
+	if logo.Kind == "custom-text" {
+		// printed in every terminal: a sanitised copy (logosafe.go)
+		copied, err := copyCustomLogo(logo.Source, fetchLogoFile(env))
+		switch {
+		case err == nil:
+			logo = copied
+		case isLogoError(err): // changed since the check
+			logoErr, logo.Kind = LogoError(err), LogoSakura
+		default:
+			return fetchCmd{}, "", err
+		}
 	}
 	if logo.Kind == LogoSakura {
 		art, err := os.ReadFile(sakuraLogo)
@@ -297,7 +307,7 @@ func writeFetchConfigs(cfg GreetingConfig, p FetchPreset, pal Palette, sakuraLog
 			return fetchCmd{}, "", err
 		}
 		logo = FetchLogo{Kind: "file", Source: fetchLogoFile(env)}
-	} else {
+	} else if logo.Source != fetchLogoFile(env) {
 		removeFiles(fetchLogoFile(env))
 	}
 	main, err := RenderFetch(p, pal, logo)
