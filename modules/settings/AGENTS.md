@@ -370,6 +370,12 @@ What a row card may hold (SettingsSection `fixed`):
   pictures when SettingRow gives them `fillHeight`, the title inside the
   picture on a gradient (ChoiceCard `inset`), the chosen one ringed;
   more than fit scroll sideways with an edge fade (controls/StripFade).
+  The bar Shape strips (BarStyleCards, PanelStyleCards) are landscape
+  instead: 16:10 pictures with the title under them, three whole and a
+  peek (controls/Strip.js), each a close crop of the bar's edge drawn as a
+  silhouette (thumbs/BarShapeThumb.qml + BarShape.js: the bar across the
+  picture, a third of its height, a few plain marks); the chosen one
+  scrolls into view (`Strip.revealX`).
   The card shows its title + the current value on the right, no row label.
   A new picture editor: add `property real fillHeight` and the same strip
   (see CardSelector: Flickable around the Grid, `strip`, `stripWidth`).

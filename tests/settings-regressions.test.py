@@ -47,7 +47,7 @@ import QtQuick
 import QtQuick.Window
 import qs.config
 import qs.modules.settings
-import qs.modules.settings.previews
+import qs.modules.settings.presets
 Window {
     id: w
     width: 700; height: 760; visible: true
@@ -58,7 +58,7 @@ Window {
         for (var i = 0; i < kids.length; i++) { var f = findItem(name, kids[i]); if (f) return f; }
         return null;
     }
-    PanelsSchematic { objectName: "sch"; width: 320; panels: [] }
+    MiniPanels { objectName: "sch"; width: 320; height: 180; panels: [] }
     SettingsShell { objectName: "shell"; x: 0; y: 400; width: 700; height: 360 }
 }""")
 sch = h.find(win, "sch")

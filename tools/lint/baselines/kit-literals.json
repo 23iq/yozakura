@@ -92,7 +92,7 @@
   "text": 10
  },
  "modules/settings": {
-  "rectangle": 2,
+  "rectangle": 1,
   "text": 1
  },
  "modules/settings/controls": {
@@ -134,8 +134,7 @@
   "text": 1
  },
  "modules/settings/previews": {
-  "rectangle": 46,
-  "text": 1
+  "rectangle": 41
  },
  "modules/settings/system": {
   "text": 1

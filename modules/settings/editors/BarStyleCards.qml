@@ -4,46 +4,49 @@ import QtQuick
 import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
-import qs.modules.settings.previews
 import qs.modules.settings.thumbs
+import "../controls/Strip.js" as Strip
 import qs.modules.settings.store
 import "../../bar/panels/PanelStyles.js" as PanelStyles
-import "../../bar/panels/PanelLayout.js" as PanelLayout
 import qs.modules.components.kit
 
 // The bar's shape (bar.layout.style): full, floating, islands, pills,
-// dock-like or none, each pictured with your modules on your bar's edge
-// over your wallpaper (the top of the screen, where the bar is).
+// dock-like or none, each pictured as a close crop of your bar's edge over
+// your wallpaper (thumbs/BarShapeThumb.qml).
 Item {
     id: root
 
     property var entry
     readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
     // A strip (in a card of the page row, SettingRow.fillHeight): one
-    // horizontal row of equal pictures with the title inside, scrolling
-    // sideways with an edge fade when they do not fit.
+    // horizontal row of equal pictures, scrolling sideways with an edge
+    // fade when they do not fit.
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: PanelStyles.barStyles().length
-    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
+    // landscape pictures (16:10) with the title under them: as tall as the
+    // card allows, three whole ones and a peek when they do not all fit
+    readonly property real stripWidth: Strip.landscapeWidth(root.width, root.fillHeight, root.stripCount, Space.m, Space.s + Type.size("secondary") * 1.4, Space.px(96))
     readonly property int columns: root.strip ? root.stripCount : width < 300 ? 2 : 3
     readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
-    function previewOf(style) {
-        const p = JSON.parse(JSON.stringify(PanelLayout.fromLegacy(Config.bar)));
-        p.style = style;
-        p.align = PanelStyles.get(style).floating ? "center" : "fill";
-        p.autohide = "never";
-        return [p];
+    readonly property int currentIndex: PanelStyles.BAR_STYLES.indexOf(root.current)
+    // the chosen picture scrolled into view
+    function reveal() {
+        if (root.strip)
+            stripFlick.contentX = Strip.revealX(stripFlick.contentX, stripFlick.width, stripFlick.contentWidth, root.currentIndex, root.stripWidth, Space.m);
     }
+    onCurrentIndexChanged: Qt.callLater(root.reveal)
+    onStripWidthChanged: Qt.callLater(root.reveal)
+    Component.onCompleted: Qt.callLater(root.reveal)
 
     Flickable {
         id: stripFlick
         objectName: "pictureStrip"
         width: parent.width
-        height: grid.height + (root.strip ? Space.m * 2 : 0)
+        height: root.strip ? root.fillHeight : grid.height
         contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
         interactive: root.strip && contentWidth > width
         clip: root.strip
@@ -55,7 +58,7 @@ Item {
             width: root.strip ? implicitWidth : stripFlick.width
             // inset: the ring, glow and lift of a picture never clip
             x: root.strip ? Space.m : 0
-            y: root.strip ? Space.m : 0
+            y: root.strip ? Math.max(Space.m, (root.fillHeight - grid.height) / 2) : 0
             columns: root.columns
             rowSpacing: Space.l
             columnSpacing: root.strip ? Space.m : Space.l
@@ -68,41 +71,15 @@ Item {
                     required property var modelData
                     objectName: "card:" + modelData.id
                     width: root.strip ? root.stripWidth : root.cardWidth
-                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.4)
-                    inset: root.strip
+                    previewHeight: root.strip ? Math.round(width * 10 / 16) : Math.round(width * 0.4)
                     selected: root.current === modelData.id
                     title: I18n.t(modelData.label)
                     onClicked: SettingsStore.set("bar.layout.style", modelData.id)
 
-                    // built off the frame: the cards show at once
-                    Loader {
+                    BarShapeThumb {
                         anchors.fill: parent
-                        asynchronous: true
-                        sourceComponent: Component {
-                            // In a strip: a close crop of the bar's own edge of a
-                            // bigger screen, so the bar's shape is the subject.
-                            Item {
-                                id: crop
-                                readonly property string edge: Config.bar.position || "top"
-                                clip: true
-                                MiniScreen {
-                                    id: screen
-                                    width: root.strip ? crop.width * 2.6 : crop.width
-                                    height: root.strip ? width * 9 / 16 : crop.height
-                                    x: !root.strip ? 0 : (crop.edge === "right" ? crop.width - width : (crop.edge === "left" ? 0 : (crop.width - width) / 2))
-                                    y: !root.strip ? 0 : (crop.edge === "bottom" ? crop.height - height : (crop.edge === "top" ? 0 : (crop.height - height) / 2))
-                                    PanelsSchematic {
-                                        anchors.fill: parent
-                                        backdrop: false
-                                        barOpacity: screen.barOpacity
-                                        panels: root.previewOf(card.modelData.id)
-                                        showWindows: false
-                                        selected: -1
-                                        unit: Math.round(width * 0.075)
-                                    }
-                                }
-                            }
-                        }
+                        style: card.modelData.id
+                        edge: Config.bar.position || "top"
                     }
                 }
             }

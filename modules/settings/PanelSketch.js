@@ -2,7 +2,8 @@
 .import "../bar/panels/PanelStyles.js" as PanelStyles
 .import "../bar/BarModuleRegistry.js" as Modules
 
-// Geometry of the panels schematic (previews/PanelsSchematic.qml): each
+// Geometry of the panels miniatures (stages/ScreenMini.qml,
+// presets/MiniPanels.qml): each
 // panel as shapes (bands, tabs, a floating dock) and module icon slots, in
 // the coordinates of a W x H screen mockup. Pure, tested in
 // tests/panels-model.test.cjs.
