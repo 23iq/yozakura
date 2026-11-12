@@ -1,19 +1,35 @@
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import qs.modules.services
+import qs.modules.theme
 import qs.config
 import qs.modules.bar.workspaces // For CompositorData
-import qs.modules.globals
 
-PanelWindow {
-    id: screenCorners
+// Rounded screen corners of one output: four corner-sized layer surfaces
+// (ScreenCornerWindow), not one transparent full-screen window, so the
+// compositor blends four small squares instead of a whole extra screen-size
+// buffer (8 / 15 / 33 MB per buffer at 1080p / 1440p / 4K). Hidden under a
+// fullscreen window and while corners are off.
+Item {
+    id: root
 
+    property ShellScreen screen: null
     property var monitor: null
     property bool activeWindowFullscreen: false
 
+    readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
+    readonly property int thickness: {
+        const value = Config.bar?.frameThickness;
+        if (typeof value !== "number")
+            return 6;
+        return Math.max(1, Math.min(Math.round(value), 40));
+    }
+    // The corner reaches past the frame when it is on.
+    readonly property int cornerSize: Styling.radius(4) + (frameEnabled ? thickness : 0)
+    readonly property bool shown: Config.theme.enableCorners && Config.roundness > 0 && !activeWindowFullscreen
+
     function updateFullscreen() {
-        const mon = YozdService.monitorFor(screen);
+        const mon = YozdService.monitorFor(root.screen);
         if (mon) {
             monitor = mon;
         }
@@ -23,36 +39,45 @@ PanelWindow {
 
     Connections {
         target: CompositorData
-        function onWindowListChanged() { screenCorners.updateFullscreen(); }
+        function onWindowListChanged() {
+            root.updateFullscreen();
+        }
     }
 
     Connections {
         target: YozdService.monitors
-        function onValuesChanged() { screenCorners.updateFullscreen(); }
+        function onValuesChanged() {
+            root.updateFullscreen();
+        }
     }
 
     Component.onCompleted: updateFullscreen()
 
-    visible: Config.theme.enableCorners && Config.roundness > 0 && !activeWindowFullscreen
-
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: Brand.namespace("screenCorners")
-    WlrLayershell.layer: WlrLayer.Overlay
-    mask: Region {
-        item: null
+    ScreenCornerWindow {
+        screen: root.screen
+        visible: root.shown
+        size: root.cornerSize
+        corner: RoundCorner.CornerEnum.TopLeft
     }
 
-    anchors {
-        top: true
-        left: true
-        right: true
-        bottom: true
+    ScreenCornerWindow {
+        screen: root.screen
+        visible: root.shown
+        size: root.cornerSize
+        corner: RoundCorner.CornerEnum.TopRight
     }
 
-    ScreenCornersContent {
-        id: cornersContent
-        anchors.fill: parent
-        hasFullscreenWindow: screenCorners.activeWindowFullscreen
+    ScreenCornerWindow {
+        screen: root.screen
+        visible: root.shown
+        size: root.cornerSize
+        corner: RoundCorner.CornerEnum.BottomLeft
+    }
+
+    ScreenCornerWindow {
+        screen: root.screen
+        visible: root.shown
+        size: root.cornerSize
+        corner: RoundCorner.CornerEnum.BottomRight
     }
 }
