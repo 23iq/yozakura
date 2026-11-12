@@ -129,16 +129,9 @@ func main() {
 		refuseWithoutWayland(errNoWaylandStart)
 		refuseIfLegacyRunning() // before migration touches user files
 	}
-	migrateLegacy()
-	if len(args) == 0 {
-		migrateDaemonFiles() // the shell start owns the daemon's files
+	if !skipsStartupMigrations(args, isAlive) {
+		runStartupMigrations(len(args) == 0)
 	}
-	markExistingInstallOnboarded()
-	markLegacyKeyboard()
-	migrateNotchStyle()
-	markLegacyAppHooks()
-	shiftDefaults()
-	ensureConfigFiles()
 
 	if len(args) == 0 {
 		runShell()
