@@ -96,9 +96,7 @@ func (s *Service) write(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &in); err != nil {
 		return nil, fmt.Errorf("compositor.write: %w", err)
 	}
-	if in.PolkitCmd == "" {
-		in.PolkitCmd = PolkitCommand()
-	}
+	in.PolkitCmd = startupPolkit(in, PolkitCommand)
 	if in.Env == nil {
 		in.Env = QtEnv(in.QtTheme)
 	}

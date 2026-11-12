@@ -220,6 +220,8 @@ Singleton {
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
             // The stock terminal bind execs it directly (works with the shell down).
             terminal: Config.generalReady ? (Config.general.terminal || "") : "",
+            // The shell registers its own polkit agent: no external one at login.
+            shellPolkit: PolkitService.available,
         };
     }
 
@@ -516,6 +518,11 @@ Singleton {
         function onRepeatRateChanged() { root.callWrite(); }
         function onRepeatDelayChanged() { root.callWrite(); }
         function onManagedChanged() { root.callWrite(); }
+    }
+
+    property Connections polkitConnections: Connections {
+        target: PolkitService
+        function onAvailableChanged() { root.callWrite(); }
     }
 
     property Connections terminalConnections: Connections {

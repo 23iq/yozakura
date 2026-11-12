@@ -185,6 +185,9 @@ settle()
 check(h.eval(f6, "isCancelled") is True and ev("PolkitLog.cancels") == 1, "unloading the agent cancels the pending request")
 check(agent() is None and ev("PolkitService.available") is False and ev("PolkitService.registered") is False,
       "setting off: no agent, nothing registered")
+pump(1200)
+check(ev("Quickshell.detached.some(c => c[c.length - 1] === 'polkit-fallback')") is True,
+      "turned off at runtime: the external agent is started (polkit-fallback)")
 
 # ---- agent not registered (another agent holds the session) ---------------
 ev("Config.system.polkitAgent = true")

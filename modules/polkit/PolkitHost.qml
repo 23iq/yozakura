@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.globals
 import qs.modules.services
 
 // The shell's own polkit authentication agent, for the instance whose root
@@ -19,6 +20,9 @@ Scope {
     property bool enabled: true
     readonly property bool wanted: root.enabled && Config.systemReady && Config.system.polkitAgent !== false
     readonly property bool loaded: agent.status === Loader.Ready
+    // Our listener was registered: turned off at runtime, nothing else
+    // would answer prompts until the next login.
+    property bool _hadListener: false
 
     Loader {
         id: agent
@@ -34,5 +38,28 @@ Scope {
         target: PolkitService
         property: "available"
         value: root.loaded
+    }
+
+    Connections {
+        target: PolkitService
+        function onRegisteredChanged() {
+            if (PolkitService.registered)
+                root._hadListener = true;
+        }
+    }
+
+    // system.polkitAgent turned off while our listener held the session:
+    // start the external agent now (`<app> polkit-fallback`, which checks
+    // the setting itself) once ours has unregistered.
+    onWantedChanged: {
+        if (!root.wanted && root._hadListener && Config.systemReady) {
+            root._hadListener = false;
+            fallbackDelay.restart();
+        }
+    }
+    Timer {
+        id: fallbackDelay
+        interval: 1000
+        onTriggered: Quickshell.execDetached([Brand.appBin, "polkit-fallback"])
     }
 }

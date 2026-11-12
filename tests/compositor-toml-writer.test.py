@@ -39,6 +39,7 @@ h.singleton('qs.config', 'Config', '''QtObject {
 }''')
 h.singleton('qs.modules.globals', 'GlobalStates', 'QtObject {}')
 h.singleton('qs.modules.services', 'DisplaysService', 'QtObject { property bool pending: false; property var outputs: [] }')
+h.singleton('qs.modules.services', 'PolkitService', 'QtObject { property bool available: false }')
 
 # gatherInput() reads the whole config tree; the test only needs a payload
 # that says which revision of the state was sent.
@@ -103,5 +104,14 @@ wait_until(lambda: proc('starts') >= 3)
 pump(DEBOUNCE)  # and only one
 check('one write once the drag settles', proc('starts') == 3, f'(starts={proc("starts")})')
 check('the settled write carries the last step', '"revision":42' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
+
+# The shell's own polkit agent comes up (or goes): the config is rewritten so
+# the next login starts no external agent next to it (shellPolkit).
+h.eval(writer, 'ipcProcess.finish(0)')
+h.eval(writer, 'revision = 50; PolkitService.available = true')
+wait_until(lambda: proc('starts') >= 4)
+check('the in-shell polkit agent becoming available rewrites the config', proc('starts') == 4, f'(starts={proc("starts")})')
+src = (Path(__file__).resolve().parents[1] / 'modules/services/CompositorTomlWriter.qml').read_text()
+check('the payload tells the backend about the shell agent', 'shellPolkit: PolkitService.available,' in src)
 
 sys.exit(0 if ok_all else 1)

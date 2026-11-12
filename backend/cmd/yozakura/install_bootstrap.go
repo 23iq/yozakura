@@ -14,8 +14,9 @@ import (
 
 // bootstrapBody is the startup-only stand-in for the generated niri.kdl /
 // mango.conf: it starts the shell (absolute path, the PATH of a fresh
-// session may lack it) and the polkit agent. yozd replaces it on the first
-// start with the full generated config, which carries the same two lines.
+// session may lack it) and `<bin> polkit-fallback`, which starts the
+// external polkit agent unless the shell registers its own. yozd replaces
+// it on the first start with the full generated config.
 func bootstrapBody(t simpleTarget, bin, polkit string) string {
 	note := "Bootstrap written by " + brand.DisplayName + "; replaced on the first start."
 	body := t.header + " " + note + "\n"
@@ -27,7 +28,8 @@ func bootstrapBody(t simpleTarget, bin, polkit string) string {
 		return body
 	}
 	// niri spawns argv, not a shell line: one quoted argument per word of
-	// the polkit command (fixed constants), the shell path as one argument.
+	// the polkit command (the launcher path and a fixed verb), the shell
+	// path as one argument.
 	body += fmt.Sprintf("spawn-at-startup %q\n", bin)
 	if polkit != "" {
 		args := strings.Fields(polkit)
@@ -58,7 +60,7 @@ func writeStartupBootstrap(t simpleTarget, bin string) {
 		fmt.Fprintf(os.Stderr, "Warning: could not create %s: %v\n", filepath.Dir(path), err)
 		return
 	}
-	if err := fsutil.WriteFile(path, []byte(bootstrapBody(t, bin, compositor.PolkitCommand())), 0o644); err != nil {
+	if err := fsutil.WriteFile(path, []byte(bootstrapBody(t, bin, compositor.FallbackCommand(bin))), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: could not write %s: %v\n", path, err)
 	}
 }

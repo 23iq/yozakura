@@ -56,6 +56,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 │   ├── notch/            # Dynamic island UI (launcher, dashboard, notifications)
 │   ├── notifications/    # Notification popup system + history
 │   ├── onboarding/       # First-run setup wizard: step registry, preset gallery, keybind tour
+│   ├── polkit/           # In-shell polkit agent + password dialog (PolkitHost: main shell only)
 │   ├── services/         # Backend singletons (30+): Battery, AI, Network, etc.
 │   ├── settings/         # Schema-driven settings window (see modules/settings/AGENTS.md)
 │   ├── shell/            # UnifiedShellPanel + ReservationWindows + OSD
@@ -98,6 +99,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Notifications** | `modules/notifications/` | Popup system + delegate + history |
 | **Adding Config** | `config/defaults/*.js` + `make schema` | Adapters are generated; int/var keys: `config/meta/AdapterTypes.js` |
 | **Onboarding** | `modules/onboarding/`, `modules/services/OnboardingService.qml` | First-run wizard; steps in `OnboardingSteps.js`; `general.onboardingDone`; `<app> run onboarding` |
+| **Polkit agent** | `modules/polkit/`, `modules/services/PolkitService.qml`, `backend/pkg/svc/compositor/polkit_shell.go` | `system.polkitAgent`; only an instance with `PolkitHost {}` registers; generated configs drop the external agent (`shellPolkit`), startup lines run `<app> polkit-fallback` |
 | **Keybinds** | `config/CoreBinds.js`, `config/KeybindActions.js`, `modules/keybinds/` | Core bind registry, action catalog (group + `binds.action.*` label), cheatsheet; editor in `modules/settings/editors/Keybind*` |
 | **Settings UI** | `modules/settings/schema/*.js` | Declare a setting (one entry + translations); see `modules/settings/AGENTS.md` |
 | **Settings catalog** | `config/meta/*.js` + `tools/schema/` -> `assets/schema/` | Descriptions/enums/ranges of keys the settings UI does not declare; `make schema`; read by `backend/pkg/catalog` (CLI + MCP) |

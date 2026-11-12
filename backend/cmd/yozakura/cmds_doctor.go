@@ -11,6 +11,7 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/deps"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 // doctorItem is one line of the report.
@@ -99,6 +100,12 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 		if d.ID == brand.Daemon && !it.ok {
 			it.ok = daemonFound()
 		}
+		// The shell's own agent takes the password prompts: an external
+		// one is only the fallback.
+		if d.ID == polkitDep && doctorShellPolkit() {
+			it.ok = true
+			it.purpose += " (" + brand.DisplayName + "'s own agent)"
+		}
 		if len(it.pkgs) == 0 {
 			// Built from this repository (yozd) or installed per user.
 			it.fix = installerHint()
@@ -107,6 +114,13 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 	}
 	return items
 }
+
+// polkitDep is the external polkit agent row of pkg/deps.
+const polkitDep = "polkit-agent"
+
+// doctorShellPolkit reports the shell's own polkit agent (system.polkitAgent
+// on and a Quickshell with the Polkit module); faked in tests.
+var doctorShellPolkit = func() bool { return compositor.ShellAgent(paths.New().Config("system")) }
 
 func doctorInstall(distro, compositor string) []doctorItem {
 	src := paths.FindBaseShellSource()

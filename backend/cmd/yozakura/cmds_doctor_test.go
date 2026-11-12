@@ -49,6 +49,9 @@ func TestDoctorRejectsUnknownFlags(t *testing.T) {
 }
 
 func TestDoctorDepsScopedToCompositor(t *testing.T) {
+	old := doctorShellPolkit
+	doctorShellPolkit = func() bool { return false }
+	t.Cleanup(func() { doctorShellPolkit = old })
 	c := &deps.Checker{Distro: "arch", LookPath: func(string) (string, error) { return "", os.ErrNotExist }, Glob: func(string) ([]string, error) { return nil, nil }, Fonts: func() string { return "" }}
 	names := func(comp string) map[string]string {
 		m := map[string]string{}
@@ -85,5 +88,29 @@ func TestReadCompositor(t *testing.T) {
 	}
 	if got := readCompositor(dir); got != "niri" {
 		t.Errorf("got %s", got)
+	}
+}
+
+// With the shell's own polkit agent, a missing external agent is no gap.
+func TestDoctorPolkitAgentInShell(t *testing.T) {
+	c := &deps.Checker{Distro: "arch", LookPath: func(string) (string, error) { return "", os.ErrNotExist }, Glob: func(string) ([]string, error) { return nil, nil }, Fonts: func() string { return "" }}
+	old := doctorShellPolkit
+	t.Cleanup(func() { doctorShellPolkit = old })
+	find := func() doctorItem {
+		for _, it := range doctorDeps(c, map[string]bool{}, "niri") {
+			if it.name == polkitDep {
+				return it
+			}
+		}
+		t.Fatal("no polkit-agent row")
+		return doctorItem{}
+	}
+	doctorShellPolkit = func() bool { return false }
+	if it := find(); it.ok {
+		t.Errorf("external agent missing, shell agent off: %+v", it)
+	}
+	doctorShellPolkit = func() bool { return true }
+	if it := find(); !it.ok || !strings.Contains(it.purpose, "own agent") {
+		t.Errorf("shell agent on: %+v", it)
 	}
 }

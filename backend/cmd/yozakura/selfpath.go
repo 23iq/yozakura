@@ -40,3 +40,8 @@ func pathWithDir(path, dir string) (string, bool) {
 	}
 	return strings.TrimRight(path, string(os.PathListSeparator)) + string(os.PathListSeparator) + dir, true
 }
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
