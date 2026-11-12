@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"runtime/debug"
 	"sync"
 
 	"yozakura/backend/pkg/instancelock"
@@ -259,25 +261,57 @@ func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) {
 		return
 	}
 
-	result, err := hdl(req.Params)
-	if err != nil {
-		w.write(Response{ID: req.ID, Error: err.Error()})
+	raw, errMsg := invoke(req.Method, hdl, req.Params)
+	if errMsg != "" {
+		w.write(Response{ID: req.ID, Error: errMsg})
 		return
-	}
-	var raw json.RawMessage
-	if result != nil {
-		data, merr := json.Marshal(result)
-		if merr != nil {
-			w.write(Response{ID: req.ID, Error: "result marshal failed"})
-			return
-		}
-		raw = data
 	}
 	w.write(Response{ID: req.ID, Result: raw})
 }
 
+// invoke runs one handler and marshals its result. A panic in either is
+// logged with its stack and answered as an error: one broken service
+// method must not take the whole daemon (and the shell it supervises) down.
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[ipc] panic in %s: %v\n%s", method, r, debug.Stack())
+			raw, errMsg = nil, fmt.Sprintf("internal error in %s: %v", method, r)
+		}
+	}()
+	result, err := hdl(params)
+	if err != nil {
+		return nil, err.Error()
+	}
+	if result == nil {
+		return nil, ""
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return nil, "result marshal failed"
+	}
+	return data, ""
+}
+
+// runSubscribe registers a stream with one service. A panic there is
+// logged and ends only that service's part of the stream.
+func runSubscribe(svc *Service, sub *Subscriber) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[ipc] panic in %s subscribe: %v\n%s", svc.Name, r, debug.Stack())
+		}
+	}()
+	svc.Subscribe(sub)
+}
+
 // marshalEvent serializes a ServiceEvent for the result field.
-func marshalEvent(event ServiceEvent) json.RawMessage {
+func marshalEvent(event ServiceEvent) (out json.RawMessage) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[ipc] panic marshalling a %s event: %v\n%s", event.Service, r, debug.Stack())
+			out = json.RawMessage(`{"error":"marshal failed"}`)
+		}
+	}()
 	data, err := json.Marshal(event)
 	if err != nil {
 		return json.RawMessage(`{"error":"marshal failed"}`)
