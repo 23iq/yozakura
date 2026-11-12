@@ -39,6 +39,19 @@ Flickable {
     readonly property var rowIds: page.category.row || []
     // the row is laid out only once all its cards exist (equal heights)
     readonly property int lastRowIndex: (page.category.sections || []).reduce((m, sec, i) => page.rowIds.indexOf(sec.id) >= 0 ? i : m, -1)
+    // Build order: a fitted page builds its row cards first (in row order),
+    // the sheet's sections after (they are not on screen); others in order.
+    readonly property var buildRank: {
+        const secs = page.category.sections || [];
+        if (!page.fitted)
+            return secs.map((s, i) => i);
+        const inRow = secs.map((s, i) => i).filter(i => page.rowIds.indexOf(secs[i].id) >= 0);
+        const rest = secs.map((s, i) => i).filter(i => page.rowIds.indexOf(secs[i].id) < 0);
+        const rank = [];
+        inRow.concat(rest).forEach((i, k) => rank[i] = k);
+        return rank;
+    }
+    readonly property int rowCount: (page.category.sections || []).filter(sec => page.rowIds.indexOf(sec.id) >= 0).length
     readonly property bool fitted: page.rowIds.length > 0
     // `form: "list"` (a page whose substance is a list: networks, devices,
     // shortcuts, providers): a short hero band (about a quarter of the
@@ -93,7 +106,7 @@ Flickable {
             // still to come land out of sight (masonry puts a card at the
             // top of the shortest column)
             bento.relayout();
-            if (!page.filled && page.height > 0 && page.builtSections > page.lastRowIndex && (page.fitted || body.y + bento.floor >= page.height))
+            if (!page.filled && page.height > 0 && (page.fitted ? page.builtSections >= page.rowCount : page.builtSections > page.lastRowIndex) && (page.fitted || body.y + bento.floor >= page.height))
                 page.filled = true;
             const start = Date.now();
             do {
@@ -381,7 +394,7 @@ Flickable {
                         })
                     section: modelData
                     exclude: page.heroIds
-                    pending: index >= page.builtSections
+                    pending: page.buildRank[index] >= page.builtSections
                     fixed: page.fitted && page.rowIds.indexOf(modelData.id) >= 0
                     suppressed: page.fitted && page.rowIds.indexOf(modelData.id) < 0
                     x: card.place.x
@@ -478,7 +491,7 @@ Flickable {
                         width: moreColumn.width
                         section: modelData.section
                         exclude: page.heroIds
-                        pending: modelData.index >= page.builtSections
+                        pending: page.buildRank[modelData.index] >= page.builtSections
                         shadow: false
                     }
                 }

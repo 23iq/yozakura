@@ -25,7 +25,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: PanelStyles.barStyles().length
-    readonly property real stripWidth: Math.max(Space.px(88), (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(110))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : width < 300 ? 2 : 3
     readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
@@ -43,8 +43,8 @@ Item {
         id: stripFlick
         objectName: "pictureStrip"
         width: parent.width
-        height: grid.height
-        contentWidth: grid.width
+        height: grid.height + (root.strip ? Space.m * 2 : 0)
+        contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
         interactive: root.strip && contentWidth > width
         clip: root.strip
         boundsBehavior: Flickable.StopAtBounds
@@ -53,6 +53,9 @@ Item {
         Grid {
             id: grid
             width: root.strip ? implicitWidth : stripFlick.width
+            // inset: the ring, glow and lift of a picture never clip
+            x: root.strip ? Space.m : 0
+            y: root.strip ? Space.m : 0
             columns: root.columns
             rowSpacing: Space.l
             columnSpacing: root.strip ? Space.m : Space.l
@@ -65,7 +68,7 @@ Item {
                     required property var modelData
                     objectName: "card:" + modelData.id
                     width: root.strip ? root.stripWidth : root.cardWidth
-                    previewHeight: root.strip ? root.fillHeight : Math.round(width * 0.4)
+                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.4)
                     inset: root.strip
                     selected: root.current === modelData.id
                     title: I18n.t(modelData.label)

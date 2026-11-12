@@ -282,6 +282,8 @@ FocusScope {
                         required property var modelData
                         required property int index
                         destination: home.tiles.find(t => t.id === modelData.id)
+                        // shadows after the first frame (18 of them cost it)
+                        shadow: home.warm
                         live: home.warm && tile.index < home.scenes
                         x: modelData.col * (grid.colW + grid.gap)
                         y: modelData.row * (grid.rowH + grid.gap)
@@ -326,6 +328,7 @@ FocusScope {
                         required property var modelData
                         required property int index
                         destination: modelData
+                        shadow: home.warm
                         live: home.warm
                         width: statusRow.tileW
                         height: Space.controlL + Space.m

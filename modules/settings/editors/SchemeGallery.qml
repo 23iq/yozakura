@@ -49,8 +49,8 @@ Item {
             id: stripFlick
             objectName: "pictureStrip"
             width: parent.width
-            height: grid.height
-            contentWidth: grid.width
+            height: grid.height + (root.strip ? Space.m * 2 : 0)
+            contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
             interactive: root.strip && contentWidth > width
             clip: root.strip
             boundsBehavior: Flickable.StopAtBounds
@@ -59,6 +59,9 @@ Item {
             Grid {
                 id: grid
                 width: root.strip ? implicitWidth : stripFlick.width
+                // inset: the ring, glow and lift of a picture never clip
+                x: root.strip ? Space.m : 0
+                y: root.strip ? Space.m : 0
                 columns: root.columns
                 rowSpacing: Space.l
                 columnSpacing: root.strip ? Space.m : Space.l
@@ -71,7 +74,7 @@ Item {
                         required property string modelData
                         readonly property var pal: SchemePreviews.palette(modelData, root.mode)
                         width: root.cardWidth
-                        previewHeight: root.strip ? Math.max(Space.controlM, root.fillHeight - Space.xl) : Space.controlL + Space.s
+                        previewHeight: root.strip ? Math.max(Space.controlM, root.fillHeight - Space.xl - Space.m * 2) : Space.controlL + Space.s
                         selected: !root.preset && root.current === modelData
                         title: I18n.t("wallpapers." + modelData.replace(/-/g, "_"))
                         onClicked: SettingsStore.set("wallpaper.matugenScheme", modelData)
