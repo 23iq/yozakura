@@ -12,8 +12,12 @@ The FIFO itself is kept across restarts: a writer that opened it while no
 reader ran (a keybind pressed while Quickshell restarts) is released by
 the next reader and its command arrives; anything else at the path (a
 regular file, a FIFO of another user) is replaced by a fresh 0600 FIFO.
+
+A reader whose Quickshell died before it started (reparented to init or
+to a subreaper) exits at once instead of following its new parent.
 """
 
+import ctypes
 import os
 import re
 import shutil
@@ -26,12 +30,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 QML = ROOT / "modules/services/GlobalShortcuts.qml"
+PR_SET_CHILD_SUBREAPER = 36
 
 
 def reader_script():
     src = QML.read_text()
     m = re.search(
-        r'property Process pipeListener: Process \{\s*command: \["sh", "-c", \'([^\']*)\', "ipc-pipe", root\.ipcName\]',
+        r'property Process pipeListener: Process \{\s*command: \["sh", "-c", \'([^\']*)\', "ipc-pipe", root\.ipcName, String\(Quickshell\.processId\)\]',
         src,
     )
     assert m, "pipeListener command not found in GlobalShortcuts.qml"
@@ -44,7 +49,7 @@ def start(tmp, env_extra=None, out_name="out.txt"):
     env = dict(os.environ, XDG_RUNTIME_DIR=str(tmp / "rt"))
     env.update(env_extra or {})
     parent = subprocess.Popen(
-        ["sh", "-c", 'sh -c "$1" ipc-pipe test_ipc.pipe >"$2" & exec sleep 300', "fakeqs", reader_script(), str(out)],
+        ["sh", "-c", 'sh -c "$1" ipc-pipe test_ipc.pipe $$ >"$2" & exec sleep 300', "fakeqs", reader_script(), str(out)],
         env=env,
         start_new_session=True,
     )
@@ -173,6 +178,63 @@ def foreign_fifo(path):
     os.chown(path, 65534, 65534)
 
 
+def gone(pid):
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except OSError:
+        return True
+    return state == "Z"
+
+
+def orphaned_before_start(subreaper, parent_stays=False):
+    """The stand-in Quickshell (its pid passed as the reader's $2, as
+    Quickshell.processId) forks the reader's sh, which execs the reader
+    script only after the stand-in exited: the reader must exit at once
+    and leave the FIFO path alone. parent_stays is the control: the same
+    start under a live stand-in runs the reader."""
+    tmp = Path(tempfile.mkdtemp(prefix="ipc-pipe-"))
+    (tmp / "rt").mkdir()
+    fifo = tmp / "rt" / "test_ipc.pipe"
+    pidfile = tmp / "reader.pid"
+    env = dict(os.environ, XDG_RUNTIME_DIR=str(tmp / "rt"))
+    libc = ctypes.CDLL(None, use_errno=True)
+    if subreaper:
+        # orphans come to this (live) process, as to systemd --user
+        assert libc.prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) == 0
+    tail = "exec sleep 300" if parent_stays else "exit 0"
+    parent = subprocess.Popen(
+        [
+            "sh",
+            "-c",
+            'sh -c \'echo $$ >"$3"; sleep 0.3; exec sh -c "$1" ipc-pipe test_ipc.pipe "$2"\' r "$1" $$ "$2" >/dev/null & ' + tail,
+            "fakeqs",
+            reader_script(),
+            str(pidfile),
+        ],
+        env=env,
+        start_new_session=True,
+    )
+    try:
+        if not parent_stays:
+            parent.wait()
+        wait_for(lambda: pidfile.exists() and pidfile.read_text().strip(), "the reader pid")
+        pid = int(pidfile.read_text())
+        if parent_stays:
+            wait_for(lambda: readers(fifo) == [pid], "the reader to run under a live parent")
+            return
+        wait_for(lambda: gone(pid), "the orphaned reader to exit", timeout=5)
+        if subreaper:
+            os.waitpid(pid, 0)
+        assert not fifo.exists(), "an orphaned reader created the FIFO"
+    finally:
+        if parent.poll() is None:
+            kill_parent(parent)
+        if subreaper:
+            libc.prctl(PR_SET_CHILD_SUBREAPER, 0, 0, 0, 0)
+        cleanup(fifo)
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def tail_without_pid(tmp):
     """A PATH where tail rejects --pid (busybox), else the real tail."""
     real = shutil.which("tail")
@@ -202,6 +264,12 @@ def main():
         case("a FIFO of another user is replaced", fresh_private_fifo, prepare=foreign_fifo)
     else:
         print("skip - a FIFO of another user (needs root to chown)")
+    orphaned_before_start(subreaper=False, parent_stays=True)
+    print("ok - a reader started under its live parent runs")
+    orphaned_before_start(subreaper=False)
+    print("ok - a reader whose parent died before it started exits (reparented to init)")
+    orphaned_before_start(subreaper=True)
+    print("ok - a reader whose parent died before it started exits (reparented to a subreaper)")
     return 0
 
 
