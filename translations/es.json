@@ -4629,5 +4629,10 @@
   "prefs.updates.stage.beta": "Lo que viene",
   "prefs.updates.stage.git": "Cada commit",
   "prefs.undo.channel_changed": "Canal de actualización cambiado",
-  "prefs.updates.section.ocr": "Reconocimiento de texto"
+  "prefs.updates.section.ocr": "Reconocimiento de texto",
+  "prefs.about.card.version": "Versión",
+  "prefs.about.card.places": "Lugares",
+  "prefs.about.card.legal": "Legal",
+  "prefs.about.updates": "Actualizaciones",
+  "prefs.about.free": "Software libre: úsalo, cámbialo, compártelo."
 }

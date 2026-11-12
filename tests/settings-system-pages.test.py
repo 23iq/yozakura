@@ -149,6 +149,14 @@ check(steps() == n + 1, "updates: one undo step")
 ev("SettingsStore.undo()")
 check(ev("Config.system.updateChannel") == "stable", "updates: undo goes back to stable")
 
+# ---- About: the identity scene and a row of cards ----------------------------
+select("about")
+check(ev('w.findItem("aboutScene") !== null'), "about: the identity scene")
+check(ev('w.findItem("aboutLegalNotice") !== null'), "about: the legal notes in their card")
+h.eval(ev('w.findItem("aboutUpdates")'), "clicked()")
+QTest.qWait(200)
+check(h.eval(shell, "currentCategory") == "updates", "about: the version card opens Updates")
+
 if failures:
     print(f"settings-system-pages: {len(failures)} failure(s)")
     h.exit(1)

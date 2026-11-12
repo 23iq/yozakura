@@ -4,79 +4,130 @@ import Quickshell
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.settings.stages
+import qs.modules.settings.store
 import qs.config
 import qs.modules.globals
 
-// About: name, version, a couple of useful shortcuts and the legal row.
+// About, composed like the other pages: the identity scene on the stage
+// (your wallpaper, the mark glowing, the name, the version, one line about
+// it), then one row of cards: the version and its updates, the useful
+// places (setup again, the config folder, the source) and the legal notes.
 Item {
     id: page
 
     required property var category
 
-    Column {
-        anchors.centerIn: parent
-        width: Math.min(parent.width - Space.xxl * 2, Space.px(520))
-        spacing: Space.xl
+    readonly property real margin: Space.xl
+    readonly property real gap: Space.l
+    readonly property real pad: Space.l
+    readonly property real rowH: Look.cardRowHeight
 
-        // The mark: the brand glyph in the language's control box (no
-        // accent: it is not a state).
-        Item {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Space.controlXL
-            height: Space.controlXL
+    // the identity scene
+    Stage {
+        id: scene
+        objectName: "aboutScene"
+        readonly property real room: page.height - Space.s - page.gap - page.rowH - page.pad
+        x: Math.round((page.width - width) / 2)
+        y: Space.s
+        height: Math.round(Math.max(Space.px(160), Math.min(scene.room, (page.width - page.margin * 2) * 9 / 16, Space.px(560))))
+        width: Math.round(Math.min(page.width - page.margin * 2, height * 16 / 9))
 
-            ControlBox {
-                radius: Look.squareControls ? Space.controlRadius : Space.surfaceRadius
-            }
-            Image {
-                anchors.centerIn: parent
-                width: Math.round(parent.width * 0.6)
+        Mark {
+            anchors.fill: parent
+            radius: scene.radius
+            color: Qt.alpha(Colors.shadow, 0.45)
+        }
+        Column {
+            anchors.centerIn: parent
+            width: parent.width * 0.8
+            spacing: Space.m
+
+            // the mark, with a soft glow
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.round(scene.height * 0.32)
                 height: width
-                source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
-                sourceSize.width: width * 2
-                sourceSize.height: height * 2
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    brightness: 1.0
-                    colorization: 1.0
-                    colorizationColor: Type.text
+                Image {
+                    id: logo
+                    anchors.fill: parent
+                    source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
+                    sourceSize.width: width * 2
+                    sourceSize.height: height * 2
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        brightness: 1.0
+                        colorization: 1.0
+                        colorizationColor: Type.accent
+                        shadowEnabled: true
+                        shadowColor: Type.accent
+                        shadowBlur: 1.0
+                        shadowOpacity: 0.6
+                    }
                 }
             }
-        }
-
-        Column {
-            width: parent.width
-            spacing: Space.xs
-
             KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 role: "display"
-                tabular: false
                 text: Brand.displayName
             }
             KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
+                role: "body"
+                wrapMode: Text.WordWrap
+                text: I18n.t("prefs.about.blurb")
+            }
+        }
+    }
+
+    // the row of cards
+    Row {
+        id: cards
+        objectName: "aboutRow"
+        x: page.margin
+        y: page.height - page.rowH - page.pad
+        width: page.width - page.margin * 2
+        spacing: page.gap
+        readonly property real cardW: (width - spacing * 2) / 3
+
+        // the version and its updates
+        Card {
+            width: cards.cardW
+            height: page.rowH
+            Title {
+                text: I18n.t("prefs.about.card.version")
+            }
+            KitText {
+                role: "display"
+                font.pixelSize: Type.size("display") * 0.8
+                text: Config.version
+            }
+            KitText {
+                width: parent.width
                 role: "secondary"
-                text: I18n.t("prefs.about.version", Config.version)
+                elide: Text.ElideRight
+                text: UpdateService.updateAvailable === true && (UpdateService.lastDetectedVersion ?? "") !== "" ? I18n.t("prefs.updates.available", UpdateService.lastDetectedVersion) : I18n.t("prefs.updates.stage.up_to_date")
+            }
+            PillButton {
+                objectName: "aboutUpdates"
+                icon: "downloadSimple"
+                text: I18n.t("prefs.about.updates")
+                onClicked: SettingsStore.navigate("updates")
             }
         }
 
-        KitText {
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            role: "body"
-            wrapMode: Text.WordWrap
-            text: I18n.t("prefs.about.blurb")
-        }
-
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
+        // useful places
+        Card {
+            width: cards.cardW
+            height: page.rowH
+            Title {
+                text: I18n.t("prefs.about.card.places")
+            }
             spacing: Space.s
-
             PillButton {
                 objectName: "aboutRunSetup"
                 icon: "seal"
@@ -98,8 +149,42 @@ Item {
             }
         }
 
-        LegalNotice {
-            width: parent.width
+        // the legal notes (NOTICE opens inside the card)
+        Card {
+            id: legalCard
+            width: cards.cardW
+            height: page.rowH
+            Title {
+                text: I18n.t("prefs.about.card.legal")
+            }
+            KitText {
+                role: "display"
+                font.pixelSize: Type.size("display") * 0.8
+                text: "AGPL-3.0"
+            }
+            KitText {
+                width: parent.width
+                role: "secondary"
+                wrapMode: Text.WordWrap
+                text: I18n.t("prefs.about.free")
+            }
+            Flickable {
+                width: legalCard.contentWidth
+                height: Math.max(Space.xl, legalCard.height - legalCard.padding * 2 - y)
+                contentWidth: width
+                contentHeight: legal.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                LegalNotice {
+                    id: legal
+                    width: parent.width
+                }
+            }
         }
+    }
+
+    // a card's title, as on the other pages' cards
+    component Title: KitText {
+        role: "title"
     }
 }

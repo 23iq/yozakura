@@ -4663,5 +4663,10 @@
   "prefs.updates.stage.beta": "Что будет дальше",
   "prefs.updates.stage.git": "Каждый коммит",
   "prefs.undo.channel_changed": "Канал обновлений изменён",
-  "prefs.updates.section.ocr": "Распознавание текста"
+  "prefs.updates.section.ocr": "Распознавание текста",
+  "prefs.about.card.version": "Версия",
+  "prefs.about.card.places": "Места",
+  "prefs.about.card.legal": "Право",
+  "prefs.about.updates": "Обновления",
+  "prefs.about.free": "Свободное ПО: используйте, меняйте, делитесь."
 }
