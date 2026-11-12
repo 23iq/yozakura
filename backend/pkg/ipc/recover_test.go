@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -49,51 +51,69 @@ func readResponse(t *testing.T, r *bufio.Reader) Response {
 	return resp
 }
 
-// A panicking handler (ordered or async, or a result that panics while
-// marshalling) answers an error and the connection keeps serving.
-func TestHandlerPanicIsAnsweredAsError(t *testing.T) {
-	conn, r := startServer(t, &Service{
-		Name: "t",
-		Methods: map[string]HandlerFunc{
-			"boom":    func(json.RawMessage) (any, error) { panic("handler boom") },
-			"aboom":   func(json.RawMessage) (any, error) { panic(errors.New("async boom")) },
-			"marshal": func(json.RawMessage) (any, error) { return panicMarshaler{}, nil },
-			"ok":      func(json.RawMessage) (any, error) { return "fine", nil },
-		},
-		Async: map[string]bool{"aboom": true},
-	})
-	for i, method := range []string{"t.boom", "t.aboom", "t.marshal"} {
-		req, _ := json.Marshal(Request{ID: json.RawMessage(`1`), Method: method})
-		_, _ = conn.Write(append(req, '\n'))
-		resp := readResponse(t, r)
-		if !strings.Contains(resp.Error, "internal error in "+method) {
-			t.Fatalf("case %d %s: error = %q", i, method, resp.Error)
-		}
-	}
-	_, _ = conn.Write([]byte(`{"id":2,"method":"t.ok"}` + "\n"))
-	if resp := readResponse(t, r); resp.Error != "" || string(resp.Result) != `"fine"` {
-		t.Fatalf("after panics: %+v", resp)
-	}
-}
+// panicChildEnv selects the panic case a re-executed test binary runs.
+const panicChildEnv = "YOZAKURA_IPC_PANIC_CHILD"
 
-// A service whose Subscribe panics does not end the stream of the others.
-func TestSubscribePanicKeepsOtherServicesStreaming(t *testing.T) {
+// runPanicChild is the child half of TestServicePanicCrashesTheDaemon: it
+// serves one service, sends the request that panics, and returns only if
+// the process was not taken down.
+func runPanicChild(t *testing.T, which string) {
 	conn, r := startServer(t,
+		&Service{
+			Name: "t",
+			Methods: map[string]HandlerFunc{
+				"boom":    func(json.RawMessage) (any, error) { panic("handler boom") },
+				"aboom":   func(json.RawMessage) (any, error) { panic(errors.New("async boom")) },
+				"marshal": func(json.RawMessage) (any, error) { return panicMarshaler{}, nil },
+			},
+			Async: map[string]bool{"aboom": true},
+		},
 		&Service{Name: "bad", Subscribe: func(*Subscriber) { panic("subscribe boom") }},
-		&Service{Name: "good", Subscribe: func(sub *Subscriber) {
-			time.Sleep(50 * time.Millisecond) // after the panic
-			sub.Send("good", "hello")
-			sub.Send("good", panicMarshaler{})
-			sub.Send("good", "still here")
+		&Service{Name: "ev", Subscribe: func(sub *Subscriber) {
+			sub.Send("ev", panicMarshaler{})
 			<-sub.StopCh()
 		}},
 	)
-	_, _ = conn.Write([]byte(`{"id":1,"method":"subscribe","params":{"services":["bad","good"]}}` + "\n"))
-	want := []string{`{"service":"good","data":"hello"}`, `{"error":"marshal failed"}`, `{"service":"good","data":"still here"}`}
-	for _, w := range want {
-		resp := readResponse(t, r)
-		if string(resp.Result) != w {
-			t.Fatalf("event = %s, want %s", resp.Result, w)
-		}
+	req := map[string]string{
+		"handler":   `{"id":1,"method":"t.boom"}`,
+		"async":     `{"id":1,"method":"t.aboom"}`,
+		"result":    `{"id":1,"method":"t.marshal"}`,
+		"subscribe": `{"id":1,"method":"subscribe","params":{"services":["bad"]}}`,
+		"event":     `{"id":1,"method":"subscribe","params":{"services":["ev"]}}`,
+	}[which]
+	_, _ = conn.Write([]byte(req + "\n"))
+	_, _ = r.ReadBytes('\n') // blocks until the process dies (or the deadline)
+	time.Sleep(time.Second)
+}
+
+// A panic in service code is logged with its stack and then still kills the
+// daemon (it is started again on the next call): recovering it would leave
+// a mutex the handler held locked and the service deadlocked for good.
+func TestServicePanicCrashesTheDaemon(t *testing.T) {
+	if which := os.Getenv(panicChildEnv); which != "" {
+		runPanicChild(t, which)
+		return
+	}
+	cases := map[string]string{
+		"handler":   "[ipc] panic in t.boom: handler boom",
+		"async":     "[ipc] panic in t.aboom: async boom",
+		"result":    "[ipc] panic in t.marshal: marshal boom",
+		"subscribe": "[ipc] panic in bad subscribe: subscribe boom",
+		"event":     "[ipc] panic in marshalling a ev event: marshal boom",
+	}
+	for which, wantLog := range cases {
+		t.Run(which, func(t *testing.T) {
+			t.Parallel()
+			cmd := exec.Command(os.Args[0], "-test.run=^TestServicePanicCrashesTheDaemon$")
+			cmd.Env = append(os.Environ(), panicChildEnv+"="+which)
+			out, err := cmd.CombinedOutput()
+			var exitErr *exec.ExitError
+			if !errors.As(err, &exitErr) || exitErr.ExitCode() == 0 {
+				t.Fatalf("the process survived the panic (err %v):\n%s", err, out)
+			}
+			if !strings.Contains(string(out), wantLog) || !strings.Contains(string(out), "runtime/debug.Stack") {
+				t.Fatalf("missing the logged panic %q with its stack:\n%s", wantLog, out)
+			}
+		})
 	}
 }

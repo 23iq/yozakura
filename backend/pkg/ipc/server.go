@@ -283,16 +283,24 @@ func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) {
 	w.write(Response{ID: req.ID, Result: raw})
 }
 
-// invoke runs one handler and marshals its result. A panic in either is
-// logged with its stack and answered as an error: one broken service
-// method must not take the whole daemon (and the shell it supervises) down.
-func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("[ipc] panic in %s: %v\n%s", method, r, debug.Stack())
-			raw, errMsg = nil, fmt.Sprintf("internal error in %s: %v", method, r)
-		}
-	}()
+// crashOnPanic, deferred around service code, logs a panic with the stack
+// of the goroutine that raised it and then panics again, so the daemon
+// still dies exactly as an unrecovered panic would. It must not swallow
+// the panic: most services take their mutex without a deferred Unlock, so
+// a handler that panics mid-section leaves the lock held and every later
+// call to that service would block forever. A dead daemon is recoverable
+// (the next CLI call or keybind starts it again through ensureDaemon, which
+// sweeps the children of the old one); a half-deadlocked one is not.
+func crashOnPanic(what string) {
+	if r := recover(); r != nil {
+		log.Printf("[ipc] panic in %s: %v\n%s", what, r, debug.Stack())
+		panic(r)
+	}
+}
+
+// invoke runs one handler and marshals its result.
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (json.RawMessage, string) {
+	defer crashOnPanic(method)
 	result, err := hdl(params)
 	if err != nil {
 		return nil, err.Error()
@@ -307,25 +315,15 @@ func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.Ra
 	return data, ""
 }
 
-// runSubscribe registers a stream with one service. A panic there is
-// logged and ends only that service's part of the stream.
+// runSubscribe registers a stream with one service.
 func runSubscribe(svc *Service, sub *Subscriber) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("[ipc] panic in %s subscribe: %v\n%s", svc.Name, r, debug.Stack())
-		}
-	}()
+	defer crashOnPanic(svc.Name + " subscribe")
 	svc.Subscribe(sub)
 }
 
 // marshalEvent serializes a ServiceEvent for the result field.
-func marshalEvent(event ServiceEvent) (out json.RawMessage) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("[ipc] panic marshalling a %s event: %v\n%s", event.Service, r, debug.Stack())
-			out = json.RawMessage(`{"error":"marshal failed"}`)
-		}
-	}()
+func marshalEvent(event ServiceEvent) json.RawMessage {
+	defer crashOnPanic("marshalling a " + event.Service + " event")
 	data, err := json.Marshal(event)
 	if err != nil {
 		return json.RawMessage(`{"error":"marshal failed"}`)
