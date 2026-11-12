@@ -54,6 +54,27 @@ function nextDelay(sortedThresholds, elapsedMs) {
     return -1;
 }
 
+// How far past its armed interval a wait may measure before the gap can
+// only be a suspend (the timer does not run while suspended, the wall clock
+// does): timer latency stays well under it.
+var SUSPEND_SLACK_MS = 2000;
+
+// Idle time to credit for the current wait when the thresholds change in
+// its middle. `spentMs`: wall-clock time since the wait was armed, minus
+// any suspend the service was told about; `armedMs`: the interval the
+// timer was armed for, or -1 when no wait is armed. Never more than the
+// armed interval, and nothing when the gap exceeds it by more than
+// SUSPEND_SLACK_MS: a suspend the service missed, whose share of the gap
+// is unknown, so the wait restarts rather than fire a listener early.
+function waitCredit(spentMs, armedMs) {
+    var spent = Math.max(0, Number(spentMs) || 0);
+    if (!(armedMs >= 0))
+        return spent;
+    if (spent > armedMs + SUSPEND_SLACK_MS)
+        return 0;
+    return Math.min(spent, armedMs);
+}
+
 // Indices of listeners due at `elapsedSec` that have not fired yet, in
 // list order.
 function due(listeners, elapsedSec, triggered) {

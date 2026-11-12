@@ -8,8 +8,8 @@ While the user was away a 1 s timer ticked for the whole absence and every
 tick re-evaluated each wallpaper's videoPaused binding. The service now
 sleeps until the next threshold (listener timeouts, the wallpaper idle-pause
 delay): each listener still fires once at its timeout, resume hooks run on
-activity, a listener list changed while idle is honoured, and
-elapsedIdleTime reaches the wallpaper delay. Thresholds here are 1-3 s, so
+activity, a listener list changed while idle is honoured without crediting
+time spent suspended, and elapsedIdleTime reaches the wallpaper delay. Thresholds here are 1-3 s, so
 the timing checks run in real time.
 """
 import sys
@@ -161,6 +161,35 @@ check('wallpaper delay leaves the thresholds when off',
 h.eval(root, 'setIdle(false)')
 h.eval(root, 'Config.performance.pauseWallpaperOnIdle = true')
 check('no timer after activity', h.eval(root, 'svc.idleTimer.running') is False)
+
+# --- Suspend: the time asleep is never credited ----------------------------
+# The timer does not run while suspended, the wall clock does. A clock jump
+# is simulated by moving the wait's wall-clock start (and the reported
+# suspend's start) back by the time asleep.
+h.eval(root, 'Config.performance.pauseWallpaperOnIdle = false')
+h.eval(root, 'clearLog()')
+h.eval(root, 'setListeners([{timeout: 30, onTimeout: "late"}])')
+h.eval(root, 'setIdle(true)')
+pump(300)
+# A 10 s suspend reported by SUSPEND/WAKE, then the listeners re-set.
+h.eval(root, 'svc.handleSleepEvent("sleep", {event: "SUSPEND"})')
+h.eval(root, 'svc._stepStart -= 10000; svc._sleptAt -= 10000')
+h.eval(root, 'svc.handleSleepEvent("sleep", {event: "WAKE"})')
+h.eval(root, 'setListeners([{timeout: 30, onTimeout: "late"}, {timeout: 5, onTimeout: "dim"}])')
+wait_ms = h.eval(root, 'svc.idleTimer.interval')
+check('after a reported suspend a new listener waits its own timeout', hooks() == [] and 4000 <= wait_ms <= 4800,
+      f'({wait_ms} ms, {hooks()})')
+# A one-hour suspend the service missed: the gap exceeds the armed wait.
+h.eval(root, 'setIdle(false)')
+h.eval(root, 'setListeners([{timeout: 30, onTimeout: "late"}])')
+h.eval(root, 'setIdle(true)')
+pump(300)
+h.eval(root, 'svc._stepStart -= 3600000')
+h.eval(root, 'setListeners([{timeout: 30, onTimeout: "late"}, {timeout: 20, onTimeout: "dim"}])')
+wait_ms = h.eval(root, 'svc.idleTimer.interval')
+check('after a missed suspend nothing fires at once', hooks() == [] and 19000 <= wait_ms <= 20000,
+      f'({wait_ms} ms, {hooks()})')
+h.eval(root, 'setIdle(false)')
 
 print('IdleService:', 'PASS' if ok_all else 'FAIL')
 sys.exit(0 if ok_all else 1)

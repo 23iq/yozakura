@@ -35,9 +35,16 @@ Singleton {
         if (service !== "sleep" || !data) return;
         const event = data.event;
         if (event === "SUSPEND") {
+            if (root._sleptAt === 0)
+                root._sleptAt = Date.now();
             root.lockBeforeSleep();
             SuspendManager.onPrepareForSleep();
         } else if (event === "WAKE") {
+            // Move the current wait's start past the time asleep.
+            if (root._sleptAt > 0) {
+                root._stepStart += Math.max(0, Date.now() - root._sleptAt);
+                root._sleptAt = 0;
+            }
             SuspendManager.onWakingUp();
         } else if (event === "LOCK") {
             root.lockBeforeSleep();
@@ -64,8 +71,11 @@ Singleton {
     property bool _idle: false
     // Idle time accounted up to the start of the pending wait (ms), and
     // when that wait started (wall clock, only to place a mid-wait change).
+    // _sleptAt: when a suspend began (0 when awake); the time asleep is
+    // never credited, the timer does not run then either.
     property real _idleMs: 0
     property real _stepStart: 0
+    property real _sleptAt: 0
 
     // Master Monitor: Detects "absence of activity" almost immediately
     property var masterMonitor: IdleMonitor {
@@ -82,6 +92,8 @@ Singleton {
             } else {
                 idleTimer.stop();
                 root._idle = false;
+                // Activity means awake, even if no WAKE event came.
+                root._sleptAt = 0;
                 root.resetIdleState();
             }
         }
@@ -110,8 +122,8 @@ Singleton {
     }
 
     function _pendingMs() {
-        const spent = Math.max(0, Date.now() - root._stepStart);
-        return idleTimer.running ? Math.min(spent, idleTimer.interval) : spent;
+        const until = root._sleptAt > 0 ? root._sleptAt : Date.now();
+        return IdleSchedule.waitCredit(until - root._stepStart, idleTimer.running ? idleTimer.interval : -1);
     }
 
     function _reached() {

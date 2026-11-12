@@ -40,3 +40,12 @@ test('due lists listeners that reached their timeout and have not fired', () => 
     assert.deepEqual(Array.from(S.due(listeners, 300, [0, 2])), [1]);
     assert.deepEqual(Array.from(S.due(listeners, 9999, [0, 1, 2])), []);
 });
+
+test('a mid-wait change credits the time spent, never a suspend', () => {
+    assert.equal(S.waitCredit(400, 1000), 400);
+    assert.equal(S.waitCredit(1000, 1000), 1000);
+    assert.equal(S.waitCredit(1000 + S.SUSPEND_SLACK_MS, 1000), 1000, 'timer latency: capped at the armed wait');
+    assert.equal(S.waitCredit(3600000, 30000), 0, 'a gap only a missed suspend explains: no credit');
+    assert.equal(S.waitCredit(-5, 1000), 0);
+    assert.equal(S.waitCredit(5000, -1), 5000, 'no armed wait: the time since the last threshold');
+});
