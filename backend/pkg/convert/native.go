@@ -81,13 +81,58 @@ func readData(raw []byte, from string) (*yaml.Node, error) {
 	default:
 		return nil, fmt.Errorf("%s is not a data format", label(from))
 	}
-	if node.Kind == yaml.DocumentNode && len(node.Content) == 1 {
-		return node.Content[0], nil
-	}
 	if node.Kind == 0 {
 		return nil, errors.New("the file is empty")
 	}
+	if err := checkAliases(&node); err != nil {
+		return nil, err
+	}
+	if node.Kind == yaml.DocumentNode && len(node.Content) == 1 {
+		return node.Content[0], nil
+	}
 	return &node, nil
+}
+
+// Alias limits: a document whose aliases loop or expand past these sizes
+// (a "billion laughs" file) is refused instead of filling memory.
+const (
+	maxExpandedNodes = 1_000_000
+	maxDepth         = 1000
+)
+
+var errAliases = errors.New("the file's aliases loop or expand too much")
+
+// checkAliases walks the node tree the way the writers expand it (an alias
+// is its target again) and fails on an alias inside its own target or past
+// maxExpandedNodes / maxDepth.
+func checkAliases(root *yaml.Node) error {
+	budget := maxExpandedNodes
+	active := map[*yaml.Node]bool{}
+	var walk func(n *yaml.Node, depth int) error
+	walk = func(n *yaml.Node, depth int) error {
+		budget--
+		if budget < 0 || depth > maxDepth {
+			return errAliases
+		}
+		if n.Kind == yaml.AliasNode {
+			if n.Alias == nil || active[n.Alias] {
+				return errAliases
+			}
+			n = n.Alias
+		}
+		if len(n.Content) == 0 {
+			return nil
+		}
+		active[n] = true
+		defer delete(active, n)
+		for _, c := range n.Content {
+			if err := walk(c, depth+1); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return walk(root, 0)
 }
 
 // plainStyle drops the flow / quoted styles a JSON source parses with, so
@@ -292,9 +337,26 @@ func firstLine(s string) string {
 
 // --- images -----------------------------------------------------------
 
+// maxPixels bounds what the native image path decodes (a small file can
+// declare a huge canvas); ImageMagick handles bigger images.
+const maxPixels = 100_000_000
+
 func convertImage(src, dst, to string, q Quality) error {
 	f, err := os.Open(src)
 	if err != nil {
+		return err
+	}
+	cfg, _, err := image.DecodeConfig(f)
+	if err != nil {
+		f.Close()
+		return fmt.Errorf("cannot read the image: %v", err)
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 || int64(cfg.Width)*int64(cfg.Height) > maxPixels {
+		f.Close()
+		return fmt.Errorf("the image is too large (%dx%d) to convert without ImageMagick", cfg.Width, cfg.Height)
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		f.Close()
 		return err
 	}
 	img, _, err := image.Decode(f)
