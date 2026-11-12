@@ -19,8 +19,9 @@ daemon, the in-process window is used. On: opening asks windows.open with
 the page and the target screen, the flag mirrors the process, a toggle off
 asks windows.close and keeps the flag up until the process is gone, a page
 asked while it runs raises it, a start failure falls back to the
-in-process window, a window open in-process stays in-process when the
-setting changes. The wizard: the same, and a closed (or crashed) wizard
+in-process window (one that died before it showed is not started again
+until the setting is turned off and on), a window open in-process stays
+in-process when the setting changes. The wizard: the same, and a closed (or crashed) wizard
 never auto-shows again this session. Relays: only allowed wallpaper
 methods reach the main shell's manager.
 """
@@ -285,7 +286,7 @@ ev("GlobalStates.settingsWindowVisible = false")
 settle()
 
 # the process ends before its window showed (QML error, missing module):
-# the in-process window instead, once
+# the in-process window instead, and for the rest of the session
 ev("GlobalStates.settingsWindowVisible = true")
 settle()
 emit("windows.state", {"kind": "settings", "state": "starting", "pid": 20})
@@ -295,8 +296,21 @@ check(ev("SeparateWindows.settingsSeparate") is False and ev("GlobalStates.setti
 opens = calls("windows.open")
 ev("GlobalStates.settingsWindowVisible = false")
 settle()
-check(calls("windows.open") == opens and ev("SeparateWindows.settingsSeparate") is True,
-      "...closed: the next open tries the process again")
+check(calls("windows.open") == opens and ev("SeparateWindows.settingsSeparate") is False,
+      "...closed: the doomed process is not started again")
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+check(calls("windows.open") == opens and ev("GlobalStates.settingsWindowVisible") is True
+      and ev("SeparateWindows.settingsOpening") is False,
+      "...the next open goes in-process at once, no pill")
+ev("GlobalStates.settingsWindowVisible = false")
+settle()
+# turning the setting off and on again tries the process again
+ev("Config.performance.separateWindows = false")
+settle()
+ev("Config.performance.separateWindows = true")
+settle()
+check(ev("SeparateWindows.settingsSeparate") is True, "...until the setting is turned off and on")
 # closed by the user while starting, then gone: no fallback
 ev("GlobalStates.settingsWindowVisible = true")
 settle()
@@ -341,6 +355,18 @@ check(ev("SeparateWindows.wizardSeparate") is False and ev("OnboardingService.vi
 check(ev("OnboardingService.dismissedThisSession") is False, "...and it does not count as dismissed")
 ev("OnboardingService.visible = false")
 settle()
+opens = calls("windows.open")
+ev("OnboardingService.visible = true")
+settle()
+check(calls("windows.open") == opens and ev("SeparateWindows.wizardSeparate") is False
+      and ev("OnboardingService.visible") is True, "...and opens in-process for the rest of the session")
+ev("OnboardingService.visible = false")
+settle()
+ev("Config.performance.separateWindows = false")
+settle()
+ev("Config.performance.separateWindows = true")
+settle()
+check(ev("SeparateWindows.wizardSeparate") is True, "...until the setting is turned off and on")
 
 # ---- staged previews ----
 pos = ev("Config.bar.position")

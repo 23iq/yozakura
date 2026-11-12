@@ -17,7 +17,8 @@ import qs.config
 // shell.qml loads the in-process windows only while `*Separate` is false.
 // A window open in-process stays in-process until it closes (the setting
 // can change while it is open); a window process that could not start
-// falls back to the in-process window. It also links the shared staging
+// falls back to the in-process window (one that died before it showed, for
+// the rest of the session). It also links the shared staging
 // (PreviewSink) and runs what a window asks of the main shell
 // (windows.relay to "shell": wallpaper changes, opening the other window).
 Singleton {
@@ -39,8 +40,14 @@ Singleton {
 
     property bool _settingsInProcess: false
     property bool _wizardInProcess: false
-    readonly property bool settingsSeparate: ProcessRole.primary && !root._settingsInProcess && (root.wanted || root.settingsRunning)
-    readonly property bool wizardSeparate: ProcessRole.primary && !root._wizardInProcess && (root.wanted || root.wizardRunning)
+    // The window process died before it showed (a QML error, a missing
+    // module): every later open would start the same doomed process, so
+    // the rest of the session (until the setting is turned off) uses the
+    // in-process window.
+    property bool _settingsBroken: false
+    property bool _wizardBroken: false
+    readonly property bool settingsSeparate: ProcessRole.primary && !root._settingsInProcess && !root._settingsBroken && (root.wanted || root.settingsRunning)
+    readonly property bool wizardSeparate: ProcessRole.primary && !root._wizardInProcess && !root._wizardBroken && (root.wanted || root.wizardRunning)
 
     // Methods of the wallpaper manager a window may ask for (RemoteWallpapers).
     readonly property var wallpaperMethods: ["setWallpaper", "setWallpaperDir", "setMatugenScheme", "setColorPreset", "clearPerScreenWallpaper", "clearAllPerScreenWallpapers", "nextWallpaper", "previousWallpaper"]
@@ -58,7 +65,13 @@ Singleton {
         BackendService.addSubscription(["windows"], (service, data) => root._onWindows(service, data));
         PreviewSink.link();
     }
-    onWantedChanged: root._subscribe()
+    onWantedChanged: {
+        if (!root.wanted) {
+            root._settingsBroken = false;
+            root._wizardBroken = false;
+        }
+        root._subscribe();
+    }
     Component.onCompleted: root._subscribe()
 
     function _onWindows(service, data) {
@@ -127,6 +140,8 @@ Singleton {
                 // The process ended before its window showed (a QML error,
                 // a missing module): the in-process window instead.
                 root._settingsFallback("the window process exited before it showed");
+                root._settingsBroken = true;
+                console.warn("SeparateWindows: Settings opens in-process for the rest of this session");
                 root._settingsInProcess = true;
                 root._setSettingsVisible(true);
             } else if (!root._settingsInProcess) {
@@ -255,6 +270,8 @@ Singleton {
                 // Never shown: not dismissed by the user, the in-process
                 // wizard instead (a first run still gets its wizard).
                 root._wizardFallback("the wizard process exited before it showed");
+                root._wizardBroken = true;
+                console.warn("SeparateWindows: the setup wizard opens in-process for the rest of this session");
                 root._wizardInProcess = true;
                 if (!OnboardingService.visible)
                     OnboardingService.open();
