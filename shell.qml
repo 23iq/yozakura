@@ -242,7 +242,10 @@ ShellRoot {
         }
     }
 
-    // Secure WlSessionLock lockscreen
+    // Secure WlSessionLock lockscreen. The marker locks again at startup
+    // when a previous shell died while the session was locked.
+    LockStateMarker {}
+
     WlSessionLock {
         id: sessionLock
         locked: GlobalStates.lockscreenVisible
