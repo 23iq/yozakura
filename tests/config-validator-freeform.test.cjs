@@ -70,3 +70,26 @@ test('a domain without free-form paths validates exactly like validate()', () =>
         plain(validator.validate(user, barDefaults)));
     assert.deepEqual(plain(validator.validateDomain(undefined, compositorDefaults, 'compositor')), compositorDefaults);
 });
+
+// Keys named like Object.prototype members are ordinary user keys inside a
+// free-form map; "__proto__" is never copied (assigning it would replace
+// the prototype of the validated map).
+test('prototype-named keys in a free-form map are kept, __proto__ is dropped', () => {
+    const user = plain(compositorDefaults);
+    user.motionOverrides = JSON.parse('{"constructor": {"curve": "snappy"}, "toString": {"speed": 2},'
+        + ' "hasOwnProperty": {"style": "fade"}, "__proto__": {"evil": true}, "windows": {"speed": 3}}');
+    const raw = validator.validateDomain(user, compositorDefaults, 'compositor').motionOverrides;
+    assert.equal('evil' in raw, false, 'the prototype was not replaced');
+    assert.equal(Object.prototype.hasOwnProperty.call(raw, '__proto__'), false, '__proto__ is not copied');
+    assert.deepEqual(plain(raw), {
+        constructor: { curve: 'snappy' }, toString: { speed: 2 }, hasOwnProperty: { style: 'fade' }, windows: { speed: 3 }
+    });
+});
+
+test('overlay copies prototype-named keys and never __proto__', () => {
+    const over = JSON.parse('{"constructor": 1, "toString": {"a": 1}, "__proto__": {"evil": true}, "x": {"y": 2}}');
+    const out = validator.overlay({ x: { z: 1 } }, over);
+    assert.equal('evil' in out, false);
+    assert.equal(Object.prototype.hasOwnProperty.call(out, '__proto__'), false);
+    assert.deepEqual(plain(out), { x: { z: 1, y: 2 }, constructor: 1, toString: { a: 1 } });
+});

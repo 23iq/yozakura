@@ -57,13 +57,27 @@ function overlay(base, over) {
     if (!isObject(over))
         return JsonUtil.clone(over);
     var out = isObject(base) ? JsonUtil.clone(base) : {};
-    for (var k in over)
-        out[k] = isObject(over[k]) ? overlay(out[k], over[k]) : JsonUtil.clone(over[k]);
+    for (var k in over) {
+        if (!ownKey(over, k))
+            continue;
+        out[k] = isObject(over[k]) ? overlay(hasOwn(out, k) ? out[k] : undefined, over[k]) : JsonUtil.clone(over[k]);
+    }
     return out;
 }
 
 function isObject(v) {
     return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+function hasOwn(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+// A key of `obj` that may be copied into a plain object: its own, and never
+// "__proto__" (JSON.parse makes it an own key; assigning it would replace
+// the prototype of the result instead of adding a key).
+function ownKey(obj, key) {
+    return key !== "__proto__" && hasOwn(obj, key);
 }
 
 // The object at `path` under `obj`; `create` adds missing levels.
@@ -128,7 +142,7 @@ function validateNode(current, defaults, keyName, path, free, freePaths) {
         }
         if (free) {
             for (var extra in current) {
-                if (!(extra in defaults) && current[extra] !== undefined)
+                if (ownKey(current, extra) && !hasOwn(defaults, extra) && current[extra] !== undefined)
                     result[extra] = JsonUtil.clone(current[extra]);
             }
         }
