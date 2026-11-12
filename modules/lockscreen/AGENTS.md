@@ -26,8 +26,10 @@ PAM config: `config/pam/password.conf` by default. `lockscreen.pamService` (adva
 default, machine-local: presets never carry or change it, the assistant must ask) names a
 system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` (grep, argv) and
 `LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
-`*-autologin` name, a missing/unreadable file, a file with an `auth ... pam_permit.so` line or
-a check that has not answered yet keeps the bundled file, with a warning in the log (`LockPam.js`).
+`*-autologin` name, a missing/unreadable file or a file with an `auth ... pam_permit.so` line
+keeps the bundled file, with a warning in the log (`LockPam.js`). A password submitted before the
+check of the configured file answered waits for it (`pamTarget.pending` / `settled`, at most
+`pamWait` = 3 s, then the bundled file), so an sssd/homed account does not fail its first try.
 A system stack with `pam_faillock` (Arch `system-auth`, `login`, ...) counts lock-screen failures:
 3 wrong passwords lock the account for ~10 min (`/etc/security/faillock.conf`), which the key's
 description says; the bundled `password.conf` has no faillock.
