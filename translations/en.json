@@ -1561,6 +1561,8 @@
   "onboarding.terminal.plan.fish": "fish becomes your login shell; you will be asked for your password. New terminals open fish right away, everything else after your next login.",
   "onboarding.terminal.plan.fish_install": "fish is installed and becomes your login shell; you will be asked for your password. New terminals open fish right away, everything else after your next login.",
   "onboarding.terminal.plan.prompt_only": "fish stays as it is, so the prompt shows only when you start fish yourself; your terminals keep your current shell.",
+  "onboarding.terminal.plan.fetch": "The system info greeting adds one line to the startup file of bash and zsh (~/.bashrc, ~/.zshrc); fish gets a file of its own.",
+  "onboarding.terminal.plan.fetch_install": "The system info greeting installs fastfetch and adds one line to the startup file of bash and zsh (~/.bashrc, ~/.zshrc); fish gets a file of its own.",
   "onboarding.terminal.login_files.title": "Your login files stay in charge",
   "onboarding.terminal.login_files.desc": "%1 holds settings of your own (for example starting the desktop or exporting variables). fish does not read these files when you log in, so it is not preselected; switch it on if you have moved them to fish.",
   "onboarding.terminal.login_failed.title": "Your login shell was not changed",

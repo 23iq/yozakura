@@ -86,9 +86,10 @@ function heldLoginFiles(status) {
     return Array.isArray(files) ? files : [];
 }
 
-// What Continue applies: a subset of ["prompt", "fish", "fetch"]. choice:
-// {prompt, fish, fetch} as ticked; ctx: {status, promptOn, fishCard, login,
-// greetingOn} (login: loginState()).
+// What Continue applies: a subset of ["prompt", "fish", "fetch",
+// "fetchOff"]. choice: {prompt, fish, fetch, fetchOff} as ticked (fetchOff:
+// the greeting, on already, was unticked); ctx: {status, promptOn,
+// fishCard, login, greetingOn} (login: loginState()).
 function actions(choice, ctx) {
     var out = [];
     var st = ctx.status || {};
@@ -98,6 +99,8 @@ function actions(choice, ctx) {
         out.push("fish");
     if (choice.fetch && !ctx.greetingOn)
         out.push("fetch");
+    if (choice.fetchOff && ctx.greetingOn)
+        out.push("fetchOff");
     return out;
 }
 
@@ -147,4 +150,13 @@ function promptOutcome(promptOn, login) {
     if (login === "pending" || login === "failed")
         return login;
     return "fish_only";
+}
+
+// The notice part about the greeting ("" when Continue does not turn it
+// on): it adds a line to the shells' startup files, and installs fastfetch
+// when it is missing.
+function fetchPlanKey(pending, fastfetchInstalled) {
+    if ((pending || []).indexOf("fetch") < 0)
+        return "";
+    return fastfetchInstalled ? "onboarding.terminal.plan.fetch" : "onboarding.terminal.plan.fetch_install";
 }

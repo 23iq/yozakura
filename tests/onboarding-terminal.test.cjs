@@ -91,6 +91,15 @@ test("Continue turns the greeting on with the sakura look, or the user's own fas
     assert.deepStrictEqual(C.actions({ fetch: true }, ctx), ["fetch"]);
     assert.deepStrictEqual(C.actions({ fetch: true }, { ...ctx, greetingOn: true }), []);
     assert.deepStrictEqual(C.actions({ prompt: true, fish: true, fetch: true }, ctx), ["prompt", "fish", "fetch"]);
+    // on already (an earlier Continue) and unticked: off, but only on Continue
+    assert.deepStrictEqual(C.actions({ fetchOff: true }, { ...ctx, greetingOn: true }), ["fetchOff"]);
+    assert.deepStrictEqual(C.actions({ fetchOff: true }, ctx), []);
+    assert.deepStrictEqual(C.actions({}, { ...ctx, greetingOn: true }), []);
+    // the notice says it edits the startup files (and installs fastfetch)
+    assert.strictEqual(C.fetchPlanKey(["fetch"], true), "onboarding.terminal.plan.fetch");
+    assert.strictEqual(C.fetchPlanKey(["prompt", "fetch"], false), "onboarding.terminal.plan.fetch_install");
+    assert.strictEqual(C.fetchPlanKey(["prompt"], true), "");
+    assert.strictEqual(C.fetchPlanKey(["fetchOff"], true), "");
     assert.strictEqual(C.fetchLook({ greeting: greet() }), "sakura");
     assert.strictEqual(C.fetchLook({ greeting: greet({ ownConfig: true }) }), "own");
     assert.strictEqual(C.fetchLook(null), "sakura");

@@ -226,6 +226,8 @@ def greetings():
 fresh_wizard({**FRESH, "greeting": GREET})
 check(prop("fetchOn", "checked") is True, "first run: the greeting is preselected")
 check(greetings() == [], "nothing is turned on while the step shows")
+plan = str(prop("shellPlan", "message") or "")
+check("~/.bashrc" in plan and "one line" in plan, f"the notice says the greeting edits the startup files: {plan!r}")
 ev("wizard.back()")
 ev("wizard.next()")
 check(greetings() == [], "Back applies nothing")
@@ -235,6 +237,25 @@ check(ev("Config.terminal.greeting") == "fastfetch", "terminal.greeting is fastf
 ev(f"wizard.go({STEPS.index('finish')})")
 QTest.qWait(50)
 check("system info greeting" in h.eval(vfind("summary:terminal"), "value"), "the summary mentions the greeting")
+
+# back on the step with the greeting on: unticking applies nothing until
+# Continue, and Skip keeps it on
+ev(f"wizard.go({STEPS.index('terminal')})")
+QTest.qWait(50)
+check(prop("fetchOn", "checked") is True, "on already: the row shows it")
+h.eval(vfind("fetchOn"), "toggled(false)")
+QTest.qWait(30)
+check(prop("fetchOn", "checked") is False, "unticked: the row shows it off")
+check(ev("Config.terminal.greeting") == "fastfetch", "unticking applies nothing before Continue")
+ev("wizard.finish()")
+check(ev("Config.terminal.greeting") == "fastfetch", "skip leaves the greeting as it was")
+fresh_wizard({**FRESH, "greeting": GREET})
+ev("Config.terminal.greeting = 'fastfetch'")
+QTest.qWait(30)
+h.eval(vfind("fetchOn"), "toggled(false)")
+check(ev("Config.terminal.greeting") == "fastfetch", "still on while the step shows")
+ev("wizard.next()")
+check(ev("Config.terminal.greeting") == "none", "unticked, then Continue: off")
 
 # a fastfetch config of the user's: their own look
 fresh_wizard({**FRESH, "greeting": {**GREET, "ownConfig": True}})

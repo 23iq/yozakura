@@ -1561,6 +1561,8 @@
   "onboarding.terminal.plan.fish": "fish pasa a ser tu shell de inicio; se te pedirá la contraseña. Las terminales nuevas abren fish enseguida, todo lo demás tras tu próximo inicio de sesión.",
   "onboarding.terminal.plan.fish_install": "Se instala fish y pasa a ser tu shell de inicio; se te pedirá la contraseña. Las terminales nuevas abren fish enseguida, todo lo demás tras tu próximo inicio de sesión.",
   "onboarding.terminal.plan.prompt_only": "fish no cambia, así que el prompt solo aparece cuando inicias fish tú mismo; tus terminales mantienen tu shell actual.",
+  "onboarding.terminal.plan.fetch": "El saludo con información del sistema añade una línea al archivo de inicio de bash y zsh (~/.bashrc, ~/.zshrc); fish recibe un archivo propio.",
+  "onboarding.terminal.plan.fetch_install": "El saludo con información del sistema instala fastfetch y añade una línea al archivo de inicio de bash y zsh (~/.bashrc, ~/.zshrc); fish recibe un archivo propio.",
   "onboarding.terminal.login_files.title": "Tus archivos de inicio de sesión siguen al mando",
   "onboarding.terminal.login_files.desc": "%1 contiene ajustes propios (por ejemplo, iniciar el escritorio o exportar variables). fish no lee estos archivos al iniciar sesión, así que no está preseleccionado; actívalo si ya los has pasado a fish.",
   "onboarding.terminal.login_failed.title": "Tu shell de inicio no se cambió",
