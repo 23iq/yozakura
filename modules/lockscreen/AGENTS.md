@@ -22,7 +22,18 @@ modules/lockscreen/
     ├── LockStyle.qml         # the interface: slots, arrangement, wallpaper treatment, palette
     └── GlassStyle / PaperStyle / TerminalStyle / AuroraStyle / NeonStyle / PosterStyle .qml
 ```
-PAM config: `config/pam/password.conf`.
+PAM config: `config/pam/password.conf` by default. `lockscreen.pamService` (advanced, empty by
+default) names a system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` exists
+and `LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
+missing file or a check that has not answered yet keeps the bundled file (`LockPam.js`).
+Only an empty field is ignored on submit; the text reaches PAM exactly as typed (spaces too).
+
+Lock across restarts: `LockStateMarker.qml` (in `shell.qml` next to `WlSessionLock`) mirrors
+`GlobalStates.lockscreenVisible` to `$XDG_RUNTIME_DIR/<app>-locked` (written on lock, removed on
+any unlock, one operation at a time) and, at startup, locks again when the marker for this
+`WAYLAND_DISPLAY` exists (`LockRestore.js`). No `XDG_RUNTIME_DIR` = no marker. Hyprland needs
+`misc:allow_session_lock_restore` (set by the generated config) to accept the new lock.
+Tests: `tests/lockscreen-marker.test.py`, `tests/lockscreen-restore.test.cjs`, `tests/lockscreen-pam.test.cjs`.
 
 ## STYLES (adding one = one file + one registry entry)
 A style extends `styles/LockStyle.qml` and fills five slots with Components declared in the
@@ -42,7 +53,7 @@ password and full auth checks against every registered style; `tests/lockscreen-
 checks the registry and layout; `tools/render/lockscreen_render.py` renders every style dark/light.
 
 Config (`config/defaults/lockscreen.js`): `style`, `tone` (style|theme|light|dark), `blur`
-(-1 = style's own), `position`, `showStatus`, `showMedia`, `showVisualizer`. Settings:
+(-1 = style's own), `position`, `showStatus`, `showMedia`, `showVisualizer`, `pamService`. Settings:
 `modules/settings/schema/lockscreen.js` (gallery: `editors/LockStyleGallery.qml`, live LockViews).
 
 Sizes, gaps, text and motion come from the kit (`Type` roles via `KitText`, `Space`,

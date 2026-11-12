@@ -7,5 +7,6 @@ var data = {
     "blur": -1,
     "showMedia": true,
     "showVisualizer": true,
-    "showStatus": true
+    "showStatus": true,
+    "pamService": ""
 }

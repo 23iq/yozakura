@@ -107,6 +107,7 @@ def check_style(style: str) -> None:
     assert lev("authenticating"), "submit marks authenticating"
     wait_until(lambda: lev("pamAuth.starts") == 1 and lev("errorMessage") != "")
     assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == " wrong  ", "PAM receives the typed password verbatim"
+    assert lev("pamAuth.startedWith").endswith("/config/pam|password.conf"), "default: the bundled PAM config"
     assert lev("authPasswordHolder.password") == "", "holder cleared after PAM completes"
     assert lev("errorMessage") == "Authentication failed"
     assert lev("passwordInputBox.showError"), f"{style}: failure shakes the field"
@@ -136,19 +137,53 @@ def lev(expr):
 lev("GlobalStates.lockscreenVisible = true")  # the last style's check unlocked
 
 
-def submit(text: str) -> None:
-    """Submit a (wrong) password and wait for the shake to end."""
+def submit(text: str) -> str:
+    """Submit a (wrong) password, wait for the shake to end; the PAM target used."""
     before = lev("pamAuth.starts")
     lev(f"passwordInput.text = {json.dumps(text)}; passwordInput.accepted()")
     wait_until(lambda: lev("pamAuth.starts") == before + 1 and lev("errorMessage") != "")
     assert lev("pamAuth.received") == text, f"PAM must receive {text!r} verbatim"
     wait_until(lambda: not lev("authenticating"))
     assert lev("GlobalStates.lockscreenVisible"), "a wrong password keeps the session locked"
+    return lev("pamAuth.startedWith")
 
 
 submit("   ")
 submit("\t")
 print("whitespace-only passwords reach PAM verbatim")
+
+# lockscreen.pamService: the system stack only for a plain name whose
+# /etc/pam.d file was found; the bundled config otherwise.
+BUNDLED = lev("pamTarget.bundledDir") + "|password.conf"
+assert lev("Config.lockscreen.pamService") == "", "default: no service"
+assert not lev("pamTarget.check.running"), "default: no service check"
+assert submit("a") == BUNDLED
+lev('Config.lockscreen.pamService = "system-auth"')
+assert lev("JSON.stringify(pamTarget.check.command)") == '["test","-f","/etc/pam.d/system-auth"]'
+assert lev("pamTarget.check.running")
+assert submit("b") == BUNDLED, "until the check answers, the bundled config is used"
+lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
+assert submit("c") == "/etc/pam.d|system-auth", "an existing service file selects the system stack"
+# A failure re-checks the file; the result for that path stands meanwhile.
+assert lev("pamTarget.check.running"), "a failed attempt re-checks the service file"
+lev("pamTarget.check.running = false; pamTarget.check.exited(1, 0)")
+assert submit("d") == BUNDLED, "a missing service file falls back to the bundled config"
+lev("pamTarget.check.running = false")
+lev('Config.lockscreen.pamService = "login"')
+lev('Config.lockscreen.pamService = "sddm"')  # changed while the check for "login" runs
+lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
+assert submit("e") == BUNDLED, "a result for another name does not count"
+wait_until(lambda: lev("JSON.stringify(pamTarget.check.command)") == '["test","-f","/etc/pam.d/sddm"]')
+lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
+assert submit("f") == "/etc/pam.d|sddm"
+lev("pamTarget.check.running = false")
+for bad in ("../shadow", "/etc/shadow", "pam.d/login", ".hidden", "-x", "a b"):
+    lev(f"Config.lockscreen.pamService = {json.dumps(bad)}")
+    assert not lev("pamTarget.check.running"), f"{bad!r}: no file check for an invalid name"
+    assert submit("g") == BUNDLED, f"{bad!r}: invalid names use the bundled config"
+lev('Config.lockscreen.pamService = ""')
+assert submit("h") == BUNDLED
+print("lockscreen.pamService selects the PAM stack conservatively")
 
 # Unknown ids fall back to the default style instead of an empty screen.
 root = env.load('import QtQuick\nimport qs.modules.lockscreen\nItem { width: 640; height: 360\n LockView { objectName: "lv"; anchors.fill: parent; styleId: "nope" } }')

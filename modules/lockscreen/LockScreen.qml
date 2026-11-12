@@ -145,6 +145,9 @@ WlSessionLockSurface {
 
             authenticating = true;
             errorMessage = "";
+            const target = pamTarget.resolve();
+            pamAuth.configDirectory = target.configDirectory;
+            pamAuth.config = target.config;
             pamAuth.start();
         }
     }
@@ -268,11 +271,19 @@ WlSessionLockSurface {
         }
     }
 
+    // PAM stack: the bundled config/pam/password.conf, or the system service
+    // named by lockscreen.pamService when its /etc/pam.d file exists.
+    LockPamTarget {
+        id: pamTarget
+        service: Config.lockscreen.pamService
+        bundledDir: Qt.resolvedUrl("../../config/pam").toString().replace("file://", "")
+    }
+
     // PAM authentication process
     PamContext {
         id: pamAuth
-        // Use custom PAM config for lockscreen authentication
-        configDirectory: Qt.resolvedUrl("../../config/pam").toString().replace("file://", "")
+        // Set from pamTarget before every start(); the bundled config by default
+        configDirectory: pamTarget.bundledDir
         config: "password.conf"
 
         onPamMessage: {
@@ -300,6 +311,9 @@ WlSessionLockSurface {
                 // Error de autenticación
                 errorMessage = "Authentication failed";
                 console.warn("PAM auth failed with result:", result);
+                // Re-check the configured service: if its file went away the
+                // next attempt falls back to the bundled config.
+                pamTarget.refresh();
                 if (Config.animDuration > 0) {
                     passwordInputBox.playWrongPassword();
                 } else {

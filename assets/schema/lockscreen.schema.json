@@ -148,6 +148,21 @@
         "control": "toggle",
         "keywords": "lock screen status user network wifi battery"
       }
+    },
+    "pamService": {
+      "title": "PAM service",
+      "type": "string",
+      "default": "",
+      "description": "Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. If that file does not exist the built-in check is used.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "auth",
+        "label": "prefs.lockscreen.pam_service",
+        "control": "text",
+        "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
+        "advanced": true
+      },
+      "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$"
     }
   },
   "additionalProperties": false
