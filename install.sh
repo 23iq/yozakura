@@ -45,6 +45,10 @@ COMPOSITORS=(hyprland niri mango)
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
+# Update channel (stable, beta, git; see sync_repo), the release tag to check
+# out (--ref, from `yozakura update`), whether --channel was given, and the
+# tag the checkout ended up on (download_release).
+CHANNEL="" REF="" CHANNEL_SET=0 RELEASE_TAG=""
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
@@ -457,7 +461,7 @@ dry_line() {
   bootstrap_yay) what="git clone https://aur.archlinux.org/yay-bin.git, then makepkg -si (in a temporary dir)" ;;
   add_input_group) what="sudo usermod -aG input $(id -un) (after sudo groupadd --system input, if it is missing)" ;;
   phosphor_user_font) what="curl the Phosphor v$PHOSPHOR_VERSION zip, copy its fonts into $(tilde "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/phosphor"), fc-cache" ;;
-  download_release) what="curl the latest release binaries and SHA256SUMS into $(tilde "$SRC_DIR"), verify them, chmod 755" ;;
+  download_release) what="curl the ${RELEASE_TAG:-latest} release binaries and SHA256SUMS into $(tilde "$SRC_DIR"), verify them, chmod 755" ;;
   polkit_autostart) what="append the hyprpolkitagent autostart line to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured)" ;;
   *)
     local a q="'" plain='^[][A-Za-z0-9_./=:,@%+~{}-]+$'
@@ -652,7 +656,16 @@ Install:
   --verbose         show command output instead of spinners
   --dir PATH        source checkout       (default ~/.local/src/$APP_ID, env YOZAKURA_SRC)
   --bin-dir PATH    where binaries go     (default ~/.local/bin, env YOZAKURA_BIN_DIR)
-  --branch NAME     git branch            (env YOZAKURA_BRANCH)
+  --branch NAME     git branch            (env YOZAKURA_BRANCH; implies --channel git)
+  --channel NAME    update channel: stable (X.Y.Z releases), beta (X.Y.Z-beta.N
+                    pre-releases and newer stable releases) or git (every
+                    commit on main). An install saves it as the setting
+                    system.updateChannel; an update uses that setting
+                    (default stable). A checkout already at or past the
+                    channel's newest release is kept as it is. Without it
+                    a first install follows main, as before.
+  --ref TAG         stable/beta: check out this release tag (what
+                    '$APP_ID update' passes after deciding the target)
   -h, --help        this help
 
 Environment: YOZAKURA_REPO_URL (git remote or path), YOZAKURA_RAW_BASE (where
@@ -684,7 +697,7 @@ parse_args() {
     --verbose) VERBOSE=1 ;;
     --update) UPDATE_ONLY=1 INSTALL_DEPS=0 ASSUME_YES=1 COMP_CONFIG=0 REBOOT=0 ;;
     -y | --yes) ASSUME_YES=1 ;;
-    --dir | --bin-dir | --branch | --compositor)
+    --dir | --bin-dir | --branch | --compositor | --channel | --ref)
       [[ $# -ge 2 ]] || die "$1 needs a value"
       case "$1" in
       --compositor)
@@ -692,6 +705,11 @@ parse_args() {
         [[ " ${COMPOSITORS[*]} " == *" $COMPOSITOR "* ]] || die "Unknown compositor: $2" "Choose one of: ${COMPOSITORS[*]}"
         ;;
       --dir) SRC_DIR="$2" ;;
+      --channel)
+        valid_channel "$2" || die "Unknown update channel: $2" "Choose one of: stable beta git"
+        CHANNEL="$2" CHANNEL_SET=1
+        ;;
+      --ref) REF="$2" ;;
       --bin-dir) BIN_DIR="$2" ;;
       --branch)
         BRANCH="$2"
@@ -709,6 +727,13 @@ parse_args() {
     shift
   done
   if [[ "$UPDATE_ONLY" == 1 ]]; then WITH_VOICE=0 WITH_DEPTH=0 WITH_SDDM=0; fi
+  if [[ -n "$BRANCH" && ("$CHANNEL" == stable || "$CHANNEL" == beta) ]]; then
+    die "--branch follows a branch; it goes with --channel git, not $CHANNEL."
+  fi
+  [[ -z "$BRANCH" ]] || CHANNEL=git
+  if [[ -n "$REF" && "$CHANNEL" != stable && "$CHANNEL" != beta ]]; then
+    die "--ref needs --channel stable or beta."
+  fi
 }
 
 # === Terminal and prompts ===
@@ -1245,7 +1270,7 @@ show_plan() {
   ui_box_head "INSTALL"
   ui_box_kv "Compositor" "$C_BOLD$(comp_name "$COMPOSITOR")$C_OFF"
   ui_box_kv "Sources" "$REPO_ACTION $(tilde "$SRC_DIR")"
-  ui_box_row "$(printf '%-12s %s%s%s' "" "$C_DIM" "$REPO_URL${BRANCH:+ @ $BRANCH}" "$C_OFF")"
+  ui_box_row "$(printf '%-12s %s%s%s' "" "$C_DIM" "$REPO_URL${BRANCH:+ @ $BRANCH}${CHANNEL:+ ($CHANNEL channel)}" "$C_OFF")"
   ui_box_kv "Binaries" "$(tilde "$BIN_DIR")/{$APP_ID,$DAEMON_ID}$([[ "$LINK_BINS" == 1 ]] && echo " + links in $SYS_BIN (sudo)")"
   old="$(old_daemon_paths | paste -sd' ' -)"
   ui_box_kv "Helper" "$SYS_HELPER (root-owned, sudo): the system helper for installing apps from the setup wizard"
@@ -1547,22 +1572,137 @@ clone_repo() {
   git clone ${BRANCH:+--branch "$BRANCH"} "$REPO_URL" "$SRC_DIR"
 }
 
+# === Update channels ===
+# stable follows the X.Y.Z release tags, beta the X.Y.Z-beta.N tags and any
+# newer stable one, git the branch (main). `yozakura update` decides the tag
+# (backend/pkg/updatechannel) and passes --ref; pick_tag is the same rule
+# for a run without it. Both are tested against the shared cases of
+# tests/fixtures/update-channels.json.
+valid_channel() { [[ "$1" == stable || "$1" == beta || "$1" == git ]]; }
+
+# config_channel: the saved system.updateChannel, if any.
+config_channel() {
+  local file="${XDG_CONFIG_HOME:-$HOME/.config}/$APP_ID/config/system.json" text re
+  [[ -r "$file" ]] || return 0
+  text="$(<"$file")"
+  re='"updateChannel"[[:space:]]*:[[:space:]]*"([a-z]+)"'
+  [[ "$text" =~ $re ]] && valid_channel "${BASH_REMATCH[1]}" && printf '%s' "${BASH_REMATCH[1]}"
+  return 0
+}
+
+# resolve_channel: --channel, else the setting of an existing install
+# (default stable); a first install without either follows main as before.
+resolve_channel() {
+  [[ -n "$CHANNEL" ]] && return 0
+  CHANNEL="$(config_channel)"
+  [[ -z "$CHANNEL" && -e "$SRC_DIR" ]] && CHANNEL=stable
+  return 0
+}
+
+# pick_tag CHANNEL: the channel's newest tag among the names on stdin (one
+# per line; "" when none). A leading v is accepted; of two spellings of one
+# version the one without it wins. Pure bash: the keys are equal-length
+# digit strings, so a string comparison orders them.
+pick_tag() {
+  local ch="$1" t key best="" tag="" re='^v?([0-9]+)\.([0-9]+)\.([0-9]+)(-beta\.([0-9]+))?$'
+  if [[ "$ch" == stable || "$ch" == beta ]]; then
+    while IFS= read -r t; do
+      [[ "$t" =~ $re ]] || continue
+      [[ -n "${BASH_REMATCH[5]}" && "$ch" != beta ]] && continue
+      printf -v key '%012d%012d%012d%d%012d' "$((10#${BASH_REMATCH[1]}))" "$((10#${BASH_REMATCH[2]}))" \
+        "$((10#${BASH_REMATCH[3]}))" "$([[ -n "${BASH_REMATCH[5]}" ]] && echo 0 || echo 1)" "$((10#${BASH_REMATCH[5]:-0}))"
+      if [[ -z "$best" || "$key" > "$best" || ("$key" == "$best" && "$tag" == v* && "$t" != v*) ]]; then
+        best="$key" tag="$t"
+      fi
+    done
+  fi
+  printf '%s\n' "$tag"
+}
+
+# checkout_release [fresh]: on the stable/beta channel, move the checkout to
+# --ref or the channel's newest tag (a detached HEAD). On its own it only
+# moves forward: a checkout at or past the tag (installs that followed main)
+# or on another line stays; a fresh clone always moves. Local changes are
+# kept, as on the git channel.
+checkout_release() {
+  [[ "$CHANNEL" == stable || "$CHANNEL" == beta ]] || return 0
+  local tag="$REF" head target src
+  printf -v src '%q' "$SRC_DIR"
+  if [[ "$DRY_RUN" == 1 ]]; then
+    dry_note run "git -C $src checkout -q --detach ${tag:-<the newest $CHANNEL release tag>} (kept as it is with local changes or when already at or past it)"
+    return 0
+  fi
+  [[ -n "$tag" ]] || tag="$(git -C "$SRC_DIR" tag -l | pick_tag "$CHANNEL")"
+  if [[ -z "$tag" ]]; then
+    warn "No $CHANNEL release is tagged yet; building the checkout as it is."
+    return 0
+  fi
+  target="$(git -C "$SRC_DIR" rev-parse -q --verify "refs/tags/$tag^{commit}")" ||
+    die "Release $tag is not in $SRC_DIR." "Fetch it: git -C $src fetch --tags origin"
+  head="$(git -C "$SRC_DIR" rev-parse HEAD)"
+  if [[ "$head" == "$target" ]]; then
+    RELEASE_TAG="$tag"
+    ok "Sources at $tag ($CHANNEL channel)"
+    return 0
+  fi
+  if [[ -n "$(git -C "$SRC_DIR" status --porcelain --untracked-files=no)" ]]; then
+    warn "$SRC_DIR has local changes; they are kept and built as they are."
+    info "To take $tag: commit or stash them, then run '$APP_ID update' again."
+    return 0
+  fi
+  if [[ "${1:-}" != fresh && -z "$REF" ]] && ! git -C "$SRC_DIR" merge-base --is-ancestor "$head" "$target"; then
+    if git -C "$SRC_DIR" merge-base --is-ancestor "$target" "$head"; then
+      ok "Sources at $(git -C "$SRC_DIR" rev-parse --short HEAD), at or past $tag (the newest $CHANNEL release)"
+    else
+      warn "$SRC_DIR is not on the line of $tag; kept as it is."
+      info "To move to it anyway: $APP_ID update --channel $CHANNEL --allow-downgrade"
+    fi
+    return 0
+  fi
+  if git -C "$SRC_DIR" checkout -q --detach "$target" 2>>"$LOG_FILE"; then
+    RELEASE_TAG="$tag"
+    ok "Sources at $tag ($CHANNEL channel)"
+  else
+    warn "Could not check out $tag; building the current tree."
+  fi
+}
+
+# save_channel: an install given --channel keeps it as the setting (an
+# update's --channel is for that run only).
+save_channel() {
+  [[ "$CHANNEL_SET" == 1 && "$UPDATE_ONLY" == 0 ]] || return 0
+  logged "$BIN_DIR/$APP_ID" config set system.updateChannel "$CHANNEL" ||
+    warn "Could not save the update channel; set it with: $APP_ID update channel $CHANNEL"
+  return 0
+}
+
 sync_repo() {
   if [[ ! -e "$SRC_DIR" ]]; then
     would mkdir -p "$(dirname "$SRC_DIR")"
     run "Cloning the sources" "Check the URL and your connection." retry clone_repo
+    checkout_release fresh
     return
   fi
   [[ -d "$SRC_DIR/.git" || -f "$SRC_DIR/.git" ]] || die "$SRC_DIR exists but is not a git checkout." "Move it away or pass --dir."
+  if [[ "$CHANNEL" == stable || "$CHANNEL" == beta ]]; then
+    run "Fetching updates" "Check your connection." git -C "$SRC_DIR" fetch --quiet --tags origin
+    checkout_release
+    return
+  fi
   run "Fetching updates" "Check your connection." git -C "$SRC_DIR" fetch --quiet origin ${BRANCH:+"$BRANCH"}
+  # git channel: a checkout left on a release tag (detached) goes back to main
+  local want="$BRANCH"
+  if [[ -z "$want" && "$CHANNEL" == git && "$(git -C "$SRC_DIR" rev-parse --abbrev-ref HEAD)" == HEAD ]]; then
+    want=main
+  fi
   if [[ "$DRY_RUN" == 1 ]]; then
-    [[ -n "$BRANCH" ]] && dry_line git -C "$SRC_DIR" checkout -q "$BRANCH"
+    [[ -n "$want" ]] && dry_line git -C "$SRC_DIR" checkout -q "$want"
     dry_note run "git -C $(printf '%q' "$SRC_DIR") merge --ff-only origin/<branch> (kept as it is with local changes)"
     return
   fi
-  if [[ -n "$BRANCH" && "$(git -C "$SRC_DIR" rev-parse --abbrev-ref HEAD)" != "$BRANCH" ]]; then
-    git -C "$SRC_DIR" checkout -q "$BRANCH" 2>/dev/null || git -C "$SRC_DIR" checkout -q -b "$BRANCH" --track "origin/$BRANCH" ||
-      die "Could not switch $SRC_DIR to $BRANCH."
+  if [[ -n "$want" && "$(git -C "$SRC_DIR" rev-parse --abbrev-ref HEAD)" != "$want" ]]; then
+    git -C "$SRC_DIR" checkout -q "$want" 2>/dev/null || git -C "$SRC_DIR" checkout -q -b "$want" --track "origin/$want" ||
+      die "Could not switch $SRC_DIR to $want." "Local changes in the way? Commit or stash them first."
   fi
   local branch upstream
   branch="$(git -C "$SRC_DIR" rev-parse --abbrev-ref HEAD)"
@@ -1625,7 +1765,12 @@ download_release() {
     return 1
     ;;
   esac
-  base="${REPO_URL%.git}/releases/latest/download"
+  # The release the checkout is on (tag channels), else the latest one.
+  if [[ -n "$RELEASE_TAG" ]]; then
+    base="${REPO_URL%.git}/releases/download/$RELEASE_TAG"
+  else
+    base="${REPO_URL%.git}/releases/latest/download"
+  fi
   curl -fsSL "$base/SHA256SUMS" -o "$SRC_DIR/.SHA256SUMS" || return 1
   for b in "$APP_ID" "$DAEMON_ID"; do
     curl -fsSL "$base/$b-linux-$arch" -o "$SRC_DIR/$b-linux-$arch" || return 1
@@ -2046,6 +2191,7 @@ nixos_flow() {
 
 main() {
   parse_args "$@"
+  resolve_channel
   [[ "$EUID" -eq 0 ]] && die "Run this as your user, not root." "It uses sudo for the steps that need it."
   if [[ "$DRY_RUN" == 0 ]]; then
     mkdir -p "$LOG_DIR"
@@ -2113,6 +2259,7 @@ main() {
   fi
   build_backend
   install_binaries
+  save_channel
   install_sys_helper
   remove_old_daemon
   legacy_notes
