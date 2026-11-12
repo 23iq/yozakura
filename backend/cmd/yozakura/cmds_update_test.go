@@ -208,6 +208,7 @@ func TestUpdateOldInstallerOnlyFollowsGit(t *testing.T) {
 	clone := fakeCheckout(t)
 	gitT(t, clone, "checkout", "-q", "--detach", "0.4.0")
 	os.WriteFile(filepath.Join(clone, "install.sh"), []byte("# no channels\n"), 0o755)
+	gitT(t, clone, "update-index", "--skip-worktree", "install.sh") // not a local change to stop at
 	r := newUpdateRun(t, clone)
 	assert.Equal(t, 1, r.run())
 	assert.Contains(t, r.errb.String(), "predates update channels")
@@ -332,4 +333,52 @@ func TestUpdateReportsReadQuickly(t *testing.T) {
 	assert.Equal(t, "/src", repo.Dir)
 	assert.Equal(t, reportTimeout, repo.ReadTimeout)
 	assert.LessOrEqual(t, reportTimeout, 10*time.Second)
+}
+
+func TestUpdateStopsOnUncommittedChanges(t *testing.T) {
+	clone := fakeCheckout(t)
+	gitT(t, clone, "checkout", "-q", "--detach", "0.4.0")
+	os.WriteFile(filepath.Join(clone, "shell.qml"), []byte("// my edit\n"), 0o644)
+	r := newUpdateRun(t, clone)
+
+	assert.Equal(t, 1, r.run())
+	assert.Contains(t, r.out.String(), clone+" has uncommitted changes; ")
+	assert.Contains(t, r.out.String(), "(the update would build them, not 0.4.1)")
+	assert.NotContains(t, r.out.String(), "Updating ")
+	assert.Equal(t, 1, r.run("--channel", "git"))
+	assert.Empty(t, r.installer, "a dirty checkout is not updated")
+
+	// a local branch is rebuilt as it is anyway
+	gitT(t, clone, "checkout", "-q", "-b", "mine")
+	assert.Equal(t, 0, r.run("--channel", "git"))
+	assert.Len(t, r.installer, 1)
+
+	// once the edit is gone, the update goes on
+	gitT(t, clone, "checkout", "-q", "--detach", "0.4.0")
+	assert.Equal(t, 1, r.run("--channel", "git"))
+	assert.Len(t, r.installer, 1, "the edit is still uncommitted")
+	gitT(t, clone, "checkout", "-q", "--", "shell.qml")
+	assert.Equal(t, 0, r.run())
+	assert.Len(t, r.installer, 2)
+}
+
+func TestInstallerFeatures(t *testing.T) {
+	dir := t.TempDir()
+	script := filepath.Join(dir, "install.sh")
+	write := func(s string) { os.WriteFile(script, []byte(s), 0o755) }
+
+	write("A=1\n" + installerFeaturesVar + `"channels allow-downgrade"` + "\n")
+	assert.Equal(t, map[string]bool{"channels": true, "allow-downgrade": true}, installerFeatures(script))
+	write("  " + installerFeaturesVar + `"channels"` + "\n    --allow-downgrade) x ;;\n")
+	assert.Equal(t, map[string]bool{"channels": true}, installerFeatures(script), "the marker wins over case labels")
+	// older installers: their option case labels
+	write("    --ref) REF=$2 ;;\n")
+	assert.Equal(t, map[string]bool{"channels": true, "allow-downgrade": false}, installerFeatures(script))
+	write("# no channels\n")
+	assert.False(t, installerFeatures(script)["channels"])
+	assert.Nil(t, installerFeatures(filepath.Join(dir, "missing.sh")))
+
+	// the real installer declares what update passes
+	repoScript := filepath.Join("..", "..", "..", "install.sh")
+	assert.Equal(t, map[string]bool{"channels": true, "allow-downgrade": true}, installerFeatures(repoScript))
 }

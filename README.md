@@ -212,7 +212,9 @@ yozakura goodbye    # remove the binaries and the compositor blocks; asks about 
 ```
 
 Re-running the one-liner also updates. Local changes in the checkout are kept
-(and built); the installer prints how to reset to upstream.
+(and built); the installer prints how to reset to upstream. `yozakura update`
+stops on uncommitted changes instead (commit or stash them first), except on
+a branch of your own, which it rebuilds as it is.
 
 **Update channels** (`system.updateChannel`, also in Settings > Updates and
 at the end of the setup wizard): `stable` (default) follows the `X.Y.Z`

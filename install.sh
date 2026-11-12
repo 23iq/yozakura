@@ -49,6 +49,9 @@ COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 # out (--ref, from `yozakura update`), whether --channel was given, the tag
 # the checkout ended up on (download_release) and --allow-downgrade.
 CHANNEL="" REF="" CHANNEL_SET=0 RELEASE_TAG="" ALLOW_DOWNGRADE=0
+# The options `<app> update` may pass (it reads this line from the checkout's
+# install.sh; keep it a single quoted literal).
+INSTALLER_FEATURES="channels allow-downgrade"
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""

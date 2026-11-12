@@ -31,9 +31,9 @@ Only releases newer than {floor} (the last one without update channels)
 are a channel's target; until one is tagged, stable and beta keep the
 install where it is. A checkout already at or past the channel's newest
 release is up to date (installs that followed main stay where they are
-until a newer release is tagged). Local changes are kept and built as they
-are; a checkout with commits that are on no branch of the remote is not
-moved to a release without them.
+until a newer release is tagged). A checkout with uncommitted changes is
+not updated (commit or stash them first); a checkout with commits that are
+on no branch of the remote is not moved to a release without them.
 
 Options:
     --channel NAME       use this channel for this run only; to keep it:
@@ -153,11 +153,14 @@ func runUpdate(args []string, e *updateEnv) int {
 		return 1
 	}
 	st := uc.Resolve(repo, channel, e.installedVersion())
-	return e.apply(st, source, a.has("allow-downgrade"))
+	return e.apply(st, source, a.has("allow-downgrade"), repo.Dirty())
 }
 
-// apply runs the installer when the resolution says so.
-func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int {
+// apply runs the installer when the resolution says so. dirty: the
+// checkout has uncommitted changes to tracked files; the installer would
+// keep them and rebuild the current tree instead of the target, so only a
+// local branch (rebuilt as it is anyway) goes on.
+func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade, dirty bool) int {
 	switch st.State {
 	case uc.Unknown:
 		fmt.Fprintf(e.errOut, "Error: %s\n", st.Note)
@@ -187,16 +190,23 @@ func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int 
 			return 0
 		}
 	}
+	if dirty && st.State != uc.LocalBranch {
+		fmt.Fprintf(e.out, "%s has uncommitted changes; %s %s stays as it is (the update would build them, not %s).\n",
+			e.src, brand.DisplayName, e.installedLabel(st), st.Target)
+		fmt.Fprintf(e.out, "Commit or stash them (git -C %s stash), then run '%s update' again.\n", e.src, brand.AppID)
+		return 1
+	}
 	args := updateArgs(e.src, e.exe)
 	if args == nil {
 		fmt.Fprintf(e.errOut, "Error: %s has no install.sh; update it with git pull && make build.\n", e.src)
 		return 1
 	}
-	if installerHasChannels(args[0]) {
+	features := installerFeatures(args[0])
+	if features["channels"] {
 		args = append(args, "--channel", st.Channel)
 		if st.Channel != uc.Git {
 			args = append(args, "--ref", st.Target)
-			if allowDowngrade && installerKnows(args[0], "--allow-downgrade)") {
+			if allowDowngrade && features["allow-downgrade"] {
 				args = append(args, "--allow-downgrade")
 			}
 		}
@@ -222,17 +232,34 @@ func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int 
 	return 0
 }
 
-// installerHasChannels: the checkout's install.sh knows --channel/--ref
-// (a checkout older than update channels does not).
-func installerHasChannels(script string) bool {
-	return installerKnows(script, "--ref)")
-}
+// installerFeaturesVar starts the line of install.sh that lists the options
+// `update` may pass: INSTALLER_FEATURES="channels allow-downgrade".
+const installerFeaturesVar = "INSTALLER_FEATURES="
 
-// installerKnows: the checkout's install.sh parses this option (its case
-// label), so passing it does not stop an older installer.
-func installerKnows(script, label string) bool {
+// installerFeatures: the options the checkout's install.sh understands, from
+// its INSTALLER_FEATURES line ("channels": --channel/--ref,
+// "allow-downgrade"). An installer without that line (older than update
+// channels, or the first ones with them) is read from its option case
+// labels, so passing an option never stops an older installer.
+func installerFeatures(script string) map[string]bool {
 	data, err := os.ReadFile(script)
-	return err == nil && strings.Contains(string(data), label)
+	if err != nil {
+		return nil
+	}
+	text := string(data)
+	for _, line := range strings.Split(text, "\n") {
+		if v, ok := strings.CutPrefix(strings.TrimSpace(line), installerFeaturesVar); ok {
+			set := map[string]bool{}
+			for _, f := range strings.Fields(strings.Trim(v, `"'`)) {
+				set[f] = true
+			}
+			return set
+		}
+	}
+	return map[string]bool{
+		"channels":        strings.Contains(text, "--ref)"),
+		"allow-downgrade": strings.Contains(text, "--allow-downgrade)"),
+	}
 }
 
 func commitsWord(n int) string {
