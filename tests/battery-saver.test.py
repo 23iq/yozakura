@@ -14,7 +14,10 @@ from lib.qmlharness import Harness  # noqa: E402
 h = Harness('battery-saver')
 h.module('Quickshell', {'Singleton': 'QtObject { default property list<QtObject> data }'})
 h.module('Quickshell.Services.UPower', {
-    'UPowerDevice': 'QtObject { enum DeviceType { Unknown, LinePower, Battery } property int type: 0 }',
+    # As in Quickshell: the device has no enums of its own, the values live
+    # on the UPowerDeviceType singleton.
+    'UPowerDevice': 'QtObject { property int type: 0 }',
+    'UPowerDeviceType': 'pragma Singleton\nQtObject { enum Enum { Unknown, LinePower, Battery } }',
     'UPower': '''pragma Singleton
 QtObject {
     property bool onBattery: false

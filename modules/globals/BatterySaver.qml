@@ -15,7 +15,7 @@ Singleton {
     id: root
 
     readonly property bool enabled: Config.performance ? Config.performance.batterySaver === true : false
-    readonly property bool hasBattery: root.enabled && UPower.displayDevice !== null && UPower.displayDevice.type === UPowerDevice.Battery
+    readonly property bool hasBattery: root.enabled && UPower.displayDevice !== null && UPower.displayDevice.type === UPowerDeviceType.Battery
     readonly property bool onBattery: root.hasBattery && UPower.onBattery
     readonly property bool active: Rule.active(root.enabled, root.hasBattery, root.onBattery)
 }
