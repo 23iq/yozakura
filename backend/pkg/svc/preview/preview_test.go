@@ -186,6 +186,13 @@ func TestCommitWaitsForTheMainShellToWrite(t *testing.T) {
 	go func() {
 		res, err := s.handleCommit(json.RawMessage(`{"owner":"settings"}`))
 		assert.NoError(t, err)
+		later, ok := res.(ipc.Deferred)
+		if !assert.True(t, ok, "commit answers later") {
+			done <- result{res}
+			return
+		}
+		res, err = later()
+		assert.NoError(t, err)
 		done <- result{res}
 	}()
 	got := drain(t, sub, 1)

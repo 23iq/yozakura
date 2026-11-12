@@ -36,6 +36,14 @@ type ServiceEvent struct {
 // HandlerFunc processes a method request and returns the result payload.
 type HandlerFunc func(params json.RawMessage) (any, error)
 
+// Deferred is a result whose answer comes later. An ordered method returns
+// one when what it decides and broadcasts must run in order with the
+// connection's earlier requests (it does that before returning) but its
+// answer waits on something slow (another client's reply): the server runs
+// the Deferred in its own goroutine and answers with its result, so later
+// requests on the connection are not held up by the wait.
+type Deferred func() (any, error)
+
 // Service is a set of methods plus an optional subscription stream.
 type Service struct {
 	Name      string
@@ -184,7 +192,13 @@ func (s *Server) handleConn(conn net.Conn) {
 	defer close(serial)
 	go func() {
 		for req := range serial {
-			s.handleOne(writer, &wmu, &req)
+			if later := s.handleOne(writer, &wmu, &req); later != nil {
+				pending.Add(1)
+				go func() {
+					defer pending.Done()
+					later()
+				}()
+			}
 			pending.Done()
 		}
 	}()
@@ -210,7 +224,9 @@ func (s *Server) handleConn(conn net.Conn) {
 		if s.isAsync(req.Method) {
 			go func(req Request) {
 				defer pending.Done()
-				s.handleOne(writer, &wmu, &req)
+				if later := s.handleOne(writer, &wmu, &req); later != nil {
+					later()
+				}
 			}(req)
 			continue
 		}
@@ -251,60 +267,78 @@ func (s *Server) isAsync(method string) bool {
 }
 
 // handleOne processes a single request and writes its response; wmu
-// serializes writes with concurrently running async handlers.
-func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) {
+// serializes writes with concurrently running async handlers. When the
+// handler returned a Deferred, nothing is written yet: the returned func
+// waits for it and writes the answer (the caller runs it off the worker).
+func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) func() {
 	if len(req.ID) == 0 {
-		return
+		return nil
 	}
 	w := &lockedWriter{w: bw, mu: wmu}
 	svcName, method := splitMethod(req.Method)
 	if svcName == "" {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
-		return
+		return nil
 	}
 	s.mu.RLock()
 	svc := s.services[svcName]
 	s.mu.RUnlock()
 	if svc == nil {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown service: %s", svcName)})
-		return
+		return nil
 	}
 	hdl, ok := svc.Methods[method]
 	if !ok {
 		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
-		return
+		return nil
 	}
 
-	raw, errMsg := invoke(req.Method, hdl, req.Params)
+	raw, errMsg, later := invoke(req.Method, hdl, req.Params)
+	if later != nil {
+		id, name := req.ID, req.Method
+		return func() {
+			raw, errMsg, _ := invoke(name, func(json.RawMessage) (any, error) { return later() }, nil)
+			w.respond(id, raw, errMsg)
+		}
+	}
+	w.respond(req.ID, raw, errMsg)
+	return nil
+}
+
+func (l *lockedWriter) respond(id, raw json.RawMessage, errMsg string) {
 	if errMsg != "" {
-		w.write(Response{ID: req.ID, Error: errMsg})
+		l.write(Response{ID: id, Error: errMsg})
 		return
 	}
-	w.write(Response{ID: req.ID, Result: raw})
+	l.write(Response{ID: id, Result: raw})
 }
 
 // invoke runs one handler and marshals its result. A panic in either is
 // logged with its stack and answered as an error: one broken service
 // method must not take the whole daemon (and the shell it supervises) down.
-func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string) {
+// A Deferred result is returned as later, unrun.
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string, later Deferred) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[ipc] panic in %s: %v\n%s", method, r, debug.Stack())
-			raw, errMsg = nil, fmt.Sprintf("internal error in %s: %v", method, r)
+			raw, errMsg, later = nil, fmt.Sprintf("internal error in %s: %v", method, r), nil
 		}
 	}()
 	result, err := hdl(params)
 	if err != nil {
-		return nil, err.Error()
+		return nil, err.Error(), nil
 	}
 	if result == nil {
-		return nil, ""
+		return nil, "", nil
+	}
+	if d, ok := result.(Deferred); ok {
+		return nil, "", d
 	}
 	data, err := json.Marshal(result)
 	if err != nil {
-		return nil, "result marshal failed"
+		return nil, "result marshal failed", nil
 	}
-	return data, ""
+	return data, "", nil
 }
 
 // runSubscribe registers a stream with one service. A panic there is

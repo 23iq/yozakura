@@ -83,8 +83,10 @@ func (s *Service) Register(srv *ipc.Server) {
 			"state":   func(json.RawMessage) (any, error) { return map[string]any{"staged": s.Staged()}, nil },
 		},
 		Subscribe: s.subscribe,
-		// waits for the main shell's preview.written
-		Async: map[string]bool{"commit": true},
+		// commit is ordered: it ends the staging after every preview.set
+		// the window sent before it on its connection (an async commit
+		// could overtake one and lose it); only its wait for the main
+		// shell's preview.written runs off the connection (ipc.Deferred).
 	})
 }
 
@@ -98,8 +100,10 @@ func (s *Service) handleCommit(raw json.RawMessage) (any, error) {
 	if d.Owner == "" {
 		return nil, errors.New("preview: missing owner")
 	}
-	had, written := s.CommitAndWait(d.Owner)
-	return map[string]any{"ok": had, "written": written}, nil
+	had, wait := s.startCommit(d.Owner)
+	return ipc.Deferred(func() (any, error) {
+		return map[string]any{"ok": had, "written": wait()}, nil
+	}), nil
 }
 
 func (s *Service) handleWritten(raw json.RawMessage) (any, error) {
@@ -172,24 +176,34 @@ func (s *Service) Commit(owner string) bool {
 // CommitAndWait is Commit, then waits up to AckWait for the main shell to
 // report it wrote the files (written). Nobody subscribed: false at once.
 func (s *Service) CommitAndWait(owner string) (had, written bool) {
+	had, wait := s.startCommit(owner)
+	return had, wait()
+}
+
+// startCommit ends the staging and broadcasts the commit now; wait then
+// waits up to AckWait for the main shell's answer.
+func (s *Service) startCommit(owner string) (had bool, wait func() bool) {
 	had, id := s.commit(owner)
 	s.mu.Lock()
 	ch, ok := s.acks[id]
 	s.mu.Unlock()
-	if !ok {
-		return had, false
+	return had, func() bool {
+		if !ok {
+			return false
+		}
+		t := time.NewTimer(AckWait)
+		defer t.Stop()
+		written := false
+		select {
+		case <-ch:
+			written = true
+		case <-t.C:
+		}
+		s.mu.Lock()
+		delete(s.acks, id)
+		s.mu.Unlock()
+		return written
 	}
-	t := time.NewTimer(AckWait)
-	defer t.Stop()
-	select {
-	case <-ch:
-		written = true
-	case <-t.C:
-	}
-	s.mu.Lock()
-	delete(s.acks, id)
-	s.mu.Unlock()
-	return had, written
 }
 
 // Ack records the main shell's preview.written for commit id.
