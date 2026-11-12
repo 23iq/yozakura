@@ -586,7 +586,7 @@
           "title": "Edge",
           "type": "string",
           "default": "auto",
-          "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
+          "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
           "x-settings": {
             "category": "osd",
             "section": "osd",

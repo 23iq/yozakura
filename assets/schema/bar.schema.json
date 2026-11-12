@@ -372,7 +372,7 @@
           "title": "Shape",
           "type": "string",
           "default": "classic",
-          "description": "One continuous bar, or floating islands around the notch.",
+          "description": "One continuous bar, or floating islands around the island.",
           "x-settings": {
             "category": "bar",
             "section": "style",

@@ -2968,7 +2968,7 @@
               "title": "Shape",
               "type": "string",
               "default": "classic",
-              "description": "One continuous bar, or floating islands around the notch.",
+              "description": "One continuous bar, or floating islands around the island.",
               "x-settings": {
                 "category": "bar",
                 "section": "style",
@@ -6893,7 +6893,7 @@
               "title": "Edge",
               "type": "string",
               "default": "auto",
-              "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
+              "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
               "x-settings": {
                 "category": "osd",
                 "section": "osd",
@@ -7168,7 +7168,7 @@
           "title": "Island edge",
           "type": "string",
           "default": "top",
-          "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
+          "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
@@ -7197,7 +7197,7 @@
           "title": "Island alignment",
           "type": "string",
           "default": "center",
-          "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
+          "description": "Where the island sits along its edge. Panels always open toward the middle of the screen.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
@@ -7249,7 +7249,7 @@
           "title": "Hide until hovered",
           "type": "boolean",
           "default": false,
-          "description": "Hide the notch until the pointer reaches it.",
+          "description": "Hide the island until the pointer reaches it.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
@@ -7266,7 +7266,7 @@
           "title": "No Media Display",
           "type": "string",
           "default": "userHost",
-          "description": "What the notch shows when nothing is playing.",
+          "description": "What the island shows when nothing is playing.",
           "x-settings": {
             "category": "notch",
             "section": "media",
@@ -7558,7 +7558,7 @@
         "liveActivities": {
           "title": "Live Activities",
           "type": "object",
-          "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
+          "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
           "x-settings": {
             "category": "notch",
             "section": "activities",
