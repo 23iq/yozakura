@@ -272,7 +272,8 @@ WlSessionLockSurface {
     }
 
     // PAM stack: the bundled config/pam/password.conf, or the system service
-    // named by lockscreen.pamService when its /etc/pam.d file exists.
+    // named by lockscreen.pamService when its /etc/pam.d file is a usable
+    // password stack (LockPam.js).
     LockPamTarget {
         id: pamTarget
         service: Config.lockscreen.pamService

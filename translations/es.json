@@ -888,7 +888,7 @@
   "prefs.lockscreen.section.login": "Pantalla de inicio de sesión",
   "prefs.lockscreen.section.auth": "Autenticación",
   "prefs.lockscreen.pam_service": "Servicio PAM",
-  "prefs.lockscreen.pam_service.desc": "Vacío: la comprobación de contraseña integrada (cuentas locales). Un nombre de servicio como \"login\" o \"system-auth\" usa /etc/pam.d/<nombre> en su lugar, para cuentas LDAP/sssd, systemd-homed o con huella. Si ese archivo no existe se usa la comprobación integrada.",
+  "prefs.lockscreen.pam_service.desc": "El servicio indicado decide quién puede desbloquear esta pantalla. Vacío: la comprobación de contraseña integrada (cuentas locales). Un nombre de servicio como \"login\" o \"system-auth\" usa /etc/pam.d/<nombre> en su lugar, para cuentas LDAP/sssd, systemd-homed o con huella. Los servicios de inicio automático y las pilas que aceptan cualquier contraseña (pam_permit) se rechazan, y si el archivo no existe o no se puede leer se usa la comprobación integrada. Se guarda en este equipo: los presets nunca lo cambian.",
   "prefs.lockscreen.pam_service.placeholder": "Comprobación de contraseña integrada",
   "prefs.lockscreen.style": "Estilo de la pantalla de bloqueo",
   "prefs.lockscreen.style.desc": "Vistas previas en vivo con tu fondo y tu paleta. La pantalla de inicio de SDDM sigue el mismo estilo.",

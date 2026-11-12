@@ -153,34 +153,47 @@ submit("\t")
 print("whitespace-only passwords reach PAM verbatim")
 
 # lockscreen.pamService: the system stack only for a plain name whose
-# /etc/pam.d file was found; the bundled config otherwise.
+# /etc/pam.d file was found to be a usable password stack; the bundled
+# config otherwise. The check is grep for `auth ... pam_permit.so`:
+# exit 1 = read, none found (usable), 0 = found (refused), 2 = unreadable.
+USABLE, PERMIT, UNREADABLE = 1, 0, 2
+
+
+def check_cmd(name):
+    return json.dumps(["grep", "-Eiqs", "-e", "^[[:space:]]*-?auth[[:space:]].*pam_permit\\.so", "--", "/etc/pam.d/" + name],
+                      separators=(",", ":"))
+
+
 BUNDLED = lev("pamTarget.bundledDir") + "|password.conf"
 assert lev("Config.lockscreen.pamService") == "", "default: no service"
 assert not lev("pamTarget.check.running"), "default: no service check"
 assert submit("a") == BUNDLED
 lev('Config.lockscreen.pamService = "system-auth"')
-assert lev("JSON.stringify(pamTarget.check.command)") == '["test","-f","/etc/pam.d/system-auth"]'
+assert lev("JSON.stringify(pamTarget.check.command)") == check_cmd("system-auth")
 assert lev("pamTarget.check.running")
 assert submit("b") == BUNDLED, "until the check answers, the bundled config is used"
-lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
-assert submit("c") == "/etc/pam.d|system-auth", "an existing service file selects the system stack"
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
+assert submit("c") == "/etc/pam.d|system-auth", "a usable service file selects the system stack"
 # A failure re-checks the file; the result for that path stands meanwhile.
 assert lev("pamTarget.check.running"), "a failed attempt re-checks the service file"
-lev("pamTarget.check.running = false; pamTarget.check.exited(1, 0)")
-assert submit("d") == BUNDLED, "a missing service file falls back to the bundled config"
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({UNREADABLE}, 0)")
+assert submit("d") == BUNDLED, "a missing or unreadable service file falls back to the bundled config"
+assert lev("pamTarget.check.running")
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({PERMIT}, 0)")
+assert submit("d2") == BUNDLED, "a service whose auth uses pam_permit.so is refused"
 lev("pamTarget.check.running = false")
 lev('Config.lockscreen.pamService = "login"')
 lev('Config.lockscreen.pamService = "sddm"')  # changed while the check for "login" runs
-lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
 assert submit("e") == BUNDLED, "a result for another name does not count"
-wait_until(lambda: lev("JSON.stringify(pamTarget.check.command)") == '["test","-f","/etc/pam.d/sddm"]')
-lev("pamTarget.check.running = false; pamTarget.check.exited(0, 0)")
+wait_until(lambda: lev("JSON.stringify(pamTarget.check.command)") == check_cmd("sddm"))
+lev(f"pamTarget.check.running = false; pamTarget.check.exited({USABLE}, 0)")
 assert submit("f") == "/etc/pam.d|sddm"
 lev("pamTarget.check.running = false")
-for bad in ("../shadow", "/etc/shadow", "pam.d/login", ".hidden", "-x", "a b"):
+for bad in ("../shadow", "/etc/shadow", "pam.d/login", ".hidden", "-x", "a b", "gdm-autologin", "sddm-autologin"):
     lev(f"Config.lockscreen.pamService = {json.dumps(bad)}")
-    assert not lev("pamTarget.check.running"), f"{bad!r}: no file check for an invalid name"
-    assert submit("g") == BUNDLED, f"{bad!r}: invalid names use the bundled config"
+    assert not lev("pamTarget.check.running"), f"{bad!r}: no file check for an invalid or refused name"
+    assert submit("g") == BUNDLED, f"{bad!r}: invalid and autologin names use the bundled config"
 lev('Config.lockscreen.pamService = ""')
 assert submit("h") == BUNDLED
 print("lockscreen.pamService selects the PAM stack conservatively")

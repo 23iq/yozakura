@@ -23,9 +23,11 @@ modules/lockscreen/
     └── GlassStyle / PaperStyle / TerminalStyle / AuroraStyle / NeonStyle / PosterStyle .qml
 ```
 PAM config: `config/pam/password.conf` by default. `lockscreen.pamService` (advanced, empty by
-default) names a system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` exists
-and `LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
-missing file or a check that has not answered yet keeps the bundled file (`LockPam.js`).
+default, machine-local: presets never carry or change it, the assistant must ask) names a
+system service instead: `LockPamTarget.qml` checks `/etc/pam.d/<name>` (grep, argv) and
+`LockScreen` applies it to `PamContext` right before each `start()`; an invalid name, a
+`*-autologin` name, a missing/unreadable file, a file with an `auth ... pam_permit.so` line or
+a check that has not answered yet keeps the bundled file, with a warning in the log (`LockPam.js`).
 Only an empty field is ignored on submit; the text reaches PAM exactly as typed (spaces too).
 
 Lock across restarts: `LockStateMarker.qml` (in `shell.qml` next to `WlSessionLock`) mirrors

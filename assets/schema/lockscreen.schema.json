@@ -153,7 +153,7 @@
       "title": "PAM service",
       "type": "string",
       "default": "",
-      "description": "Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. If that file does not exist the built-in check is used.",
+      "description": "The named service decides who can unlock this screen. Empty: the built-in password check (local accounts). A service name such as \"login\" or \"system-auth\" uses /etc/pam.d/<name> instead, for LDAP/sssd, systemd-homed or fingerprint accounts. Autologin services and stacks that let any password in (pam_permit) are refused, and a missing or unreadable file falls back to the built-in check. Kept on this computer: presets never change it.",
       "x-settings": {
         "category": "lockscreen",
         "section": "auth",
@@ -162,7 +162,8 @@
         "keywords": "lock screen pam authentication service ldap sssd homed fingerprint fprintd u2f yubikey password unlock",
         "advanced": true
       },
-      "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$"
+      "pattern": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,63}$",
+      "x-local": true
     }
   },
   "additionalProperties": false

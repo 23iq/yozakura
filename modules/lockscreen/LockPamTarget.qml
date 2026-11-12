@@ -5,8 +5,9 @@ import "LockPam.js" as LockPam
 
 // The PAM stack for the next authentication (rules: LockPam.js). The
 // bundled config unless lockscreen.pamService names a service whose
-// /etc/pam.d file exists; the existence check runs when the setting
-// changes, before any password is typed.
+// /etc/pam.d file is a usable password stack (readable, not an autologin
+// stack, no `auth ... pam_permit.so`); the check runs when the setting
+// changes, before any password is typed, and again after a failed attempt.
 QtObject {
     id: root
 
@@ -16,29 +17,38 @@ QtObject {
     required property string bundledDir
 
     readonly property string path: LockPam.servicePath(root.service)
-    // The service file the last finished check looked at, and its result.
+    // The service file the last finished check looked at, and its verdict
+    // (LockPam.checkResult: "usable" | "permit" | "unreadable").
     property string checkedPath: ""
-    property bool exists: false
+    property string verdict: ""
     // The service file the running check looks at.
     property string checkingPath: ""
 
     // A result only counts for the path it was taken for (LockPam.target),
     // so the previous one can stand until the new check finishes.
     function refresh() {
-        if (root.service.trim() !== "" && root.path === "")
-            console.warn("LockScreen: lockscreen.pamService is not a plain PAM service name; using the bundled config");
-        if (root.path === "" || root.check.running)
+        if (root.path === "") {
+            // Unset, not a plain name, or refused by name (autologin).
+            const why = LockPam.warning(root.service, root.checkedPath, root.verdict);
+            if (why !== "")
+                console.warn("LockScreen: " + why);
+            return;
+        }
+        if (root.check.running)
             return;
         root.checkingPath = root.path;
-        root.check.command = ["test", "-f", root.path];
+        root.check.command = LockPam.checkCommand(root.path);
         root.check.running = true;
     }
 
     // {configDirectory, config, system} for PamContext, read at submit.
     function resolve() {
-        const t = LockPam.target(root.service, root.checkedPath, root.exists, root.bundledDir);
-        if (root.path !== "" && !t.system)
-            console.warn("LockScreen: PAM service " + root.path + " not found (or not checked yet); using the bundled config");
+        const t = LockPam.target(root.service, root.checkedPath, root.verdict, root.bundledDir);
+        if (!t.system) {
+            const why = LockPam.warning(root.service, root.checkedPath, root.verdict);
+            if (why !== "")
+                console.warn("LockScreen: " + why);
+        }
         return t;
     }
 
@@ -52,7 +62,9 @@ QtObject {
             return;
         }
         root.checkedPath = root.checkingPath;
-        root.exists = exitCode === 0;
+        root.verdict = LockPam.checkResult(exitCode);
+        if (root.verdict !== "usable")
+            console.warn("LockScreen: " + LockPam.warning(root.service, root.checkedPath, root.verdict));
     }
 
     property Process check: Process {
