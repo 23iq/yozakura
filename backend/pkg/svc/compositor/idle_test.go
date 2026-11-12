@@ -59,8 +59,9 @@ func wantStatus(t *testing.T, ch <-chan IdleUpdate, connected, events bool, epoc
 }
 
 // Both flips of a monitor are forwarded, every monitor's flips carry their
-// own id, a stale (lower seq) flip is dropped, and a new stream resets the
-// seq bookkeeping (a restarted daemon counts from 1 again) with a new epoch.
+// own id, a stale (lower seq) flip is dropped, and the end of a stream
+// resets the seq bookkeeping (a restarted daemon counts from 1 again); the
+// next stream has a new epoch.
 func TestIdleHubForwardsFlipsInSeqOrder(t *testing.T) {
 	m := NewManager(tomlPath(t.TempDir() + "/d.toml"))
 	ch, st, cancel := m.SubscribeIdle()

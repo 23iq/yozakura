@@ -67,14 +67,19 @@ func (h *idleHub) streamUp(features []string) {
 	h.status.Connected = true
 	h.status.Events = slices.Contains(features, client.FeatureIdleEvents)
 	h.status.Epoch++
-	clear(h.lastSeq) // a restarted daemon numbers flips from 1 again
 	h.sendStatusLocked()
 }
 
-// streamDown records the end of the subscribe stream.
+// streamDown records the end of the subscribe stream. The seq bookkeeping
+// is reset here and not in streamUp: the daemon writes every broadcast in
+// its own goroutine and adds a subscriber before writing its State.Dump, so
+// flips can reach a new stream before the dump, and clearing there would
+// let a stale flip through. A restarted daemon numbers flips from 1 again,
+// but its stream always starts after this call (the old one ended first).
 func (h *idleHub) streamDown() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	clear(h.lastSeq)
 	if !h.status.Connected {
 		return
 	}
