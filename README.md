@@ -203,7 +203,9 @@ installer installs from it and `yozakura doctor` checks it.
 ### Update, check and uninstall
 
 ```bash
-yozakura update     # pull, rebuild and reinstall both binaries (runs install.sh --update)
+yozakura update     # update on your channel, rebuild and reinstall both binaries (runs install.sh --update)
+yozakura update --check            # installed version, channel and its target; changes nothing
+yozakura update channel [beta]     # show / save the update channel: stable, beta or git
 yozakura reload     # restart the shell on the new version
 yozakura doctor     # every dependency, what is missing and the command that installs it
 yozakura goodbye    # remove the binaries and the compositor blocks; asks about source and config
@@ -211,6 +213,15 @@ yozakura goodbye    # remove the binaries and the compositor blocks; asks about 
 
 Re-running the one-liner also updates. Local changes in the checkout are kept
 (and built); the installer prints how to reset to upstream.
+
+**Update channels** (`system.updateChannel`, also in Settings > Updates and
+at the end of the setup wizard): `stable` (default) follows the `X.Y.Z`
+releases, `beta` the `X.Y.Z-beta.N` pre-releases and any newer stable
+release, `git` every commit on `main`. A checkout already at or past the
+channel's newest release is left as it is (nothing is ever rewound unless you
+pass `--allow-downgrade`); `yozakura update --channel git` updates on another
+channel once, and `install.sh --channel beta` installs on that channel. Nix
+installs update through their flake; channels do not apply there.
 
 `yozakura install hyprland` adds one block to `~/.config/hypr/hyprland.lua`:
 
