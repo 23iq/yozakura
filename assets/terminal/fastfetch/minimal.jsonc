@@ -5,6 +5,7 @@
     },
     "display": {
         "key": {"type": "none"},
+        "color": {"title": "bold_magenta"},
         "duration": {"abbreviation": true, "spaceBeforeUnit": "never"}
     },
     "modules": [

@@ -5,7 +5,7 @@
     },
     "display": {
         "separator": " › ",
-        "key": {"width": 6},
+        "key": {"width": 7},
         "color": {"keys": "magenta", "title": "bold_magenta", "separator": "light_black"},
         "duration": {"abbreviation": true, "spaceBeforeUnit": "never"},
         "percent": {"type": 9, "color": {"green": "green", "yellow": "yellow", "red": "red"}}
