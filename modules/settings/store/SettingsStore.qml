@@ -174,11 +174,22 @@ Singleton {
         // holds every domain) is the write explicit, so a live change is
         // never held back.
         const paused = typeof Config.autoSavePausedFor === "function" ? Config.autoSavePausedFor(k.domain) : Config.pauseAutoSave;
-        if (paused) {
-            const saver = Config["save" + k.domain.charAt(0).toUpperCase() + k.domain.slice(1)];
-            if (typeof saver === "function")
-                saver();
+        if (paused)
+            root._save(k.domain);
+        return true;
+    }
+
+    // Writes one domain's file now (Config.saveDomain: every domain has one,
+    // tests/settings-save-path.test.cjs). false: no way to write it.
+    function _save(domain) {
+        if (typeof Config.saveDomain === "function")
+            return Config.saveDomain(domain);
+        const saver = Config["save" + domain.charAt(0).toUpperCase() + domain.slice(1)];
+        if (typeof saver !== "function") {
+            console.warn("SettingsStore: no save path for", domain);
+            return false;
         }
+        saver();
         return true;
     }
 
@@ -191,7 +202,13 @@ Singleton {
             return;
         if (!root._write(key, value, false))
             return;
-        root._record(key, before, value);
+        // What the config holds now (a typed property may have converted
+        // it): the value an undo expects to find. The wallpaper manager
+        // answers later (a separate window relays it), so its keys keep the
+        // value asked for.
+        const after = root._async(key) ? SchemaUtil.plain(value) : root._current(key);
+        if (!SchemaUtil.equal(before, after))
+            root._record(key, before, after);
         root.valueSet(key, value);
     }
 
@@ -204,15 +221,25 @@ Singleton {
             root.valueSet(key, value);
     }
 
-    // Session history: [{label, changes: [{key, before, after}], time}].
+    // Window history: [{id, label, changes: [{key, before, after}], time}].
+    // It lives while the window is open: closing the window clears it, in
+    // process as in a separate window process (which quits), because what
+    // changes while it is closed (dashboard, CLI, presets) is not recorded
+    // and would make old steps write stale values. A preset command clears
+    // it too (PresetStudio), and so does a reload of a domain that changed
+    // a value the history expects (another process, `config set`, a preset
+    // applied elsewhere: _domainReloaded). An undo or redo whose keys no
+    // longer hold the values it expects is dropped, never written.
     property var undoStack: []
     property var redoStack: []
     readonly property bool canUndo: undoStack.length > 0
     readonly property bool canRedo: redoStack.length > 0
     // The last step recorded, undone or redone, for the undo pill:
-    // {label, kind: "changed" | "undone" | "redone", serial}.
+    // {id (the step's), label, kind: "changed" | "undone" | "redone",
+    // serial}; null: nothing to offer (the pill hides).
     property var lastStep: null
     property int _serial: 0
+    property int _ids: 0
     // key -> label of the entry that edits it.
     readonly property var labelIndex: UndoModel.labelIndex(Categories.categories)
     // An open transaction: changes made inside it are one step.
@@ -236,21 +263,70 @@ Singleton {
     }
 
     function _push(step) {
-        const next = UndoModel.push(root.undoStack, step, Date.now(), SchemaUtil.equal);
-        if (next.length === root.undoStack.length && next.length > 0 && next[next.length - 1] === root.undoStack[root.undoStack.length - 1])
+        step.id = root._ids + 1;
+        const r = UndoModel.pushResult(root.undoStack, step, Date.now(), SchemaUtil.equal);
+        if (r.outcome === "none")
             return;
-        root.undoStack = next;
+        if (r.outcome === "added")
+            root._ids = step.id;
+        root.undoStack = r.stack;
         root.redoStack = [];
-        root._announce(step.label, "changed");
+        // A change taken back within the coalescing window (a switch
+        // flipped twice): its step is gone, nothing is announced and the
+        // pill that named it hides.
+        root._announce(r.outcome === "cancelled" ? null : r.step, "changed");
     }
 
-    function _announce(label, kind) {
+    function _announce(step, kind) {
         root._serial++;
-        root.lastStep = {
-            "label": label || "",
+        root.lastStep = step ? {
+            "id": step.id,
+            "label": step.label || "",
             "kind": kind,
             "serial": root._serial
-        };
+        } : null;
+    }
+
+    // Keys whose value is not known synchronously (the wallpaper manager):
+    // the undo checks trust them.
+    function _async(key) {
+        return SchemaUtil.storeOf(key) === "wallpaper";
+    }
+    function _current(key) {
+        return SchemaUtil.plain(root.get(key));
+    }
+
+    function clearHistory() {
+        root.undoStack = [];
+        root.redoStack = [];
+        root._announce(null, "");
+    }
+
+    // A domain was reloaded from disk: when that changed a value the
+    // history expects, its steps no longer describe the config and all of
+    // them go (a later undo would bring back a stale value). Our own write
+    // coming back, or a change to keys the history never touched, keeps it.
+    function _domainReloaded(name) {
+        if (root.undoStack.length === 0 && root.redoStack.length === 0)
+            return;
+        const only = k => SchemaUtil.splitKey(k).domain === name;
+        if (!UndoModel.consistent(root.undoStack, root.redoStack, root._current, SchemaUtil.equal, only))
+            root.clearHistory();
+    }
+
+    Connections {
+        target: Config
+        ignoreUnknownSignals: true
+        function onDomainReloaded(name) {
+            root._domainReloaded(name);
+        }
+    }
+    Connections {
+        target: GlobalStates
+        function onSettingsWindowVisibleChanged() {
+            if (!GlobalStates.settingsWindowVisible)
+                root.clearHistory();
+        }
     }
 
     // Changes made by `fn` are one undo step labelled `label` (an i18n key):
@@ -287,27 +363,58 @@ Singleton {
         }
     }
 
+    // Undoes the newest step. A step whose keys no longer hold what it set
+    // (changed elsewhere since) is dropped without writing. true: undone.
     function undo() {
         if (!root.canUndo)
-            return;
+            return false;
         const stack = root.undoStack.slice();
         const step = stack.pop();
         root.undoStack = stack;
+        if (!UndoModel.holds(step, "after", root._current, SchemaUtil.equal, root._async)) {
+            root._announce(null, "");
+            return false;
+        }
         root._replay(UndoModel.reverted(step));
         root.redoStack = root.redoStack.concat([step]);
-        root._announce(step.label, "undone");
+        root._announce(step, "undone");
+        return true;
     }
 
     function redo() {
         if (!root.canRedo)
-            return;
+            return false;
         const stack = root.redoStack.slice();
         const step = stack.pop();
         root.redoStack = stack;
+        if (!UndoModel.holds(step, "before", root._current, SchemaUtil.equal, root._async)) {
+            root._announce(null, "");
+            return false;
+        }
         root._replay(UndoModel.replayed(step));
         step.time = 0;
         root.undoStack = root.undoStack.concat([step]);
-        root._announce(step.label, "redone");
+        root._announce(step, "redone");
+        return true;
+    }
+
+    // The undo pill acts on the step it names and never on another one:
+    // only while that step is still the newest (else the pill just hides).
+    function undoStep(id) {
+        const top = root.undoStack[root.undoStack.length - 1];
+        if (!top || top.id !== id) {
+            root._announce(null, "");
+            return false;
+        }
+        return root.undo();
+    }
+    function redoStep(id) {
+        const top = root.redoStack[root.redoStack.length - 1];
+        if (!top || top.id !== id) {
+            root._announce(null, "");
+            return false;
+        }
+        return root.redo();
     }
 
     // ---- modified / reset ---------------------------------------------

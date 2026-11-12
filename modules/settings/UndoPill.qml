@@ -10,12 +10,16 @@ import qs.modules.settings.store
 // the bottom of the window that names what changed ("Roundness changed")
 // with [Undo] (or [Redo] after an undo). It rises in with a spring, stays a
 // few seconds (longer while hovered or focused) and slides away. Ctrl+Z /
-// Ctrl+Shift+Z work with or without it (SettingsShell).
+// Ctrl+Shift+Z work with or without it (SettingsShell). Its button acts on
+// the step it names (SettingsStore.undoStep / redoStep by id), never on
+// another one; when that step is gone (taken back, dropped, the history
+// cleared) the store announces nothing and the pill hides.
 Item {
     id: pill
 
     property int holdMs: 5000
-    readonly property var step: SettingsStore.lastStep
+    // The step the pill names; kept while it slides away so its text holds.
+    property var step: null
     property bool shown: false
     readonly property bool hovered: hover.hovered
     readonly property string what: pill.step && pill.step.label ? I18n.t(pill.step.label) : I18n.t("prefs.undo.something")
@@ -37,11 +41,19 @@ Item {
         }
     }
 
-    onStepChanged: {
-        if (!pill.step)
-            return;
-        pill.shown = true;
-        hideTimer.restart();
+    Connections {
+        target: SettingsStore
+        function onLastStepChanged() {
+            const s = SettingsStore.lastStep;
+            if (!s) {
+                hideTimer.stop();
+                pill.shown = false;
+                return;
+            }
+            pill.step = s;
+            pill.shown = true;
+            hideTimer.restart();
+        }
     }
 
     Timer {
@@ -100,7 +112,14 @@ Item {
                 highlighted: activeFocus
                 Keys.onReturnPressed: clicked()
                 Keys.onSpacePressed: clicked()
-                onClicked: pill.undone ? SettingsStore.redo() : SettingsStore.undo()
+                onClicked: {
+                    if (!pill.step || !pill.shown)
+                        return;
+                    if (pill.undone)
+                        SettingsStore.redoStep(pill.step.id);
+                    else
+                        SettingsStore.undoStep(pill.step.id);
+                }
             }
         }
     }

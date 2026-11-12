@@ -47,50 +47,130 @@ function effective(changes, equal) {
     });
 }
 
-function sameKeys(a, b) {
-    if (a.length !== b.length)
-        return false;
-    for (var i = 0; i < a.length; i++) {
-        if (a[i].key !== b[i].key)
-            return false;
-    }
-    return true;
+function keysOf(changes) {
+    return changes.map(function (c) {
+        return c.key;
+    });
 }
 
-// Adds a finished step to `stack` (a new array). A single-setting step right
-// after a step of the same setting and label merges into it; a step (or a
-// merge) that changes nothing in the end is not kept.
-function push(stack, step, now, equal) {
-    var out = (stack || []).slice();
-    var changes = effective(step.changes, function () {
-        return false;
+// Every key of `a` is in `b`.
+function within(a, b) {
+    var keys = keysOf(b);
+    return keysOf(a).every(function (k) {
+        return keys.indexOf(k) !== -1;
     });
+}
+
+// Two steps edit the same thing: one's keys hold the other's (the same
+// setting again; a macro slider whose points move one key more or less).
+function sameKeys(a, b) {
+    return within(a, b) || within(b, a);
+}
+
+// Adds a finished step to `stack`. A step right after a step with the same
+// label and the same keys (sameKeys: one setting dragged, a macro slider
+// moved over several points) merges into it; a step (or a merge) that changes nothing
+// in the end is not kept. `step.id` names a new step; a merge keeps the id
+// of the step it merged into.
+// Returns {stack (a new array), outcome, step}: outcome "added" (step: the
+// new step), "merged" (step: the merged step), "cancelled" (a merge that
+// ended where it began removed the step `id`: step = {id}) or "none"
+// (nothing to record; stack unchanged).
+function pushResult(stack, step, now, equal) {
+    var out = (stack || []).slice();
+    var changes = (step.changes || []).slice();
     if (changes.length === 0)
-        return out;
+        return {
+            "stack": out,
+            "outcome": "none",
+            "step": null
+        };
     var top = out.length > 0 ? out[out.length - 1] : null;
-    if (top && top.label === step.label && changes.length === 1 && sameKeys(top.changes, changes) && now - top.time < COALESCE_MS) {
-        var merged = addChange(top.changes, changes[0].key, changes[0].before, changes[0].after);
+    if (top && top.label === step.label && sameKeys(top.changes, changes) && now - top.time < COALESCE_MS) {
+        var merged = top.changes;
+        for (var i = 0; i < changes.length; i++)
+            merged = addChange(merged, changes[i].key, changes[i].before, changes[i].after);
         out.pop();
         merged = effective(merged, equal);
-        if (merged.length > 0)
-            out.push({
-                "label": top.label,
-                "changes": merged,
-                "time": now
-            });
-        return out;
+        if (merged.length === 0)
+            return {
+                "stack": out,
+                "outcome": "cancelled",
+                "step": {
+                    "id": top.id
+                }
+            };
+        var m = {
+            "id": top.id,
+            "label": top.label,
+            "changes": merged,
+            "time": now
+        };
+        out.push(m);
+        return {
+            "stack": out,
+            "outcome": "merged",
+            "step": m
+        };
     }
     changes = effective(changes, equal);
     if (changes.length === 0)
-        return out;
-    out.push({
+        return {
+            "stack": out,
+            "outcome": "none",
+            "step": null
+        };
+    var added = {
+        "id": step.id,
         "label": step.label,
         "changes": changes,
         "time": now
-    });
+    };
+    out.push(added);
     while (out.length > LIMIT)
         out.shift();
-    return out;
+    return {
+        "stack": out,
+        "outcome": "added",
+        "step": added
+    };
+}
+
+// pushResult's stack alone.
+function push(stack, step, now, equal) {
+    return pushResult(stack, step, now, equal).stack;
+}
+
+// Every change of `step` still holds `field` ("after": the step can be
+// undone; "before": it can be redone) by `get(key)`. A key `skip(key)`
+// says to trust (its value is not known synchronously) is not checked.
+function holds(step, field, get, equal, skip) {
+    return step.changes.every(function (c) {
+        return (skip && skip(c.key)) || equal(get(c.key), c[field]);
+    });
+}
+
+// The history still matches the config (an external reload changed none
+// of its keys): for every key the newest undo step that touches it ends at
+// the current value, and the next redo step that touches it starts there.
+// `only(key)` limits the check (the keys of one reloaded domain).
+function consistent(undoStack, redoStack, get, equal, only) {
+    var seen = {};
+    var ok = true;
+    function check(list, field) {
+        for (var i = list.length - 1; i >= 0 && ok; i--) {
+            list[i].changes.forEach(function (c) {
+                if (!ok || seen[field + c.key] || (only && !only(c.key)))
+                    return;
+                seen[field + c.key] = true;
+                if (!equal(get(c.key), c[field]))
+                    ok = false;
+            });
+        }
+    }
+    check(undoStack || [], "after");
+    check(redoStack || [], "before");
+    return ok;
 }
 
 // What applying a step backwards writes: [{key, value}] in reverse order.
