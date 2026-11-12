@@ -25,6 +25,7 @@ func greetFixture(t *testing.T, terminalJSON string) *fixture {
 // The greeting is written without the prompt; the prompt hook stays away.
 func TestApplyWritesTheGreetingWithoutThePrompt(t *testing.T) {
 	f := greetFixture(t, greetingOn)
+	f.installed["fish"] = true
 	if _, err := f.s.fetchAllow(nil); err != nil { // switched on in this version
 		t.Fatal(err)
 	}

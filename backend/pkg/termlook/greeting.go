@@ -340,21 +340,30 @@ func removeFiles(paths ...string) {
 	}
 }
 
-// applyFish writes the fish file unless a file of the user's runs a fetch
-// tool already (then ours goes) or a file of that name is not ours.
+// applyFish writes the fish file when fish is installed, unless a file of
+// the user's runs a fetch tool already (then ours goes) or a file of that
+// name is not ours.
 func applyFish(content string, env Env) error {
 	file := FishGreetingFile(env)
 	exists, ours := hookOwned(file)
 	if exists && !ours {
 		return nil // not ours: reported as foreign
 	}
-	if foreignFetch("fish", env) != "" {
-		if exists {
-			return os.Remove(file)
-		}
-		return nil
+	if foreignFetch("fish", env) != "" || !shellInstalled("fish", env) {
+		return removeFishGreeting(env)
 	}
-	return writeAtomic(file, []byte(content))
+	return writeOwnedFile(env, file, env.ConfigHome, []byte(content))
+}
+
+// removeFishGreeting removes our fish file and the directories created for
+// it that are empty now.
+func removeFishGreeting(env Env) error {
+	var err error
+	if exists, ours := hookOwned(FishGreetingFile(env)); exists && ours {
+		err = os.Remove(FishGreetingFile(env))
+	}
+	removeOwnedDirs(env)
+	return err
 }
 
 // applyRC adds the marked line to the shell's rc file (installed shells
@@ -407,9 +416,7 @@ func RemoveGreeting(env Env) error {
 func removeGreeting(env Env, filter func(error) error) error {
 	var errs []error
 	removeFiles(GreetingScriptFile(env), FetchConfigFile(env), fetchKittyFile(env), fetchLogoFile(env))
-	if exists, ours := hookOwned(FishGreetingFile(env)); exists && ours {
-		errs = append(errs, os.Remove(FishGreetingFile(env)))
-	}
+	errs = append(errs, removeFishGreeting(env))
 	henv := env.hooksEnv()
 	bashrc, _ := rcFiles("bash", env)
 	for _, rc := range append([]string{bashrc}, zshRCs(env)...) {

@@ -444,3 +444,54 @@ func TestGreetingRemovesItsRCAfterTheLineChanged(t *testing.T) {
 		t.Errorf("created rc left: %q", readFile(t, rc))
 	}
 }
+
+// fish missing: no fish file, the status says absent; directories the
+// greeting created for fish go again once empty, the user's stay.
+func TestGreetingFishOnlyWhereFishIs(t *testing.T) {
+	env := greetEnv(t, "bash", "fastfetch")
+	writeFile(t, filepath.Join(env.Home, ".bashrc"), "x\n")
+	cfg := GreetingConfig{On: true, Preset: "sakura", Logo: LogoSakura, LoginShell: "/bin/bash"}
+	st := applyGreeting(t, cfg, env)
+	if _, err := os.Stat(FishGreetingFile(env)); err == nil {
+		t.Error("fish file written although fish is not installed")
+	}
+	if s := stateOf(st, "fish"); s.State != ShellAbsent {
+		t.Errorf("fish %+v", s)
+	}
+	fishDir := filepath.Join(env.ConfigHome, "fish")
+	if _, err := os.Stat(fishDir); err == nil {
+		t.Error("fish dir created")
+	}
+
+	env = greetEnv(t)
+	fishDir = filepath.Join(env.ConfigHome, "fish")
+	applyGreeting(t, cfg, env)
+	if _, err := os.Stat(FishGreetingFile(env)); err != nil {
+		t.Fatal(err)
+	}
+	cfg.On = false
+	applyGreeting(t, cfg, env)
+	if _, err := os.Stat(fishDir); err == nil {
+		t.Error("~/.config/fish we created left after off")
+	}
+	// the user's own fish dir (with a file of theirs) stays
+	writeFile(t, filepath.Join(fishDir, "config.fish"), "# mine\n")
+	cfg.On = true
+	applyGreeting(t, cfg, env)
+	if err := RemoveGreeting(env); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(fishDir, "config.fish")); err != nil {
+		t.Error("the user's fish dir went")
+	}
+	if _, err := os.Stat(filepath.Join(fishDir, "conf.d")); err == nil {
+		t.Error("conf.d we created left after uninstall")
+	}
+	// fish uninstalled later: our file goes on the next apply
+	applyGreeting(t, cfg, env)
+	env.LookPath = greetEnv(t, "bash", "zsh", "fastfetch").LookPath
+	applyGreeting(t, cfg, env)
+	if _, err := os.Stat(FishGreetingFile(env)); err == nil {
+		t.Error("fish file left after fish went")
+	}
+}
