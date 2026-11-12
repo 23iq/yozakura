@@ -133,7 +133,7 @@ FileView {
         if (!raw || raw.trim().length === 0) {
             // File is missing or empty — create with defaults
             console.log(name + ".json missing or empty, creating default...");
-            file.setText(JSON.stringify(ConfigValidator.validate(migrated, defaults), null, 2));
+            file.setText(JSON.stringify(ConfigValidator.validateDomain(migrated, defaults, file.name), null, 2));
             onComplete();
             return;
         }
@@ -145,7 +145,7 @@ FileView {
                 source = ConfigValidator.overlay(current, file.pendingOverlay);
                 file.pendingOverlay = undefined;
             }
-            var validated = ConfigValidator.validate(migrated !== undefined ? migrated : source, defaults);
+            var validated = ConfigValidator.validateDomain(migrated !== undefined ? migrated : source, defaults, file.name);
 
             if (!JsonUtil.deepEqual(current, validated)) {
                 console.log("Merging and updating " + name + ".json...");
@@ -217,7 +217,7 @@ FileView {
                     file.reload();
                 } else {
                     console.log("Using defaults for " + name + ".json");
-                    file.setText(JSON.stringify(migrated !== undefined ? ConfigValidator.validate(migrated, defaults) : defaults, null, 2));
+                    file.setText(JSON.stringify(migrated !== undefined ? ConfigValidator.validateDomain(migrated, defaults, file.name) : defaults, null, 2));
                     onComplete();
                 }
             }

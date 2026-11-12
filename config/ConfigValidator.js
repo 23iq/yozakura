@@ -4,6 +4,7 @@
 .import "../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
 .import "meta/Enums.js" as Enums
 .import "meta/KeyAliases.js" as KeyAliases
+.import "meta/AdapterTypes.js" as AdapterTypes
 .import "JsonUtil.js" as JsonUtil
 
 // Key-alias migration (config/meta/KeyAliases.js) over the raw, not yet
@@ -79,7 +80,30 @@ function walk(obj, path, create) {
     return cur;
 }
 
+// Dotted paths of a domain's free-form maps ("var" in meta/AdapterTypes.js):
+// their keys are not config keys, so the user's own keys are kept.
+function freeFormPaths(domain) {
+    var types = (AdapterTypes.types || {})[domain] || {};
+    return Object.keys(types).filter(function (p) {
+        return types[p] === "var";
+    });
+}
+
+// validate() for a whole domain file: like validate(), but inside the
+// domain's free-form maps the keys the defaults do not list are kept
+// (cloned) instead of dropped. Keys the defaults list are validated as
+// everywhere else.
+function validateDomain(current, defaults, domain) {
+    return validateNode(current, defaults, undefined, "", false, freeFormPaths(domain));
+}
+
 function validate(current, defaults, keyName) {
+    return validateNode(current, defaults, keyName, "", false, []);
+}
+
+// `path`: dotted path of this value inside the domain; `free`: it is (or
+// lies inside) a free-form map; `freePaths`: the domain's free-form paths.
+function validateNode(current, defaults, keyName, path, free, freePaths) {
     if (current === undefined || current === null) {
         return JsonUtil.clone(defaults);
     }
@@ -98,7 +122,15 @@ function validate(current, defaults, keyName) {
 
         var result = {};
         for (var key in defaults) {
-            result[key] = validate(current[key], defaults[key], key);
+            var childPath = path ? path + "." + key : key;
+            var childFree = free || freePaths.indexOf(childPath) !== -1;
+            result[key] = validateNode(current[key], defaults[key], key, childPath, childFree, freePaths);
+        }
+        if (free) {
+            for (var extra in current) {
+                if (!(extra in defaults) && current[extra] !== undefined)
+                    result[extra] = JsonUtil.clone(current[extra]);
+            }
         }
         return result;
     }
