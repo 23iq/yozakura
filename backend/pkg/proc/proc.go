@@ -115,6 +115,17 @@ func Command(ctx context.Context, name string, args ...string) *exec.Cmd {
 	return exec.CommandContext(ctx, name, args...)
 }
 
+// StartReaped starts cmd fire-and-forget: a goroutine waits for it, so the
+// child is reaped when it exits instead of staying a zombie for the rest of
+// the parent's life. The caller must not call Wait.
+func StartReaped(cmd *exec.Cmd) error {
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	go func() { _ = cmd.Wait() }()
+	return nil
+}
+
 // Start starts a long-running child bound to ctx (killed when ctx ends). The
 // caller owns Wait.
 func Start(ctx context.Context, name string, args ...string) (*exec.Cmd, error) {

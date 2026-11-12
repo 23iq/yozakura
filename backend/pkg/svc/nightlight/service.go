@@ -44,7 +44,9 @@ var runFn = func(name string, args ...string) error {
 	cmd := exec.CommandContext(context.Background(), name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Start()
+	// stopped by a pkill (defaultStop): reaped in the background so the
+	// killed wlsunset does not stay a zombie of the daemon
+	return proc.StartReaped(cmd)
 }
 
 // stopFn is a package-level indirection used by tests. The Service holds
