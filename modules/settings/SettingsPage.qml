@@ -369,7 +369,9 @@ Flickable {
                     out[i] = {
                         "x": pl.col * (bento.colW + bento.gap),
                         "y": pl.y,
-                        "w": pl.span * bento.colW + (pl.span - 1) * bento.gap
+                        "w": pl.span * bento.colW + (pl.span - 1) * bento.gap,
+                        // the last card of a column reaches the tallest one's end
+                        "extra": r.extra[k] || 0
                     };
                 });
                 // one card pushed down: every card lands at once (a glide
@@ -404,7 +406,7 @@ Flickable {
                     pending: page.rank[index] >= page.builtSections
                     x: card.place.x
                     width: card.place.w
-                    height: implicitHeight
+                    height: implicitHeight + (card.place.extra || 0)
                     // cards that move up (rows hidden above them) glide into
                     // the room; when one is pushed down (a card above grew)
                     // all land at once, so none sits under another, even for

@@ -180,8 +180,24 @@ function place(items, cols, gap, fixed, reserved) {
         height = Math.max(height, end);
         floor = Math.min(floor, end);
     });
+    // the last card of each column reaches down to the tallest one: the
+    // page ends on one line, never on a ragged blank two columns wide
+    var extra = places.map(function (pl, n) {
+        var h = items[n].height > 0 ? items[n].height + gap : 0;
+        if (h <= 0 || !pl)
+            return 0;
+        for (var m = 0; m < places.length; m++) {
+            var o = places[m];
+            if (m === n || !o || !(items[m].height > 0) || o.y <= pl.y)
+                continue;
+            if (o.col < pl.col + pl.span && pl.col < o.col + o.span)
+                return 0;
+        }
+        return Math.max(0, height - (pl.y + h));
+    });
     return {
         "places": places,
+        "extra": extra,
         "height": Math.max(0, height - gap),
         "floor": Math.max(0, floor - gap)
     };

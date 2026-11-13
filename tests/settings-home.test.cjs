@@ -68,6 +68,9 @@ test('page cards: 1 to 3 columns, masonry without overlap', () => {
     assert.equal(height, 260);
     // the shortest column ends at 140: a next card lands at or below it
     assert.equal(floor, 140);
+    // the last card of each column reaches the tallest end (270 with the gap):
+    // the wide one is not last (one is under it), the others stretch
+    assert.deepEqual([...BentoLayout.place(items, 3, 10).extra], [0, 0, 0, 120]);
     // a span wider than the grid is clamped
     assert.equal(BentoLayout.place([{ span: 2, height: 10 }], 1, 0).places[0].span, 1);
 });

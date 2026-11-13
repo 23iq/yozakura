@@ -173,11 +173,12 @@ Window {
         // columns: where each ends, and whether one is empty
         var bento = find("pageBento", page);
         if (bento && bento.cols > 1) {
-            var unit = bento.colW + bento.gap, ends = [], used = [], hs = [], last = [];
+            var unit = bento.colW + bento.gap, ends = [], used = [], hs = [], last = [], boxes = [];
             for (var c = 0; c < bento.cols; c++) { ends.push(0); used.push(false); last.push(0); }
             walk(bento, x => {
                 if (!x.visible || String(x.objectName).indexOf("settingsSection:") !== 0) return x === bento;
                 if (x.height <= 0) return false;
+                boxes.push([x.x, x.y, x.width, x.height]);
                 var c0 = Math.round(x.x / unit), span = Math.max(1, Math.round((x.width + bento.gap) / unit));
                 for (var k = c0; k < Math.min(bento.cols, c0 + span); k++) {
                     if (x.y + x.height >= ends[k]) last[k] = x.height;
@@ -190,6 +191,30 @@ Window {
             out.columns = { "cols": bento.cols, "ends": ends.map(Math.round), "used": used, "cards": hs.length, "last": last.map(Math.round),
                             "meanCard": hs.length ? Math.round(hs.reduce((a, h) => a + h, 0) / hs.length) : 0,
                             "viewBottom": Math.round(page.height - (bento.mapToItem(page, 0, 0).y)) };
+            // holes: on the first screen, inside the content (above the
+            // last card's end), a blank wider than one column (two columns
+            // side by side empty along the same stretch) and over 120 px tall
+            ["pageStage", "heroHint", "heroFoot"].forEach(n => {
+                var it = find(n, page);
+                if (it && shown(it) && it.width > 0 && it.height > 0) {
+                    var o = it.mapToItem(bento, 0, 0);
+                    boxes.push([o.x, o.y, it.width * (it.scale || 1), it.height * (it.scale || 1)]);
+                }
+            });
+            var top0 = Math.max(0, -bento.mapToItem(page, 0, 0).y), bottom0 = Math.min(out.columns.viewBottom, Math.max.apply(null, ends));
+            var step = 4, holes = [];
+            function blank(k, y) {
+                var x0 = k * unit, x1 = x0 + bento.colW;
+                return !boxes.some(r => r[0] < x1 - 1 && r[0] + r[2] > x0 + 1 && r[1] < y + step && r[1] + r[3] + bento.gap > y);
+            }
+            for (var k = 0; k + 1 < bento.cols; k++) {
+                var run = 0;
+                for (var y = top0; y < bottom0; y += step) {
+                    run = blank(k, y) && blank(k + 1, y) ? run + step : 0;
+                    if (run > 120) { holes.push([k, Math.round(y - run), run]); break; }
+                }
+            }
+            out.columns.holes = holes;
         }
         // stage, hint, cards: one band under the other
         var stage = find("pageStage", page);
@@ -272,6 +297,8 @@ def problems(m: dict | None, label: str) -> list[str]:
             for k, end in enumerate(col["ends"]):
                 if tallest - end > room:
                     out.append(f"{label}: column {k} ends {tallest - end} px above the tallest (cards {col['meanCard']} px)")
+    for k, y, run in (col or {}).get("holes", []):
+        out.append(f"{label}: a blank wider than a column beside cards (columns {k}-{k + 1}, from y {y}, over 120 px)")
     st = m.get("stage")
     if st and st["h"] > st["pageH"] / 3 + 2:
         out.append(f"{label}: the stage takes more than a third of the page ({st['h']} of {st['pageH']})")
