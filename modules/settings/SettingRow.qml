@@ -48,6 +48,16 @@ FocusScope {
     // and reaches the control.
     property bool preview: false
     property var previewFix: null
+    // the row waits on one switch of its own (a side switch beside the
+    // stage): shown dimmed the same way, a press turns that switch on first
+    property bool selfGate: false
+    readonly property bool dimmed: row.preview || (row.selfGate && row.fixable)
+    readonly property var dimFix: row.preview ? row.previewFix : (row.dimmed ? row.note.fix : null)
+    // turn on what this dimmed row waits for
+    function wake() {
+        if (row.dimFix)
+            SettingsStore.set(row.dimFix.key, row.dimFix.value);
+    }
     readonly property bool shown: (SettingsStore.visible(entry) && (row.usable || row.fixable)) || row.preview
     // The row above in the section: a run of rows waiting for the same
     // switch names it once, on its first row.
@@ -83,7 +93,7 @@ FocusScope {
     // which shows its other places (SettingsStore.pickedSurface).
     readonly property bool legend: row.dense && type === "selector" && ["launcher", "dashboard", "aiquick", "panels", "cheatsheet"].indexOf(entry.surface || "") >= 0
     readonly property bool picked: row.legend && SettingsStore.pickedSurface === entry.surface
-    readonly property bool stacked: (row.usable || row.preview) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && !!entry.sizeKey && width < Space.px(400)) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && !!entry.sizeKey && width < Space.px(400)) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
@@ -105,7 +115,7 @@ FocusScope {
     // The caption under the label: what a waiting row needs, where the
     // choice shows instead, or the entry's own short hint.
     readonly property string caption: {
-        if (row.fixable && !row.preview)
+        if (row.fixable && !row.dimmed)
             return row.noteRepeats ? "" : row.note.text;
         if (row.picked)
             return I18n.t("prefs.layout.pick_place");
@@ -183,7 +193,7 @@ FocusScope {
     // label above it (SectionLabel.inset).
     Column {
         id: body
-        opacity: row.preview ? 0.45 : 1
+        opacity: row.dimmed ? 0.45 : 1
         x: row.labelHidden ? 0 : Look.rowInset
         width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
         topPadding: row.dense ? Space.xs : Space.s
@@ -212,7 +222,7 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font") ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font" || row.selectorAsDropdown) ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
                         role: "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
@@ -259,11 +269,12 @@ FocusScope {
 
             Loader {
                 id: inlineControl
+                objectName: "rowControl"
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.66 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : -1))
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.8 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.selectorAsDropdown ? body.width * 0.48 : -1)))
                 focus: !row.stacked
                 active: row.built && !row.stacked
-                sourceComponent: row.fixable && !row.preview ? fixComponent : row.controlComponent()
+                sourceComponent: row.fixable && !row.dimmed ? fixComponent : row.controlComponent()
             }
         }
 
@@ -293,11 +304,11 @@ FocusScope {
         objectName: "rowPreviewPress"
         anchors.fill: parent
         z: 10
-        enabled: row.preview && row.previewFix !== null
+        enabled: row.dimmed && row.dimFix !== null
         visible: enabled
         cursorShape: Qt.PointingHandCursor
         onPressed: mouse => {
-            SettingsStore.set(row.previewFix.key, row.previewFix.value);
+            row.wake();
             mouse.accepted = false;
         }
     }

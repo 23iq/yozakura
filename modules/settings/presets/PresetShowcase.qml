@@ -214,7 +214,7 @@ FittedFrame {
         y: root.height - root.rowH - Space.l
         width: root.width - root.margin * 2
         height: root.rowH
-        readonly property real savingW: Math.round((row.width - root.gap) * 0.24)
+        readonly property real savingW: Math.round((row.width - root.gap) * 0.3)
 
         Card {
             id: stripCard

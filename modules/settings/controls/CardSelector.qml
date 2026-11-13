@@ -24,7 +24,9 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: root.options.length
-    readonly property real stripWidth: root.stripCount * Space.px(84) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
+    // all whole when they fit at a small picture each (three or fewer: always),
+    // else as many as fit at a regular size and a peek of the next
+    readonly property real stripWidth: root.stripCount <= 3 || root.stripCount * Space.px(60) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(root.options.length, Math.floor((width + grid.columnSpacing) / (Space.px(150) + grid.columnSpacing))))
     // A few options do not stretch into huge cards.
     readonly property real cardWidth: Math.min((width - grid.columnSpacing * (columns - 1)) / columns, Space.px(240))

@@ -72,7 +72,7 @@ Window {
         walk(w.contentItem, x => { if (!host && x.objectName === "settingsPage") host = x; });
         var page = host ? host.item : null;
         if (!page) return null;
-        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true, "cut": [], "share": (page.category && page.category.bandShare) || 0.24 };
+        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true, "cut": [], "wide": [], "share": (page.category && page.category.bandShare) || 0.24 };
         walk(page, x => {
             var n = String(x.objectName);
             if (((n.indexOf("settingsSection:") === 0 && x.fixed) || x.fittedCard === true) && x.visible) {
@@ -83,6 +83,26 @@ Window {
                 // content box (only a last row that is a list may scroll on)
                 var rows = [];
                 walk(x, r => { if (String(r.objectName).indexOf("settingRow:") === 0 && r.visible && r.height > 0) rows.push(r); });
+                // nothing past the card's right content edge: an inline control
+                // whole (not wider than its slot) and inside the card, and no
+                // row label wrapped onto three lines
+                var right = Math.round(p.x + x.width - (x.padding || 0));
+                rows.forEach(r => {
+                    walk(r, c => {
+                        var cn = String(c.objectName);
+                        if (cn === "rowLabel" && c.visible && c.lineCount > 2)
+                            out.wide.push([n + " / " + r.objectName + " label lines", c.lineCount, 2]);
+                        if (cn !== "rowControl" || !c.visible || !c.item)
+                            return;
+                        var it = c.item;
+                        var e = Math.round(it.mapToItem(page, it.width, 0).x);
+                        if (e > right + 1)
+                            out.wide.push([n + " / " + r.objectName, e, right]);
+                        // (segments cannot shrink; a dropdown elides its value)
+                        if (it.dropdown === false && it.width > 0 && it.implicitWidth > it.width + 2)
+                            out.wide.push([n + " / " + r.objectName + " squeezed", Math.round(it.implicitWidth), Math.round(it.width)]);
+                    });
+                });
                 if (rows.length > 1) {
                     var foot = Math.round(p.y + x.height - (x.padding || 0));
                     rows.forEach((r, i) => {
@@ -119,6 +139,8 @@ def fits(label: str) -> None:
         return
     check(m["contentH"] <= m["h"] + 1, f"{label}: the page does not scroll ({m['contentH']} > {m['h']})")
     check(len(m["cards"]) > 0, f"{label}: a row of cards")
+    for name, got, limit in m["wide"]:
+        check(False, f"{label}: {name} is clipped across its card ({got} > {limit})")
     for name, bottom, foot in m["cut"]:
         check(False, f"{label}: {name} is cut by its card ({bottom} > {foot})")
     for name, bottom in m["cards"]:
