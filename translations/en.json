@@ -4568,7 +4568,7 @@
   "prefs.bar.hero_hint": "Click a part of the bar to edit it · the edge is set under Edge and frame",
   "prefs.undo.bar_added": "Bar added",
   "prefs.notch.hero_hint": "Pick a state to see it · click the island to edit what it shows",
-  "prefs.dock.hero_hint": "Click an edge to move the dock · click the island to edit it",
+  "prefs.dock.hero_hint": "Hover the apps to see magnification · the edge is set under Edge and monitors",
   "prefs.layout.hero_hint": "Pick a chip on the screen, then click where it should open",
   "prefs.lockscreen.hero_hint": "Click the top or bottom half to move the password field",
   "prefs.notif.hero_hint": "With corner toasts, click a corner to move them there",
@@ -4729,5 +4729,7 @@
   "prefs.notch.state.media": "Music",
   "prefs.notch.state.notification": "Notification",
   "prefs.notch.state.timer": "Timer",
-  "prefs.notch.off_stage": "The island is off"
+  "prefs.notch.off_stage": "The island is off",
+  "prefs.dock.off_stage": "The dock is off",
+  "prefs.dock.in_bar_stage": "The dock lives inside the bar"
 }

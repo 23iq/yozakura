@@ -4568,7 +4568,7 @@
   "prefs.bar.hero_hint": "Pulsa una parte de la barra para editarla · el borde se elige en Borde y marco",
   "prefs.undo.bar_added": "Barra añadida",
   "prefs.notch.hero_hint": "Elige un estado para verlo · pulsa la isla para editar lo que muestra",
-  "prefs.dock.hero_hint": "Haz clic en un borde para mover el dock · clic en la isla para editarla",
+  "prefs.dock.hero_hint": "Pasa por las apps para ver la ampliación · el borde se elige en Borde y monitores",
   "prefs.layout.hero_hint": "Elige una ficha en la pantalla y haz clic donde debe abrirse",
   "prefs.lockscreen.hero_hint": "Haz clic en la mitad superior o inferior para mover el campo de contraseña",
   "prefs.notif.hero_hint": "Con avisos en esquina, haz clic en una esquina para moverlos",
@@ -4729,5 +4729,7 @@
   "prefs.notch.state.media": "Música",
   "prefs.notch.state.notification": "Notificación",
   "prefs.notch.state.timer": "Temporizador",
-  "prefs.notch.off_stage": "La isla está desactivada"
+  "prefs.notch.off_stage": "La isla está desactivada",
+  "prefs.dock.off_stage": "El dock está desactivado",
+  "prefs.dock.in_bar_stage": "El dock vive dentro de la barra"
 }

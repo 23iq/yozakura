@@ -280,6 +280,7 @@ MIRROR = [
     "modules/bar/clock/ClockFaces.js",
     "modules/bar/clock/faces",
     "modules/bar/workspaces/indicators",
+    "modules/dock/indicators",  # the dock stage draws the real indicator styles
     "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
     "modules/widgets/dashboard/DashboardTabs.js",
