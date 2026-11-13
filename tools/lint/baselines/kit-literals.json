@@ -105,9 +105,9 @@
   "rectangle": 8
  },
  "modules/settings/editors": {
-  "font-size": 2,
-  "rectangle": 28,
-  "text": 3
+  "font-size": 1,
+  "rectangle": 25,
+  "text": 2
  },
  "modules/settings/editors/desktopwidgets": {
   "rectangle": 5
