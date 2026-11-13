@@ -106,7 +106,7 @@ Window {
         });
     }
     function probe() {
-        var out = { "overlaps": [], "elided": [], "outside": [], "unreachable": [], "stage": null, "rows": 0, "home": false, "page": "" };
+        var out = { "overlaps": [], "elided": [], "outside": [], "unreachable": [], "stage": null, "rows": 0, "rowsTotal": 0, "home": false, "page": "", "schema": false, "list": false };
         var home = find("settingsHome");
         var atHome = home && home.visible && home.opacity > 0.99;
         if (atHome) {
@@ -135,6 +135,8 @@ Window {
         var page = host ? host.item : null;
         if (!page) return null;
         out.page = page.category ? page.category.id : "";
+        out.schema = !!(page.category && page.category.sections && !page.category.page);
+        out.list = page.listForm === true;
         // the header
         var head = [];
         ["backPill", "destinationTitle", "destinationTabs", "pageUndo", "pageReset"].forEach(n => {
@@ -158,7 +160,9 @@ Window {
                     if (m.indexOf("settingRow:") === 0 && y.height > 0 && y.shown !== false) {
                         var rr = rect(y);
                         rows.push([m, rr]);
-                        if (onScreen(rr)) out.rows++;
+                        out.rowsTotal++;
+                        // density: rows wholly inside the first screen
+                        if (page.contentY === 0 && rr[1] >= 0 && rr[1] + rr[3] <= w.height + 1) out.rows++;
                         return false;
                     }
                 });

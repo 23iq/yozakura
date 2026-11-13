@@ -29,7 +29,7 @@ Item {
     // else as many as fit at a regular size and a peek of the next
     readonly property real stripWidth: root.stripCount <= 3 || root.stripCount * Space.px(60) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
     // compact pictures: about 130 px, five or six a row in a wide card
-    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.options.length, Space.px(124))
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.options.length, Space.px(96))
     // A few options do not stretch into huge cards.
     readonly property real cardWidth: PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(150))
     readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""

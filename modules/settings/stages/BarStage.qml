@@ -7,14 +7,14 @@ import qs.modules.settings.store
 import "../PanelsModel.js" as PanelsModel
 import "../SchemaUtil.js" as SchemaUtil
 
-// Stage of the Bar page: your whole screen arrangement (ScreenMini: every
-// bar panel on its edge, rails, the dock, the island, the frame and the
-// space they reserve) on your wallpaper, and the place to move the bar:
-// a click on an empty edge of the tiny screen moves the bar there (the
-// bar picked for editing when there are several; EdgePicker shows a ghost
-// first); a click on a bar picks it for the bars editor
-// (SettingsStore.selectedPanel); a click on the island or the dock opens
-// its tab. Rows light up their part.
+// Stage of the Bar page: the bar itself, as wide as the page and at a
+// readable scale (ScreenMini drawn page-wide and cropped to the edge of the
+// bar picked for editing: its shape, size, the real clock face and
+// workspace indicator, every module's glyph, the island under it). Not a
+// shrunk desktop: where the bar sits is the Edge row's job. A click on a
+// module scrolls to its card and flashes it (the clock to Clock, the
+// workspaces to Workspaces, any other to On the bar); a click on a bar
+// picks it for the bars editor; rows light up their part.
 Stage {
     id: stage
 
@@ -24,50 +24,44 @@ Stage {
             "panels": SchemaUtil.plain(SettingsStore.get("bar.panels")) || []
         })
     readonly property var panels: PanelsModel.panelsOf(stage.barConfig)
-    // the single legacy bar (bar.position) or explicit panels (bar.panels,
-    // even just one: then bar.position is ignored)
-    readonly property bool legacy: PanelsModel.isLegacy(stage.barConfig)
-    readonly property bool several: stage.panels.length > 1
     readonly property int current: Math.max(0, Math.min(SettingsStore.selectedPanel, stage.panels.length - 1))
     readonly property string currentEdge: stage.panels[stage.current] ? stage.panels[stage.current].edge : "top"
+    readonly property bool vertical: stage.currentEdge === "left" || stage.currentEdge === "right"
+    // the band of the bar and the island hanging from it, never taller than
+    // a vertical bar's top part needs
+    readonly property real preferredHeight: stage.vertical ? Space.px(240) : Math.round(mini.edgeDepth(stage.currentEdge) + mini.unit * 2)
 
-    // Move the bar (the picked one) to `edge`; a bar already there is
-    // picked instead.
-    function moveTo(edge) {
-        if (!stage.legacy) {
-            const there = stage.panels.findIndex(p => p.edge === edge);
-            if (there >= 0 && there !== stage.current) {
-                SettingsStore.selectedPanel = there;
-                return;
-            }
-            if (there === stage.current)
-                return;
-            SettingsStore.transaction("prefs.undo.bar_moved", () => SettingsStore.set("bar.panels", PanelsModel.setField(stage.panels, stage.current, "edge", edge)));
-        } else {
-            SettingsStore.transaction("prefs.undo.bar_moved", () => SettingsStore.set("bar.position", edge));
-        }
+    // the card a module is edited in
+    function sectionOf(id) {
+        return id === "clock" ? "clock" : (id === "workspaces" ? "workspaces" : "layout");
     }
 
-    stageHeight: Space.px(270)
+    stageHeight: stage.preferredHeight
 
-    ScreenMini {
-        id: mini
-        objectName: "barStageScreen"
+    Item {
+        id: crop
         anchors.fill: parent
-        barOpacity: stage.barOpacity
-        cornerRadius: stage.radius
-        partsClickable: true
-        onPartPicked: part => SettingsStore.navigate(part === "island" ? "notch" : "dock")
-        selectable: true
-        selectedPanel: SettingsStore.selectedPanel
-        onPanelPicked: index => SettingsStore.selectedPanel = index
-        EdgePicker {
-            objectName: "barEdgePicker"
-            current: stage.currentEdge
-            busy: stage.several ? stage.panels.map(p => p.edge).filter(e => e !== stage.currentEdge) : []
-            reach: Math.max(mini.unit * 1.6, Space.px(24))
-            ghostThickness: mini.unit
-            onPicked: edge => stage.moveTo(edge)
+        clip: true
+
+        ScreenMini {
+            id: mini
+            objectName: "barStageScreen"
+            width: crop.width
+            height: Math.round(crop.width * 9 / 16)
+            x: 0
+            y: stage.currentEdge === "bottom" ? crop.height - height : 0
+            showWindows: false
+            showDock: false
+            corners: false
+            barOpacity: stage.barOpacity
+            cornerRadius: 0
+            partsClickable: true
+            onPartPicked: part => SettingsStore.navigate(part === "island" ? "notch" : "dock")
+            modulesClickable: true
+            onModulePicked: id => SettingsStore.navigate("bar", stage.sectionOf(id), "")
+            selectable: stage.panels.length > 1
+            selectedPanel: SettingsStore.selectedPanel
+            onPanelPicked: index => SettingsStore.selectedPanel = index
         }
     }
 }

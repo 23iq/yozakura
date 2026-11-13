@@ -144,6 +144,10 @@ Flickable {
             SettingsStore.highlightedEntry = entryId;
             unflash.restart();
             target.forceActiveFocus();
+        } else {
+            // a card reached from the stage: a brief accent wash
+            SettingsStore.highlightedSection = sectionId;
+            unflash.restart();
         }
     }
 
@@ -160,7 +164,10 @@ Flickable {
     Timer {
         id: unflash
         interval: 1600
-        onTriggered: SettingsStore.highlightedEntry = ""
+        onTriggered: {
+            SettingsStore.highlightedEntry = "";
+            SettingsStore.highlightedSection = "";
+        }
     }
 
     // The stage: compact, centred, receding as the page scrolls.
@@ -182,10 +189,12 @@ Flickable {
             objectName: "pageStage"
             // a third of the page at most, 16:9, never taller than a band
             // needs (a list page's band is short)
-            height: Math.round(Math.min(page.height / 3, page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            // a stage that is a strip (the bar, the dock) asks for its height
+            readonly property real asked: stageLoader.item && stageLoader.item.preferredHeight > 0 ? stageLoader.item.preferredHeight : 0
+            height: Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself
-            width: Math.round(page.listForm ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
+            width: Math.round(page.listForm || stageLoader.asked > 0 ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl

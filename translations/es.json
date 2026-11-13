@@ -4565,7 +4565,7 @@
   "prefs.bar.size": "Tamaño",
   "prefs.bar.section.edge_frame": "Borde y marco",
   "prefs.bar.add_bar": "Añadir una barra",
-  "prefs.bar.hero_hint": "Haz clic en un borde para mover la barra · clic en la isla o el dock para editarlos",
+  "prefs.bar.hero_hint": "Pulsa una parte de la barra para editarla · el borde se elige en Borde y marco",
   "prefs.undo.bar_added": "Barra añadida",
   "prefs.notch.hero_hint": "Haz clic en el borde superior o inferior para mover la isla · clic en la barra o el dock para editarlos",
   "prefs.dock.hero_hint": "Haz clic en un borde para mover el dock · clic en la isla para editarla",

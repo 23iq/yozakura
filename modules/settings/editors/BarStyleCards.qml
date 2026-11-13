@@ -28,7 +28,7 @@ Item {
     // landscape pictures (16:10) with the title under them: as tall as the
     // card allows, three whole ones and a peek when they do not all fit
     readonly property real stripWidth: Strip.landscapeWidth(root.width, root.fillHeight, root.stripCount, Space.m, Space.s + Type.size("secondary") * 1.4, Space.px(96))
-    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.stripCount, Space.px(124))
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.stripCount, Space.px(96))
     readonly property real cardWidth: PictureGrid.cardWidth(grid.width, grid.columnSpacing, root.columns, Space.px(150))
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight

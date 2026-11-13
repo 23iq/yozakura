@@ -53,16 +53,22 @@ function place(items, cols, gap) {
     };
 }
 
+// Picture editors whose compact cards wrap in a single column (like
+// `display: "cards"`): they never make their card wide.
+var COMPACT_PICTURES = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "SchemeGallery", "MotionProfileCards", "ThemeModeCards"];
+
 // The span a schema section asks for: `span` when it sets one, else two
-// columns when it holds a full-width control (picture cards, an editor, a
-// list), one otherwise.
+// columns when it holds a full-width control (an editor, a list), one
+// otherwise (picture cards are compact and wrap: one column).
 function spanOf(section, inWindow) {
     if (section && section.span)
         return section.span;
     var wide = (section && section.entries || []).some(function (e) {
         if (inWindow && !inWindow(e, section))
             return false;
-        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role" || e.display === "cards";
+        if (e.type === "custom" && COMPACT_PICTURES.indexOf(e.component) >= 0)
+            return false;
+        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role";
     });
     return wide ? 2 : 1;
 }

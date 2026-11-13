@@ -41,6 +41,8 @@ Singleton {
 
     // Set by the settings window to flash an entry after a search jump.
     property string highlightedEntry: ""
+    // a card reached from a click on the stage (SettingsPage.reveal)
+    property string highlightedSection: ""
     // The row under the pointer or keyboard focus: its keys light up the
     // part of the page's stage they change (StageSpot). [] = none.
     property var focusKeys: []

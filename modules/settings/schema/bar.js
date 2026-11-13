@@ -30,7 +30,7 @@ var category = {
         "hint": "prefs.bar.hero_hint"
     },
     // One row of cards under the stage.
-    "row": [{ "id": "shape", "weight": 1.5 }, { "id": "size", "weight": 0.8 }, { "id": "layout", "weight": 1.25 }],
+    "row": ["shape", "style", "layout"],
     "sections": [
         {
             "id": "panels",
@@ -95,17 +95,10 @@ var category = {
                     "label": "prefs.bar.style",
                     "description": "prefs.bar.style.desc",
                     "keywords": "panel bar shape style"
-                }
-            ]
-        },
-        {
-            "id": "size",
-            "title": "prefs.bar.size",
-            "entries": [
+                },
                 {
                     "key": "bar.compact",
-                    "type": "custom",
-                    "component": "BarSizeCards",
+                    "type": "toggle",
                     "label": "prefs.bar.compact",
                     "description": "prefs.bar.compact.desc",
                     "keywords": "compact dense slim thin small height size"

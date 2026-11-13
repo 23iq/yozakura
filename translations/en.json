@@ -4565,7 +4565,7 @@
   "prefs.bar.size": "Size",
   "prefs.bar.section.edge_frame": "Edge and frame",
   "prefs.bar.add_bar": "Add a bar",
-  "prefs.bar.hero_hint": "Click an edge to move the bar there · click the island or the dock to edit them",
+  "prefs.bar.hero_hint": "Click a part of the bar to edit it · the edge is set under Edge and frame",
   "prefs.undo.bar_added": "Bar added",
   "prefs.notch.hero_hint": "Click the top or bottom edge to move the island · click the bar or the dock to edit them",
   "prefs.dock.hero_hint": "Click an edge to move the dock · click the island to edit it",

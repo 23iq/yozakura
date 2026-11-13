@@ -81,7 +81,9 @@ test('a page of wide cards uses two columns, not an empty third', () => {
 
 test('a section with picture cards or an editor spans two columns', () => {
     assert.equal(BentoLayout.spanOf({ entries: [{ type: 'switch' }] }), 1);
-    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards' }] }), 2);
+    // compact pictures wrap in one column
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards' }] }), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarStyleCards' }] }), 1);
     assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom' }] }), 2);
     assert.equal(BentoLayout.spanOf({ span: 3, entries: [] }), 3);
     // an out-of-window editor does not widen the card

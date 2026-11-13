@@ -14,7 +14,6 @@ var EDITORS = {
     "PanelList": "editors/PanelList.qml",
     "PanelShapeCards": "editors/PanelShapeCards.qml",
     "PanelModulesCard": "editors/PanelModulesCard.qml",
-    "BarSizeCards": "editors/BarSizeCards.qml",
     "DockLookEditor": "editors/DockLookEditor.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorCards": "editors/IndicatorCards.qml",

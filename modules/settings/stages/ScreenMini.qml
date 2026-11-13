@@ -43,9 +43,12 @@ Item {
     property string emphasis: ""
     // The island and the dock answer clicks (`partPicked`).
     property bool partsClickable: false
+    // The bar's modules answer clicks (`modulePicked(id)`).
+    property bool modulesClickable: false
     default property alias overlay: overlayLayer.data
     signal panelPicked(int index)
     signal partPicked(string part)
+    signal modulePicked(string id)
 
     function get(key, fallback) {
         const v = SettingsStore.get(key);
@@ -407,6 +410,15 @@ Item {
                         StageSpot {
                             visible: slot.modelData.id === "workspaces"
                             keys: ["workspaces"]
+                        }
+                        MouseArea {
+                            objectName: "barModule:" + slot.modelData.id
+                            anchors.fill: parent
+                            anchors.margins: -Math.round(screen.unit * 0.12)
+                            enabled: screen.modulesClickable
+                            visible: enabled
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: screen.modulePicked(slot.modelData.id)
                         }
                     }
                 }

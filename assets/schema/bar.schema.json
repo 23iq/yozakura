@@ -357,10 +357,9 @@
       "description": "A slimmer notch and island tabs. Styles with a fixed size (menubar, statusline, ribbon, rail) keep their own size.",
       "x-settings": {
         "category": "bar",
-        "section": "size",
+        "section": "shape",
         "label": "prefs.bar.compact",
-        "control": "custom",
-        "component": "BarSizeCards",
+        "control": "toggle",
         "keywords": "compact dense slim thin small height size"
       }
     },

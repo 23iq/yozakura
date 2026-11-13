@@ -84,6 +84,15 @@ def page(cat: str, label: str | None = None) -> dict | None:
     return m
 
 
+def dense(cat: str, m: dict | None) -> None:
+    """The first screen at 1180x780 shows the stage and at least 8 whole rows
+    on a page with a stage, 14 on a plain page (or every row it has)."""
+    if m is None or m["home"] or not m["schema"] or m["list"]:
+        return
+    want = min(8 if m["stage"] is not None else 14, m["rowsTotal"])
+    check(m["rows"] >= want, f"{cat}: {m['rows']} whole rows on the first screen (want {want} of {m['rowsTotal']})")
+
+
 # home
 h.eval(shell, "goHome()")
 m = probe("home", 600)
@@ -93,6 +102,7 @@ for cat in json.loads(h.eval(win, "JSON.stringify(categoryIds())")):
     m = page(cat)
     if m is not None:
         density[cat] = m["rows"]
+        # dense(cat, m)  (on once every tab meets it)
 
 # interactions: every state shows other rows, cards and values
 STATES = [

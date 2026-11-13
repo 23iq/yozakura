@@ -82,6 +82,21 @@ Card {
     }
 
     objectName: "settingsSection:" + sectionId
+    // reached from a click on the stage: a brief accent wash
+    background: Mark {
+        objectName: "sectionFlash"
+        anchors.fill: parent
+        radius: Look.radius("surface", height)
+        color: Type.accent
+        opacity: SettingsStore.highlightedSection !== "" && SettingsStore.highlightedSection === sectionRoot.sectionId ? 0.16 : 0
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
+    }
     visible: (sectionRoot.shown || sectionRoot.waiting) && !sectionRoot.pending && !sectionRoot.suppressed
     padding: Look.boxPadding + Space.s
     spacing: Space.s
@@ -175,7 +190,8 @@ Card {
                         required property int index
                         width: rowsColumn.width
                         entry: modelData
-                        bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key))
+                        // the card's heading already names it: no second label
+                        bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!modelData.label && !!sectionRoot.section.title && I18n.t(modelData.label) === I18n.t(sectionRoot.section.title))
                         dense: true
                         // waits on the card's switch: shown dimmed (CardGate);
                         // a row hidden until a switch of this same page is on
