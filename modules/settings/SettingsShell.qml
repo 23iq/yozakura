@@ -8,7 +8,6 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import qs.modules.settings.store
-import qs.modules.settings.presets
 import "schema/Categories.js" as Categories
 import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
@@ -33,6 +32,12 @@ Item {
     // coordinates; null: from the middle.
     property var origin: null
     property var pendingReveal: null
+    // The active preset's changes sheet is open (home footer, toast).
+    property bool changesOpen: false
+    // The preset overlays (edit banner, trial pill, toast, changes sheet,
+    // name dialog) are loaded by URL once home has shown its first frame
+    // (or a page is open): none is on the first frame, their compile was.
+    readonly property bool overlaysReady: homeView.warm || !shell.atHome
     readonly property alias home: homeView
     // Off until the first frame: a deep link opens straight on its page.
     property bool animated: false
@@ -115,9 +120,9 @@ Item {
         if (id === "save")
             PresetStudio.afterFlush(() => PresetStatusService.save(toast));
         else if (id === "saveAs")
-            saveAsDialog.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
+            saveAsDialog.item.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
         else if (id === "changes")
-            changesSheet.open = true;
+            shell.changesOpen = true;
         else if (id === "revert")
             PresetStatusService.revert(toast);
     }
@@ -213,10 +218,14 @@ Item {
         onClicked: shell.goHome()
     }
 
-    PresetEditBanner {
+    Loader {
         id: editBanner
         width: parent.width
+        height: item ? item.height : 0
         z: 5
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetEditBanner.qml")
     }
 
     SettingsHome {
@@ -233,7 +242,7 @@ Item {
         onDestinationOpened: (id, tile) => shell.openDestination(id, tile)
         onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
         onPresetAction: id => shell.presetAction(id)
-        wantIndex: changesSheet.open
+        wantIndex: shell.changesOpen
     }
 
     // The shared element: a box growing from the tile to the window.
@@ -298,34 +307,50 @@ Item {
         z: 6
     }
 
-    PresetTrialPill {
+    Loader {
         anchors.horizontalCenter: parent.horizontalCenter
         y: editBanner.height + Space.l
         z: 6
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetTrialPill.qml")
     }
 
-    PresetToast {
+    Loader {
         anchors.left: parent.left
         anchors.leftMargin: Space.xl
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Space.xl
         z: 6
-        onDetailsRequested: shell.presetAction("changes")
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetToast.qml")
+        onLoaded: item.detailsRequested.connect(() => shell.presetAction("changes"))
     }
 
-    PresetChangesSheet {
+    Loader {
         id: changesSheet
-        objectName: "presetChangesSheet"
         anchors.fill: parent
         z: 7
-        index: homeView.index
-        onClosed: open = false
-        onActionRequested: id => shell.presetAction(id)
-        onNavigate: (c, s, e) => shell.navigate(c, s, e)
+        active: shell.overlaysReady || shell.changesOpen
+        asynchronous: !shell.changesOpen
+        source: Qt.resolvedUrl("presets/PresetChangesSheet.qml")
+        onLoaded: {
+            item.open = Qt.binding(() => shell.changesOpen);
+            item.index = Qt.binding(() => homeView.index);
+            item.closed.connect(() => shell.changesOpen = false);
+            item.actionRequested.connect(id => shell.presetAction(id));
+            item.navigate.connect((c, sec, e) => shell.navigate(c, sec, e));
+        }
     }
 
-    PresetNameDialog {
+    Loader {
         id: saveAsDialog
+        anchors.fill: parent
+        z: 50
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetNameDialog.qml")
     }
 
     // Reveal after the page laid out.

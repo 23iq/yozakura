@@ -266,7 +266,9 @@ costs nothing until opened and gives all its memory back when closed.
   on the window's first `frameSwapped`): the tile scenes (home/*.qml, by
   URL, asynchronous, one more per frame: Stage and ScreenMini compile only
   then), the tile status lines, the status tiles' services (network, audio,
-  power profile, updates) and the preset footer (PresetStatusService). The search
+  power profile, updates), the preset footer (PresetStatusService) and the
+  preset overlays of the shell (edit banner, trial pill, toast, changes sheet,
+  name dialog: Loaders by URL, asynchronous, compiled off the first frame). The search
   index is built on the first query (or when the changes sheet opens).
 - Pages and stages are created by URL (`Registry.PAGES`, `Registry.STAGES`);
   the host imports the page directories only so Quickshell's scanner
