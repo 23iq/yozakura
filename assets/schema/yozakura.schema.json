@@ -5647,7 +5647,7 @@
           "description": "Screen edge the dock sits on (bottom, left or right). In the bar (integrated) left and right put it at the start or end of the bar, bottom centers it.",
           "x-settings": {
             "category": "dock",
-            "section": "dock",
+            "section": "place",
             "label": "prefs.dock.position",
             "control": "selector",
             "keywords": "dock position edge top bottom left right vertical",
@@ -5725,6 +5725,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 12,
             "max": 96
           },
@@ -5928,7 +5929,8 @@
             "visibleWhen": {
               "key": "dock.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "indicator": {
@@ -5953,7 +5955,8 @@
                   "equals": true
                 }
               ]
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "dot",
@@ -6050,7 +6053,7 @@
           "description": "Monitors that show the dock; none selected shows it on every monitor.",
           "x-settings": {
             "category": "dock",
-            "section": "dock",
+            "section": "place",
             "label": "prefs.dock.screens",
             "control": "screens",
             "keywords": "dock monitor screen display multi-monitor where",
@@ -6925,7 +6928,7 @@
               "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
               "x-settings": {
                 "category": "osd",
-                "section": "osd",
+                "section": "place",
                 "label": "prefs.osd.position",
                 "control": "selector",
                 "keywords": "osd position edge side top bottom left right",
@@ -6959,7 +6962,6 @@
                 "section": "osd",
                 "label": "prefs.label.osd_style",
                 "control": "selector",
-                "preview": "OsdPreview",
                 "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
               },
               "enum": [
@@ -6984,13 +6986,12 @@
               "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
               "x-settings": {
                 "category": "osd",
-                "section": "osd",
+                "section": "place",
                 "label": "prefs.osd.timeout",
                 "control": "slider",
                 "step": 100,
                 "unit": "ms",
                 "keywords": "osd duration timeout how long hide",
-                "advanced": true,
                 "min": 800,
                 "max": 8000
               },
@@ -7199,14 +7200,10 @@
           "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "place",
             "label": "prefs.label.island_edge",
             "control": "selector",
-            "keywords": "notch position top bottom left right side vertical edge",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "notch position top bottom left right side vertical edge"
           },
           "enum": [
             "top",
@@ -7228,14 +7225,10 @@
           "description": "Where the island sits along its edge. Panels always open toward the middle of the screen.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "behaviour",
             "label": "prefs.label.island_align",
             "control": "selector",
-            "keywords": "notch align alignment left right corner start center end",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "notch align alignment left right corner start center end"
           },
           "enum": [
             "start",
@@ -7297,14 +7290,10 @@
           "description": "What the island shows when nothing is playing.",
           "x-settings": {
             "category": "notch",
-            "section": "media",
+            "section": "idle",
             "label": "shell.no_media_display",
             "control": "selector",
-            "keywords": "idle text user host compositor custom nothing playing",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "idle text user host compositor custom nothing playing"
           },
           "enum": [
             "userHost",
@@ -7324,21 +7313,13 @@
           "description": "Text shown in the idle notch.",
           "x-settings": {
             "category": "notch",
-            "section": "media",
+            "section": "idle",
             "label": "shell.notch.custom_text",
             "control": "text",
             "keywords": "custom text label idle",
             "visibleWhen": {
-              "all": [
-                {
-                  "key": "notch.enabled",
-                  "equals": true
-                },
-                {
-                  "key": "notch.noMediaDisplay",
-                  "equals": "custom"
-                }
-              ]
+              "key": "notch.noMediaDisplay",
+              "equals": "custom"
             }
           }
         },
@@ -7385,14 +7366,10 @@
           "description": "Open media, activities and download panels on hover or only on click.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "behaviour",
             "label": "shell.notch.expand_on",
             "control": "selector",
-            "keywords": "notch panel expand open hover click activities media downloads",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "notch panel expand open hover click activities media downloads"
           },
           "enum": [
             "hover",
@@ -7567,7 +7544,7 @@
           "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
           "x-settings": {
             "category": "notch",
-            "section": "activities",
+            "section": "activity_details",
             "label": "prefs.notch.activities_in",
             "control": "selector",
             "keywords": "live activities chips bar notch downloads timer recording grow place"
@@ -7589,7 +7566,7 @@
           "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
           "x-settings": {
             "category": "notch",
-            "section": "activities",
+            "section": "activity_details",
             "label": "shell.activities",
             "control": "custom",
             "component": "ActivitiesEditor",
@@ -7838,7 +7815,7 @@
           "description": "A full card, or one compact line that unfolds on hover.",
           "x-settings": {
             "category": "notch",
-            "section": "activities",
+            "section": "activity_details",
             "label": "prefs.notifications.notch_style",
             "control": "selector",
             "keywords": "notification notch compact card one line",
@@ -8150,7 +8127,7 @@
           "description": "Notifications kept in the dashboard after they hide.",
           "x-settings": {
             "category": "notifications",
-            "section": "behaviour",
+            "section": "history",
             "label": "prefs.notif.history",
             "control": "number",
             "step": 10,
@@ -8293,7 +8270,7 @@
                   "description": "Start time, 24-hour HH:MM.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_from",
                     "control": "text",
                     "keywords": "start begin from time hour",
@@ -8311,7 +8288,7 @@
                   "description": "End time; earlier than the start means the next morning.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_to",
                     "control": "text",
                     "keywords": "end until to time hour",
@@ -8348,7 +8325,7 @@
                   "description": "Days the window starts on.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_days",
                     "control": "multiselect",
                     "keywords": "days week weekdays weekend monday sunday",

@@ -53,7 +53,7 @@
       "description": "Screen edge the dock sits on (bottom, left or right). In the bar (integrated) left and right put it at the start or end of the bar, bottom centers it.",
       "x-settings": {
         "category": "dock",
-        "section": "dock",
+        "section": "place",
         "label": "prefs.dock.position",
         "control": "selector",
         "keywords": "dock position edge top bottom left right vertical",
@@ -131,6 +131,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 12,
         "max": 96
       },
@@ -334,7 +335,8 @@
         "visibleWhen": {
           "key": "dock.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "indicator": {
@@ -359,7 +361,8 @@
               "equals": true
             }
           ]
-        }
+        },
+        "advanced": true
       },
       "enum": [
         "dot",
@@ -456,7 +459,7 @@
       "description": "Monitors that show the dock; none selected shows it on every monitor.",
       "x-settings": {
         "category": "dock",
-        "section": "dock",
+        "section": "place",
         "label": "prefs.dock.screens",
         "control": "screens",
         "keywords": "dock monitor screen display multi-monitor where",

@@ -26,14 +26,10 @@
       "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "place",
         "label": "prefs.label.island_edge",
         "control": "selector",
-        "keywords": "notch position top bottom left right side vertical edge",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "notch position top bottom left right side vertical edge"
       },
       "enum": [
         "top",
@@ -55,14 +51,10 @@
       "description": "Where the island sits along its edge. Panels always open toward the middle of the screen.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "behaviour",
         "label": "prefs.label.island_align",
         "control": "selector",
-        "keywords": "notch align alignment left right corner start center end",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "notch align alignment left right corner start center end"
       },
       "enum": [
         "start",
@@ -124,14 +116,10 @@
       "description": "What the island shows when nothing is playing.",
       "x-settings": {
         "category": "notch",
-        "section": "media",
+        "section": "idle",
         "label": "shell.no_media_display",
         "control": "selector",
-        "keywords": "idle text user host compositor custom nothing playing",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "idle text user host compositor custom nothing playing"
       },
       "enum": [
         "userHost",
@@ -151,21 +139,13 @@
       "description": "Text shown in the idle notch.",
       "x-settings": {
         "category": "notch",
-        "section": "media",
+        "section": "idle",
         "label": "shell.notch.custom_text",
         "control": "text",
         "keywords": "custom text label idle",
         "visibleWhen": {
-          "all": [
-            {
-              "key": "notch.enabled",
-              "equals": true
-            },
-            {
-              "key": "notch.noMediaDisplay",
-              "equals": "custom"
-            }
-          ]
+          "key": "notch.noMediaDisplay",
+          "equals": "custom"
         }
       }
     },
@@ -212,14 +192,10 @@
       "description": "Open media, activities and download panels on hover or only on click.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "behaviour",
         "label": "shell.notch.expand_on",
         "control": "selector",
-        "keywords": "notch panel expand open hover click activities media downloads",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "notch panel expand open hover click activities media downloads"
       },
       "enum": [
         "hover",
@@ -394,7 +370,7 @@
       "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
       "x-settings": {
         "category": "notch",
-        "section": "activities",
+        "section": "activity_details",
         "label": "prefs.notch.activities_in",
         "control": "selector",
         "keywords": "live activities chips bar notch downloads timer recording grow place"
@@ -416,7 +392,7 @@
       "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
       "x-settings": {
         "category": "notch",
-        "section": "activities",
+        "section": "activity_details",
         "label": "shell.activities",
         "control": "custom",
         "component": "ActivitiesEditor",

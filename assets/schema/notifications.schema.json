@@ -13,7 +13,7 @@
       "description": "A full card, or one compact line that unfolds on hover.",
       "x-settings": {
         "category": "notch",
-        "section": "activities",
+        "section": "activity_details",
         "label": "prefs.notifications.notch_style",
         "control": "selector",
         "keywords": "notification notch compact card one line",
@@ -325,7 +325,7 @@
       "description": "Notifications kept in the dashboard after they hide.",
       "x-settings": {
         "category": "notifications",
-        "section": "behaviour",
+        "section": "history",
         "label": "prefs.notif.history",
         "control": "number",
         "step": 10,
@@ -468,7 +468,7 @@
               "description": "Start time, 24-hour HH:MM.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_from",
                 "control": "text",
                 "keywords": "start begin from time hour",
@@ -486,7 +486,7 @@
               "description": "End time; earlier than the start means the next morning.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_to",
                 "control": "text",
                 "keywords": "end until to time hour",
@@ -523,7 +523,7 @@
               "description": "Days the window starts on.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_days",
                 "control": "multiselect",
                 "keywords": "days week weekdays weekend monday sunday",
