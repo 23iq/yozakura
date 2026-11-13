@@ -11,6 +11,10 @@ Scenes:
   tile-open    a click on the Look tile: the tile grows into its page
   edge-click   on Desktop layout > Bar, the left edge of the miniature is
                hovered (a ghost bar, "Move here") and clicked: the bar moves
+  windows-gap  on Windows, the gap grip between the windows is dragged: the
+               gaps widen live, the readout follows, one undo step
+  power-idle   on Power, the Sleep knob of the idle timeline is dragged
+               sooner and back (the device fixtures give the battery stage)
 
 Frames are grabbed as fast as the window renders, each stamped with the
 time it was taken, and joined by ffmpeg with those durations, so the result
@@ -33,7 +37,9 @@ from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-SCENES = ("tile-hover", "tile-open", "edge-click")
+SCENES = ("tile-hover", "tile-open", "edge-click", "windows-gap", "power-idle")
+# the page a scene starts on ("" = home)
+PAGES = {"edge-click": "bar", "windows-gap": "windows", "power-idle": "power"}
 
 
 class Recorder:
@@ -91,7 +97,8 @@ def scene(name: str, args, out: Path) -> None:
     colors = sr.DEFAULT_PALETTE if args.palette == "default" else sr.palette("dark", state, from_wallpaper=bool(args.wallpaper))
     env = SettingsEnv(f"motion-{name}", palette=colors,
                       user_config=True,
-                      overrides={"theme": {"language": args.language, "lightMode": False}}, wallpaper=state)
+                      overrides={"theme": {"language": args.language, "lightMode": False}}, wallpaper=state,
+                      devices=name in PAGES)
     win = env.load(f"""
 import QtQuick
 import QtQuick.Window
@@ -104,8 +111,8 @@ Window {{
     shell = env.h.find(win, "shell")
     root = win.contentItem()
     QTest.mouseMove(win, QPoint(w - 4, h - 4))
-    if name == "edge-click":
-        env.h.eval(shell, 'select("bar")')
+    if name in PAGES:
+        env.h.eval(shell, f'select("{PAGES[name]}")')
     else:
         env.h.eval(shell, "goHome()")
     QTest.qWait(1200)
@@ -143,6 +150,22 @@ Window {{
         rec.grab(400)
         env.h.eval(shell, "SettingsStore.undo()")
         rec.grab(800)
+    elif name in ("windows-gap", "power-idle"):
+        knob = sr.find_visual(root, "windowsGapGripArea" if name == "windows-gap" else "idleKnob:sleep")
+        a = centre(knob)
+        far = QPoint(a.x() + (36 if name == "windows-gap" else -120), a.y())
+        rec.grab(200)
+        glide(win, rest, a, rec, 8)
+        rec.grab(300)
+        QTest.mousePress(win, Qt.LeftButton, Qt.NoModifier, a)
+        rec.grab(120)
+        glide(win, a, far, rec, 14)
+        rec.grab(300)
+        glide(win, far, a, rec, 10)
+        QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, a)
+        rec.grab(500)
+        glide(win, a, rest, rec, 6)
+        rec.grab(300)
     rec.write(out, name, args.scale)
 
 
