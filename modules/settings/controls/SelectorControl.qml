@@ -17,6 +17,9 @@ Item {
     // false: labels are already display text (e.g. language names)
     property bool translate: true
     property int segmentLimit: 4
+    // segments show their icons only (a narrow place; the name is the
+    // accessible name)
+    property bool iconOnly: false
     readonly property bool dropdown: root.options.length > root.segmentLimit
     signal selected(var value)
 
@@ -38,7 +41,7 @@ Item {
         model: root.dropdown ? [] : root.options.map(o => ({
                     "name": "option:" + o.value,
                     "icon": o.icon ? (Icons[o.icon] ?? "") : "",
-                    "text": root.labelOf(o)
+                    "text": root.iconOnly && o.icon ? "" : root.labelOf(o)
                 }))
         currentIndex: root.currentIndex
         onActivated: i => root.selected(root.options[i].value)

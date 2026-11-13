@@ -68,7 +68,11 @@ FocusScope {
     // about how wide an inline segmented of this selector is (stack it when
     // it would not fit beside the label)
     readonly property real selectorWidth: type === "selector" ? (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0) : 0
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    // picture cards: the row's own control, or (a card of the page row that
+    // holds other rows too) a plain selector: a strip of pictures is a
+    // card's one setting (PAGE COMPOSITION)
+    readonly property bool asCards: entry.display === "cards" && (!row.dense || row.bare)
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && row.selectorWidth > width - Space.px(170)
@@ -278,7 +282,7 @@ FocusScope {
         case "number":
             return numberComponent;
         case "selector":
-            return entry.display === "cards" ? cardsComponent : selectorComponent;
+            return row.asCards ? cardsComponent : selectorComponent;
         case "text":
             return textComponent;
         case "font":

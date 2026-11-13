@@ -110,6 +110,8 @@ Item {
 
                 SelectorControl {
                     visible: !!row.item && row.item.side !== "center"
+                    // a card of the page row: the side as two icons
+                    iconOnly: root.width < Space.px(440)
                     anchors.verticalCenter: parent.verticalCenter
                     options: [
                         {
