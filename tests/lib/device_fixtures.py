@@ -6,7 +6,8 @@ BlueZ, PipeWire, the daemon's displays / keyboard services) that do not exist
 in the harness, so they render empty there. These stand-ins carry a small,
 fixed world - a laptop at 76 % on Balanced, two monitors, two keyboard
 layouts, a few Wi-Fi networks and Bluetooth devices, speakers and a
-microphone with two apps playing - so a page's look can be reviewed and its
+microphone with two apps playing, three fish prompts with their previews, the extras catalog -
+so a page's look can be reviewed and its
 behaviour tested. Fixtures only: nothing here is product code.
 
     SettingsEnv(..., devices=True)        # tests/lib/settings_env.py
@@ -255,6 +256,30 @@ def _catalog() -> str:
     return json.dumps(CATALOG)
 
 
+def _extras() -> str:
+    """The real extras catalog with a few apps installed (the backend sends
+    it for real), so the Extras page shows its catalog."""
+    from extras_env import full_catalog
+    from settings_env import EXTRAS_STUB
+    cat = full_catalog()
+    ids = [e["id"] for e in cat["entries"]]
+    status = {i: {"id": i, "state": "installed" if k % 4 == 0 else "missing"} for k, i in enumerate(ids)}
+    return (EXTRAS_STUB
+            .replace("    property var catalog: null", f"    property var catalog: ({json.dumps(cat)})")
+            .replace("    property var status: ({})", f"    property var status: ({json.dumps(status)})"))
+
+
+def _terminal_look() -> str:
+    """The prompt presets with rendered previews (the daemon draws them for
+    real), so the Terminal page's prompt strip shows pictures."""
+    from settings_env import TERMINAL_LOOK_STUB
+    from terminal_env import PRESETS, sample_previews
+    previews = {f"starship:{k}": v for k, v in sample_previews().items()}
+    return (TERMINAL_LOOK_STUB
+            .replace("    property var presets: []", f"    property var presets: {json.dumps(PRESETS)}")
+            .replace("    property var previews: ({})", f"    property var previews: ({json.dumps(previews)})"))
+
+
 SERVICES = {
     "KeyboardService": KEYBOARD % _catalog(),
     "Audio": AUDIO,
@@ -266,4 +291,6 @@ SERVICES = {
     "PowerProfileClient": POWER_PROFILES,
     "DisplaysService": DISPLAYS,
     "NightLightClient": NIGHT_LIGHT,
+    "TerminalLookService": _terminal_look(),
+    "ExtrasService": _extras(),
 }

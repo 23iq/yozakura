@@ -93,6 +93,37 @@ def wallpaper_state() -> dict:
             "thumbs": thumbs, "presets": []}
 
 
+def preset_listing() -> str:
+    """`preset list --json` of the built app (./yozakura, `make build`), or ""."""
+    app = REPO / "yozakura"
+    if not app.exists():
+        return ""
+    r = subprocess.run([str(app), "preset", "list", "--json"], capture_output=True, text=True, timeout=60)
+    return r.stdout if r.returncode == 0 else ""
+
+
+def library_thumbs(paths: list, out: Path) -> dict:
+    """Small thumbnails of the library, like the wallpaper manager's cache
+    (the window shows those, never the full pictures): without them a render
+    decodes every full-size picture at once and catches them half loaded."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return {}
+    folder = out / ".thumbs"
+    folder.mkdir(parents=True, exist_ok=True)
+    thumbs = {}
+    for p in paths:
+        t = folder / (Path(p).name + ".jpg")
+        if not t.exists() or t.stat().st_mtime < Path(p).stat().st_mtime:
+            with Image.open(p) as im:
+                im = im.convert("RGB")
+                im.thumbnail((1280, 1280))
+                im.save(t, quality=88)
+        thumbs[p] = str(t)
+    return thumbs
+
+
 def color_source(state: dict) -> str:
     cur = state.get("current", "")
     if cur and Path(cur).suffix.lower() in (".mp4", ".webm", ".mkv", ".mov", ".gif"):
@@ -212,7 +243,7 @@ def main() -> int:
         library = sorted(str(p) for p in Path(wp).parent.iterdir()
                          if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")) or [wp]
         state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": library,
-                 "current": wp, "thumbs": {}, "presets": []}
+                 "current": wp, "thumbs": library_thumbs(library, out), "presets": []}
     schemes = scheme_palettes(state)
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
     langs = [x for x in args.languages.split(",") if x] or [""]
@@ -248,6 +279,12 @@ Window {{
     shell = env.h.find(win, "shell")
     env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
+    listing = preset_listing() if args.devices else ""
+    if listing:
+        # the preset studio lists the presets the built app finds (the
+        # harness runs no processes)
+        env.h.eval(shell, "PresetStudio.runner = function (args, cb) { if (args[0] === 'list') cb(true, "
+                   + json.dumps(listing) + ", ''); else cb(false, '', ''); }")
     for cat in args.categories:
         cat = cat.lower()
         if cat == "home":
@@ -260,6 +297,10 @@ Window {{
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)
+        if cat == "presets":
+            # `preset list` runs the app binary (YOZAKURA_BIN), then the
+            # strip draws each preset
+            QTest.qWait(5000)
         if cat == "lockscreen":
             # the style gallery pictures one style at a time
             QTest.qWait(9000)
