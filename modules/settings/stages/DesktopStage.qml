@@ -8,6 +8,7 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import "../../desktop/widgets/WidgetRegistry.js" as Registry
 import "../SchemaUtil.js" as SchemaUtil
+import "../Ui.js" as Ui
 import "DesktopPlace.js" as DesktopPlace
 import "../../desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
 
@@ -29,7 +30,7 @@ Stage {
     readonly property string clockStyle: String(SettingsStore.get("desktop.depthClockStyle") || "")
     readonly property string clockInk: String(SettingsStore.get("desktop.depthClockInk") || "auto")
     // where the clock is drawn (its real placement), else where the setting says
-    readonly property string clockSide: DesktopPlace.clockSide(String(SettingsStore.get("desktop.depthClockPosition") || "auto"), clock.item ? clock.item.side : "")
+    readonly property string clockSide: DesktopPlace.clockSide(String(SettingsStore.get("desktop.depthClockPosition") || "auto"), String(Ui.prop(clock.item, "side") ?? ""))
     // the other side, where this style can go ("": none)
     readonly property string clockTarget: DesktopPlace.moveTarget(stage.clockSide, ClockStyles.get(stage.clockStyle).sides)
     readonly property bool iconsOn: SettingsStore.get("desktop.enabled") === true

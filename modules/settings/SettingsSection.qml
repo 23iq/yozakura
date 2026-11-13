@@ -91,7 +91,7 @@ Card {
             return headSwitch;
         for (let i = 0; i < rows.count; i++) {
             const line = rows.itemAt(i);
-            const all = line ? line.items() : [];
+            const all = Ui.invoke(line, "items", []) || [];
             for (const r of all)
                 if (Ui.prop(r, "entryId") === entryId)
                     return r;
@@ -200,7 +200,8 @@ Card {
                         required property var modelData
                         readonly property var e: sectionRoot.entries[lineItem.modelData] || ({})
                         readonly property string eid: lineItem.e.id || lineItem.e.key || ""
-                        width: lineItem.parent && lineItem.parent.rowWidth ? lineItem.parent.rowWidth(lineItem.modelData) : rowsColumn.width
+                        // its line (or the column beside the pictures) says how wide
+                        width: Ui.invoke(lineItem.parent, "rowWidth", [lineItem.modelData]) ?? rowsColumn.width
                         entry: lineItem.e
                         // the card's heading already names it: no second label
                         bare: sectionRoot.single !== null || (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!lineItem.e.label && !!sectionRoot.section.title && I18n.t(lineItem.e.label) === I18n.t(sectionRoot.section.title))

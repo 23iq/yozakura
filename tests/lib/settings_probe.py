@@ -297,7 +297,7 @@ def problems(m: dict | None, label: str) -> list[str]:
             for k, end in enumerate(col["ends"]):
                 if tallest - end > room:
                     out.append(f"{label}: column {k} ends {tallest - end} px above the tallest (cards {col['meanCard']} px)")
-    for k, y, run in (col or {}).get("holes", []):
+    for k, y, _run in (col or {}).get("holes", []):
         out.append(f"{label}: a blank wider than a column beside cards (columns {k}-{k + 1}, from y {y}, over 120 px)")
     st = m.get("stage")
     if st and st["h"] > st["pageH"] / 3 + 2:
