@@ -4767,5 +4767,13 @@
   "prefs.notch.state.timer": "Таймер",
   "prefs.notch.off_stage": "Остров выключен",
   "prefs.dock.off_stage": "Док выключен",
-  "prefs.dock.in_bar_stage": "Док встроен в панель"
+  "prefs.dock.in_bar_stage": "Док встроен в панель",
+  "prefs.ai.stage.model": "Ваша модель",
+  "prefs.undo.strip_changed": "Строка состояния изменена",
+  "prefs.ai.stage.ask": "Сделай панель плавающей",
+  "prefs.ai.stage.thought": "Думал 2 с",
+  "prefs.ai.stage.answer": "Готово: панель теперь парит, с небольшим отступом.",
+  "prefs.ai.stage.sug_clip": "Объясни скопированную ошибку",
+  "prefs.ai.stage.sug_song": "Что это за песня?",
+  "prefs.voice.stage.ask": "Спросите что угодно"
 }

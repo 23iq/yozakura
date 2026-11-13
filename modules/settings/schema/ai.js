@@ -16,6 +16,7 @@ var category = {
     "title": "prefs.cat.ai",
     "description": "prefs.cat.ai.desc",
     "keywords": "ai assistant chat sidebar model llm agent claude codex opencode ollama mcp automation prompt",
+    "stage": "AssistantStage",
     "row": [
         {
             "id": "size",

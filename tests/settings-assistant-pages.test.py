@@ -92,7 +92,7 @@ def row(entry):
 
 # ---- Assistant: plain rows, no desktop stage --------------------------------
 select("ai")
-check(ev('w.findItem("pageStage").active') is False, "assistant: no stage (not a desktop page)")
+check(ev('w.findItem("assistantPanel") !== null'), "assistant: the stage is the chat itself")
 check(ev("Config.ai.sidebarPosition") == "right", "assistant: on the right by default")
 for e in ("ai.appearance.defaultSize", "ai.appearance.messageStyle", "ai.enabled", "ai.showThinking",
           "ai.sidebarPosition", "ai.quickAsk.enabled", "layout.aiquick.host"):

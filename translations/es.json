@@ -4731,5 +4731,13 @@
   "prefs.notch.state.timer": "Temporizador",
   "prefs.notch.off_stage": "La isla está desactivada",
   "prefs.dock.off_stage": "El dock está desactivado",
-  "prefs.dock.in_bar_stage": "El dock vive dentro de la barra"
+  "prefs.dock.in_bar_stage": "El dock vive dentro de la barra",
+  "prefs.ai.stage.model": "Tu modelo",
+  "prefs.undo.strip_changed": "Línea de estado cambiada",
+  "prefs.ai.stage.ask": "Haz que mi barra flote",
+  "prefs.ai.stage.thought": "Pensó 2 s",
+  "prefs.ai.stage.answer": "Hecho: tu barra ahora flota, con un poco de espacio alrededor.",
+  "prefs.ai.stage.sug_clip": "Explica el error copiado",
+  "prefs.ai.stage.sug_song": "¿Qué canción es?",
+  "prefs.voice.stage.ask": "Pregunta lo que sea"
 }

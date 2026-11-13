@@ -4731,5 +4731,13 @@
   "prefs.notch.state.timer": "Timer",
   "prefs.notch.off_stage": "The island is off",
   "prefs.dock.off_stage": "The dock is off",
-  "prefs.dock.in_bar_stage": "The dock lives inside the bar"
+  "prefs.dock.in_bar_stage": "The dock lives inside the bar",
+  "prefs.ai.stage.model": "Your model",
+  "prefs.undo.strip_changed": "Status line changed",
+  "prefs.ai.stage.ask": "Make my bar float",
+  "prefs.ai.stage.thought": "Thought for 2 s",
+  "prefs.ai.stage.answer": "Done: your bar floats now, with a little room around it.",
+  "prefs.ai.stage.sug_clip": "Explain the copied error",
+  "prefs.ai.stage.sug_song": "What's this song?",
+  "prefs.voice.stage.ask": "Ask anything"
 }
