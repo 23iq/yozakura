@@ -189,6 +189,7 @@ FocusScope {
                     x: Math.max(brand.width + home.gap, (parent.width - width) / 2)
                     width: Math.min(parent.width - brand.width - undoButton.width - home.gap * 2, Space.px(620))
                     boxed: true
+                    onWindow: true
                     placeholderText: I18n.t("prefs.home.search")
                     hints: ["Ctrl F"]
                     clearOnEscape: true
