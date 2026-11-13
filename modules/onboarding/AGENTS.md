@@ -38,8 +38,10 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
 - Adding a step = `Step<Name>.qml` + one entry in `OnboardingSteps.js` +
   `onboarding.*` translations (en/es/ru). `tests/onboarding.test.cjs` checks
   files and keys.
-- Settings are written through `SettingsStore` (live preview); staged
-  domains are applied when the wizard finishes or is skipped.
+- Settings are written through `OnboardingState.set` = `SettingsStore.stageSet`
+  (live preview, staged: the Settings window applies at once, the wizard
+  does not); staged domains are applied when the wizard finishes or is
+  skipped (`SettingsStore.apply()`).
 - `general.onboardingDone`: default false; Config.qml marks a general.json
   written before the key existed as done (existing installs never see the
   wizard by itself); finish/skip/Esc set it true. Re-run: Settings > About,

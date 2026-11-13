@@ -5,11 +5,11 @@ import qs.modules.settings
 import qs.modules.components.kit
 import "PresetStatusModel.js" as PresetStatusModel
 
-// Settings sidebar footer: the active preset and how far the live settings
+// Settings home footer: the active preset and how far the live settings
 // drifted from it ("Yozakura Night · 3 changes"), with the one primary
 // action while there is something to keep: Save (into the user's own
 // preset) or Save as new (a built-in is read-only), and a ⋯ menu (show
-// changes, revert, save as new). Compact sidebar: a single icon button.
+// changes, revert, save as new). `compact`: a single icon button.
 Item {
     id: root
 
@@ -41,7 +41,7 @@ Item {
         width: parent.width
     }
 
-    // Full sidebar: name + state, ⋯, and the primary action.
+    // Full: name + state, ⋯, and the primary action.
     Column {
         id: body
         visible: !root.compact
@@ -111,7 +111,7 @@ Item {
         }
     }
 
-    // Compact sidebar: the preset glyph (active while there are changes).
+    // Compact: the preset glyph (active while there are changes).
     IconButton {
         id: glyph
         visible: root.compact

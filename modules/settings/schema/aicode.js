@@ -1,37 +1,33 @@
 .pragma library
 
-// AI > Code tasks: defaults of new tasks, queue, notifications, review and
-// the look of the task board (ai.tasks.*, pushed to the backend through
-// tasks.configure by TasksService). Entry format: see modules/settings/AGENTS.md.
-
-var AGENTS = [
-    {
-        "value": "claude",
-        "label": "prefs.ai.tasks.agent_claude",
-        "icon": "robot"
-    },
-    {
-        "value": "codex",
-        "label": "prefs.ai.tasks.agent_codex",
-        "icon": "terminal"
-    },
-    {
-        "value": "opencode",
-        "label": "prefs.ai.tasks.agent_opencode",
-        "icon": "code"
-    }
-];
+// Assistant > Code tasks (ai.tasks.*, pushed to the backend through
+// tasks.configure by TasksService): a composed page. The stage is the task
+// board (TasksStage); beside it: plan first, work in place, notifications;
+// the row: new tasks, review, the board's cards. In More: the layout, the
+// fallback agent, confirmations, done limit, which events notify. Entry
+// format: see modules/settings/AGENTS.md.
 
 var category = {
     "id": "ai-code",
     "icon": "kanban",
-    "title": "prefs.ai.tasks",
+    "title": "prefs.cat.ai_code",
     "description": "prefs.ai.tasks.desc",
     "keywords": "ai code tasks agents board worktree review accept merge squash best of plan queue parallel claude codex opencode",
+    "row": [
+        {
+            "id": "new_tasks",
+            "weight": 0.85
+        },
+        {
+            "id": "review",
+            "weight": 1.15
+        },
+        "board"
+    ],
     "sections": [
         {
             "id": "new_tasks",
-            "title": "prefs.ai.tasks.new",
+            "title": "prefs.ai.tasks.agents",
             "entries": [
                 {
                     "key": "ai.tasks.defaultAgents",
@@ -39,7 +35,23 @@ var category = {
                     "label": "prefs.ai.tasks.default_agents",
                     "description": "prefs.ai.tasks.default_agents.desc",
                     "keywords": "agent default best of n parallel claude codex opencode",
-                    "options": AGENTS
+                    "options": [
+                        {
+                            "value": "claude",
+                            "label": "prefs.ai.tasks.agent_claude",
+                            "icon": "robot"
+                        },
+                        {
+                            "value": "codex",
+                            "label": "prefs.ai.tasks.agent_codex",
+                            "icon": "terminal"
+                        },
+                        {
+                            "value": "opencode",
+                            "label": "prefs.ai.tasks.agent_opencode",
+                            "icon": "code"
+                        }
+                    ]
                 },
                 {
                     "key": "ai.tasks.planFirst",
@@ -54,35 +66,6 @@ var category = {
                     "label": "prefs.ai.tasks.in_place",
                     "description": "prefs.ai.tasks.in_place.desc",
                     "keywords": "worktree current branch checkout in place"
-                }
-            ]
-        },
-        {
-            "id": "queue",
-            "title": "prefs.ai.tasks.queue",
-            "entries": [
-                {
-                    "key": "ai.tasks.maxParallel",
-                    "type": "number",
-                    "label": "prefs.ai.tasks.max_parallel",
-                    "description": "prefs.ai.tasks.max_parallel.desc",
-                    "keywords": "parallel concurrent slots queue",
-                    "min": 1,
-                    "max": 8
-                },
-                {
-                    "key": "ai.tasks.fallbackAgent",
-                    "type": "selector",
-                    "label": "prefs.ai.tasks.fallback",
-                    "description": "prefs.ai.tasks.fallback.desc",
-                    "keywords": "fallback limit usage rate agent",
-                    "options": [
-                        {
-                            "value": "",
-                            "label": "prefs.ai.tasks.fallback_none",
-                            "icon": "hourglass"
-                        }
-                    ].concat(AGENTS)
                 }
             ]
         },
@@ -110,6 +93,108 @@ var category = {
                     ]
                 },
                 {
+                    "key": "ai.tasks.commitWithAi",
+                    "type": "toggle",
+                    "label": "prefs.ai.tasks.commit_ai",
+                    "description": "prefs.ai.tasks.commit_ai.desc",
+                    "keywords": "commit message ai write git"
+                }
+            ]
+        },
+        {
+            "id": "board",
+            "title": "prefs.ai.tasks.board",
+            "entries": [
+                {
+                    "key": "ai.tasks.showCosts",
+                    "type": "toggle",
+                    "label": "prefs.ai.tasks.show_costs",
+                    "description": "prefs.ai.tasks.show_costs.desc",
+                    "keywords": "cost tokens price card"
+                },
+                {
+                    "key": "ai.tasks.showBranch",
+                    "type": "toggle",
+                    "label": "prefs.ai.tasks.show_branch",
+                    "description": "prefs.ai.tasks.show_branch.desc",
+                    "keywords": "branch worktree badge card"
+                },
+                {
+                    "key": "ai.tasks.showElapsed",
+                    "type": "toggle",
+                    "label": "prefs.ai.tasks.show_elapsed",
+                    "description": "prefs.ai.tasks.show_elapsed.desc",
+                    "keywords": "time elapsed duration card"
+                }
+            ]
+        },
+        {
+            "id": "more_tasks",
+            "title": "prefs.ai.tasks.more",
+            "entries": [
+                {
+                    "key": "ai.tasks.maxParallel",
+                    "type": "number",
+                    "label": "prefs.ai.tasks.max_parallel",
+                    "description": "prefs.ai.tasks.max_parallel.desc",
+                    "keywords": "parallel concurrent slots queue",
+                    "min": 1,
+                    "max": 8
+                },
+                {
+                    "key": "ai.tasks.boardLayout",
+                    "type": "selector",
+                    "label": "prefs.ai.tasks.layout",
+                    "description": "prefs.ai.tasks.layout.desc",
+                    "keywords": "board columns list kanban layout",
+                    "options": [
+                        {
+                            "value": "auto",
+                            "label": "prefs.ai.tasks.layout_auto",
+                            "icon": "sparkle"
+                        },
+                        {
+                            "value": "columns",
+                            "label": "prefs.ai.tasks.layout_columns",
+                            "icon": "kanban"
+                        },
+                        {
+                            "value": "list",
+                            "label": "prefs.ai.tasks.layout_list",
+                            "icon": "list"
+                        }
+                    ]
+                },
+                {
+                    "key": "ai.tasks.fallbackAgent",
+                    "type": "selector",
+                    "label": "prefs.ai.tasks.fallback",
+                    "description": "prefs.ai.tasks.fallback.desc",
+                    "keywords": "fallback limit usage rate agent",
+                    "options": [
+                        {
+                            "value": "",
+                            "label": "prefs.ai.tasks.fallback_none",
+                            "icon": "hourglass"
+                        },
+                        {
+                            "value": "claude",
+                            "label": "prefs.ai.tasks.agent_claude",
+                            "icon": "robot"
+                        },
+                        {
+                            "value": "codex",
+                            "label": "prefs.ai.tasks.agent_codex",
+                            "icon": "terminal"
+                        },
+                        {
+                            "value": "opencode",
+                            "label": "prefs.ai.tasks.agent_opencode",
+                            "icon": "code"
+                        }
+                    ]
+                },
+                {
                     "key": "ai.tasks.autoOpenReview",
                     "type": "toggle",
                     "label": "prefs.ai.tasks.auto_open_review",
@@ -131,11 +216,20 @@ var category = {
                     "keywords": "confirm discard delete worktree"
                 },
                 {
-                    "key": "ai.tasks.commitWithAi",
-                    "type": "toggle",
-                    "label": "prefs.ai.tasks.commit_ai",
-                    "description": "prefs.ai.tasks.commit_ai.desc",
-                    "keywords": "commit message ai write git"
+                    "key": "ai.tasks.doneLimit",
+                    "type": "number",
+                    "label": "prefs.ai.tasks.done_limit",
+                    "description": "prefs.ai.tasks.done_limit.desc",
+                    "keywords": "done finished history count",
+                    "min": 0,
+                    "max": 200,
+                    "step": 5,
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.ai.tasks.done_all"
+                        }
+                    ]
                 }
             ]
         },
@@ -146,7 +240,7 @@ var category = {
                 {
                     "key": "ai.tasks.notifications",
                     "type": "toggle",
-                    "label": "prefs.ai.tasks.notify",
+                    "label": "prefs.ai.tasks.notify_me",
                     "description": "prefs.ai.tasks.notify.desc",
                     "keywords": "notification desktop alert"
                 },
@@ -185,73 +279,6 @@ var category = {
                             "value": "limit",
                             "label": "prefs.ai.tasks.event_limit",
                             "icon": "hourglass"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "board",
-            "title": "prefs.ai.tasks.board",
-            "entries": [
-                {
-                    "key": "ai.tasks.boardLayout",
-                    "type": "selector",
-                    "label": "prefs.ai.tasks.layout",
-                    "description": "prefs.ai.tasks.layout.desc",
-                    "keywords": "board columns list kanban layout",
-                    "options": [
-                        {
-                            "value": "auto",
-                            "label": "prefs.ai.tasks.layout_auto",
-                            "icon": "sparkle"
-                        },
-                        {
-                            "value": "columns",
-                            "label": "prefs.ai.tasks.layout_columns",
-                            "icon": "kanban"
-                        },
-                        {
-                            "value": "list",
-                            "label": "prefs.ai.tasks.layout_list",
-                            "icon": "list"
-                        }
-                    ]
-                },
-                {
-                    "key": "ai.tasks.showCosts",
-                    "type": "toggle",
-                    "label": "prefs.ai.tasks.show_costs",
-                    "description": "prefs.ai.tasks.show_costs.desc",
-                    "keywords": "cost tokens price card"
-                },
-                {
-                    "key": "ai.tasks.showElapsed",
-                    "type": "toggle",
-                    "label": "prefs.ai.tasks.show_elapsed",
-                    "description": "prefs.ai.tasks.show_elapsed.desc",
-                    "keywords": "time elapsed duration card"
-                },
-                {
-                    "key": "ai.tasks.showBranch",
-                    "type": "toggle",
-                    "label": "prefs.ai.tasks.show_branch",
-                    "description": "prefs.ai.tasks.show_branch.desc",
-                    "keywords": "branch worktree badge card"
-                },
-                {
-                    "key": "ai.tasks.doneLimit",
-                    "type": "number",
-                    "label": "prefs.ai.tasks.done_limit",
-                    "description": "prefs.ai.tasks.done_limit.desc",
-                    "keywords": "done finished history count",
-                    "min": 0,
-                    "max": 200,
-                    "step": 5,
-                    "specialValues": [
-                        {
-                            "value": 0,
-                            "label": "prefs.ai.tasks.done_all"
                         }
                     ]
                 }

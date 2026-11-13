@@ -74,18 +74,17 @@ var category = {
     "title": "prefs.cat.desktop",
     "description": "prefs.cat.desktop.desc",
     "keywords": "desktop icons clock depth wallpaper widgets",
+    "stage": "DesktopStage",
+    "hero": {
+        "hint": "prefs.desktop.hero_hint"
+    },
+    // icon size is a rare knob: in More, with the arrangement
+    "row": ["arrange", { "id": "clock", "weight": 1.6 }],
     "sections": [
         {
             "id": "clock",
             "title": "prefs.desktop.section.clock",
             "entries": [
-                {
-                    "key": "desktop.depthClock",
-                    "type": "toggle",
-                    "label": "prefs.desktop.depth_clock",
-                    "description": "prefs.desktop.depth_clock.desc",
-                    "keywords": "clock time wallpaper depth subject behind big widget"
-                },
                 {
                     "key": "desktop.depthClockStyle",
                     "type": "custom",
@@ -97,7 +96,13 @@ var category = {
                     "label": "prefs.label.clock_style",
                     "description": "prefs.desktop.depth_clock_style.desc",
                     "keywords": "clock style yozakura poster kanji mincho look gallery"
-                },
+                }
+            ]
+        },
+        {
+            "id": "clockmore",
+            "title": "prefs.desktop.section.clock_details",
+            "entries": [
                 {
                     "key": "desktop.depthClockPosition",
                     "type": "selector",
@@ -154,8 +159,8 @@ var category = {
             ]
         },
         {
-            "id": "widgets",
-            "title": "prefs.desktop.section.widgets",
+            "id": "arrange",
+            "title": "prefs.desktop.section.arrange",
             "entries": [
                 {
                     "key": "desktop.widgetsEnabled",
@@ -165,16 +170,9 @@ var category = {
                     "keywords": "widgets desktop show hide"
                 },
                 {
-                    "key": "desktop.depthLayering",
-                    "type": "toggle",
-                    "label": "prefs.desktop.depth_layering",
-                    "description": "prefs.desktop.depth_layering.desc",
-                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
-                },
-                {
                     "key": "desktop.widgets",
                     "type": "custom",
-                    "component": "DesktopWidgetsEditor",
+                    "component": "DesktopWidgetsMore",
                     "visibleWhen": {
                         "key": "desktop.widgetsEnabled",
                         "equals": true
@@ -194,6 +192,13 @@ var category = {
                     "label": "prefs.desktop.widget_variant",
                     "description": "prefs.desktop.widget_variant.desc",
                     "keywords": "widget style surface glass background card pane"
+                },
+                {
+                    "key": "desktop.depthLayering",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_layering",
+                    "description": "prefs.desktop.depth_layering.desc",
+                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
                 },
                 {
                     "key": "desktop.widgetGrid",
@@ -216,6 +221,20 @@ var category = {
                     "label": "prefs.desktop.widget_grid",
                     "description": "prefs.desktop.widget_grid.desc",
                     "keywords": "snap grid align spacing move resize"
+                },
+                {
+                    "key": "desktop.depthClock",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_clock",
+                    "description": "prefs.desktop.depth_clock.desc",
+                    "keywords": "clock time wallpaper depth subject behind big widget"
+                },
+                {
+                    "key": "desktop.enabled",
+                    "type": "toggle",
+                    "label": "prefs.desktop.icons",
+                    "description": "prefs.desktop.icons.desc",
+                    "keywords": "desktop icons files show hide"
                 }
             ]
         },
@@ -223,13 +242,6 @@ var category = {
             "id": "icons",
             "title": "prefs.desktop.section.icons",
             "entries": [
-                {
-                    "key": "desktop.enabled",
-                    "type": "toggle",
-                    "label": "prefs.desktop.icons",
-                    "description": "prefs.desktop.icons.desc",
-                    "keywords": "desktop icons files show hide"
-                },
                 {
                     "key": "desktop.iconSize",
                     "type": "slider",
@@ -260,7 +272,13 @@ var category = {
                     "label": "prefs.desktop.icon_spacing",
                     "description": "prefs.desktop.icon_spacing.desc",
                     "keywords": "icon spacing vertical gap rows"
-                },
+                }
+            ]
+        },
+        {
+            "id": "icondetails",
+            "title": "prefs.desktop.section.icon_details",
+            "entries": [
                 {
                     "key": "desktop.textColor",
                     "type": "custom",

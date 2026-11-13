@@ -263,6 +263,8 @@ def sfind(name: str):
 
 
 sev('select("desktop")')
+# the full editor and the clock details are cards of the page (it scrolls)
+wait_until(lambda: sfind("settingsPage") is not None and sev('!!w.findItem("settingsPage").item'))
 wait_until(lambda: sfind("addWidget:calendar") is not None)
 sev("SettingsStore.set('desktop.depthClock', true)")
 settle()
@@ -272,7 +274,7 @@ check(add is not None, "add calendar button")
 h.eval(add, "clicked()")
 wait_until(lambda: len(widgets()) == count + 1 and sfind(f"widgetCard:{widgets()[-1]['id']}") is not None)
 check(len(widgets()) == count + 1 and widgets()[-1]["type"] == "calendar", "settings adds a widget")
-check(sev("GlobalStates.shellHasChanges") is True, "widget edits are staged with the shell settings")
+check(sev("GlobalStates.shellHasChanges") is False, "widget edits apply live (nothing staged)")
 cal_id = widgets()[-1]["id"]
 check(sfind(f"widgetCard:{cal_id}") is not None, "card for the new widget")
 sev(f"""(function() {{
@@ -296,6 +298,10 @@ h.eval(poster, "clicked()")
 check(sev("Config.desktop.depthClockStyle") == "poster", "gallery writes the style")
 swatch = sfind("swatch:tertiary")
 check(swatch is not None, "ink swatch")
+# a window tall enough for the whole page (the page scrolls; the pointer
+# needs the swatch on screen)
+shell_win.resize(shell_win.width(), 3000)
+settle()
 QTest.mouseClick(shell_win, Qt.LeftButton, Qt.NoModifier, center(swatch))
 check(sev("Config.desktop.depthClockInk") == "tertiary", "swatch writes the ink role")
 

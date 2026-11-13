@@ -75,15 +75,6 @@ test('reset only touches visible entries of the running compositor', () => {
     assert.deepEqual(plain(ids('', { 'dock.enabled': true })), ['bar.compact', 'dock.height']);
 });
 
-test('unstagedKeys lists modified keys of domains without a snapshot', () => {
-    const items = SchemaUtil.flatten([{ sections: [{ id: 's', entries: [
-        { key: 'bar.compact' }, { key: 'general.x' }, { key: 'wallpaper.matugenScheme' }, { key: 'weather.unit' },
-    ] }] }]);
-    const staged = d => d === 'bar';
-    const modified = e => e.key !== 'weather.unit';
-    assert.deepEqual(plain(ResetModel.unstagedKeys(items, modified, staged)), ['general.x']);
-});
-
 test('search skips hidden and other-compositor entries and tells duplicates apart', () => {
     const cats = [{
         id: 'c', title: 't', icon: 'x', sections: [
@@ -111,4 +102,14 @@ test('wallpaper defaults come from one source', () => {
     assert.equal(Defaults.get('wallpaper.matugenScheme'), WallpaperDefaults.MATUGEN_SCHEME);
     assert.equal(Defaults.get('wallpaper.activeColorPreset'), WallpaperDefaults.ACTIVE_COLOR_PRESET);
     assert.equal(Defaults.get('wallpaper.wallPath'), undefined);
+});
+
+test('Ui.on connects a runtime object\'s signal, or says it cannot', () => {
+    const seen = [];
+    const sig = { connect: fn => seen.push(fn) };
+    const fn = () => 1;
+    assert.equal(Ui.on({ closed: sig }, 'closed', fn), true);
+    assert.equal(seen[0], fn);
+    assert.equal(Ui.on({}, 'closed', fn), false);
+    assert.equal(Ui.on(null, 'closed', fn), false);
 });

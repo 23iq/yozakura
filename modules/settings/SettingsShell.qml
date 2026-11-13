@@ -8,60 +8,101 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import qs.modules.settings.store
-import qs.modules.settings.presets
 import "schema/Categories.js" as Categories
 import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
+import "Registry.js" as Registry
 
-// Settings window content: sidebar (groups, search) + the current page
-// (SettingsPageHost: a fresh, asynchronously built page per category).
+// Settings window content, the "showcase" frame: a home screen
+// (SettingsHome: search + a bento of live tiles + pills) and, once a
+// destination is opened, its page - the tile expands into it (a shared
+// element: a box grows from the tile to the window while the page fades
+// in) - with only a back pill, the title and the tabs as chrome
+// (DestinationHeader) over the page (SettingsPageHost: built on first
+// visit, kept alive). Esc, the back pill, the mouse back button and
+// Alt+Left return home (the page collapses back into its tile). Every
+// change applies at once; Ctrl+Z / Ctrl+Shift+Z undo / redo it (UndoPill).
 Item {
     id: shell
 
     property string currentCategory: ""
-    readonly property bool compact: width < 860
-    // Compact: the icon rail has no search field. Ctrl+F or the rail's search
-    // button slides the full sidebar over the page until a pick or Escape.
-    property bool searchOpen: false
-    readonly property bool railed: compact && !searchOpen
-    readonly property real railWidth: 76
-    readonly property real sidebarWidth: 264
-    // 0..1: how far the compact search sidebar is slid out. Only this
-    // animates; the rail <-> full sidebar switch that follows the window
-    // width (first layout at width 0, a resize, a tiling configure) is
-    // immediate, never a sidebar growing over the page while it opens.
-    property real searchSlide: searchOpen ? 1 : 0
-    Behavior on searchSlide {
-        enabled: Config.animDuration > 0
+    property bool atHome: true
+    // 0 = home, 1 = page fully open (animated).
+    property real reveal: atHome ? 0 : 1
+    // Where the page grows from / shrinks back to (a home tile), in shell
+    // coordinates; null: from the middle.
+    property var origin: null
+    property var pendingReveal: null
+    // The active preset's changes sheet is open (home footer, toast).
+    property bool changesOpen: false
+    // The preset overlays (edit banner, trial pill, toast, changes sheet,
+    // name dialog) are loaded by URL once home has shown its first frame
+    // (or a page is open): none is on the first frame, their compile was.
+    readonly property bool overlaysReady: homeView.warm || !shell.atHome
+    readonly property alias home: homeView
+    // Off until the first frame: a deep link opens straight on its page.
+    property bool animated: false
+
+    // A whole-window morph (the morph token, not a glide: a short glide
+    // reads as a flash at this size), decelerating so it lands softly.
+    Behavior on reveal {
+        enabled: shell.animated && Motion.morph.duration > 0
         NumberAnimation {
             duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
-    function openSearch() {
-        if (compact)
-            searchOpen = true;
-        Qt.callLater(sidebar.focusSearch);
-    }
-    property var pendingReveal: null
 
-    // Accepts a category id or a sidebar group id (Categories.resolve).
-    // The page is rebuilt here, after the category is known: a handler on
-    // currentCategory would run before the bindings that follow it and
-    // build the old page once more.
+    // Accepts a category id, a moved id or a destination id
+    // (Categories.resolve); opens its page (a tab of the same destination
+    // slides in from its side).
     function select(id) {
         const c = Categories.resolve(id);
         if (!c)
             return;
-        const changed = c.id !== currentCategory || !page.category;
+        const changed = c.id !== currentCategory || !page.item;
+        const tabs = Categories.tabsOf(c.id);
+        const from = tabs.findIndex(t => t.id === currentCategory);
+        const to = tabs.findIndex(t => t.id === c.id);
+        page.direction = !shell.atHome && from >= 0 && to >= 0 && from !== to ? (to > from ? 1 : -1) : 0;
         currentCategory = c.id;
-        searchOpen = false;
         GlobalStates.settingsCategory = c.id;
-        if (changed) {
-            // Rows a search revealed in the Simple view fold back away.
-            SettingsStore.clearRevealed();
+        if (changed)
             page.load(c);
+        shell.atHome = false;
+    }
+
+    // A home tile (or pill) opens its destination's first tab, growing
+    // out of the tile.
+    function openDestination(id, from) {
+        const g = Categories.groupById(id);
+        if (!g)
+            return;
+        if (from) {
+            const p = from.mapToItem(shell, 0, 0);
+            shell.origin = {
+                "x": p.x,
+                "y": p.y,
+                "w": from.width,
+                "h": from.height
+            };
+        } else {
+            shell.origin = null;
         }
+        select(g.categories[0]);
+    }
+
+    function goHome() {
+        if (shell.atHome)
+            return;
+        shell.atHome = true;
+        GlobalStates.settingsCategory = "";
+        homeView.forceActiveFocus();
+    }
+
+    function openSearch() {
+        goHome();
+        Qt.callLater(homeView.focusSearch);
     }
 
     function navigate(categoryId, sectionId, entryId) {
@@ -70,22 +111,21 @@ Item {
             "entry": entryId || ""
         };
         const c = Categories.resolve(categoryId);
-        if (c && c.id === currentCategory && page.status === Loader.Ready)
+        if (c && c.id === currentCategory && page.item && !shell.atHome)
             revealTimer.restart();
         else
             select(categoryId);
     }
 
-    // The active preset's actions (sidebar footer, changes sheet, toast).
-    // Staged edits are written first, so the preset gets what the user sees.
+    // The active preset's actions (home footer, changes sheet, toast).
     function presetAction(id) {
         const toast = (ok, message, undo) => PresetStudio.notify(message, undo ? "save:" + undo : "");
         if (id === "save")
             PresetStudio.afterFlush(() => PresetStatusService.save(toast));
         else if (id === "saveAs")
-            saveAsDialog.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
+            Ui.invoke(saveAsDialog.item, "ask", [I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast))]);
         else if (id === "changes")
-            changesSheet.open = true;
+            shell.changesOpen = true;
         else if (id === "revert")
             PresetStatusService.revert(toast);
     }
@@ -102,15 +142,30 @@ Item {
     Connections {
         target: GlobalStates
         function onSettingsCategoryChanged() {
-            if (GlobalStates.settingsCategory && GlobalStates.settingsCategory !== shell.currentCategory)
+            if (GlobalStates.settingsCategory && (GlobalStates.settingsCategory !== shell.currentCategory || shell.atHome))
                 shell.select(GlobalStates.settingsCategory);
+        }
+        // a plain open after a close starts at home
+        function onSettingsWindowVisibleChanged() {
+            if (!GlobalStates.settingsWindowVisible) {
+                // the next open (maybe a deep link) starts without motion
+                shell.animated = false;
+                shell.atHome = true;
+                GlobalStates.settingsCategory = "";
+            } else {
+                Qt.callLater(() => shell.animated = true);
+            }
         }
     }
 
     Component.onCompleted: {
         // A preset trial or edit outlives the window: bring back its pill/banner.
         PresetStudio.refreshSessions();
-        select(Categories.resolve(GlobalStates.settingsCategory) ? GlobalStates.settingsCategory : "appearance");
+        if (Categories.resolve(GlobalStates.settingsCategory))
+            select(GlobalStates.settingsCategory);
+        else
+            homeView.forceActiveFocus();
+        Qt.callLater(() => shell.animated = true);
     }
 
     Connections {
@@ -125,14 +180,16 @@ Item {
         onActivated: shell.openSearch()
     }
     Shortcut {
-        sequences: [StandardKey.Cancel]
-        enabled: shell.searchOpen
-        onActivated: shell.searchOpen = false
+        sequences: ["Alt+Left"]
+        onActivated: shell.goHome()
     }
     Shortcut {
-        sequences: [StandardKey.Save]
-        enabled: SettingsStore.hasChanges
-        onActivated: SettingsStore.apply()
+        sequences: ["Ctrl+Z"]
+        onActivated: SettingsStore.undo()
+    }
+    Shortcut {
+        sequences: ["Ctrl+Shift+Z", "Ctrl+Y"]
+        onActivated: SettingsStore.redo()
     }
     Shortcut {
         sequences: ["Ctrl+PgDown", "Ctrl+Tab"]
@@ -142,197 +199,188 @@ Item {
         sequences: ["Ctrl+PgUp", "Ctrl+Shift+Tab"]
         onActivated: shell.step(-1)
     }
+    // Esc returns home when nothing inside took it (a search field clears
+    // itself first, a popup closes first).
+    Keys.onEscapePressed: shell.goHome()
 
-    // Window background: the theme's "bg" surface, or the language's
-    // translucent window fill (glass) over the desktop.
-    StyledRect {
+    // Window background: the wallpaper, blurred, darkened and vignetted
+    // (kit Ambient), so the window carries the desktop's colour; plain on
+    // battery saver.
+    Ambient {
+        objectName: "windowAmbient"
         anchors.fill: parent
-        visible: !Look.windowTranslucent
-        variant: "bg"
-        glassSurface: "settings"
-        radius: 0
-        enableBorder: false
+        // the wallpaper after the first frame (decode + blur cost it; it fades in)
+        source: homeView.warm ? SettingsStore.wallpaper : ""
+        plain: Config.performance.batterySaver === true
+        // full on home and on the tabs about the desktop; quiet on the
+        // others (the backdrop, not content)
+        strength: Look.ambientStrength * (shell.atHome || !!Registry.DESKTOP_STAGES[shell.currentCategory] ? 1 : 0.3)
     }
-    Rectangle {
-        objectName: "windowGlass"
+
+    // The mouse back button returns home.
+    MouseArea {
         anchors.fill: parent
-        visible: Look.windowTranslucent
-        color: Look.windowFill
+        acceptedButtons: Qt.BackButton
+        onClicked: shell.goHome()
     }
 
-    // Sidebar plane: the language's group fill (ink: none), and a hairline
-    // against the page.
-    Rectangle {
-        id: sidebarBg
-        z: shell.searchOpen ? 5 : 0
-        width: sidebar.width
-        height: parent.height
-        color: Look.groupFill
-
-        Divider {
-            anchors.right: parent.right
-            vertical: true
-            height: parent.height
-        }
+    Loader {
+        id: editBanner
+        width: parent.width
+        z: 5
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetEditBanner.qml")
     }
 
-    SettingsSidebar {
-        id: sidebar
-        objectName: "settingsSidebar"
-        z: shell.searchOpen ? 6 : 0
-        width: shell.compact ? shell.railWidth + (shell.sidebarWidth - shell.railWidth) * shell.searchSlide : shell.sidebarWidth
-        height: parent.height
-        compact: shell.railed
-        currentCategory: shell.currentCategory
-        onCategorySelected: id => shell.select(id)
-        onResultActivated: r => {
-            shell.searchOpen = false;
-            shell.navigate(r.categoryId, r.sectionId, r.entryId);
-        }
+    SettingsHome {
+        id: homeView
+        objectName: "settingsHome"
+        y: editBanner.height
+        width: parent.width
+        height: parent.height - y
+        visible: shell.reveal < 1
+        enabled: shell.atHome
+        focus: shell.atHome
+        // gone under the growing card early: never two screens at once
+        opacity: Math.max(0, 1 - shell.reveal / 0.35)
+        scale: 1 - Math.min(1, shell.reveal / 0.35) * 0.03
+        onDestinationOpened: (id, tile) => shell.openDestination(id, tile)
+        onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
         onPresetAction: id => shell.presetAction(id)
+        wantIndex: shell.changesOpen
     }
 
-    // The rail's search button (the field itself needs the wide sidebar).
-    IconButton {
-        objectName: "railSearch"
-        visible: shell.railed
-        size: "s"
-        icon: Icons.magnifyingGlass
-        x: (shell.railWidth - width) / 2
-        y: sidebar.height - height - Space.l
-        onClicked: shell.openSearch()
-    }
-
-    Item {
-        id: content
-        anchors.left: parent.left
-        anchors.leftMargin: shell.compact ? shell.railWidth : sidebar.width
-        anchors.right: parent.right
-        height: parent.height
-        clip: true
-
-        // Click outside the opened search sidebar closes it.
-        MouseArea {
-            anchors.fill: parent
-            z: 4
-            enabled: shell.searchOpen
-            visible: shell.searchOpen
-            onClicked: shell.searchOpen = false
+    // The shared element: a box growing from the tile to the window.
+    Mark {
+        readonly property var o: shell.origin || {
+            "x": shell.width * 0.4,
+            "y": shell.height * 0.4,
+            "w": shell.width * 0.2,
+            "h": shell.height * 0.2
         }
+        readonly property real t: shell.reveal
+        visible: t > 0 && t < 1
+        x: o.x * (1 - t)
+        y: o.y * (1 - t)
+        width: o.w + (shell.width - o.w) * t
+        height: o.h + (shell.height - o.h) * t
+        radius: Look.bigRadius(Space.controlXL) * (1 - t)
+        // opaque (a translucent box over a fading home and a fading page
+        // was three layers at once): the window's own ground, then it
+        // gives way to the page in the last third
+        readonly property color ground: Look.cardFill(false)
+        color: Qt.rgba(ground.r, ground.g, ground.b, 1)
+        opacity: t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3)
+    }
 
-        PresetEditBanner {
-            id: editBanner
-            width: parent.width
-            z: 2
+    FocusScope {
+        id: pageView
+        objectName: "settingsPageView"
+        y: editBanner.height
+        width: parent.width
+        height: parent.height - y
+        visible: shell.reveal > 0
+        enabled: !shell.atHome
+        focus: !shell.atHome
+        // the page arrives once the card has grown and the page is laid
+        // out (it never reflows in view)
+        opacity: page.pageReady ? Math.max(0, (shell.reveal - 0.6) / 0.4) : 0
+
+        DestinationHeader {
+            id: header
+            objectName: "destinationHeader"
+            x: Space.xl
+            y: Space.l
+            width: parent.width - Space.xl * 2
+            category: page.category
+            onTabSelected: id => shell.select(id)
+            onBack: shell.goHome()
         }
 
         SettingsPageHost {
             id: page
             objectName: "settingsPage"
-            y: editBanner.height
+            y: header.y + header.height + Space.m
             width: parent.width
-            height: parent.height - editBanner.height
+            height: parent.height - y
             onLoaded: {
                 if (shell.pendingReveal)
                     revealTimer.restart();
             }
         }
 
-        ChangesBar {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
-        }
-
-        PresetTrialPill {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: editBanner.height + 16
-            z: 3
-        }
-
-        PresetToast {
-            anchors.left: parent.left
-            anchors.leftMargin: 22
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
-            z: 3
-            onDetailsRequested: shell.presetAction("changes")
+        // once the page scrolls, a hairline under the header: cards slide
+        // under a clear edge instead of being cut mid-heading
+        Mark {
+            objectName: "headerEdge"
+            x: Space.xl
+            y: page.y - Space.xs
+            width: parent.width - Space.xl * 2
+            height: Space.hairline
+            radius: 0
+            color: Type.hairline
+            opacity: (Ui.prop(page.item, "contentY") || 0) > Space.s ? 1 : 0
+            Behavior on opacity {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
         }
     }
 
-    PresetChangesSheet {
+    UndoPill {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Space.xl
+        z: 6
+    }
+
+    Loader {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: editBanner.height + Space.l
+        z: 6
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetTrialPill.qml")
+    }
+
+    Loader {
+        anchors.left: parent.left
+        anchors.leftMargin: Space.xl
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Space.xl
+        z: 6
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetToast.qml")
+        onLoaded: Ui.on(item, "detailsRequested", () => shell.presetAction("changes"))
+    }
+
+    Loader {
         id: changesSheet
-        objectName: "presetChangesSheet"
         anchors.fill: parent
-        index: sidebar.index
-        onClosed: open = false
-        onActionRequested: id => shell.presetAction(id)
-        onNavigate: (c, s, e) => shell.navigate(c, s, e)
-    }
-
-    PresetNameDialog {
-        id: saveAsDialog
-    }
-
-    // Closing the window with unsaved staged changes asks first
-    // (SettingsWindow keeps the window and raises settingsCloseConfirm).
-    ConfirmSheet {
-        id: closeConfirm
-        anchors.fill: parent
-        open: GlobalStates.settingsCloseConfirm && SettingsStore.hasChanges
-        title: I18n.t("prefs.close.title")
-        body: I18n.t("prefs.close.body")
-        actions: [
-            {
-                "id": "keep",
-                "text": I18n.t("prefs.close.keep"),
-                "kind": "ghost"
-            },
-            {
-                "id": "discard",
-                "text": I18n.t("prefs.changes.discard"),
-                "kind": "tonal"
-            },
-            {
-                "id": "apply",
-                "text": I18n.t("prefs.changes.apply"),
-                "kind": "filled"
-            }
-        ]
-        onDismissed: GlobalStates.settingsCloseConfirm = false
-        onChosen: id => {
-            GlobalStates.settingsCloseConfirm = false;
-            if (id === "keep")
-                return;
-            if (id === "apply")
-                SettingsStore.apply();
-            else
-                SettingsStore.discard();
-            GlobalStates.settingsWindowVisible = false;
+        z: 7
+        active: shell.overlaysReady || shell.changesOpen
+        asynchronous: !shell.changesOpen
+        source: Qt.resolvedUrl("presets/PresetChangesSheet.qml")
+        onLoaded: {
+            item.open = Qt.binding(() => shell.changesOpen);
+            item.index = Qt.binding(() => homeView.index);
+            Ui.on(item, "closed", () => shell.changesOpen = false);
+            Ui.on(item, "actionRequested", id => shell.presetAction(id));
+            Ui.on(item, "navigate", (c, sec, e) => shell.navigate(c, sec, e));
         }
     }
 
-    // Reset page / section over settings that save at once (no Apply /
-    // Discard covers them): ask before applying the defaults.
-    ConfirmSheet {
+    Loader {
+        id: saveAsDialog
         anchors.fill: parent
-        open: SettingsStore.pendingReset !== null
-        title: I18n.t("prefs.reset.title")
-        body: I18n.t("prefs.reset.body", SettingsStore.pendingResetCount)
-        actions: [
-            {
-                "id": "cancel",
-                "text": I18n.t("common.cancel"),
-                "kind": "ghost"
-            },
-            {
-                "id": "reset",
-                "text": I18n.t("prefs.common.reset"),
-                "kind": "filled"
-            }
-        ]
-        onDismissed: SettingsStore.cancelReset()
-        onChosen: id => id === "reset" ? SettingsStore.confirmReset() : SettingsStore.cancelReset()
+        z: 50
+        active: shell.overlaysReady
+        asynchronous: true
+        source: Qt.resolvedUrl("presets/PresetNameDialog.qml")
     }
 
     // Reveal after the page laid out.

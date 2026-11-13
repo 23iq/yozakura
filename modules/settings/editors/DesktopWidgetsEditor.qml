@@ -78,7 +78,7 @@ ColumnLayout {
             objectName: "widgetsEditMode"
             kind: DesktopWidgets.editMode ? "filled" : "tonal"
             icon: DesktopWidgets.editMode ? "accept" : "arrowsOutCardinal"
-            text: DesktopWidgets.editMode ? I18n.t("desktop.widgets.done") : I18n.t("desktop.widgets.edit")
+            text: DesktopWidgets.editMode ? I18n.t("desktop.widgets.done") : I18n.t("prefs.desktop.arrange_on_desktop")
             onClicked: DesktopWidgets.toggleEditMode()
         }
 

@@ -9,8 +9,21 @@ Uses tests/lib/settings_env.py with your real config (~/.config/yozakura),
 palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
+`home` renders the home screen (with `--search` a query in its field).
+`--devices` gives the device pages (Power, Displays, Keys, Network,
+Bluetooth, Sound) a believable world to show (tests/lib/device_fixtures.py).
+Colours: with `--wallpaper` the palette is derived from that image (matugen,
+or without it `wallpaper_palette.py`, which needs the `materialyoucolor`
+package), so the proof's wallpaper and colours belong together; light mode
+likewise; without either the fixed rose palette. `--palette default` forces
+the rose palette (it belongs with assets/wallpapers_example/wallpaper-01.png
+and wallpaper-06.png, the art direction's pairing).
 `--set theme.surfaceEffect='"crt"'` overrides a config key for the render
-(value parsed as JSON, plain strings allowed). `--languages` renders each visual
+(value parsed as JSON, plain strings allowed). `--wallpaper PATH` uses that
+image as the wallpaper (e.g. assets/wallpapers_example/wallpaper-03.png on a
+machine without one). `--hover ENTRY` puts the pointer on a row (its stage
+part lights up), `--undo` changes nothing but shows the undo pill as after
+a change, `--tab ID` opens that tab (any category id works as before). `--languages` renders each visual
 language (theme.language) over the current wallpaper. Writes
 <out>/<category>-<mode>.png, or <out>/settings-<category>-<language>[-light].png
 with --languages.
@@ -19,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -30,10 +44,28 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window as QQuickWindow)
+from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import wallpaper_palette  # noqa: E402
+
 CACHE = Path.home() / ".cache" / "yozakura"
+
+# Light counterpart of DEFAULT_PALETTE (the same rose seed), used for light
+# renders on a machine without matugen.
+LIGHT_PALETTE = {
+    "background": "#fff8f7", "surface": "#fff8f7", "surfaceDim": "#e8d6d6", "surfaceBright": "#fff8f7",
+    "surfaceContainerLowest": "#ffffff", "surfaceContainerLow": "#fff0f0", "surfaceContainer": "#fceaea",
+    "surfaceContainerHigh": "#f6e4e4", "surfaceContainerHighest": "#f0dede", "surfaceVariant": "#f4dddd",
+    "primary": "#8f4a51", "overPrimary": "#ffffff", "primaryContainer": "#ffdadb", "overPrimaryContainer": "#3b0811",
+    "secondary": "#765657", "overSecondary": "#ffffff", "secondaryContainer": "#ffdadb",
+    "overSecondaryContainer": "#2c1516", "tertiary": "#775a2f", "overTertiary": "#ffffff",
+    "tertiaryContainer": "#ffddb5", "overTertiaryContainer": "#2a1800", "overBackground": "#22191a",
+    "overSurface": "#22191a", "overSurfaceVariant": "#524344", "outline": "#857374", "outlineVariant": "#d7c1c2",
+    "error": "#ba1a1a", "overError": "#ffffff", "shadow": "#000000",
+}
 
 
 def camel(role: str) -> str:
@@ -61,6 +93,37 @@ def wallpaper_state() -> dict:
             "thumbs": thumbs, "presets": []}
 
 
+def preset_listing() -> str:
+    """`preset list --json` of the built app (./yozakura, `make build`), or ""."""
+    app = REPO / "yozakura"
+    if not app.exists():
+        return ""
+    r = subprocess.run([str(app), "preset", "list", "--json"], capture_output=True, text=True, timeout=60)
+    return r.stdout if r.returncode == 0 else ""
+
+
+def library_thumbs(paths: list, out: Path) -> dict:
+    """Small thumbnails of the library, like the wallpaper manager's cache
+    (the window shows those, never the full pictures): without them a render
+    decodes every full-size picture at once and catches them half loaded."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return {}
+    folder = out / ".thumbs"
+    folder.mkdir(parents=True, exist_ok=True)
+    thumbs = {}
+    for p in paths:
+        t = folder / (Path(p).name + ".jpg")
+        if not t.exists() or t.stat().st_mtime < Path(p).stat().st_mtime:
+            with Image.open(p) as im:
+                im = im.convert("RGB")
+                im.thumbnail((1280, 1280))
+                im.save(t, quality=88)
+        thumbs[p] = str(t)
+    return thumbs
+
+
 def color_source(state: dict) -> str:
     cur = state.get("current", "")
     if cur and Path(cur).suffix.lower() in (".mp4", ".webm", ".mkv", ".mov", ".gif"):
@@ -80,24 +143,31 @@ def seed_palette(mode: str, seed: str) -> dict:
     return out
 
 
-def palette(mode: str, state: dict, seed: str = "") -> dict:
+def palette(mode: str, state: dict, seed: str = "", from_wallpaper: bool = False) -> dict:
+    """The palette of a render. `from_wallpaper`: derived from the render's
+    wallpaper (so the two belong together), by matugen or, without it, by
+    wallpaper_palette.py; otherwise the user's current colors."""
+    src = color_source(state)
+    if not shutil.which("matugen"):
+        if src and not seed and wallpaper_palette.available():
+            return {**(DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE), **wallpaper_palette.palette(src, mode)}
+        return DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE
     if seed:
         return seed_palette(mode, seed)
-    if mode == "dark":
+    if mode == "dark" and not from_wallpaper:
         try:
             return json.loads((CACHE / "colors.json").read_text())
         except (OSError, ValueError):
             return DEFAULT_PALETTE
-    src = color_source(state)
     if not src:
         return DEFAULT_PALETTE
-    r = subprocess.run(["matugen", "image", src, "--dry-run", "-q", "-j", "hex", "-m", "light",
+    r = subprocess.run(["matugen", "image", src, "--dry-run", "-q", "-j", "hex", "-m", mode,
                         "--source-color-index", "0"], capture_output=True, text=True)
     if r.returncode != 0:
         return DEFAULT_PALETTE
     colors = json.loads(r.stdout)["colors"]
     out = dict(DEFAULT_PALETTE)
-    out.update({camel(k): v["light"]["color"] for k, v in colors.items() if "light" in v})
+    out.update({camel(k): v[mode]["color"] for k, v in colors.items() if mode in v})
     return out
 
 
@@ -105,6 +175,8 @@ def scheme_palettes(state: dict) -> dict:
     src = color_source(state)
     if not src:
         return {}
+    if not shutil.which("matugen"):
+        return wallpaper_palette.scheme_previews(src) if wallpaper_palette.available() else {}
     binary = REPO / ".cache" / "render" / "yozakura"
     binary.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["go", "build", "-o", str(binary), "./cmd/yozakura"], cwd=REPO / "backend", check=True)
@@ -153,11 +225,25 @@ def main() -> int:
                     help="evaluate EXPR on the named item after the page loads (e.g. open a popup)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
+    ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
+    ap.add_argument("--hover", default="", metavar="ENTRY", help="hover the row of this entry id")
+    ap.add_argument("--undo", action="store_true", help="show the undo pill (as after a change)")
+    ap.add_argument("--devices", action="store_true",
+                    help="believable device state (battery, monitors, networks, audio: tests/lib/device_fixtures.py)")
+    ap.add_argument("--palette", default="wallpaper", choices=["wallpaper", "default"],
+                    help="colours from the wallpaper (default) or the fixed rose palette")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
+    if args.wallpaper:
+        wp = str(Path(args.wallpaper).resolve())
+        # the library: every picture of the wallpaper's folder
+        library = sorted(str(p) for p in Path(wp).parent.iterdir()
+                         if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")) or [wp]
+        state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": library,
+                 "current": wp, "thumbs": library_thumbs(library, out), "presets": []}
     schemes = scheme_palettes(state)
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
     langs = [x for x in args.languages.split(",") if x] or [""]
@@ -174,8 +260,11 @@ def render(lang: str, mode: str, args, size: tuple, state: dict, schemes: dict, 
     extra["theme"] = {**extra.get("theme", {}), "lightMode": mode == "light"}
     if lang:
         extra["theme"]["language"] = lang
-    env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=palette(mode, state), user_config=True,
-                      overrides=extra, wallpaper=state)
+    colors = (DEFAULT_PALETTE if mode == "dark" else LIGHT_PALETTE) if args.palette == "default" \
+        else palette(mode, state, from_wallpaper=bool(args.wallpaper))
+    env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=colors,
+                      user_config=True,
+                      overrides=extra, wallpaper=state, devices=args.devices)
     backdrop = json.dumps(("file://" + wall) if wall and lang else "")
     win = env.load(f"""
 import QtQuick
@@ -190,24 +279,52 @@ Window {{
     shell = env.h.find(win, "shell")
     env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
+    listing = preset_listing() if args.devices else ""
+    if listing:
+        # the preset studio lists the presets the built app finds (the
+        # harness runs no processes)
+        env.h.eval(shell, "PresetStudio.runner = function (args, cb) { if (args[0] === 'list') cb(true, "
+                   + json.dumps(listing) + ", ''); else cb(false, '', ''); }")
     for cat in args.categories:
         cat = cat.lower()
-        env.h.eval(shell, 'currentCategory = ""')
-        env.h.eval(shell, f"select({json.dumps(cat)})")
-        if not env.h.eval(shell, "currentCategory"):
-            raise SystemExit(f"unknown settings category: {cat!r}")
+        if cat == "home":
+            env.h.eval(shell, "goHome()")
+        else:
+            env.h.eval(shell, 'currentCategory = ""')
+            env.h.eval(shell, f"select({json.dumps(cat)})")
+            if not env.h.eval(shell, "currentCategory"):
+                raise SystemExit(f"unknown settings category: {cat!r}")
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)
+        if cat == "presets":
+            # `preset list` runs the app binary (YOZAKURA_BIN), then the
+            # strip draws each preset
+            QTest.qWait(5000)
+        if cat == "lockscreen":
+            # the style gallery pictures one style at a time
+            QTest.qWait(9000)
+        # the pointer rests on the brand, not on a row (a hovered row
+        # lights its stage part)
+        QTest.mouseMove(win, QPoint(w - 2, 2))
+        QTest.mouseMove(win, QPoint(4, 4))
+        QTest.qWait(150)
         if args.scroll:
             page = env.h.find(win, "settingsPage").property("item")
             page.setProperty("contentY", args.scroll)
             QTest.qWait(300)
+        if args.hover:
+            env.h.eval(shell, f"SettingsStore.focusKeys = {json.dumps(args.hover.split(','))}")
+            QTest.qWait(300)
+        if args.undo:
+            env.h.eval(shell, 'SettingsStore._announce(SettingsStore.labelIndex["theme.roundness"] || "", "changed")')
+            QTest.qWait(700)
         if args.eval:
             name, _, expr = args.eval.partition(":")
             env.h.eval(find_visual(win.contentItem(), name), expr)
             QTest.qWait(700)
-        suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "")
+        suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "") \
+            + ("-hover" if args.hover else "") + ("-undo" if args.undo else "")
         if lang:
             path = out / f"settings-{cat}{suffix}-{lang}{'' if mode == 'dark' else '-light'}.png"
         else:

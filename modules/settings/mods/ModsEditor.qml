@@ -1,12 +1,11 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
+import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.settings
+import qs.modules.settings.stages
 import "ModsModel.js" as ModsModel
-import "../Ui.js" as Ui
 import qs.modules.components.kit
 
 // Settings > Mods: the mods master switch and version-check bypass, install
@@ -14,8 +13,10 @@ import qs.modules.components.kit
 // the selected mod's details and settings, rebuild / restart / rollback of
 // the generation. Every action goes through ModsService; installing and
 // enabling ask for the trust confirmation first.
-Item {
+FittedFrame {
     id: page
+    listForm: true
+    hasHint: false
 
     required property var category
 
@@ -85,46 +86,92 @@ Item {
         onTriggered: ModsService.refresh()
     }
 
-    Flickable {
-        id: flick
-        anchors.fill: parent
-        contentWidth: width
-        contentHeight: column.implicitHeight + 120
-        clip: true
-        interactive: page.confirmKind === ""
-        boundsBehavior: Flickable.StopAtBounds
-        flickableDirection: Flickable.VerticalFlick
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-        }
+    // The list form of the page template: a short band (the master switch,
+    // how many mods are on, the generation, rebuild / refresh / roll back)
+    // over one row of tall cards: the installed mods (search, sort, drag to
+    // reorder), the selected mod's details and settings, and adding a mod
+    // (package source, the version-check bypass). Each card scrolls inside.
+    readonly property var mods: ModsService.mods ?? []
+    readonly property int onCount: page.mods.filter(m => m.enabled).length
 
-        Column {
-            id: column
-            width: Math.min(flick.width - 64, 820)
-            x: (flick.width - width) / 2
-            y: 36
-            spacing: Space.xxl
+    Item {
+        id: hero
+        objectName: "pageHero"
+        x: page.margin
+        y: Space.s
+        width: page.width - page.margin * 2
+        height: page.bandH
 
-            PageHeader {
-                width: parent.width
-                category: page.category
+        Stage {
+            id: band
+            calm: true
+            objectName: "pageStage"
+            anchors.fill: parent
+            stageHeight: page.bandH
+
+            RectangularShadow {
+                z: -1
+                anchors.fill: parent
+                radius: Look.radius("surface", parent.height)
+                offset: Qt.vector2d(0, Space.m)
+                blur: Space.xxl
+                color: Qt.alpha(Colors.shadow, 0.45)
+            }
+            Row {
+                x: Space.xl
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Space.l
+
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: Icons.puzzlePiece
+                    size: Math.round(band.height * 0.36)
+                    tone: ModsService.modsEnabled ? "accent" : "muted"
+                }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Space.xs
+                    Row {
+                        spacing: Space.m
+                        KitText {
+                            anchors.verticalCenter: parent.verticalCenter
+                            role: "title"
+                            text: I18n.t("mods.band_count", page.onCount, page.mods.length)
+                        }
+                        Switch {
+                            objectName: "modsMasterSwitch"
+                            anchors.verticalCenter: parent.verticalCenter
+                            checked: ModsService.modsEnabled
+                            Accessible.name: I18n.t("mods.toggle_title")
+                            onToggled: value => ModsService.setModsEnabled(value)
+                        }
+                    }
+                    KitText {
+                        role: "caption"
+                        text: (ModsService.busy ? I18n.t("mods.working") + " · " : "") + I18n.t("mods.base") + " " + (ModsService.baseVersion || I18n.t("mods.unknown")) + (ModsService.baseRevision ? " · " + ModsModel.shortRevision(ModsService.baseRevision) : "") + " · " + I18n.t("mods.active") + " " + (ModsService.activeGeneration || "base")
+                        font.family: Config.theme.monoFont
+                        color: Type.secondary
+                        elide: Text.ElideMiddle
+                    }
+                }
             }
 
             Column {
-                width: parent.width
-                spacing: Metrics.spacing + 4
-
-                RowLayout {
-                    width: parent.width
-                    spacing: Metrics.spacing
-
-                    KitText {
-                        role: "secondary"
-                        Layout.fillWidth: true
-                        text: ModsService.busy ? I18n.t("mods.working") : ""
-                        elide: Text.ElideRight
+                anchors.right: parent.right
+                anchors.rightMargin: Space.xl
+                anchors.verticalCenter: parent.verticalCenter
+                width: Space.px(300)
+                spacing: Space.s
+                Row {
+                    anchors.right: parent.right
+                    spacing: Space.s
+                    PillButton {
+                        visible: ModsService.previousGeneration !== ""
+                        kind: "ghost"
+                        text: I18n.t("mods.rollback")
+                        enabled: !ModsService.busy
+                        onClicked: ModsService.rollback()
                     }
-
                     PillButton {
                         kind: "ghost"
                         icon: "arrowCounterClockwise"
@@ -132,7 +179,6 @@ Item {
                         enabled: !ModsService.busy
                         onClicked: ModsService.refresh()
                     }
-
                     PillButton {
                         icon: "arrowsClockwise"
                         text: I18n.t("mods.rebuild")
@@ -140,46 +186,45 @@ Item {
                         onClicked: ModsService.rebuild()
                     }
                 }
-
-                ModsStatusBanner {
-                    objectName: "modsBanner"
-                    width: parent.width
-                }
-            }
-
-            ModsCard {
-                width: parent.width
-
+                // a mod built for another base version: ask first, turning
+                // the check back on is free (the tooltip says what it does)
                 ModsSwitchRow {
-                    title: I18n.t("mods.toggle_title")
-                    description: I18n.t("mods.toggle_description")
-                    checked: ModsService.modsEnabled
-                    onToggled: value => ModsService.setModsEnabled(value)
-                }
-
-                Divider {
+                    objectName: "modsBypass"
                     width: parent.width
-                }
-
-                ModsSwitchRow {
                     title: I18n.t("mods.bypass_title")
-                    description: I18n.t("mods.bypass_description")
                     checked: ModsService.bypassVersionCheck
-                    // turning the check off lets a mod built for another base
-                    // version in: ask first, turning it back on is free
                     onToggled: value => value ? page.askConfirm("bypass", null, "") : ModsService.setBypassVersionCheck(false)
+                    Tooltip {
+                        text: I18n.t("mods.bypass_description")
+                        shown: bypassHover.hovered
+                    }
+                    HoverHandler {
+                        id: bypassHover
+                    }
                 }
             }
+        }
+    }
 
-            ModsCard {
+    // the row: the list (and adding a mod under it), the selected mod
+    Item {
+        id: row
+        x: page.margin
+        y: hero.y + hero.height + page.gap
+        width: page.width - page.margin * 2
+        height: page.height - y - Space.l
+
+        TallCard {
+            id: listCard
+            objectName: "settingsSection:mods_list"
+            height: row.height
+            scrollable: page.confirmKind === ""
+            width: Math.round((row.width - page.gap) / 2)
+
+            ModsStatusBanner {
+                objectName: "modsBanner"
                 width: parent.width
-                title: I18n.t("mods.package_source")
-
-                ModsInstallSource {
-                    onInstallRequested: source => page.askConfirm("install", null, source)
-                }
             }
-
             ModsList {
                 objectName: "modsList"
                 width: parent.width
@@ -187,6 +232,27 @@ Item {
                 onSelectRequested: id => page.selectedId = id
                 onToggleRequested: mod => page.toggle(mod)
             }
+            Divider {
+                width: parent.width
+            }
+            KitText {
+                width: parent.width
+                role: "title"
+                text: I18n.t("mods.package_source")
+            }
+            ModsInstallSource {
+                width: parent.width
+                onInstallRequested: source => page.askConfirm("install", null, source)
+            }
+        }
+
+        TallCard {
+            id: detailsCard
+            objectName: "settingsSection:mods_details"
+            height: row.height
+            scrollable: page.confirmKind === ""
+            x: listCard.width + page.gap
+            width: row.width - x
 
             ModsDetails {
                 objectName: "modsDetails"
@@ -195,26 +261,59 @@ Item {
                 mod: page.selectedMod
                 onEnableRequested: page.askConfirm("enable", page.selectedMod, page.selectedMod.source ?? "")
             }
-
-            RowLayout {
+            KitText {
                 width: parent.width
-                spacing: Metrics.spacing
+                visible: !page.selectedMod
+                role: "secondary"
+                wrapMode: Text.WordWrap
+                text: I18n.t("mods.none_selected")
+            }
+        }
+    }
 
-                KitText {
-                    role: "caption"
-                    Layout.fillWidth: true
-                    text: I18n.t("mods.base") + " " + (ModsService.baseVersion || I18n.t("mods.unknown")) + (ModsService.baseRevision ? " · " + ModsModel.shortRevision(ModsService.baseRevision) : "") + " · " + I18n.t("mods.active") + " " + (ModsService.activeGeneration || "base")
-                    font.family: Config.theme.monoFont
-                    color: Colors.overSurfaceVariant
-                    elide: Text.ElideMiddle
+    // A tall card of the row: its content scrolls inside, with a fade
+    // at the bottom while more is below.
+    component TallCard: Card {
+        id: tall
+        readonly property bool fixed: true
+        default property alias body: inner.data
+        // the content scrolls only while no confirmation is open
+        property bool scrollable: true
+
+        padding: Look.boxPadding + Space.s
+
+        Item {
+            width: tall.contentWidth
+            height: tall.height - tall.padding * 2
+            Flickable {
+                id: scroll
+                anchors.fill: parent
+                contentWidth: width
+                contentHeight: inner.implicitHeight
+                clip: true
+                interactive: tall.scrollable && contentHeight > height + 1
+                boundsBehavior: Flickable.StopAtBounds
+                Column {
+                    id: inner
+                    width: scroll.width
+                    spacing: Space.m
                 }
-
-                PillButton {
-                    visible: ModsService.previousGeneration !== ""
-                    kind: "ghost"
-                    text: I18n.t("mods.rollback")
-                    enabled: !ModsService.busy
-                    onClicked: ModsService.rollback()
+            }
+            Mark {
+                visible: scroll.interactive && scroll.contentY < scroll.contentHeight - scroll.height - 1
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: Space.xl
+                radius: 0
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: "transparent"
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Look.cardFill(false)
+                    }
                 }
             }
         }

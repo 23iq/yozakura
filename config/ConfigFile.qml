@@ -3,13 +3,16 @@ import Quickshell.Io
 import "ConfigValidator.js" as ConfigValidator
 import "JsonUtil.js" as JsonUtil
 import "ConfigMerge.js" as ConfigMerge
+import "WriteThrottle.js" as WriteThrottle
 
 // One config domain persisted as <configDir>/<name>.json, bound two-way to its
 // generated adapter (config/adapters/<Name>Adapter.qml). On the first load the
 // file is validated against the defaults (or created from the preset /
 // defaults when missing); later reloads only fill in missing top-level keys.
-// Adapter edits are written back (coalesced by store.autoSaveDelay) unless the
-// store pauses auto-save; a reload this file triggers never writes back.
+// Adapter edits are written back (coalesced by store.autoSaveDelay, and at
+// least every store.autoSaveMaxWait ms during a long burst such as a slider
+// drag, WriteThrottle.js) unless the store pauses auto-save; a reload this
+// file triggers never writes back.
 // Another process may write the same file (the main shell and a separate
 // Settings window, the `config set` CLI): an edit still waiting to be
 // written when the file changes is merged into the new contents (what this
@@ -59,6 +62,8 @@ FileView {
         interval: Math.max(1, file.autoSaveDelay())
         onTriggered: file.autoSave()
     }
+    // When the oldest edit the timer holds was made (ms, -1: none).
+    property real pendingSince: -1
 
     // Values the key aliases moved into this still missing file; laid over the
     // preset copy by the validation that follows it (see handleMissing).
@@ -127,7 +132,14 @@ FileView {
             file.store.registerFile(file.name, file);
     }
     // A pending coalesced write must not be lost when the shell quits.
-    Component.onDestruction: {
+    Component.onDestruction: file.flushPending()
+
+    // Writes the coalesced edit still waiting for its timer now (a preset
+    // command is about to read the file, or to replace it: a cancelled
+    // preset edit, a reverted trial). Written before the replacement lands,
+    // the edit is simply replaced; left waiting, it would be merged into
+    // the new contents (onFileChanged) and outlive the cancel.
+    function flushPending() {
         if (saveTimer.running) {
             saveTimer.stop();
             file.autoSave();
@@ -152,11 +164,21 @@ FileView {
         return isFinite(d) && d > 0 ? d : 0;
     }
 
+    function autoSaveMaxWait() {
+        const d = Number(file.store.autoSaveMaxWait);
+        return isFinite(d) && d > 0 ? d : 0;
+    }
+
     function scheduleWrite() {
-        if (file.autoSaveDelay() > 0)
+        const now = Date.now();
+        if (!saveTimer.running)
+            file.pendingSince = now;
+        if (WriteThrottle.decide(now, file.pendingSince, file.autoSaveDelay(), file.autoSaveMaxWait()) === "now") {
+            saveTimer.stop();
+            file.autoSave();
+        } else {
             saveTimer.restart();
-        else
-            file.writeSynced();
+        }
     }
 
     function autoSave() {
@@ -165,6 +187,7 @@ FileView {
     }
 
     function writeSynced() {
+        file.pendingSince = -1;
         file.writeAdapter();
         file.synced = ConfigMerge.serialize(file.adapter, file.defaults);
     }

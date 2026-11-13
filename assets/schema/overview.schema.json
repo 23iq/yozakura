@@ -44,9 +44,9 @@
       "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
       "x-settings": {
         "category": "overview",
-        "section": "layout",
+        "section": "grid",
         "label": "prefs.overview.rows",
-        "control": "slider",
+        "control": "number",
         "step": 1,
         "keywords": "overview rows grid vertical workspaces count",
         "visibleWhen": {
@@ -106,9 +106,9 @@
       "description": "Columns of the grid; in the filmstrip, how many workspaces are visible at once.",
       "x-settings": {
         "category": "overview",
-        "section": "layout",
+        "section": "grid",
         "label": "prefs.overview.columns",
-        "control": "slider",
+        "control": "number",
         "step": 1,
         "keywords": "overview columns grid horizontal workspaces count visible",
         "min": 1,
@@ -124,7 +124,7 @@
       "description": "Size of each workspace preview relative to the screen.",
       "x-settings": {
         "category": "overview",
-        "section": "size",
+        "section": "grid",
         "label": "prefs.overview.scale",
         "control": "slider",
         "step": 0.01,
@@ -142,7 +142,7 @@
       "description": "Gap between workspace previews in the overview.",
       "x-settings": {
         "category": "overview",
-        "section": "size",
+        "section": "grid",
         "label": "prefs.overview.spacing",
         "control": "slider",
         "step": 1,

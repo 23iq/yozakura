@@ -6,7 +6,7 @@ import qs.modules.components.kit
 // accent track with an onAccent knob (the accent marks the active state
 // only). Round, or the small radius in square languages (tiles).
 // `toggled(value)` fires on user interaction only; `checked` follows the
-// bound value. Space / Enter flip it; keyboard focus shows a hairline ring.
+// bound value. Space / Enter flip it; keyboard focus shows the kit FocusRing.
 Item {
     id: root
 
@@ -38,8 +38,6 @@ Item {
         anchors.fill: parent
         radius: root.trackRadius
         color: root.checked ? Type.accent : (root.hovered ? Qt.rgba(Type.text.r, Type.text.g, Type.text.b, 0.22) : Type.track)
-        border.width: root.activeFocus ? Space.hairline : 0
-        border.color: Type.text
 
         Behavior on color {
             enabled: Motion.enter.duration > 0
@@ -66,6 +64,13 @@ Item {
                 }
             }
         }
+    }
+
+    // keyboard focus: the kit ring around the track (a hairline was too faint)
+    FocusRing {
+        shown: root.activeFocus
+        anchors.margins: -Space.stroke
+        radius: root.trackRadius + Space.stroke
     }
 
     MouseArea {

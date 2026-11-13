@@ -134,13 +134,13 @@
       }
     },
     "dashboardPersistTabs": {
-      "title": "Persist Dashboard Tabs",
+      "title": "Keep dashboard tabs loaded",
       "type": "boolean",
       "default": false,
       "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "performance.dashboard_persist",
         "control": "toggle",
         "keywords": "dashboard tabs keep loaded memory"
@@ -153,7 +153,7 @@
       "description": "Most dashboard tabs kept in memory at once.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.dashboard_max_tabs",
         "control": "number",
         "keywords": "dashboard tabs memory limit",
@@ -175,7 +175,7 @@
       "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.unload_idle_views",
         "control": "toggle",
         "keywords": "dashboard tabs memory unload idle release",
@@ -244,13 +244,13 @@
       "maximum": 60
     },
     "batterySaver": {
-      "title": "Battery Saver",
+      "title": "Battery saver",
       "type": "boolean",
       "default": false,
       "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "power",
+        "section": "idle",
         "label": "system.performance.battery_saver",
         "control": "toggle",
         "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"

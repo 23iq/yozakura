@@ -118,7 +118,7 @@ Applying never overwrites the user's own settings: `~/.local/share/yozakura/pres
 records what the last preset wrote. A key the new preset does not name is reset to its default
 only while it still holds that recorded value; anything the user changed is kept (reported as
 `keptUserValues` by `apply --json` / the MCP `preset_apply`). Without a record nothing is reset.
-System domains (keyboard, displays, general, ...) are never written. The settings sidebar footer
+System domains (keyboard, displays, general, ...) are never written. The settings home footer
 shows the active preset and its changes (`PresetStatusService`, pushed by the backend
 `preset.status` event); `general.autoSavePreset` (off by default) saves changes into an active
 user preset automatically, never into a built-in. Code: `backend/pkg/presets/{provenance,status}.go`,
@@ -477,7 +477,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 76. **Try the wizard without touching the system**: `yozakura onboarding --dry-run [--keep]` (see Quick commands above; rules for adding a wizard call in `modules/onboarding/AGENTS.md`). Use it instead of resetting `general.onboardingDone` on a real setup.
 77. **Third-party app is not themed** (kitty, Ghostty, foot, Alacritty, Discord/Vesktop): the daemon `apphooks` service wires them to the generated theme files, idempotently and never into files the user manages elsewhere (Nix store, unparsable): IPC `apphooks.status | ensure {ids} | apply {id} | revert {id}`; states connected / disconnected / absent / managed / error. A fresh install connects the enabled apps automatically; an upgraded install starts with apps whose config exists switched off (`backend/pkg/migrate/apphooks.go`, Settings offers Connect), and a kitty.conf with its own theme (`kitty +kitten themes`) is only connected on Connect. Qt is not a hook: `QT_QPA_PLATFORMTHEME` goes into the generated compositor config (`[env]`, `backend/pkg/svc/compositor/qtenv.go`). Firefox, Spicetify and Telegram hooks are not implemented yet (deferred; the catalog has no `post` for them). Add an app in `backend/pkg/apphooks/` (one file, register in `apphooks.go`) and a generator under `modules/theme/` if it needs a file; `modules/services/AppHooksService.qml` is the shell side. `backend/pkg/envclean` deduplicates `XDG_DATA_DIRS`, `PATH` ... at startup and for every child the daemon starts (a compositor config that prepends on each reload otherwise grows them without bound).
 78. **The shell crashed or froze**: the daemon restarts Quickshell itself (1 s, 2 s, 4 s ... up to 16 s; more than 5 exits in 60 s is a crash loop: it stops restarting, notifies with `notify-send` / `hyprctl notify` and exits non-zero, releasing its instance lock; the next shell keybind or `yozakura reload` starts a fresh daemon with a fresh guard). When the compositor itself is gone (logout: its Wayland socket vanished or refuses connections) the daemon does not restart the shell but exits cleanly, so the next login starts a fresh one. A frozen GUI thread is caught by the heartbeat watchdog (`system.heartbeat` from `BackendService.qml` every 3 s; 15 s of silence SIGKILLs the shell's process group, then the restart above). The heartbeat is an async IPC method and ordered calls run on a per-connection worker, so a slow `compositor.dispatch` on the same socket never delays it. `yozakura run|toggle|lock` start a dead daemon and retry (bounded, never a second instance; never outside a Wayland session: without `WAYLAND_DISPLAY` they, the bare `yozakura` and `reload` refuse, since such a daemon would hold the next login's instance lock) and print a note when the command was only queued (no shell received it yet); `lock` instead waits for a shell to pick it up (starting a daemon that gave up again) and exits 1 if none did, so `before_sleep_cmd` never suspends unlocked; Super+T execs `general.terminal` directly, and `yozakura run terminal` opens it without the shell. Recover by hand with `yozakura reload` (Super+Alt+B, works without a live daemon). Code: `backend/pkg/daemon/qsguard.go` (thresholds), `qssupervise.go`, `backend/cmd/yozakura/uicall.go`, `backend/pkg/svc/compositor/terminalbind.go`.
-79. **Settings / the setup wizard cost memory while unused**: `yozakura config set performance.separateWindows true` runs them as their own Quickshell processes (started by the daemon on open, `windows.status` shows them; they give all their memory back on close, each open takes a few seconds longer). Everything opens them as before; staged changes still preview on the desktop (daemon `preview` relay). Design, page notes and limits: `modules/settings/AGENTS.md` (SEPARATE PROCESS); a new session-wide service checks `ProcessRole.primary` (`modules/services/AGENTS.md`). Code: `backend/pkg/svc/windows`, `backend/pkg/svc/preview`, `settings-window.qml`, `onboarding-window.qml`, `modules/globals/ProcessRole.qml`, `modules/services/SeparateWindows.qml` + `PreviewSink.qml`.
+79. **Settings / the setup wizard cost memory while unused**: `yozakura config set performance.separateWindows true` runs them as their own Quickshell processes (started by the daemon on open, `windows.status` shows them; they give all their memory back on close, each open takes a few seconds longer). Everything opens them as before; a Settings change is written at once (coalesced, a few writes per second while a slider moves) and the shell follows the file; the wizard's staged choices preview through the daemon `preview` relay. Design, page notes and limits: `modules/settings/AGENTS.md` (SEPARATE PROCESS); a new session-wide service checks `ProcessRole.primary` (`modules/services/AGENTS.md`). Code: `backend/pkg/svc/windows`, `backend/pkg/svc/preview`, `settings-window.qml`, `onboarding-window.qml`, `modules/globals/ProcessRole.qml`, `modules/services/SeparateWindows.qml` + `PreviewSink.qml`.
 
 ### Keybinds
 Keybinds live in `~/.config/yozakura/binds.json` (hot-reloaded), edited in
@@ -589,7 +589,9 @@ working on every preset/edge/light-dark/roundness 0..24/`animDuration 0`.
    to the `GlobalStates` snapshot list when a settings panel edits it.
 2. Declare it in `modules/settings/schema/<category>.js` (type, label,
    description, options/min/max, `visibleWhen`) and add the strings to
-   `translations/{en,es,ru}.json` (see `modules/settings/AGENTS.md`).
+   `translations/{en,es,ru}.json` (see `modules/settings/AGENTS.md`). Only
+   important options are rows of the Settings window; a rare or expert knob
+   gets `"advanced": true` (still in the catalog, the CLI and MCP).
 3. If the settings UI does not state its allowed values (custom editor, no
    entry), describe it in `config/meta/<domain>.js` (description, `enum`,
    `min`/`max`, `items`; shared lists in `config/meta/Enums.js`).
@@ -700,7 +702,10 @@ ink,glass,tiles --mode dark|light`), and view the PNGs.
 **Add an activity source.** See `modules/services/activities/AGENTS.md`.
 
 **Add a settings category.** `modules/settings/schema/<id>.js` + import in
-`Categories.js` (see `modules/settings/AGENTS.md`).
+`Categories.js`, as a tab of one of the nine destinations (`groups`; home
+shows them as a weighted bento, so prefer a tab to a new destination); a stage only if the
+tab is about the desktop (`Registry.DESKTOP_STAGES`), picture cards per
+"CONVERTING A PAGE" in `modules/settings/AGENTS.md`.
 
 **Add an MCP tool.** `define(...)` in a `backend/pkg/mcp/yozakura/*_tools.go`
 file, register its group in `Tools()` (`tools.go`), add read-only tools to

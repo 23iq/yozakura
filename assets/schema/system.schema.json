@@ -35,25 +35,37 @@
         "section": "language",
         "label": "prefs.label.interface_language",
         "control": "custom",
-        "component": "LanguagePicker",
+        "component": "LanguageCards",
         "keywords": "language locale translation i18n english spanish russian auto"
+      },
+      "enum": [
+        "auto",
+        "en",
+        "es",
+        "ru"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "en": "English",
+        "es": "Español",
+        "ru": "Русский"
       }
     },
     "updateServiceEnabled": {
-      "title": "Update Service",
+      "title": "Check in the background",
       "type": "boolean",
       "default": true,
       "description": "Look for new releases in the background (about once an hour) and notify you.",
       "x-settings": {
         "category": "updates",
         "section": "updates",
-        "label": "shell.system.update_service",
+        "label": "prefs.updates.service",
         "control": "toggle",
         "keywords": "updates check background notify new version"
       }
     },
     "updateChannel": {
-      "title": "Update channel",
+      "title": "Channel",
       "type": "string",
       "default": "stable",
       "description": "Which versions updates and the update notice follow. Stable: tested releases. Beta: pre-releases to try what comes next, plus every newer stable release. Git: every commit on main, the least stable. Nix installs update through their flake instead.",
@@ -104,11 +116,12 @@
               "default": "yozakura lock",
               "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "idle",
                 "label": "settings.system.lock_command",
                 "control": "text",
-                "keywords": "lock screen command idle"
+                "keywords": "lock screen command idle",
+                "advanced": true
               },
               "format": "command"
             },
@@ -118,11 +131,12 @@
               "default": "loginctl lock-session",
               "description": "Runs right before the computer suspends, usually to lock the screen.",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "power",
                 "label": "settings.system.before_sleep",
                 "control": "text",
-                "keywords": "suspend sleep before lock command power"
+                "keywords": "suspend sleep before lock command power",
+                "advanced": true
               },
               "format": "command"
             },
@@ -132,11 +146,12 @@
               "default": "yozakura screen on",
               "description": "Runs when the computer wakes up, e.g. to turn the screens back on.",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "power",
                 "label": "settings.system.after_sleep",
                 "control": "text",
-                "keywords": "resume wake after sleep command power screen on"
+                "keywords": "resume wake after sleep command power screen on",
+                "advanced": true
               },
               "format": "command"
             }
@@ -171,8 +186,8 @@
           },
           "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
           "x-settings": {
-            "category": "system",
-            "section": "idle",
+            "category": "power",
+            "section": "commands",
             "label": "idle.listeners",
             "control": "list",
             "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
@@ -190,11 +205,11 @@
           "type": "boolean",
           "default": true,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -204,11 +219,11 @@
           "type": "boolean",
           "default": true,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -218,11 +233,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -232,11 +247,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -246,11 +261,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -260,11 +275,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -274,11 +289,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -288,11 +303,11 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -317,6 +332,7 @@
             "step": 60,
             "unit": "s",
             "keywords": "pomodoro work focus length",
+            "advanced": true,
             "min": 60,
             "max": 14400
           },
@@ -337,6 +353,7 @@
             "step": 60,
             "unit": "s",
             "keywords": "pomodoro break rest length",
+            "advanced": true,
             "min": 60,
             "max": 7200
           },
@@ -354,7 +371,8 @@
             "section": "pomodoro",
             "label": "prefs.timers.pomo_auto",
             "control": "toggle",
-            "keywords": "pomodoro auto start next phase continue"
+            "keywords": "pomodoro auto start next phase continue",
+            "advanced": true
           }
         },
         "syncSpotify": {
@@ -364,7 +382,7 @@
           "description": "Spotify plays while you work and pauses on breaks",
           "x-settings": {
             "category": "timers",
-            "section": "pomodoro",
+            "section": "extras",
             "label": "prefs.timers.pomo_spotify",
             "control": "toggle",
             "keywords": "pomodoro spotify music pause play"
@@ -383,8 +401,8 @@
           "default": "ring",
           "description": "A ring that empties as time runs out, or just the time",
           "x-settings": {
-            "category": "notch",
-            "section": "timers",
+            "category": "timers",
+            "section": "notch",
             "label": "prefs.timers.style",
             "control": "selector",
             "keywords": "notch ring progress text countdown display"
@@ -425,7 +443,7 @@
           }
         },
         "alarmPanel": {
-          "title": "Open the alarm in the notch",
+          "title": "Alarm in the island",
           "type": "boolean",
           "default": true,
           "description": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
@@ -457,7 +475,7 @@
           "description": "Empty: the built-in tone",
           "x-settings": {
             "category": "timers",
-            "section": "alarm",
+            "section": "ringing",
             "label": "prefs.label.alarm_sound_file",
             "control": "path",
             "keywords": "alarm sound file tone custom",
@@ -475,7 +493,7 @@
           "description": "How many times the tone plays",
           "x-settings": {
             "category": "timers",
-            "section": "alarm",
+            "section": "ringing",
             "label": "prefs.timers.repeat",
             "control": "number",
             "step": 1,
@@ -504,7 +522,7 @@
           "description": "Seconds between two tones",
           "x-settings": {
             "category": "timers",
-            "section": "alarm",
+            "section": "ringing",
             "label": "prefs.timers.interval",
             "control": "number",
             "step": 1,
@@ -527,7 +545,7 @@
           "description": "A soft chime when work turns into a break and back",
           "x-settings": {
             "category": "timers",
-            "section": "alarm",
+            "section": "ringing",
             "label": "prefs.timers.phase_sound",
             "control": "toggle",
             "keywords": "pomodoro phase break chime sound",
@@ -538,7 +556,7 @@
           }
         },
         "showStopwatch": {
-          "title": "Show the stopwatch",
+          "title": "Stopwatch",
           "type": "boolean",
           "default": true,
           "description": "The running stopwatch appears next to the notch",
@@ -603,7 +621,7 @@
           "description": "Title of the Notes note quick notes are appended to (created when missing)",
           "x-settings": {
             "category": "timers",
-            "section": "input",
+            "section": "extras",
             "label": "prefs.timers.note_title",
             "control": "text",
             "keywords": "quick note inbox notes title capture"
@@ -668,7 +686,7 @@
           "description": "A notification with how many notifications arrived and from which apps",
           "x-settings": {
             "category": "timers",
-            "section": "focus",
+            "section": "extras",
             "label": "prefs.timers.focus_summary",
             "control": "toggle",
             "keywords": "focus summary missed notifications end"

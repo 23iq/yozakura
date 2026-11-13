@@ -32,6 +32,9 @@ Item {
     property var hints: []
     property bool rule: false
     property bool boxed: false
+    // the box on a surface of the window's own (a card's fill), not the
+    // translucent control fill: readable over a busy ambient background
+    property bool onWindow: false
     property bool clearOnEscape: true
     property bool handleTabNavigation: false
     property bool handleHomeEnd: false
@@ -83,7 +86,9 @@ Item {
         anchors.fill: parent
         visible: root.boxed
         radius: Look.chipRadius(height)
-        color: Look.raisedFill(root.hovered || textField.activeFocus)
+        color: root.onWindow ? Look.cardFill(root.hovered || textField.activeFocus) : Look.raisedFill(root.hovered || textField.activeFocus)
+        border.width: root.onWindow ? Space.hairline : 0
+        border.color: Type.hairline
     }
 
     RowLayout {
@@ -112,7 +117,8 @@ Item {
             font.pixelSize: Type.size(root.boxed ? "body" : "title")
             font.weight: Font.Normal
             color: Type.text
-            placeholderTextColor: Type.muted
+            // on the toolbar box the muted ink is too faint (light mode)
+            placeholderTextColor: root.boxed ? Type.secondary : Type.muted
             selectionColor: Qt.alpha(Type.accent, 0.3)
             selectedTextColor: Type.text
             cursorDelegate: caret

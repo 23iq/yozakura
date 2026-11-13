@@ -89,7 +89,7 @@ WALLPAPER_MANAGER = """function nextWallpaper() {}
         function getSubfolderFromPath(p) { return "" }
         function scanSubfolders() {}
         function clearPerScreenWallpaper(s) {}"""
-GLOBALS_EXTRA = """property bool settingsCloseConfirm: false
+GLOBALS_EXTRA = """property bool settingsWindowVisible: true
     property int wallpaperSelectedIndex: 2
     function setWallpaperTransitionOrigin(item, x, y, screen) {}"""
 
@@ -111,7 +111,7 @@ class DashTabsEnv(DashboardEnv):
             self._qmldir(qs / rel, "qs." + rel.replace("/", "."))
         self.h.module("Quickshell.Services.Pipewire", PIPEWIRE)
         gs = global_states(wallpaper or {}).replace("function nextWallpaper() {}", WALLPAPER_MANAGER, 1)
-        gs = gs.replace("property bool settingsCloseConfirm: false", GLOBALS_EXTRA, 1)
+        gs = gs.replace("property bool settingsWindowVisible: true", GLOBALS_EXTRA, 1)
         self.h.module("qs.modules.globals", {"GlobalStates": gs})
         self.h.module("qs.modules.services", {"SystemResources": SYSTEM_RESOURCES, "Audio": AUDIO,
                                               "EasyEffectsService": EASY_EFFECTS})

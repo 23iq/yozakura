@@ -67,7 +67,10 @@ StyledRect {
                 role: "secondary"
                 Layout.fillWidth: true
                 text: root.preset.label || root.preset.id || ""
-                elide: Text.ElideRight
+                // a long name wraps (two lines at most), whole
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideNone
                 font.weight: Font.Medium
                 color: Type.text
             }

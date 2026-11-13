@@ -18,6 +18,9 @@ Item {
     id: root
 
     property var entry
+    // a card of the page row: whole rows at rest, the rest scrolls with a
+    // fade at the foot
+    property real fillHeight: 0
 
     objectName: "islandActivitiesEditor"
 
@@ -27,110 +30,143 @@ Item {
     readonly property var morph: Motion.morph
 
     implicitWidth: 480
-    implicitHeight: root.list.length * root.rowHeight
+    readonly property real listHeight: root.list.length * root.rowHeight
+    implicitHeight: root.fillHeight > 0 ? root.fillHeight : root.listHeight
 
     function write(next) {
         SettingsStore.set("notch.activities", Registry.toConfig(next));
     }
 
-    Repeater {
-        model: root.list.length
+    Flickable {
+        id: view
+        objectName: "activitiesScroll"
+        width: root.width
+        // whole rows only
+        height: root.fillHeight > 0 ? Math.min(root.listHeight, Math.floor(root.fillHeight / root.rowHeight) * root.rowHeight) : root.listHeight
+        contentWidth: width
+        contentHeight: root.listHeight
+        interactive: contentHeight > height + 1
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
-        delegate: Item {
-            id: row
-            required property int index
-            readonly property var item: root.list[row.index]
-            readonly property bool dragging: handle.drag.active
+        Repeater {
+            model: root.list.length
 
-            width: root.width
-            height: root.rowHeight
-            // Dragging assigns y directly; releasing re-binds it to the slot
-            y: row.index * root.rowHeight
-            z: row.dragging ? 2 : 1
+            delegate: Item {
+                id: row
+                required property int index
+                readonly property var item: root.list[row.index]
+                readonly property bool dragging: handle.drag.active
 
-            Behavior on y {
-                enabled: Config.animDuration > 0 && !row.dragging
-                NumberAnimation {
-                    duration: root.morph.duration
-                    easing.type: root.morph.easing
+                width: root.width
+                height: root.rowHeight
+                // Dragging assigns y directly; releasing re-binds it to the slot
+                y: row.index * root.rowHeight
+                z: row.dragging ? 2 : 1
+
+                Behavior on y {
+                    enabled: Config.animDuration > 0 && !row.dragging
+                    NumberAnimation {
+                        duration: root.morph.duration
+                        easing.type: root.morph.easing
+                    }
                 }
-            }
 
-            StyledRect {
-                anchors.fill: parent
-                anchors.bottomMargin: Metrics.spacing
-                variant: row.dragging ? "focus" : "common"
-                radius: Styling.radius(0)
-                opacity: row.item && row.item.enabled ? 1 : 0.6
-            }
-
-            // Drag handle: the grip, moving the row freely along y
-            Icon {
-                id: grip
-                role: "title"
-                x: Metrics.spacing
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: -Metrics.spacing / 2
-                icon: Icons.dotsNine
-                color: Ui.alpha(Colors.overBackground, 0.6)
-
-                MouseArea {
-                    id: handle
+                StyledRect {
                     anchors.fill: parent
-                    anchors.margins: -Metrics.spacing / 2
-                    cursorShape: row.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                    drag.target: row
-                    drag.axis: Drag.YAxis
-                    drag.minimumY: 0
-                    drag.maximumY: root.height - root.rowHeight
-                    onReleased: {
-                        const to = Math.round(row.y / root.rowHeight);
-                        if (to !== row.index)
-                            root.write(Registry.move(root.list, row.index, to));
-                        row.y = Qt.binding(() => row.index * root.rowHeight);
+                    anchors.bottomMargin: Metrics.spacing
+                    variant: row.dragging ? "focus" : "common"
+                    radius: Styling.radius(0)
+                    opacity: row.item && row.item.enabled ? 1 : 0.6
+                }
+
+                // Drag handle: the grip, moving the row freely along y
+                Icon {
+                    id: grip
+                    role: "title"
+                    x: Metrics.spacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -Metrics.spacing / 2
+                    icon: Icons.dotsNine
+                    color: Ui.alpha(Colors.overBackground, 0.6)
+
+                    MouseArea {
+                        id: handle
+                        anchors.fill: parent
+                        anchors.margins: -Metrics.spacing / 2
+                        cursorShape: row.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                        drag.target: row
+                        drag.axis: Drag.YAxis
+                        drag.minimumY: 0
+                        drag.maximumY: root.listHeight - root.rowHeight
+                        onReleased: {
+                            const to = Math.round(row.y / root.rowHeight);
+                            if (to !== row.index)
+                                root.write(Registry.move(root.list, row.index, to));
+                            row.y = Qt.binding(() => row.index * root.rowHeight);
+                        }
+                    }
+                }
+
+                KitText {
+                    anchors.left: grip.right
+                    anchors.leftMargin: Metrics.spacing
+                    anchors.right: controls.left
+                    anchors.verticalCenter: grip.verticalCenter
+                    text: row.item ? I18n.t("prefs.notch.activity." + row.item.id) : ""
+                    elide: Text.ElideRight
+                }
+
+                Row {
+                    id: controls
+                    anchors.right: parent.right
+                    anchors.rightMargin: Metrics.spacing
+                    anchors.verticalCenter: grip.verticalCenter
+                    spacing: Metrics.spacing
+
+                    SelectorControl {
+                        visible: !!row.item && row.item.side !== "center"
+                        // a card of the page row: the side as two icons
+                        iconOnly: root.width < Space.px(440)
+                        anchors.verticalCenter: parent.verticalCenter
+                        options: [
+                            {
+                                "value": "leading",
+                                "label": "prefs.notch.activity.leading",
+                                "icon": "alignLeft"
+                            },
+                            {
+                                "value": "trailing",
+                                "label": "prefs.notch.activity.trailing",
+                                "icon": "alignRight"
+                            }
+                        ]
+                        value: row.item ? row.item.side : "leading"
+                        onSelected: v => root.write(Registry.setField(root.list, row.item.id, "side", v))
+                    }
+                    ToggleControl {
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: !!row.item && row.item.enabled
+                        onToggled: v => root.write(Registry.setField(root.list, row.item.id, "enabled", v))
                     }
                 }
             }
-
-            KitText {
-                anchors.left: grip.right
-                anchors.leftMargin: Metrics.spacing
-                anchors.right: controls.left
-                anchors.verticalCenter: grip.verticalCenter
-                text: row.item ? I18n.t("prefs.notch.activity." + row.item.id) : ""
-                elide: Text.ElideRight
+        }
+    }
+    Mark {
+        visible: view.interactive && view.contentY < view.contentHeight - view.height - 1
+        y: view.height - height
+        width: root.width
+        height: Space.l
+        radius: 0
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: "transparent"
             }
-
-            Row {
-                id: controls
-                anchors.right: parent.right
-                anchors.rightMargin: Metrics.spacing
-                anchors.verticalCenter: grip.verticalCenter
-                spacing: Metrics.spacing
-
-                SelectorControl {
-                    visible: !!row.item && row.item.side !== "center"
-                    anchors.verticalCenter: parent.verticalCenter
-                    options: [
-                        {
-                            "value": "leading",
-                            "label": "prefs.notch.activity.leading",
-                            "icon": "alignLeft"
-                        },
-                        {
-                            "value": "trailing",
-                            "label": "prefs.notch.activity.trailing",
-                            "icon": "alignRight"
-                        }
-                    ]
-                    value: row.item ? row.item.side : "leading"
-                    onSelected: v => root.write(Registry.setField(root.list, row.item.id, "side", v))
-                }
-                ToggleControl {
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: !!row.item && row.item.enabled
-                    onToggled: v => root.write(Registry.setField(root.list, row.item.id, "enabled", v))
-                }
+            GradientStop {
+                position: 1
+                color: Look.cardFill(false)
             }
         }
     }

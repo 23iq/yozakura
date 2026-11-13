@@ -21,121 +21,225 @@
 .import "specials.js" as Specials
 .import "timers.js" as Timers
 .import "routines.js" as Routines
-.import "layout.js" as Layout
 .import "dashboard.js" as Dashboard
 .import "osd.js" as Osd
+.import "layout.js" as Layout
 .import "menus.js" as Menus
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
 .import "presets.js" as Presets
+.import "power.js" as Power
+.import "network.js" as Network
+.import "bluetooth.js" as Bluetooth
+.import "sound.js" as Sound
+.import "effects.js" as Effects
 
-// Settings information architecture: the sidebar tree and its pages.
+// Settings information architecture: the window's destinations and their
+// tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The sidebar shows the 12 top-level `groups` (one per shell element:
-// Layout, Bar, Island, ...); a group opens its first category and, when it
-// has several, lists them under itself. A category is one of:
-//   * schema-driven: has `sections` (see appearance.js) - rendered by
-//     SettingsPage.qml, searchable entry by entry; entries flagged
-//     `advanced: true` show only in the All view (Advanced.js);
-//   * a page: has `page` - a hand-written page mapped by name in
-//     SettingsPageHost.pages (Connect pages host the live device controls).
-// Every category is listed in exactly one group. `resolve(id)` accepts a
-// category id, a moved id (MOVED) or a group id, so old deep links and the
-// new tree both work.
+// The window opens on a home screen (SettingsHome): a 3x3 grid of equal
+// tiles, one per destination (HOME). A destination (`groups`) holds one or
+// more categories, shown as tabs at the top of its page (`categories`,
+// first = default tab). A category is one of:
+//   * schema-driven: has `sections` (see bar.js) - rendered by
+//     SettingsPage.qml as a hero (its `stage`, Registry.STAGES) over a
+//     bento of cards (one per section); entries flagged `advanced: true`
+//     are not in the window (SchemaUtil.inWindow);
+//   * a page: has `page` - a hand-written page loaded by URL
+//     (Registry.PAGES).
+// Every category is listed in exactly one destination. `resolve(id)`
+// accepts a category id, a moved id (MOVED) or a destination id, so old
+// deep links (`<app> run settings <id>`, GlobalStates.settingsCategory)
+// keep working.
 
 var groups = [
-    {
-        "id": "layout",
-        "icon": "frameCorners",
-        "title": "prefs.group.layout",
-        "categories": ["layout"]
-    },
-    {
-        "id": "bar",
-        "icon": "squaresFour",
-        "title": "prefs.group.bar",
-        "categories": ["bar"]
-    },
-    {
-        "id": "island",
-        "icon": "dotsThree",
-        "title": "prefs.group.island",
-        "categories": ["notch"]
-    },
-    {
-        "id": "dock",
-        "icon": "dock",
-        "title": "prefs.group.dock",
-        "categories": ["dock"]
-    },
-    {
-        "id": "launcher",
-        "icon": "magnifyingGlass",
-        "title": "prefs.group.launcher",
-        "categories": ["launcher"]
-    },
-    {
-        "id": "dashboard",
-        "icon": "robot",
-        "title": "prefs.group.dashboard",
-        "categories": ["dashboard", "ai", "ai-providers", "ai-code"]
-    },
-    {
-        "id": "popups",
-        "icon": "bell",
-        "title": "prefs.group.popups",
-        "categories": ["notifications", "osd", "menus"]
-    },
-    {
-        "id": "lockscreen",
-        "icon": "lock",
-        "title": "prefs.group.lockscreen",
-        "categories": ["lockscreen"]
-    },
-    {
-        "id": "desktop",
-        "icon": "monitor",
-        "title": "prefs.group.desktop",
-        "categories": ["desktop", "overview"]
-    },
-    {
-        "id": "look",
-        "icon": "paintBrush",
-        "title": "prefs.group.look",
-        "categories": ["appearance", "icons-type", "wallpapers"]
-    },
-    {
-        "id": "presets",
-        "icon": "magicWand",
-        "title": "prefs.group.presets",
-        "categories": ["presets", "changes"]
-    },
-    {
-        "id": "system",
-        "icon": "gear",
-        "title": "prefs.group.system",
-        "categories": ["system", "displays", "keyboard", "windows", "specials", "terminal", "input", "voice", "timers", "routines", "network", "bluetooth", "sound", "effects", "extras", "mods", "updates", "about"]
-    }
+    { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "wallpapers", "icons-type", "presets", "changes"] },
+    { "id": "screen", "icon": "frameCorners", "title": "prefs.dest.screen", "categories": ["bar", "notch", "dock", "desktop", "lockscreen"] },
+    { "id": "windows", "icon": "layout", "title": "prefs.dest.windows", "categories": ["windows", "overview", "specials"] },
+    { "id": "panels", "icon": "dotsNine", "title": "prefs.dest.panels", "categories": ["launcher", "dashboard", "menus"] },
+    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications_focus", "categories": ["notifications", "timers"] },
+    { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code", "voice"] },
+    { "id": "keys", "icon": "keyboard", "title": "prefs.dest.keyboard", "categories": ["keyboard", "input"] },
+    { "id": "devices", "icon": "monitor", "title": "prefs.dest.devices", "categories": ["displays", "network", "bluetooth", "sound", "effects", "power"] },
+    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "terminal", "extras", "mods", "routines", "about"] }
 ];
 
-// A hand-written page (SettingsPageHost.pages[name]).
-function page(id, icon, name, keywords) {
+// The home bento (HomeLayout.js, a grid of six columns): a tile's size is
+// the weight of what it opens. Screen (where everything sits) is the
+// biggest, Look next, the everyday destinations a third of the width, the
+// rarely visited ones a sixth. Reading order is the packing order.
+var HOME_SIZES = {
+    "screen": [4, 2],
+    "look": [2, 2],
+    "panels": [2, 1],
+    "windows": [2, 1],
+    "notifications": [2, 1],
+    "devices": [2, 1],
+    "assistant": [2, 1],
+    "keys": [1, 1],
+    "system": [1, 1]
+};
+var HOME = ["screen", "look", "panels", "windows", "notifications", "devices", "assistant", "keys", "system"].map(function (id) {
+    return {
+        "id": id,
+        "w": HOME_SIZES[id][0],
+        "h": HOME_SIZES[id][1]
+    };
+});
+
+// A hand-written page (Registry.PAGES[name]); `fitted`: composed like a
+// converted page on a FittedFrame (tests/settings-fit.test.py checks it).
+function page(id, icon, name, keywords, fitted) {
     return {
         "id": id,
         "icon": icon,
         "title": "prefs.cat." + id,
         "description": "prefs.cat." + id + ".desc",
         "keywords": keywords,
-        "page": name
+        "page": name,
+        "fitted": fitted === true
     };
 }
 
-// Categories that moved into another page: old deep links land there.
+// Categories (and former sidebar groups) that moved: old deep links land
+// there.
 var MOVED = {
     "surfaces": "appearance",
     "bar-classic": "bar",
-    "sidebar": "ai"
+    "sidebar": "ai",
+    "popups": "notifications",
+    "island": "notch",
+    // the former destinations and tabs of the 18-tile home
+    "layout": "bar",
+    "osd": "menus",
+    "wallpaper": "wallpapers",
+    "apps": "terminal",
+    "fonts": "icons-type"
 };
+
+// A copy of `cat` with `entries` put into its section `sectionId` ("" = the
+// first section): after the entry with key `after`, else at the start.
+function withEntries(cat, sectionId, entries, after) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = cat.sections.map(function (sec, i) {
+        if (sectionId ? sec.id !== sectionId : i !== 0)
+            return sec;
+        var copy = {};
+        for (var k2 in sec)
+            copy[k2] = sec[k2];
+        var at = after ? sec.entries.findIndex(function (e) {
+            return e.key === after;
+        }) + 1 : 0;
+        copy.entries = sec.entries.slice(0, at).concat(entries, sec.entries.slice(at));
+        return copy;
+    });
+    return out;
+}
+
+// A copy of `cat` whose sections `fromIds` are folded into the section
+// `intoId` (their entries appended in order; a section's compositor gate
+// goes onto its entries): a card of one plain row joins the card it belongs
+// with, instead of a heading that repeats its only row.
+function mergeInto(cat, intoId, fromIds) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    var moved = [];
+    fromIds.forEach(function (id) {
+        var sec = cat.sections.filter(function (x) {
+            return x.id === id;
+        })[0];
+        if (!sec)
+            throw new Error("mergeInto: no section " + id + " in " + cat.id);
+        sec.entries.forEach(function (e) {
+            if (sec.compositor && !e.compositor) {
+                var c = {};
+                for (var f in e)
+                    c[f] = e[f];
+                c.compositor = sec.compositor;
+                moved.push(c);
+            } else {
+                moved.push(e);
+            }
+        });
+    });
+    var found = false;
+    out.sections = cat.sections.filter(function (x) {
+        return fromIds.indexOf(x.id) < 0;
+    }).map(function (x) {
+        if (x.id !== intoId)
+            return x;
+        found = true;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = x.entries.concat(moved);
+        return c;
+    });
+    if (!found)
+        throw new Error("mergeInto: no section " + intoId + " in " + cat.id);
+    if (cat.row)
+        out.row = cat.row.filter(function (r) {
+            return fromIds.indexOf(typeof r === "string" ? r : r.id) < 0;
+        });
+    return out;
+}
+
+// A copy of `cat` with the entry `key` moved to the head of the section
+// `toId` (a feature's switch at the top of its own card).
+function moveEntry(cat, key, toId) {
+    var entry = null;
+    var secs = cat.sections.map(function (x) {
+        var found = x.entries.filter(function (e) {
+            return e.key === key;
+        })[0];
+        if (!found)
+            return x;
+        entry = found;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = x.entries.filter(function (e) {
+            return e !== found;
+        });
+        return c;
+    });
+    if (!entry)
+        throw new Error("moveEntry: no entry " + key + " in " + cat.id);
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = secs.map(function (x) {
+        if (x.id !== toId)
+            return x;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = [entry].concat(x.entries);
+        return c;
+    });
+    return out;
+}
+
+// A copy of `cat` without its sections `ids`.
+function withoutSections(cat, ids) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = cat.sections.filter(function (sec) {
+        return ids.indexOf(sec.id) < 0;
+    });
+    return out;
+}
+
+// The sections `ids` of `cat`.
+function sectionsOf(cat, ids) {
+    return cat.sections.filter(function (sec) {
+        return ids.indexOf(sec.id) >= 0;
+    });
+}
 
 // A copy of `cat` with `extra` sections appended.
 function withSections(cat, extra) {
@@ -147,39 +251,47 @@ function withSections(cat, extra) {
 }
 
 var categories = [
-    Layout.category,
-    Appearance.category,
+    // the theme (light or dark, the visual style) in one card beside the five
+    // feel sliders in one card
+    mergeInto(mergeInto(mergeInto(Appearance.category, "palette", ["accents"]), "mode", ["language"]), "tune", ["tune-surface"]),
     IconsType.category,
-    Wallpapers.category,
-    Bar.category,
-    Notch.category,
+    mergeInto(Wallpapers.category, "panorama", ["transition"]),
+    mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]),
+    mergeInto(Notch.category, "notch", ["behaviour", "place", "idle"]),
     Dock.category,
-    Overview.category,
-    Launcher.category,
-    Desktop.category,
-    Lockscreen.category,
-    Notifications.category,
-    Osd.category,
-    Menus.category,
-    Dashboard.category,
+    mergeInto(Overview.category, "grid", ["size", "wallpaper"]),
+    withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),
+    // the widgets: one card (the switch, the list with add / remove and one
+    // "Arrange on desktop", the surface and layering, then the icons); the
+    // clock: its switch, style and details in one card
+    mergeInto(moveEntry(mergeInto(Desktop.category, "arrange", ["icons", "icondetails"]), "desktop.depthClock", "clock"), "clock", ["clockmore"]),
+    mergeInto(Lockscreen.category, "style", ["tone"]),
+    mergeInto(Notifications.category, "behaviour", ["sound", "history"]),
+    withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),
+    mergeInto(withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]), "home", ["memory"]),
     Specials.category,
-    Windows.category,
-    Terminal.category,
-    Input.category,
-    System.category,
+    mergeInto(mergeInto(mergeInto(Windows.category, "unfocused", ["dim"]), "borders", ["pulse"]), "blur", ["shadows"]),
+    mergeInto(mergeInto(Terminal.category, "look", ["engine"]), "kitty", ["terminal"]),
+    withEntries(Input.category, "", [Layout.placed("layout.cheatsheet.host", "prefs.layout.sheet_opens_in")]),
+    // OCR languages are a language setting: Language & weather, not Updates
+    withSections(System.category, sectionsOf(Updates.category, ["ocr"])),
     Voice.category,
-    Timers.category,
+    withEntries(Timers.category, "notch", [Layout.placed("layout.panels.host", "prefs.layout.opens_in")]),
     Routines.category,
-    Updates.category,
-    page("network", "wifiHigh", "Network", "network wifi internet ethernet connection"),
-    page("bluetooth", "bluetooth", "Bluetooth", "bluetooth devices pairing headphones"),
-    page("sound", "speakerHigh", "Sound", "sound audio volume mixer output input microphone speaker"),
-    page("effects", "waveform", "Effects", "equalizer easyeffects bass audio effects"),
-    withSections(Ai.category, Sidebar.sections),
+    withoutSections(Updates.category, ["ocr"]),
+    Power.category,
+    Network.category,
+    Bluetooth.category,
+    Sound.category,
+    Effects.category,
+    mergeInto(mergeInto(withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"), "center", ["model_effort", "context"]), "bar_behavior", ["sidebar"]),
     AiProviders.category,
     AiCode.category,
-    page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"),
-    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom"),
+    Object.assign(page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"), {
+        "form": "list",
+        "row": ["mods_list", "mods_details"]
+    }),
+    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom", true),
     {
         "id": "presets",
         "icon": "magicWand",
@@ -187,6 +299,7 @@ var categories = [
         "description": "prefs.cat.presets.desc",
         "keywords": "presets studio save load profiles themes layouts looks gallery mixer mix duplicate import export share try",
         "page": "PresetStudio",
+        "row": ["presets_saving"],
         "sections": Presets.sections
     },
     {
@@ -195,7 +308,8 @@ var categories = [
         "title": "prefs.cat.displays",
         "description": "prefs.cat.displays.desc",
         "keywords": "displays monitors screens resolution refresh rate hz scale dpi rotation rotate arrange layout position vrr adaptive sync identify hdmi displayport",
-        "page": "Displays"
+        "page": "Displays",
+        "fitted": true
     },
     {
         "id": "keyboard",
@@ -203,7 +317,8 @@ var categories = [
         "title": "prefs.cat.keyboard",
         "description": "prefs.cat.keyboard.desc",
         "keywords": "keyboard layout layouts language russian english variant switch alt shift caps lock escape ctrl compose xkb options key repeat rate delay indicator type typing",
-        "page": "Keyboard"
+        "page": "Keyboard",
+        "fitted": true
     },
     {
         "id": "extras",
@@ -211,7 +326,9 @@ var categories = [
         "title": "prefs.cat.extras",
         "description": "prefs.cat.extras.desc",
         "keywords": "apps extras install software packages catalog browsers chat games steam discord spotify media ai agents claude codex ollama cuda voice flatpak aur terminal fish starship",
-        "page": "Extras"
+        "page": "Extras",
+        "form": "list",
+        "row": ["catalog"]
     },
     {
         "id": "about",
@@ -219,7 +336,8 @@ var categories = [
         "title": "prefs.cat.about",
         "description": "prefs.cat.about.desc",
         "keywords": "about version credits license notice yozakura",
-        "page": "AboutPage"
+        "page": "AboutPage",
+        "fitted": true
     }
 ];
 
@@ -239,7 +357,7 @@ function groupById(id) {
     return null;
 }
 
-// The group (top-level sidebar entry) a category belongs to.
+// The destination (sidebar entry) a category belongs to.
 function groupOf(categoryId) {
     for (var i = 0; i < groups.length; i++) {
         if (groups[i].categories.indexOf(categoryId) !== -1)
@@ -248,7 +366,8 @@ function groupOf(categoryId) {
     return null;
 }
 
-// A category id (old deep links) or a group id (opens its first page).
+// A category id (old deep links), a moved id or a destination id (opens
+// its first tab).
 function resolve(id) {
     var cat = byId(MOVED[id] || id);
     if (cat)
@@ -257,55 +376,26 @@ function resolve(id) {
     return g ? byId(g.categories[0]) : null;
 }
 
-// Sidebar model: [{id, icon, title, categories: [category...]}] in order.
-function sidebar() {
-    return groups.map(function (g) {
-        return {
-            "id": g.id,
-            "icon": g.icon,
-            "title": g.title,
-            "categories": g.categories.map(byId).filter(function (c) {
-                return c !== null;
-            })
-        };
+// The tabs of the destination holding `categoryId`: [category...] (one tab
+// = no tab strip).
+function tabsOf(categoryId) {
+    var g = groupOf(categoryId);
+    return g ? g.categories.map(byId).filter(function (c) {
+        return c !== null;
+    }) : [];
+}
+
+// Home model: the tiles as destinations.
+function home() {
+    return HOME.map(function (t) {
+        return Object.assign({}, groupById(t.id), {
+            "w": t.w,
+            "h": t.h
+        });
     });
 }
 
-// The sidebar's labelled blocks (SectionLabels) over the element pages:
-// the shell's parts, its style, then the computer itself. Every group sits
-// in exactly one block, in `groups` order (tests/settings-tree.test.cjs).
-var SIDEBAR_SECTIONS = [
-    {
-        "id": "shell",
-        "title": "prefs.sidebar.shell",
-        "groups": ["layout", "bar", "island", "dock", "launcher", "dashboard", "popups", "lockscreen", "desktop"]
-    },
-    {
-        "id": "style",
-        "title": "prefs.sidebar.style",
-        "groups": ["look", "presets"]
-    },
-    {
-        "id": "computer",
-        "title": "prefs.sidebar.computer",
-        "groups": ["system"]
-    }
-];
-
-function sidebarSections() {
-    var tree = sidebar();
-    return SIDEBAR_SECTIONS.map(function (sec) {
-        return {
-            "id": sec.id,
-            "title": sec.title,
-            "groups": tree.filter(function (g) {
-                return sec.groups.indexOf(g.id) >= 0;
-            })
-        };
-    });
-}
-
-// Categories in sidebar order (keyboard navigation).
+// Categories in destination order (Ctrl+Tab steps through them).
 function ordered() {
     var out = [];
     groups.forEach(function (g) {

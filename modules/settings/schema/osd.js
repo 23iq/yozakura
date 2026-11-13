@@ -1,6 +1,7 @@
 .pragma library
 
-// Popups > On-screen display: style, edge and timing of the volume /
+// Panels > Menus & OSD (spliced into menus.js by Categories.js): style,
+// edge and timing of the volume /
 // brightness OSD (modules/shell/osd).
 // Entry format: see modules/settings/AGENTS.md.
 
@@ -12,6 +13,8 @@ var sections = [
             {
                 "key": "layout.osd.style",
                 "type": "selector",
+                "display": "cards",
+                "thumb": "OsdStyleThumb",
                 "options": [
                     {
                         "value": "pill",
@@ -34,34 +37,45 @@ var sections = [
                         "label": "prefs.osd.style.gauge"
                     }
                 ],
-                "preview": "OsdPreview",
                 "label": "prefs.label.osd_style",
                 "description": "prefs.osd.style.desc",
                 "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
-            },
+            }
+        ]
+    },
+    {
+        // where and how long: the edge is also picked on the stage
+        "id": "place",
+        "title": "prefs.osd.section.place",
+        "entries": [
             {
                 "key": "layout.osd.position",
                 "type": "selector",
                 "options": [
                     {
                         "value": "auto",
-                        "label": "prefs.osd.position.auto"
+                        "label": "prefs.osd.position.auto",
+                        "icon": "sparkle"
                     },
                     {
                         "value": "top",
-                        "label": "prefs.osd.position.top"
+                        "label": "prefs.osd.position.top",
+                        "icon": "arrowUp"
                     },
                     {
                         "value": "bottom",
-                        "label": "prefs.osd.position.bottom"
+                        "label": "prefs.osd.position.bottom",
+                        "icon": "arrowDown"
                     },
                     {
                         "value": "left",
-                        "label": "prefs.osd.position.left"
+                        "label": "prefs.osd.position.left",
+                        "icon": "arrowLeft"
                     },
                     {
                         "value": "right",
-                        "label": "prefs.osd.position.right"
+                        "label": "prefs.osd.position.right",
+                        "icon": "arrowRight"
                     }
                 ],
                 "visibleWhen": {
@@ -74,7 +88,6 @@ var sections = [
             },
             {
                 "key": "layout.osd.timeout",
-                "advanced": true,
                 "type": "slider",
                 "min": 800,
                 "max": 8000,
@@ -88,11 +101,3 @@ var sections = [
     }
 ];
 
-var category = {
-    "id": "osd",
-    "icon": "speakerHigh",
-    "title": "prefs.cat.osd",
-    "description": "prefs.cat.osd.desc",
-    "keywords": "osd on-screen display volume brightness level indicator popup island",
-    "sections": sections
-};

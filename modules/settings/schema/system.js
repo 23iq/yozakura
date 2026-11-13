@@ -1,7 +1,11 @@
 .pragma library
 
-// System: language, weather, performance, idle
-// listeners, power/sleep commands, monitored disks and clipboard storage.
+// System: the stage is your desktop speaking your language (SystemStage:
+// the date as it writes it, the weather in your unit, the shell's
+// identity); the row: the language as picture cards and the weather. The
+// "only shell" card (Hyprland) opens in More. Idle, sleep and the battery
+// saver live on Power (power.js); performance, authentication and storage
+// are plumbing: out of the window.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -14,24 +18,19 @@ function toggle(key, label, description, keywords) {
     };
 }
 
-function command(key, label, description, placeholder, keywords) {
-    return {
-        "key": key,
-        "type": "text",
-        "monospace": true,
-        "placeholder": placeholder,
-        "label": label,
-        "description": description,
-        "keywords": keywords
-    };
-}
-
 var category = {
     "id": "system",
     "icon": "circuitry",
     "title": "prefs.cat.system",
     "description": "prefs.cat.system.desc",
     "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard polkit password",
+    "row": [
+        {
+            "id": "language",
+            "weight": 1.4
+        },
+        "weather"
+    ],
     "sections": [
         {
             "id": "language",
@@ -40,26 +39,30 @@ var category = {
                 {
                     "key": "system.language",
                     "type": "custom",
-                    "component": "LanguagePicker",
+                    "component": "LanguageCards",
+                    // the shipped translations (the cards list them from
+                    // translations/languages.json); names the value
+                    "options": [
+                        {
+                            "value": "auto",
+                            "label": "prefs.voice.lang.auto"
+                        },
+                        {
+                            "value": "en",
+                            "label": "prefs.sys.lang.en"
+                        },
+                        {
+                            "value": "es",
+                            "label": "prefs.sys.lang.es"
+                        },
+                        {
+                            "value": "ru",
+                            "label": "prefs.sys.lang.ru"
+                        }
+                    ],
                     "label": "prefs.label.interface_language",
                     "description": "prefs.sys.language.desc",
                     "keywords": "language locale translation i18n english spanish russian auto"
-                }
-            ]
-        },
-        {
-            "id": "exclusive",
-            "compositor": "hyprland",
-            "entries": [
-                {
-                    "id": "system.exclusive",
-                    "type": "custom",
-                    "component": "ExclusiveCard",
-                    "compositor": "hyprland",
-                    "resettable": false,
-                    "label": "prefs.exclusive.title",
-                    "description": "prefs.exclusive.desc",
-                    "keywords": "exclusive only shell hyprland waybar mako dunst backup restore minimal config user.lua disable other bars daemons systemd"
                 }
             ]
         },
@@ -88,7 +91,7 @@ var category = {
                             "label": "weather.fahrenheit"
                         }
                     ],
-                    "label": "settings.system.temperature_unit",
+                    "label": "prefs.sys.unit",
                     "description": "prefs.sys.weather_unit.desc",
                     "keywords": "temperature unit celsius fahrenheit"
                 }
@@ -97,6 +100,8 @@ var category = {
         {
             "id": "performance",
             "title": "settings.system.performance",
+            // performance plumbing: out of the window (yozakura config)
+            "advanced": true,
             "entries": [
                 toggle("performance.blurTransition", "performance.blur_transition", "system.performance.blur_transition_desc", "blur transition animation panels"),
                 toggle("performance.windowPreview", "performance.window_preview", "system.performance.window_preview_desc", "window preview thumbnails overview dock"),
@@ -121,7 +126,6 @@ var category = {
                 },
                 toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
                 toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
-                toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
                 {
                     "key": "performance.visualizerFps",
                     "type": "number",
@@ -192,63 +196,6 @@ var category = {
             ]
         },
         {
-            "id": "idle",
-            "title": "settings.system.idle",
-            "entries": [
-                command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle"),
-                {
-                    "key": "system.idle.listeners",
-                    "type": "list",
-                    "fields": [
-                        {
-                            "key": "timeout",
-                            "type": "number",
-                            "min": 5,
-                            "max": 7200,
-                            "step": 5,
-                            "unit": "s",
-                            "label": "idle.timeout"
-                        },
-                        {
-                            "key": "onTimeout",
-                            "type": "text",
-                            "monospace": true,
-                            "placeholder": "prefs.sys.idle_on_timeout.placeholder",
-                            "flex": 0.5,
-                            "label": "idle.on_timeout"
-                        },
-                        {
-                            "key": "onResume",
-                            "type": "text",
-                            "monospace": true,
-                            "placeholder": "prefs.sys.idle_on_resume.placeholder",
-                            "flex": 0.5,
-                            "label": "idle.on_resume"
-                        }
-                    ],
-                    "newItem": {
-                        "timeout": 60,
-                        "onTimeout": "",
-                        "onResume": ""
-                    },
-                    "itemLabel": "idle.listener_n",
-                    "addLabel": "idle.add_listener",
-                    "emptyLabel": "prefs.sys.idle_listeners.empty",
-                    "label": "idle.listeners",
-                    "description": "prefs.sys.idle_listeners.desc",
-                    "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
-                }
-            ]
-        },
-        {
-            "id": "power",
-            "title": "prefs.sys.section.power",
-            "entries": [
-                command("system.idle.general.before_sleep_cmd", "settings.system.before_sleep", "prefs.sys.before_sleep.desc", "idle.before_sleep", "suspend sleep before lock command power"),
-                command("system.idle.general.after_sleep_cmd", "settings.system.after_sleep", "prefs.sys.after_sleep.desc", "idle.after_sleep", "resume wake after sleep command power screen on")
-            ]
-        },
-        {
             "id": "auth",
             "title": "prefs.sys.section.auth",
             "entries": [
@@ -265,6 +212,8 @@ var category = {
         {
             "id": "storage",
             "title": "prefs.sys.section.storage",
+            // mount points and tmpfs: out of the window (yozakura config)
+            "advanced": true,
             "entries": [
                 {
                     "key": "system.disks",
@@ -280,6 +229,23 @@ var category = {
                     "keywords": "disks mount points storage metrics usage home root"
                 },
                 toggle("system.clipboard.tmpfs", "prefs.sys.clipboard_tmpfs", "prefs.sys.clipboard_tmpfs.desc", "clipboard history tmp tmpfs ram memory reboot privacy")
+            ]
+        },
+        {
+            "id": "exclusive",
+            "title": "prefs.exclusive.section",
+            "compositor": "hyprland",
+            "entries": [
+                {
+                    "id": "system.exclusive",
+                    "type": "custom",
+                    "component": "ExclusiveCard",
+                    "compositor": "hyprland",
+                    "resettable": false,
+                    "label": "prefs.exclusive.title",
+                    "description": "prefs.exclusive.desc",
+                    "keywords": "exclusive only shell hyprland waybar mako dunst backup restore minimal config user.lua disable other bars daemons systemd"
+                }
             ]
         }
     ]

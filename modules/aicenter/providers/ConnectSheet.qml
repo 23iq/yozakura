@@ -92,6 +92,9 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
+            // embedded (a settings card titled Providers): only a picked
+            // provider's form names itself, the grid needs no header
+            visible: !root.embedded || root.provider !== ""
             spacing: Space.s
             IconButton {
                 size: "xs"

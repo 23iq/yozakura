@@ -13,7 +13,7 @@
       "description": "Yozakura uses your terminal to launch the tmux manager and show update progress.",
       "x-settings": {
         "category": "terminal",
-        "section": "terminal",
+        "section": "kitty",
         "label": "system.terminal.title",
         "control": "text",
         "keywords": "terminal emulator kitty foot alacritty wezterm ghostty"
@@ -26,7 +26,7 @@
       "description": "Use a custom command template for terminals that do not accept the standard `-e` flag",
       "x-settings": {
         "category": "terminal",
-        "section": "terminal",
+        "section": "kitty",
         "label": "system.terminal.advanced",
         "control": "toggle",
         "keywords": "terminal advanced custom command template",
@@ -40,7 +40,7 @@
       "description": "$TERMINAL is replaced by the terminal above, $COMMAND by what the shell runs. Examples: \"gnome-terminal -- $COMMAND\", \"konsole -e $COMMAND\".",
       "x-settings": {
         "category": "terminal",
-        "section": "terminal",
+        "section": "kitty",
         "label": "system.terminal.open_with",
         "control": "text",
         "keywords": "terminal command template $TERMINAL $COMMAND gnome-terminal konsole",
@@ -76,12 +76,6 @@
         "control": "toggle",
         "keywords": "auto save preset automatically active current own changes"
       }
-    },
-    "settingsShowAll": {
-      "title": "Show all settings",
-      "type": "boolean",
-      "default": false,
-      "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
     }
   },
   "additionalProperties": false

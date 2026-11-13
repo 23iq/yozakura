@@ -10,6 +10,7 @@ import qs.config
 import "../Ui.js" as Ui
 import "../../../config/motion/MotionProfiles.js" as MotionProfiles
 import "../../../config/motion/MotionSpec.js" as MotionSpec
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Motion profile picker (compositor.motionProfile): one card per profile of
@@ -21,7 +22,7 @@ Item {
     property var entry
     readonly property string current: SettingsStore.get("compositor.motionProfile") || MotionProfiles.DEFAULT_ID
     readonly property real durationScale: Number(SettingsStore.get("compositor.motionDurationScale")) || 1
-    readonly property int columns: Math.max(2, Math.min(4, Math.floor(width / 180)))
+    readonly property int columns: PictureGrid.columns(width, Space.m, 0, Space.px(124))
 
     implicitHeight: grid.implicitHeight
 
@@ -39,7 +40,7 @@ Item {
                 required property var modelData
                 required property int index
                 objectName: "motionCard:" + modelData.id
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                width: PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(190))
                 previewHeight: Math.round(width * 0.62)
                 selected: root.current === modelData.id
                 icon: modelData.icon

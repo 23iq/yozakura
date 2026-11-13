@@ -1,4 +1,5 @@
-"""Sidebar hover keeps the theme/effect graph stable in kit visual languages.
+"""List row hover keeps the theme/effect graph stable in kit visual languages
+(the settings search results and every kit list).
 
 Regresses ListRow switching its entire StyledRect to focus even though the
 ControlBox already paints the hover. Masked corners and ink effects made
@@ -20,21 +21,19 @@ win = env.load("""
 import QtQuick
 import QtQuick.Window
 import qs.config
-import qs.modules.settings
+import qs.modules.components.kit
 Window {
     id: w
     width: 320; height: 180; visible: true
     property int clicks: 0
-    NavItem {
-        objectName: "nav"; x: 20; y: 20; width: 240
-        category: ({id: "appearance", title: "prefs.cat.appearance", icon: "gear"})
+    ListRow {
+        objectName: "navRow"; x: 20; y: 20; width: 240
+        title: "Appearance"
         onClicked: w.clicks++
     }
 }
 """)
-nav = h.find(win, "nav")
-h.eval(nav, 'children.find(c => c.title !== undefined).objectName = "navRow"')
-row = h.find(nav, "navRow")
+row = h.find(win, "navRow")
 
 
 def move(x, y):
@@ -64,13 +63,13 @@ for language in ("ink", "glass", "tiles"):
     # accent surface and pointer feedback must not remove that selection.
     row.setProperty("highlighted", True)
     assert row.property("hovered") and row.property("boxed"), language
-    nav.setProperty("selected", True)
+    row.setProperty("selected", True)
     assert row.property("variant") == "primary", language
-    nav.setProperty("selected", False)
+    row.setProperty("selected", False)
     row.setProperty("highlighted", False)
 
 QTest.mouseClick(win, Qt.LeftButton, pos=QPoint(40, 35))
-assert win.property("clicks") == 1, "sidebar navigation remains clickable"
+assert win.property("clicks") == 1, "the row remains clickable"
 
 # Classic has no kit control box: its configured focus variant still paints hover.
 h.eval(win, 'Config.theme.language = "classic"')

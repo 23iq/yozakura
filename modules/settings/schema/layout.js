@@ -1,8 +1,11 @@
 .pragma library
 
-// Layout: where the launcher and dashboard open (notch, spotlight or side
-// sheet) and which side the sheet uses, with a live edge preview of the
-// screen. Hosts: modules/shell/hosts. Entry format: see modules/settings/AGENTS.md.
+// Bar > Where things open: where the launcher, dashboard, quick ask, the
+// voice / timer panels and the cheatsheet open (the island, a spotlight, a
+// side sheet, a card), each a row of choices, over a stage where each is a
+// chip in its place: pick one, click a drop zone to move it
+// (stages/OpensStage.qml). Hosts: modules/shell/hosts. Entry format: see
+// modules/settings/AGENTS.md.
 // `surface` (SurfaceRegistry.js id) notes where an entry shows while the
 // notch is off ("Island is off - shown as X", SettingRow).
 
@@ -74,11 +77,15 @@ var category = {
     "icon": "layout",
     "title": "prefs.cat.layout",
     "description": "prefs.cat.layout.desc",
+    "hero": { "hint": "prefs.layout.hero_hint" },
+    "row": ["hosts", "hosts2"],
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
         {
             "id": "parts",
             "title": "prefs.layout.section.parts",
+            // The edges live on the bar, island and dock pages.
+            "advanced": true,
             "entries": [
                 {
                     "id": "layout.builder",
@@ -86,8 +93,8 @@ var category = {
                     "component": "LayoutBuilder",
                     // Edits the parts' edge/style/align keys too, but those
                     // live on the bar, notch and dock pages (one page per
-                    // setting); notch.enabled is the builder's own
-                    "keys": ["notch.enabled"],
+                    // setting; notch.enabled is the Island tab's switch)
+                    "keys": [],
                     "label": "prefs.layout.builder",
                     "description": "prefs.layout.builder.desc",
                     "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
@@ -103,7 +110,6 @@ var category = {
                     "type": "selector",
                     "options": HOSTS,
                     "surface": "launcher",
-                    "preview": "LayoutPreview",
                     "label": "prefs.layout.launcher_host",
                     "description": "prefs.layout.launcher_host.desc",
                     "keywords": "launcher host spotlight sheet notch centered search"
@@ -117,6 +123,27 @@ var category = {
                     "description": "prefs.layout.dashboard_host.desc",
                     "keywords": "dashboard host spotlight sheet notch side panel"
                 },
+                {
+                    "key": "layout.cheatsheet.host",
+                    "type": "selector",
+                    "surface": "cheatsheet",
+                    "options": [
+                        {
+                            "value": "fullscreen",
+                            "label": "prefs.layout.host.fullscreen",
+                            "icon": "arrowsOut"
+                        }
+                    ].concat(HOSTS.slice(2)),
+                    "label": "prefs.layout.cheatsheet_host",
+                    "description": "prefs.layout.cheatsheet_host.desc",
+                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
+                }
+            ]
+        },
+        {
+            "id": "hosts2",
+            "title": "prefs.layout.section.more_panels",
+            "entries": [
                 {
                     "key": "layout.aiquick.host",
                     "type": "selector",
@@ -134,14 +161,21 @@ var category = {
                     "label": "prefs.layout.panels_host",
                     "description": "prefs.layout.panels_host.desc",
                     "keywords": "voice dictation timer hub alarm panels host card floating notch island"
-                },
+                }
+            ]
+        },
+        {
+            "id": "hosts3",
+            "title": "prefs.layout.section.sheets",
+            "entries": [
                 {
                     "key": "layout.sheet.side",
                     "type": "selector",
                     "options": [
                         {
                             "value": "auto",
-                            "label": "common.auto"
+                            "label": "common.auto",
+                            "icon": "sparkle"
                         },
                         {
                             "value": "left",
@@ -166,22 +200,36 @@ var category = {
                     "label": "prefs.layout.backdrop",
                     "description": "prefs.layout.backdrop.desc",
                     "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
-                },
-                {
-                    "key": "layout.cheatsheet.host",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "fullscreen",
-                            "label": "prefs.layout.host.fullscreen",
-                            "icon": "arrowsOut"
-                        }
-                    ].concat(HOSTS.slice(2)),
-                    "label": "prefs.layout.cheatsheet_host",
-                    "description": "prefs.layout.cheatsheet_host.desc",
-                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
                 }
             ]
         }
     ]
 };
+
+// "Where things open" is no tab of its own: each host row opens the page of
+// the thing it places (Categories.js splices them there, "Opens in"), the
+// sheet's side and backdrop go to Menus & OSD, the parts builder stays an
+// expert block of the Bar page.
+function entryOf(key) {
+    for (var i = 0; i < category.sections.length; i++) {
+        var hit = category.sections[i].entries.filter(function (e) {
+            return e.key === key;
+        })[0];
+        if (hit)
+            return hit;
+    }
+    return null;
+}
+
+// `entryOf(key)` labelled for the page it lands on (`label`: i18n key)
+function placed(key, label) {
+    var e = entryOf(key);
+    var out = {};
+    for (var k in e)
+        out[k] = e[k];
+    out.label = label;
+    delete out.iconOnly;
+    return out;
+}
+
+var builderSection = category.sections[0];

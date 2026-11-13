@@ -9,9 +9,10 @@ import "../Ui.js" as Ui
 import "DisplayFormat.js" as DisplayFormat
 import qs.modules.components.kit
 
-// The arrangement canvas: every enabled monitor as a scaled tile; drag one
-// to move it (snaps to the others' edges on release). Disabled monitors sit
-// in a strip underneath. `configs` is the draft layout, `outputs` the live
+// The arrangement canvas (the Displays page's hero): every enabled monitor
+// as a scaled tile; drag one to move it (snaps to the others' edges on
+// release), click one to pick it. Disabled monitors sit in a strip
+// underneath. `configs` is the draft layout, `outputs` the live
 // outputs (model names, wallpaper aspect).
 StyledRect {
     id: root
@@ -31,9 +32,11 @@ StyledRect {
     variant: "pane"
     radius: Look.radius("box")
     enableShadow: false
-    readonly property int margin: 16
-    readonly property int canvasHeight: 308
-    implicitHeight: canvasHeight + margin * 2 + (disabled.length > 0 ? strip.height + 14 : 0)
+    readonly property int margin: Space.l
+    // the canvas takes the height the page gives, less the strip of
+    // monitors that are off
+    readonly property real canvasHeight: Math.max(Space.controlXL, root.height - margin * 2 - (disabled.length > 0 ? strip.height + Space.m : 0))
+    implicitHeight: Space.px(340)
 
     Rectangle {
         anchors.fill: parent
@@ -109,21 +112,12 @@ StyledRect {
         }
     }
 
-    KitText {
-        role: "caption"
-        anchors.left: canvas.left
-        anchors.bottom: canvas.bottom
-        anchors.margins: Space.xs
-        text: I18n.t("prefs.displays.arrange_hint")
-        color: Ui.alpha(Colors.overSurfaceVariant, 0.8)
-    }
-
     // Disabled monitors
     Flow {
         id: strip
         visible: root.disabled.length > 0
         x: root.margin
-        y: canvas.y + canvas.height + 8
+        y: canvas.y + canvas.height + Space.m
         width: parent.width - root.margin * 2
         spacing: Space.s
 

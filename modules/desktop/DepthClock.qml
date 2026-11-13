@@ -67,7 +67,10 @@ Item {
     readonly property var layoutInfo: (info && info.ok && info.layouts) ? (info.layouts[screenW + "x" + screenH] ?? null) : null
     // Hold the clock back until the mask lookup answered (a cache hit is
     // ~20 ms), so it does not visibly jump spots right after a wallpaper change.
-    readonly property bool settled: info !== null || !DepthMaskService.available || settleTimer.expired
+    // false: draw at once, without waiting for the wallpaper's matte (a
+    // picture of the style on a plain ground, the settings gallery)
+    property bool waitForMask: true
+    readonly property bool settled: !waitForMask || info !== null || !DepthMaskService.available || settleTimer.expired
 
     // Screen area not reserved by the bar / frame.
     readonly property string barPosition: Panels.primaryEdge

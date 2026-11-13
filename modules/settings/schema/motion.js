@@ -40,6 +40,8 @@ var sections = [
         "entries": [
             {
                 "key": "compositor.motionProfile",
+                // the Motion macro on Look picks the profile
+                "advanced": true,
                 "type": "custom",
                 "component": "MotionProfileCards",
                 "keys": [
@@ -51,6 +53,7 @@ var sections = [
             },
             {
                 "key": "compositor.motionDurationScale",
+                "advanced": true,
                 "type": "slider",
                 "min": 0.25,
                 "max": 3,

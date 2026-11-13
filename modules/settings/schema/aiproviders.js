@@ -1,16 +1,27 @@
 .pragma library
 
-// AI > Providers: connect chat providers (the AI bar's Connect sheet),
-// default model, picker visibility, request policy, custom endpoint
-// headers and local servers (Ollama, LM Studio). Entry format: see
-// modules/settings/AGENTS.md.
+// Assistant > Providers, a list page: the band says where answers come
+// from and shows every provider in its state (ProvidersBand); the row:
+// the providers (the AI bar's Connect sheet: a tile per provider, the key
+// form opens from it) and the models (the default one, which providers
+// the picker lists). Request policy, custom endpoint headers and local
+// servers stay out of the window. Entry format: see modules/settings/AGENTS.md.
 
 var category = {
     "id": "ai-providers",
     "icon": "plugsConnected",
-    "title": "ai.providers",
+    "title": "prefs.cat.ai_providers",
     "description": "prefs.ai.providers.desc",
     "keywords": "ai api key provider connect openai anthropic gemini mistral groq minimax deepseek openrouter lm studio ollama custom endpoint local",
+    "form": "list",
+    "stage": "ProvidersBand",
+    "hero": {
+        "hint": "prefs.ai.providers.hero_hint"
+    },
+    "row": [
+        "connections",
+        "defaults"
+    ],
     "sections": [
         {
             "id": "connections",
@@ -46,13 +57,7 @@ var category = {
                     "label": "prefs.ai.providers.visible",
                     "description": "prefs.ai.providers.visible.desc",
                     "keywords": "hide show provider picker enable disable list"
-                }
-            ]
-        },
-        {
-            "id": "requests",
-            "title": "prefs.ai.providers.requests",
-            "entries": [
+                },
                 {
                     "key": "ai.providers.timeout",
                     "advanced": true,
@@ -64,7 +69,12 @@ var category = {
                     "max": 3600,
                     "step": 30,
                     "unit": "s",
-                    "specialValues": [{ "value": 0, "label": "prefs.ai.providers.timeout.none" }]
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.ai.providers.timeout.none"
+                        }
+                    ]
                 },
                 {
                     "key": "ai.providers.retries",
@@ -117,13 +127,7 @@ var category = {
                     "label": "prefs.ai.providers.headers",
                     "description": "prefs.ai.providers.headers.desc",
                     "keywords": "custom endpoint headers proxy auth authorization openai compatible"
-                }
-            ]
-        },
-        {
-            "id": "local",
-            "title": "prefs.ai.providers.local",
-            "entries": [
+                },
                 {
                     "key": "ai.ollama.endpoint",
                     "advanced": true,
@@ -154,7 +158,12 @@ var category = {
                     "min": 0,
                     "max": 1048576,
                     "step": 1024,
-                    "specialValues": [{ "value": 0, "label": "prefs.ai.ollama_num_ctx.model_max" }]
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.ai.ollama_num_ctx.model_max"
+                        }
+                    ]
                 },
                 {
                     "key": "ai.lmstudio.endpoint",
@@ -177,7 +186,12 @@ var category = {
                     "max": 3600,
                     "step": 15,
                     "unit": "s",
-                    "specialValues": [{ "value": 0, "label": "prefs.ai.providers.probe_interval.manual" }]
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.ai.providers.probe_interval.manual"
+                        }
+                    ]
                 }
             ]
         }

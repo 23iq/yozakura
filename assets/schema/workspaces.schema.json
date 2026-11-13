@@ -7,7 +7,7 @@
   "x-file": "config/workspaces.json",
   "properties": {
     "shown": {
-      "title": "Workspaces shown",
+      "title": "Workspace count",
       "type": "number",
       "default": 10,
       "description": "How many workspace slots the bar shows.",
@@ -15,7 +15,7 @@
         "category": "bar",
         "section": "workspaces",
         "label": "prefs.bar.ws_shown",
-        "control": "slider",
+        "control": "number",
         "step": 1,
         "keywords": "workspaces count number visible desktops",
         "min": 1,
@@ -51,11 +51,12 @@
         "visibleWhen": {
           "key": "workspaces.showNumbers",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "showNumbers": {
-      "title": "Show numbers",
+      "title": "Numbers",
       "type": "boolean",
       "default": false,
       "description": "Label workspaces with their number.",
@@ -68,7 +69,7 @@
       }
     },
     "dynamic": {
-      "title": "Dynamic",
+      "title": "Only used ones",
       "type": "boolean",
       "default": false,
       "description": "Only show workspaces that are in use.",
@@ -129,7 +130,7 @@
       "format": "font-family"
     },
     "indicatorStyle": {
-      "title": "Active indicator",
+      "title": "Active mark",
       "type": "string",
       "default": "pill",
       "description": "Shape that marks the active workspace.",
@@ -138,7 +139,7 @@
         "section": "workspaces",
         "label": "prefs.bar.ws_indicator",
         "control": "custom",
-        "component": "IndicatorStyleChips",
+        "component": "IndicatorCards",
         "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
       },
       "enum": [
@@ -176,7 +177,7 @@
       ]
     },
     "branchColor": {
-      "title": "Blossom colour",
+      "title": "Blossom color",
       "type": "string",
       "default": "primary",
       "description": "Palette role of the blossoms and buds. The active workspace always takes the accent.",

@@ -24,6 +24,15 @@ Item {
     implicitWidth: row.implicitWidth + Space.xs * 2
     implicitHeight: Space.controlM
 
+    // Keyboard: `focusable` takes Tab focus (ring around the track) and
+    // Left / Right move to the neighbouring segment.
+    property bool focusable: false
+    activeFocusOnTab: root.focusable
+    Keys.onLeftPressed: if (root.currentIndex > 0)
+        root.activated(root.currentIndex - 1)
+    Keys.onRightPressed: if (root.currentIndex < root.count - 1)
+        root.activated(root.currentIndex + 1)
+
     Rectangle {
         objectName: "segmentTrack"
         anchors.fill: parent
@@ -31,6 +40,11 @@ Item {
         color: Look.raisedFill(false)
         border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
         border.color: Look.controlEdge
+
+        FocusRing {
+            shown: root.activeFocus
+            radius: parent.radius + Space.stroke
+        }
     }
 
     StyledRect {

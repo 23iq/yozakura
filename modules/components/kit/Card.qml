@@ -1,0 +1,149 @@
+import QtQuick
+import QtQuick.Effects
+import qs.modules.theme
+import qs.modules.components.kit
+
+// A bento card: one surface (Look.cardFill: translucent over the window's
+// Ambient in glass / ink, solid in the boxed languages; Look.bigRadius, a
+// hairline edge, a soft shadow) holding a concept - an optional label
+// (SectionLabel) over its content, laid out in a column. Visible in every
+// visual language (unlike Group, which ink leaves unboxed), so a grid of
+// cards reads as a bento. `interactive` makes the whole card a button:
+// it lifts and brightens on hover (Motion.micro), springs on press
+// (Motion.spring), reports the `pointer` over it, takes Tab focus with the FocusRing, `clicked()` on
+// click / Enter / Space. `fill: false` drops the box (a picture tile that
+// paints itself, `background` content under everything).
+//
+//   Card { label: "Edge"; Switch { ... } }
+Item {
+    id: root
+
+    property string label: ""
+    property bool interactive: false
+    property bool highlighted: false
+    property bool fill: true
+    // an accent ring and glow (the thing the window is about, e.g. the hero tile)
+    property bool accented: false
+    // the shadow under the card (off for cards inside cards)
+    property bool shadow: true
+    property int padding: Look.boxPadding + Space.xs
+    property int spacing: Space.m
+    readonly property real radius: Look.bigRadius(Space.controlXL)
+    readonly property bool hovered: area.containsMouse || root.highlighted
+    readonly property real contentWidth: root.width - root.padding * 2
+    // Where the pointer is over an interactive card, -1..1 on each axis
+    // (0, 0 when it is away): for a picture that follows it (parallax).
+    readonly property point pointer: area.containsMouse && root.width > 0 && root.height > 0 ? Qt.point(area.mouseX / root.width * 2 - 1, area.mouseY / root.height * 2 - 1) : Qt.point(0, 0)
+    default property alias content: body.data
+    // Painted under the label and content, clipped to the card (a picture).
+    property alias background: backdrop.data
+
+    signal clicked
+
+    implicitWidth: body.implicitWidth + root.padding * 2
+    implicitHeight: body.implicitHeight + root.padding * 2
+    activeFocusOnTab: root.interactive
+    Keys.onReturnPressed: if (root.interactive)
+        root.clicked()
+    Keys.onSpacePressed: if (root.interactive)
+        root.clicked()
+
+    Accessible.role: root.interactive ? Accessible.Button : Accessible.Grouping
+    Accessible.name: root.label
+
+    // The box, lifted a little while hovered, pressed in on a press.
+    Item {
+        id: shell
+        anchors.fill: parent
+        y: root.interactive && root.hovered && !area.pressed ? -Space.xs : 0
+        scale: area.pressed ? 0.985 : 1
+        Behavior on y {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
+                easing.type: Motion.micro.easing
+            }
+        }
+        Behavior on scale {
+            enabled: Motion.spring.duration > 0
+            NumberAnimation {
+                duration: Motion.spring.duration
+                easing.type: Motion.spring.easing
+                easing.overshoot: Motion.spring.overshoot
+            }
+        }
+
+        RectangularShadow {
+            anchors.fill: parent
+            visible: root.shadow && (root.fill || root.accented)
+            radius: root.radius
+            offset: Qt.vector2d(0, root.interactive && root.hovered ? Space.s : Space.xs)
+            blur: root.interactive && root.hovered ? Space.xxl : Space.xl
+            spread: 0
+            color: root.accented ? Qt.alpha(Type.accent, 0.35) : Look.cardShadow
+            Behavior on blur {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
+        }
+        Mark {
+            anchors.fill: parent
+            visible: root.fill
+            radius: root.radius
+            color: Look.cardFill(root.interactive && root.hovered)
+            border.width: Look.cardEdge.a > 0 ? Space.hairline : 0
+            border.color: Look.cardEdge
+            Behavior on color {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
+        }
+        Item {
+            id: backdrop
+            anchors.fill: parent
+        }
+
+        Column {
+            id: body
+            x: root.padding
+            y: root.padding
+            width: root.contentWidth
+            spacing: root.spacing
+
+            SectionLabel {
+                width: parent.width
+                inset: 0
+                visible: root.label !== ""
+                text: root.label
+            }
+        }
+
+        // the accent ring, over the picture
+        Mark {
+            anchors.fill: parent
+            visible: root.accented
+            radius: root.radius
+            color: "transparent"
+            border.width: Space.stroke
+            border.color: Type.accent
+            z: 2
+        }
+        FocusRing {
+            shown: root.activeFocus
+            radius: root.radius + Space.stroke
+        }
+    }
+
+    MouseArea {
+        id: area
+        anchors.fill: parent
+        enabled: root.interactive
+        hoverEnabled: root.interactive
+        cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: root.clicked()
+    }
+}

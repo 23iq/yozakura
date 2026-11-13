@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
+import "WheelGuard.js" as WheelGuard
 
 // A 3px line slider: track, accent fill, a knob that shows while hovered or
 // dragged (always with `alwaysShowKnob`: a media timeline's playhead). Drag or click to set, the wheel adjusts by `step`. Optional
@@ -180,7 +181,7 @@ Item {
                         mouse.track(m);
                 }
                 onWheel: w => {
-                    if (!root.wheelEnabled) {
+                    if (!root.wheelEnabled || !WheelGuard.owns(root)) {
                         w.accepted = false;
                         return;
                     }

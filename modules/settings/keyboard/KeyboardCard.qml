@@ -7,13 +7,18 @@ import "../Ui.js" as Ui
 import qs.modules.components.kit
 
 // A titled card of the Keyboard page: tinted icon, title, subtitle, then the
-// rows (children). Same look as the monitor details card of Displays.
+// rows (children); `headless` (with Group's `bare`) inside a row card.
 Group {
     id: root
+
+    bare: root.headless
 
     property string icon: "keyboard"
     property string title: ""
     property string subtitle: ""
+    // Inside a row card that names it (the fitted page): no header, no box
+    // of its own.
+    property bool headless: false
     // Extra controls on the right of the header
     default property alias rows: body.data
     property alias headerActions: actions.data
@@ -24,7 +29,8 @@ Group {
 
         Item {
             width: parent.width
-            height: Space.controlL + Space.m
+            height: root.headless ? 0 : Space.controlL + Space.m
+            visible: !root.headless
 
             // Neutral icon tile: the accent stays for active state
             StyledRect {

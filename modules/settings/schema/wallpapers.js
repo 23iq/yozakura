@@ -35,6 +35,12 @@ var category = {
     "title": "prefs.cat.wallpapers",
     "description": "prefs.cat.wallpapers.desc",
     "keywords": "wallpaper background picture image folder video",
+    "stage": "WallpaperStage",
+    "hero": {
+        "foot": ["wallpaper.browser"],
+        "hint": "prefs.wall.hero_hint"
+    },
+    "row": [{ "id": "panorama", "weight": 0.9 }, { "id": "transition", "weight": 1.35 }, { "id": "colours", "weight": 0.75 }],
     "sections": [
         {
             "id": "library",
@@ -43,7 +49,7 @@ var category = {
                 {
                     "id": "wallpaper.browser",
                     "type": "custom",
-                    "component": "WallpaperGrid",
+                    "component": "WallpaperStrip",
                     "resettable": false,
                     "label": "prefs.wall.current",
                     "description": "prefs.wall.current.desc",
@@ -52,16 +58,39 @@ var category = {
             ]
         },
         {
-            "id": "folders",
-            "title": "prefs.wall.section.folders",
+            "id": "panorama",
+            "title": "prefs.wall.section.panorama",
             "entries": [
                 {
-                    "key": "desktop.wallpaperFolders",
-                    "type": "custom",
-                    "component": "FolderList",
-                    "label": "prefs.wall.folders",
-                    "description": "prefs.wall.folders.desc",
-                    "keywords": "folder directory path location library add remove multiple"
+                    "key": "desktop.wallpaperMode",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "fill",
+                            "label": "prefs.wall.mode.fill"
+                        },
+                        {
+                            "value": "panorama",
+                            "label": "prefs.wall.mode.panorama"
+                        }
+                    ],
+                    "display": "cards",
+                    "thumb": "WallFitThumb",
+                    "label": "prefs.wall.mode",
+                    "description": "prefs.wall.mode.desc",
+                    "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+                },
+                {
+                    "key": "desktop.panoramaParallax",
+                    "advanced": true,
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "desktop.wallpaperMode",
+                        "equals": "panorama"
+                    },
+                    "label": "prefs.wall.parallax",
+                    "description": "prefs.wall.parallax.desc",
+                    "keywords": "parallax depth layers map near far 3d"
                 }
             ]
         },
@@ -100,7 +129,8 @@ var category = {
                             "label": "shell.desktop.transition.none"
                         }
                     ],
-                    "preview": "TransitionPreview",
+                    "display": "cards",
+                    "thumb": "WallTransitionThumb",
                     "label": "prefs.wall.transition",
                     "description": "prefs.wall.transition.desc",
                     "keywords": "transition animation grow wipe dissolve fade random shader effect"
@@ -126,44 +156,47 @@ var category = {
             ]
         },
         {
-            "id": "panorama",
-            "title": "prefs.wall.section.panorama",
+            "id": "colours",
+            "title": "prefs.wall.section.colours",
             "entries": [
                 {
-                    "key": "desktop.wallpaperMode",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "fill",
-                            "label": "prefs.wall.mode.fill"
-                        },
-                        {
-                            "value": "panorama",
-                            "label": "prefs.wall.mode.panorama"
-                        }
-                    ],
-                    "preview": "PanoramaPreview",
-                    "label": "prefs.wall.mode",
-                    "description": "prefs.wall.mode.desc",
-                    "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+                    "id": "wallpaper.colours",
+                    "type": "custom",
+                    "component": "WallpaperColours",
+                    "resettable": false,
+                    "label": "prefs.wall.colours",
+                    "description": "prefs.wall.colours.desc",
+                    "keywords": "colours colors palette from wallpaper matugen scheme accent"
+                }
+            ]
+        },
+        {
+            "id": "folders",
+            "title": "prefs.wall.section.folders",
+            "entries": [
+                {
+                    "key": "desktop.wallpaperFolders",
+                    "type": "custom",
+                    "component": "FolderList",
+                    "label": "prefs.wall.folders",
+                    "description": "prefs.wall.folders.desc",
+                    "keywords": "folder directory path location library add remove multiple"
                 },
                 {
-                    "key": "desktop.panoramaParallax",
-                    "advanced": true,
-                    "type": "toggle",
-                    "visibleWhen": {
-                        "key": "desktop.wallpaperMode",
-                        "equals": "panorama"
-                    },
-                    "label": "prefs.wall.parallax",
-                    "description": "prefs.wall.parallax.desc",
-                    "keywords": "parallax depth layers map near far 3d"
+                    "id": "wallpaper.screens",
+                    "type": "custom",
+                    "component": "WallpaperScreens",
+                    "resettable": false,
+                    "label": "prefs.wall.per_screen",
+                    "description": "prefs.wall.per_screen.desc",
+                    "keywords": "per screen monitor own wallpaper each display apply all"
                 }
             ]
         },
         {
             "id": "more",
             "title": "prefs.wall.section.more",
+            "advanced": true,
             "entries": [
                 {
                     "id": "wallpaper.rotation",

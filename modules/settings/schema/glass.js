@@ -12,6 +12,7 @@ var sections = [
         "entries": [
             {
                 "key": "theme.glass.enabled",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.glass.enabled",
                 "description": "prefs.glass.enabled.desc",
@@ -19,6 +20,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.amount",
+                "advanced": true,
                 "type": "custom",
                 "component": "GlassAmountEditor",
                 "keys": [

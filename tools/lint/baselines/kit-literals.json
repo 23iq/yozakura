@@ -92,23 +92,22 @@
   "text": 10
  },
  "modules/settings": {
-  "spacing": 3,
-  "rectangle": 4,
-  "text": 4
+  "rectangle": 1,
+  "text": 1
  },
  "modules/settings/controls": {
   "spacing": 5,
   "font-size": 1,
   "rectangle": 6,
-  "text": 8
+  "text": 6
  },
  "modules/settings/displays": {
   "rectangle": 8
  },
  "modules/settings/editors": {
-  "font-size": 3,
-  "rectangle": 33,
-  "text": 5
+  "font-size": 1,
+  "rectangle": 25,
+  "text": 2
  },
  "modules/settings/editors/desktopwidgets": {
   "rectangle": 5
@@ -135,8 +134,7 @@
   "text": 1
  },
  "modules/settings/previews": {
-  "rectangle": 50,
-  "text": 1
+  "rectangle": 34
  },
  "modules/settings/system": {
   "text": 1

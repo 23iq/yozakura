@@ -234,6 +234,17 @@ function conditionKeys(cond) {
     return out;
 }
 
+// Is the entry a row of the settings window? Entries (or whole sections)
+// flagged `advanced: true` are not: they are expert plumbing or rarely
+// needed, stay in the catalog (`yozakura config`, MCP, presets) and are
+// neither rendered nor found by the window's search. A section that starts
+// folded (`collapsed: true`, the old expert blocks) counts as advanced.
+function inWindow(entry, section) {
+    if (!entry || entry.advanced)
+        return false;
+    return !(section && (section.advanced || section.collapsed));
+}
+
 // [{entry, section, category}] in render order.
 function flatten(categories) {
     var out = [];
@@ -251,7 +262,8 @@ function flatten(categories) {
     return out;
 }
 
-// Search index generated from the schema. `tr` translates an i18n key.
+// Search index of the window generated from the schema (window entries
+// only, see inWindow). `tr` translates an i18n key.
 // Legacy (not yet migrated) categories contribute their `topics`.
 function buildSearchIndex(categories, tr) {
     var t = tr || function (k) {
@@ -272,7 +284,7 @@ function buildSearchIndex(categories, tr) {
         (cat.sections || []).forEach(function (sec) {
             var secTitle = sec.title ? t(sec.title) : "";
             (sec.entries || []).forEach(function (entry) {
-                if (!entry.label)
+                if (!entry.label || !inWindow(entry, sec))
                     return;
                 var label = t(entry.label);
                 out.push({

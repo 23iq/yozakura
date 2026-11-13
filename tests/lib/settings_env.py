@@ -142,6 +142,22 @@ QtObject {
     function test(r, cb) { calls = calls.concat([["test", r]]); if (cb) cb(nextReport, "") }
 }"""
 
+# Home status tiles read the network and the power profile.
+NETWORK_STUB = """pragma Singleton
+QtObject {
+    property string networkName: "Sakura 5G"
+    property int networkStrength: 80
+    property bool ethernet: false
+    property bool wifiEnabled: true
+}"""
+
+POWER_PROFILE_STUB = """pragma Singleton
+QtObject {
+    property string currentProfile: "balanced"
+    property bool isAvailable: true
+    property var availableProfiles: ["power-saver", "balanced", "performance"]
+}"""
+
 UPDATE_STUB = """pragma Singleton
 QtObject {
     property string currentVersion: "1.3.9"
@@ -241,6 +257,7 @@ MIRROR = [
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
+    "modules/services/timers/TimerFormat.js",  # the Timers stage formats like the island
     # Presets page: the unified gallery's tabs, cards and stores
     "modules/widgets/presets",
     "config/defaults",
@@ -259,9 +276,14 @@ MIRROR = [
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/panels/PanelEdit.js",
     "modules/bar/workspaces/WorkspaceNumerals.js",
+    "modules/bar/clock/ClockFace.qml",  # the bar stage draws the real clock faces
+    "modules/bar/clock/ClockFaces.js",
+    "modules/bar/clock/faces",
     "modules/bar/workspaces/indicators",
+    "modules/dock/indicators",  # the dock stage draws the real indicator styles
     "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
+    "modules/widgets/dashboard/DashboardTabs.js",
     "modules/widgets/dashboard/wallpapers/WallpaperDefaults.js",
     "modules/widgets/launcher/Providers.js",
     "modules/specials/Specials.js",
@@ -480,7 +502,6 @@ QtObject {{
     property string compositorLayout: "dwindle"
     property string settingsCategory: "appearance"
     property bool settingsWindowVisible: true
-    property bool settingsCloseConfirm: false
     readonly property var _shellSections: {sections}
     function markThemeChanged() {{ themeHasChanges = true }}
     function markShellChanged() {{ shellHasChanges = true }}
@@ -573,6 +594,43 @@ QtObject {
         return apps.filter(a => a.name.toLowerCase().indexOf(l) !== -1);
     }
     function getAllApps() { return apps }
+}"""
+# Night light (Displays page): idle stand-in; tests/lib/device_fixtures.py has a live one.
+NIGHT_LIGHT_STUB = """pragma Singleton
+QtObject {
+    property bool active: false
+    property int temp: 4500
+    function toggle() {}
+    function setEnabled(v) {}
+    function setTemperature(v) {}
+}"""
+# Bluetooth page: idle stand-in (adapter off); tests/lib/device_fixtures.py has a live one.
+BLUETOOTH_STUB = """pragma Singleton
+QtObject {
+    property bool enabled: false
+    property bool discovering: false
+    property var friendlyDeviceList: []
+    function setEnabled(v) {}
+    function startDiscovery() {}
+    function stopDiscovery() {}
+    function connectDevice(a) {}
+    function disconnectDevice(a) {}
+    function pairDevice(a) {}
+    function removeDevice(a) {}
+}"""
+# Effects page: EasyEffects not running; tests/lib/device_fixtures.py has a live one.
+EASY_EFFECTS_STUB = """pragma Singleton
+QtObject {
+    property bool available: false
+    property bool bypassed: false
+    property var outputPresets: []
+    property var inputPresets: []
+    property string activeOutputPreset: ""
+    property string activeInputPreset: ""
+    function setConsumer(k, on) {}
+    function setBypass(v) {}
+    function loadOutputPreset(n) {}
+    function loadInputPreset(n) {}
 }"""
 # Keyboard page (modules/settings/keyboard): idle stand-in; tests/lib/keyboard_env.py swaps in the real one.
 KEYBOARD_STUB = """pragma Singleton
@@ -782,7 +840,16 @@ QtObject {
 
 class SettingsEnv:
     def __init__(self, name: str = "settings", *, palette: dict | None = None, user_config: bool = False,
-                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None):
+                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None,
+                 devices: bool = False, text_wider: float = 0, pin_fonts: bool = False):
+        """`devices`: believable live services (tests/lib/device_fixtures.py)
+        instead of the idle stand-ins, for the device pages. `text_wider`:
+        every kit text (KitText) set that much wider (0.08 = about 8 %, by
+        letter spacing), so a layout test catches a fit that another
+        machine's fonts would elide. `pin_fonts`: the bundled UI fonts
+        (assets/fonts/ui) registered and set as the theme's body and mono
+        fonts, so a layout test measures the same glyphs on every machine
+        (the default family may be missing, and its fallback differs)."""
         self.h = Harness(name)
         self.root = self.h.root
         domains = load_defaults()
@@ -795,8 +862,19 @@ class SettingsEnv:
                         pass
         for dom, values in (overrides or {}).items():
             domains[dom] = _merge(domains[dom], values)
+        if pin_fonts:
+            import bundled_fonts
+            bundled_fonts.register()
+            domains["theme"] = _merge(domains["theme"], {"font": "Inter", "monoFont": "IBM Plex Mono"})
         self.domains = domains
         self._mirror()
+        if text_wider:
+            kit_text = self.root / "qs/modules/components/kit/KitText.qml"
+            src = kit_text.read_text()
+            line = "    font.letterSpacing: Type.letterSpacing(root.role)\n"
+            assert line in src, "KitText letter spacing line"
+            # an average glyph is about half an em wide
+            kit_text.write_text(src.replace(line, f"    font.letterSpacing: Type.letterSpacing(root.role) + Type.size(root.role) * {text_wider / 2}\n"))
         qs = self.root / "qs"
         if binds is None:
             binds = default_binds()
@@ -816,25 +894,30 @@ class SettingsEnv:
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
         from lockscreen_env import SERVICES as LOCK_SERVICES  # (lockscreen_env imports this module)
         from osd_env import AUDIO_STUB, OSD_SERVICE_STUB  # (same)
+        from device_fixtures import SERVICES as DEVICE_SERVICES
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "BluetoothService": BLUETOOTH_STUB, "EasyEffectsService": EASY_EFFECTS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
                                               "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
-                                              **LOCK_SERVICES, **DESKTOP_STUBS})
+                                              "NetworkService": NETWORK_STUB, "PowerProfileClient": POWER_PROFILE_STUB,
+                                              **LOCK_SERVICES, **DESKTOP_STUBS,
+                                              **(DEVICE_SERVICES if devices else {})})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
                                              "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})
         self.h.module("Quickshell", QUICKSHELL)
         self.h.module("Quickshell.Io", QUICKSHELL_IO)
         self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)
+        # the Sound page tracks app streams (PwObjectTracker)
+        self.h.module("Quickshell.Services.Pipewire", {"PwObjectTracker": "import QtQuick\nQtObject { property var objects: [] }"})
         # Legacy panel components reused by editors (heavy service deps).
         self.h.module("qs.modules.widgets.dashboard.controls", {
-            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
+            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120; property var write: null }"})
         self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
         self._qmldir(qs / "modules/widgets/presets", "qs.modules.widgets.presets",
@@ -858,7 +941,7 @@ class SettingsEnv:
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
                   "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
-                  "modules/settings/changes", "modules/settings/thumbs",
+                  "modules/settings/changes", "modules/settings/thumbs", "modules/settings/stages", "modules/settings/home",
                   "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 

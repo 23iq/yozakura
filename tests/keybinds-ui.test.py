@@ -400,7 +400,7 @@ check(ev(f"{adapter}.custom.length") == 2 and ev("KeybindsStore.recorders") == 0
 ev('KeybindsStore.editorQuery = "close it"')
 wait_until(lambda: find("keybindRow:custom:0") is not None and find("keybindRow:core:launcher") is None)
 check(find("keybindRow:custom:0") is not None and find("keybindRow:core:launcher") is None, "editor search filters")
-check(h.eval(find("settingsSection:shell"), "visible") is False, "groups without matches are hidden")
+check(h.eval(find("shortcutGroup:shell"), "visible") is False, "groups without matches are hidden")
 check(h.eval(find("keybindsMatchCount"), "visible") is True, "the number of matches is shown")
 ev('KeybindsStore.editorQuery = "super return"')
 wait_until(lambda: find("keybindRow:custom:0") is not None and ev("KeybindsStore.visibleAll.length") == 1)
@@ -408,10 +408,10 @@ check(find("keybindRow:custom:0") is not None and ev("KeybindsStore.visibleAll.l
 ev('KeybindsStore.editorQuery = "zzzz"')
 wait_until(lambda: find("keybindsEmpty") is not None and h.eval(find("keybindsEmpty"), "visible") is True)
 check(h.eval(find("keybindsEmpty"), "visible") is True, "empty state when nothing matches")
-check(h.eval(find("settingsSection:windows"), "visible") is False, "no empty cards")
+check(h.eval(find("shortcutGroup:windows"), "visible") is False, "no empty groups")
 ev('KeybindsStore.editorQuery = ""')
 settle()
-check(h.eval(find("settingsSection:windows"), "visible") is True and h.eval(find("keybindsEmpty"), "visible") is False,
+check(h.eval(find("shortcutGroup:windows"), "visible") is True and h.eval(find("keybindsEmpty"), "visible") is False,
       "clearing the search shows everything again")
 
 # cheatsheet "edit" opens the row in the editor

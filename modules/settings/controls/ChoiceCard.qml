@@ -1,14 +1,22 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
+import QtQuick.Effects
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.components.kit
 
-// Selectable card: a preview area (default children) above a caption.
-// Used by every "pick one of these looks" editor. At rest / hovered it is
-// the language's control box (Look); `selected` is the kit's accent tint
-// with an accent check (KitStates "active"). Keyboard focus shows the
-// hover look.
-StyledRect {
+// A picture card: one look to pick, shown as a picture (default children,
+// clipped to the card's rounded corners) over a short title. Used by every
+// "pick one of these looks" row. At rest the picture has a hairline edge;
+// hovered it lifts a little and the edge firms up; `selected` rings it in
+// the accent (inside its edge), puts a check badge in its corner and the
+// title in the active weight. Keyboard:
+// Tab focus with the kit FocusRing, Space / Enter pick. The same in every
+// visual language (the picture is the box). `subtitle` is a second caption
+// line for the rare card whose picture cannot say it. `inset`: the title
+// sits inside the picture on a gradient (a strip of pictures in a card of
+// the page row), no caption under it.
+Item {
     id: card
 
     property bool selected: false
@@ -16,94 +24,179 @@ StyledRect {
     property string subtitle: ""
     property string icon: ""
     property real previewHeight: 96
+    property bool inset: false
     default property alias preview: previewArea.data
-    readonly property bool hovered: area.containsMouse || card.activeFocus
+    readonly property bool hovered: area.containsMouse
+    readonly property real radius: Look.radius("control", Space.controlL)
     signal clicked
 
-    implicitWidth: 180
-    implicitHeight: previewHeight + caption.implicitHeight + Space.s * 2 + Space.s
+    implicitWidth: Space.px(180)
+    implicitHeight: card.inset ? card.previewHeight : card.previewHeight + Space.s + caption.implicitHeight
     activeFocusOnTab: true
     Keys.onSpacePressed: clicked()
     Keys.onReturnPressed: clicked()
-
-    variant: card.selected ? "primary" : (card.hovered ? "focus" : "common")
-    backgroundOpacity: card.selected ? (card.hovered ? Look.activeTint * 1.5 : Look.activeTint) : (Look.boxedControls ? 0 : -1)
-    enableBorder: !card.selected && !Look.boxedControls
-    radius: Look.chipRadius(height)
 
     Accessible.role: Accessible.RadioButton
     Accessible.name: title
     Accessible.checked: selected
 
-    ControlBox {
-        shown: !card.selected
-        radius: card.radius
-        hovered: card.hovered
+    Item {
+        id: frame
+        width: parent.width
+        height: card.previewHeight
+        y: card.hovered && !card.selected ? -Space.hairline * 2 : 0
+        Behavior on y {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
+                easing.type: Motion.micro.easing
+            }
+        }
+
+        Item {
+            id: previewArea
+            anchors.fill: parent
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: mask
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1.0
+            }
+        }
+        Mark {
+            id: mask
+            anchors.fill: parent
+            radius: card.radius
+            visible: false
+            layer.enabled: true
+            layer.smooth: true
+        }
+
+        // inset title: on a gradient at the bottom of the picture
+        Mark {
+            visible: card.inset
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.min(parent.height, insetTitle.implicitHeight + Space.l * 2)
+            radius: card.radius
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 1
+                    color: Qt.alpha(Colors.shadow, 0.75)
+                }
+            }
+            KitText {
+                id: insetTitle
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Space.s
+                width: Math.min(implicitWidth, parent.width - Space.s * 2)
+                role: "secondary"
+                color: Qt.rgba(1, 1, 1, card.selected ? 1 : 0.85)
+                font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
+                text: card.title
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
+            }
+        }
+
+        // The edge: a hairline at rest, the accent ring when selected (drawn
+        // inside the picture: never cut by the card or row that holds it).
+        Mark {
+            anchors.fill: parent
+            radius: card.radius
+            color: "transparent"
+            border.width: card.selected ? Space.stroke : Space.hairline
+            border.color: card.selected ? Type.accent : (card.hovered ? Type.track : Type.hairline)
+            Behavior on border.color {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
+        }
+        // The chosen one also carries a check badge in its corner: the
+        // choice reads without telling the accent from the hairline.
+        Mark {
+            objectName: "choiceBadge"
+            visible: card.selected
+            width: Math.round(Type.iconSize("caption") * 1.7)
+            height: width
+            x: parent.width - width - Space.s
+            y: Space.s
+            color: Type.accent
+            Icon {
+                anchors.centerIn: parent
+                icon: Icons.accept
+                role: "caption"
+                tone: "accentInk"
+            }
+        }
+
+        FocusRing {
+            shown: card.activeFocus
+            anchors.margins: -Space.stroke * 2
+            radius: card.radius + Space.stroke * 2
+        }
     }
 
-    Item {
-        id: previewArea
-        x: Space.s
-        y: Space.s
-        width: parent.width - Space.s * 2
-        height: card.previewHeight
-        clip: true
+    // a narrow card (the compact picture grids): the description is the
+    // tooltip, not a line under the name
+    readonly property bool compactCaption: card.width < Space.px(180)
+    Tooltip {
+        text: card.subtitle
+        shown: card.compactCaption && card.subtitle !== "" && card.hovered
     }
 
     Row {
         id: caption
-        x: Space.m
-        anchors.top: previewArea.bottom
+        visible: !card.inset
+        anchors.top: frame.bottom
         anchors.topMargin: Space.s
-        width: parent.width - Space.m * 2
+        x: Space.xs
+        width: parent.width - Space.xs * 2
         spacing: Space.s
 
-        Text {
+        Icon {
             id: lead
             visible: card.icon !== ""
             anchors.verticalCenter: titleCol.verticalCenter
-            text: Icons[card.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("secondary")
-            color: card.selected ? Type.accent : Type.secondary
+            icon: Icons[card.icon] ?? ""
+            role: "secondary"
+            tone: card.selected ? "accent" : "secondary"
         }
         Column {
             id: titleCol
-            width: parent.width - (lead.visible ? lead.width + parent.spacing : 0) - (check.visible ? check.width + parent.spacing : 0)
+            width: parent.width - (lead.visible ? lead.width + parent.spacing : 0)
+            // the name, whole (as many lines as it needs: a translation is
+            // never cut; the pictures of a row stay aligned on top); the
+            // chosen one in the text colour and the active weight
             KitText {
+                id: titleText
                 width: parent.width
                 role: "secondary"
-                color: Type.text
+                color: card.selected ? Type.text : Type.secondary
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
             }
-            // Up to two lines (a card's description is a sentence, not a
-            // word); the height is reserved so cards in a row stay equal.
-            KitText {
-                id: twoLines
-                visible: false
-                role: "caption"
-                text: "M\nM"
-            }
+            // a compact card keeps its description for the tooltip
             KitText {
                 width: parent.width
-                height: card.subtitle !== "" ? twoLines.implicitHeight : 0
-                visible: card.subtitle !== ""
+                visible: card.subtitle !== "" && !card.compactCaption
                 role: "caption"
                 text: card.subtitle
                 wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
+                elide: Text.ElideNone
             }
-        }
-        Text {
-            id: check
-            visible: card.selected
-            anchors.verticalCenter: titleCol.verticalCenter
-            text: Icons.accept
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("secondary")
-            color: Type.accent
         }
     }
 

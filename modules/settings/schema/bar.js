@@ -2,8 +2,11 @@
 .import "barextra.js" as BarExtra
 .import "barsentence.js" as BarSentence
 
-// Bar & Islands: style, module layout, placement, clock, workspaces and
-// auto-hide. Entry format: see modules/settings/AGENTS.md.
+// Bar: its look and edge, modules, clock, workspaces and when it shows,
+// over a live stage of the bar (stages/BarStage.qml). The reference page of
+// the window (modules/settings/AGENTS.md, CONVERTING A PAGE): one control
+// per setting, picture cards for looks, expert knobs `advanced` (out of
+// the window, still in `yozakura config`). Entry format: see AGENTS.md.
 
 // The shared pin (bar.pinnedOnStartup, the pin button) only drives panels
 // whose auto-hide is "auto" (BarContent.qml; a missing value is auto, the
@@ -21,25 +24,53 @@ var category = {
     "title": "prefs.cat.bar",
     "description": "prefs.cat.bar.desc",
     "keywords": "bar panel taskbar islands top modules widgets",
+    "stage": "BarStage",
+    // Beside the stage: the bars (left), when the bar shows (right).
+    "hero": {
+        "hint": "prefs.bar.hero_hint"
+    },
+    // One row of cards under the stage.
+    // the bar being edited (the list beside the canvas), where it sits,
+    // its shape, then its modules
+    "row": ["panels", "style", "shape", "layout"],
     "sections": [
         {
             "id": "panels",
             "title": "prefs.bar.section.panels",
             "entries": [
                 {
+                    "id": "bar.panels.list",
+                    "type": "custom",
+                    "component": "PanelList",
+                    "keys": ["bar.panels"],
+                    // the list of bars beside the stage; the selected bar's
+                    // fields are bar.panels.editor's (one part each)
+                    "part": true,
+                    "resettable": false,
+                    "label": "prefs.bar.panels",
+                    "description": "prefs.bar.panels.desc",
+                    "keywords": "bars panels add bar second bar"
+                },
+                {
                     "id": "bar.panels.editor",
                     "type": "custom",
                     "component": "PanelsEditor",
                     "keys": ["bar.panels"],
-                    "label": "prefs.bar.panels",
+                    // Several bars (from a preset or `yozakura config`): this
+                    // editor replaces the single bar's style, edge and modules.
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": false
+                    },
+                    "label": "prefs.bar.panels.selected",
                     "description": "prefs.bar.panels.desc",
                     "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
                 }
             ]
         },
         {
-            "id": "style",
-            "title": "prefs.bar.section.style",
+            "id": "shape",
+            "title": "prefs.bar.style",
             "entries": [
                 {
                     "key": "bar.layout.style",
@@ -54,36 +85,31 @@ var category = {
                     "keywords": "classic islands floating pills style look"
                 },
                 {
+                    "id": "bar.panels.style",
+                    "type": "custom",
+                    "component": "PanelShapeCards",
+                    "keys": ["bar.panels"],
+                    "part": true,
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": false
+                    },
+                    "label": "prefs.bar.style",
+                    "description": "prefs.bar.style.desc",
+                    "keywords": "panel bar shape style"
+                },
+                {
                     "key": "bar.compact",
                     "type": "toggle",
                     "label": "prefs.bar.compact",
                     "description": "prefs.bar.compact.desc",
-                    "keywords": "compact dense slim thin small height"
+                    "keywords": "compact dense slim thin small height size"
                 }
             ]
         },
         {
-            "id": "layout",
-            "title": "prefs.bar.section.layout",
-            "entries": [
-                {
-                    "id": "bar.layout.modules",
-                    "visibleWhen": {
-                        "key": "bar.panels",
-                        "empty": true
-                    },
-                    "type": "custom",
-                    "component": "BarLayoutEditor",
-                    "keys": ["bar.layout.left", "bar.layout.right", "bar.layout.drawer"],
-                    "label": "prefs.label.bar_modules",
-                    "description": "prefs.bar.layout.desc",
-                    "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
-                }
-            ]
-        },
-        {
-            "id": "placement",
-            "title": "prefs.bar.section.placement",
+            "id": "style",
+            "title": "prefs.bar.section.edge_frame",
             "entries": [
                 {
                     "key": "bar.position",
@@ -91,8 +117,15 @@ var category = {
                         "key": "bar.panels",
                         "empty": true
                     },
-                    "type": "custom",
-                    "component": "BarPositionPicker",
+                    "type": "selector",
+                    "display": "cards",
+                    "thumb": "BarEdgeThumb",
+                    "options": [
+                        { "value": "top", "label": "common.top" },
+                        { "value": "bottom", "label": "common.bottom" },
+                        { "value": "left", "label": "common.left" },
+                        { "value": "right", "label": "common.right" }
+                    ],
                     "label": "prefs.label.bar_edge",
                     "description": "prefs.bar.position.desc",
                     "keywords": "position edge top bottom left right vertical horizontal"
@@ -134,13 +167,48 @@ var category = {
             ]
         },
         {
+            "id": "layout",
+            "title": "prefs.bar.section.layout",
+            "entries": [
+                {
+                    "id": "bar.layout.modules",
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": true
+                    },
+                    "type": "custom",
+                    "component": "BarLayoutEditor",
+                    // built once the page shows (SettingRow `lazy`)
+                    "lazy": true,
+                    "keys": ["bar.layout.left", "bar.layout.right", "bar.layout.drawer"],
+                    "label": "prefs.label.bar_modules",
+                    "description": "prefs.bar.layout.desc",
+                    "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
+                },
+                {
+                    "id": "bar.panels.modules",
+                    "type": "custom",
+                    "component": "PanelModulesCard",
+                    "lazy": true,
+                    "keys": ["bar.panels"],
+                    "part": true,
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": false
+                    },
+                    "label": "prefs.label.bar_modules",
+                    "description": "prefs.bar.layout.desc",
+                    "keywords": "panel modules widgets order arrange drag drop"
+                }
+            ]
+        },
+        {
             "id": "clock",
             "title": "prefs.bar.section.clock",
             "entries": [
                 {
                     "key": "bar.clockShowDate",
                     "type": "toggle",
-                    "preview": "ClockPreview",
                     "label": "prefs.bar.clock_date",
                     "description": "prefs.bar.clock_date.desc",
                     "keywords": "clock date day month time"
@@ -155,6 +223,8 @@ var category = {
                 {
                     "key": "bar.moduleOptions.clock.face",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "ClockFaceThumb",
                     "label": "prefs.bar.clock_face",
                     "description": "prefs.bar.clock_face.desc",
                     "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese",
@@ -183,6 +253,8 @@ var category = {
                 {
                     "key": "bar.moduleOptions.clock.panelStyle",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "ClockPanelThumb",
                     "label": "prefs.bar.clock_panel",
                     "description": "prefs.bar.clock_panel.desc",
                     "keywords": "clock popup panel calendar pomodoro world clocks weather column wide bento grid layout",
@@ -204,6 +276,7 @@ var category = {
         {
             "id": "media",
             "title": "prefs.bar.section.media",
+            "advanced": true,
             "entries": [
                 {
                     "key": "bar.moduleOptions.media.showTitle",
@@ -227,7 +300,7 @@ var category = {
             "entries": [
                 {
                     "key": "workspaces.shown",
-                    "type": "slider",
+                    "type": "number",
                     "min": 1,
                     "max": 20,
                     "step": 1,
@@ -236,20 +309,20 @@ var category = {
                     "keywords": "workspaces count number visible desktops"
                 },
                 {
+                    "key": "workspaces.indicatorStyle",
+                    "type": "custom",
+                    "component": "IndicatorCards",
+                    "label": "prefs.bar.ws_indicator",
+                    "description": "prefs.bar.ws_indicator.desc",
+                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
+                },
+                {
                     "key": "workspaces.numeralStyle",
                     "type": "custom",
                     "component": "NumeralCards",
                     "label": "prefs.bar.ws_numerals",
                     "description": "prefs.bar.ws_numerals.desc",
                     "keywords": "numerals kanji japanese roman arabic numbers workspaces"
-                },
-                {
-                    "key": "workspaces.indicatorStyle",
-                    "type": "custom",
-                    "component": "IndicatorStyleChips",
-                    "label": "prefs.bar.ws_indicator",
-                    "description": "prefs.bar.ws_indicator.desc",
-                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
                 },
                 {
                     "key": "workspaces.branchBlossom",
@@ -303,6 +376,7 @@ var category = {
                 },
                 {
                     "key": "workspaces.alwaysShowNumbers",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "workspaces.showNumbers",

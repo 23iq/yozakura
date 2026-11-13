@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Shapes
 import qs.modules.theme
 import qs.modules.components.kit
+import "WheelGuard.js" as WheelGuard
 
 // A rotary knob: a matte cap with a pointer, inside a 270° value arc (the
 // track in Type.track, the value in Type.progress: the live value is the
@@ -210,6 +211,13 @@ Item {
             const travel = (drag.start.y - m.y) + (m.x - drag.start.x);
             root.setValue(drag.startValue + travel / (root.size * 2.5) * (root.to - root.from));
         }
-        onWheel: w => root.stepBy((w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1)
+        onWheel: w => {
+            // a scrolling page keeps the wheel unless this has the focus
+            if (!WheelGuard.owns(root)) {
+                w.accepted = false;
+                return;
+            }
+            root.stepBy((w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1);
+        }
     }
 }

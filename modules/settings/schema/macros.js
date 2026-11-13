@@ -23,7 +23,15 @@ var sections = [
         "entries": [
             macro("motion", "motion animation speed calm lively quick slow bouncy"),
             macro("density", "density spacing gaps compact airy roomy padding size"),
-            macro("roundness", "roundness rounded corners radius square round"),
+            macro("roundness", "roundness rounded corners radius square round")
+        ]
+    },
+    // the surfaces' two macros, a card of their own (the Feel card of the
+    // page row holds exactly three whole rows)
+    {
+        "id": "tune-surface",
+        "title": "prefs.macro.section_surface",
+        "entries": [
             macro("depth", "depth shadow shadows flat deep lighting 3d"),
             macro("glass", "glass transparency translucent frosted solid blur opacity")
         ]

@@ -91,20 +91,16 @@ var category = {
     "title": "prefs.cat.notifications",
     "description": "prefs.cat.notifications.desc",
     "keywords": "notifications popups toasts do not disturb dnd alerts rules mute history sound",
+    "stage": "NotifStage",
+    "hero": {
+        "hint": "prefs.notif.hero_hint"
+    },
+    "row": ["presentation", "behaviour", "dnd"],
     "sections": [
         {
             "id": "presentation",
             "title": "prefs.notif.section.presentation",
             "entries": [
-                {
-                    "id": "notifications.status",
-                    "type": "custom",
-                    "component": "NotificationsStatus",
-                    "resettable": false,
-                    "label": "prefs.notif.status",
-                    "description": "prefs.notif.status.desc",
-                    "keywords": "test notification preview send now dnd active"
-                },
                 {
                     "key": "notifications.presentation",
                     "type": "selector",
@@ -136,6 +132,35 @@ var category = {
                     "label": "prefs.label.notification_style",
                     "description": "prefs.notif.presentation.desc",
                     "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
+                },
+                {
+                    "key": "notifications.notchStyle",
+                    "type": "selector",
+                    // only toasts grown from the island use it
+                    "visibleWhen": {
+                        "not": {
+                            "key": "notifications.presentation",
+                            "in": ["corner", "strips"]
+                        }
+                    },
+                    "enabledWhen": {
+                        "key": "notch.enabled",
+                        "equals": true
+                    },
+                    "reason": "prefs.disabled.needs_notch",
+                    "options": [
+                        {
+                            "value": "card",
+                            "label": "prefs.notifications.notch_style.card"
+                        },
+                        {
+                            "value": "compact",
+                            "label": "prefs.notifications.notch_style.compact"
+                        }
+                    ],
+                    "label": "prefs.notifications.notch_style",
+                    "description": "prefs.notifications.notch_style.desc",
+                    "keywords": "notification notch compact card one line"
                 },
                 {
                     "key": "notifications.strips.edge",
@@ -197,6 +222,23 @@ var category = {
                     "label": "prefs.notif.strips.max",
                     "description": "prefs.notif.strips.max.desc",
                     "keywords": "strips maximum count knot overflow"
+                }
+            ]
+        },
+        {
+            // what shows now (and a test), where corner toasts show (the
+            // stage moves them too) and on which screens: in More
+            "id": "where",
+            "title": "prefs.notif.section.where",
+            "entries": [
+                {
+                    "id": "notifications.status",
+                    "type": "custom",
+                    "component": "NotificationsStatus",
+                    "resettable": false,
+                    "label": "prefs.notif.status",
+                    "description": "prefs.notif.status.desc",
+                    "keywords": "test notification preview send now dnd active"
                 },
                 {
                     "key": "notifications.position",
@@ -258,22 +300,6 @@ var category = {
                     "label": "prefs.notif.group",
                     "description": "prefs.notif.group.desc",
                     "keywords": "group grouping stack app same application"
-                },
-                {
-                    "key": "notifications.historySize",
-                    "type": "number",
-                    "min": 0,
-                    "max": 500,
-                    "step": 10,
-                    "specialValues": [
-                        {
-                            "value": 0,
-                            "label": "prefs.notif.history.none"
-                        }
-                    ],
-                    "label": "prefs.notif.history",
-                    "description": "prefs.notif.history.desc",
-                    "keywords": "history size keep remember stored count dashboard"
                 }
             ]
         },
@@ -346,30 +372,11 @@ var category = {
             ]
         },
         {
-            "id": "dnd",
-            "title": "prefs.notif.section.dnd",
+            // quiet hours: the times and days of the Do Not Disturb schedule
+            // (its switch is in the Do Not Disturb card)
+            "id": "dnd_schedule",
+            "title": "prefs.notif.section.quiet_hours",
             "entries": [
-                {
-                    "key": "notifications.dnd.enabled",
-                    "type": "toggle",
-                    "label": "prefs.notif.dnd",
-                    "description": "prefs.notif.dnd.desc",
-                    "keywords": "do not disturb dnd silence quiet focus mute all"
-                },
-                {
-                    "key": "notifications.dnd.allowCritical",
-                    "type": "toggle",
-                    "label": "prefs.notif.dnd_critical",
-                    "description": "prefs.notif.dnd_critical.desc",
-                    "keywords": "critical urgent battery alarm bypass dnd"
-                },
-                {
-                    "key": "notifications.dnd.schedule.enabled",
-                    "type": "toggle",
-                    "label": "prefs.notif.schedule",
-                    "description": "prefs.notif.schedule.desc",
-                    "keywords": "schedule night quiet hours automatic dnd time"
-                },
                 {
                     "key": "notifications.dnd.schedule.from",
                     "type": "text",
@@ -405,6 +412,56 @@ var category = {
                     "label": "prefs.notif.schedule_days",
                     "description": "prefs.notif.schedule_days.desc",
                     "keywords": "days week weekdays weekend monday sunday"
+                }
+            ]
+        },
+        {
+            // how many past notifications are kept (rare)
+            "id": "history",
+            "title": "prefs.notif.section.history",
+            "entries": [
+                {
+                    "key": "notifications.historySize",
+                    "type": "number",
+                    "min": 0,
+                    "max": 500,
+                    "step": 10,
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.notif.history.none"
+                        }
+                    ],
+                    "label": "prefs.notif.history",
+                    "description": "prefs.notif.history.desc",
+                    "keywords": "history size keep remember stored count dashboard"
+                }
+            ]
+        },
+        {
+            "id": "dnd",
+            "title": "prefs.notif.section.dnd",
+            "entries": [
+                {
+                    "key": "notifications.dnd.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notif.dnd_now",
+                    "description": "prefs.notif.dnd.desc",
+                    "keywords": "do not disturb dnd silence quiet focus mute all"
+                },
+                {
+                    "key": "notifications.dnd.allowCritical",
+                    "type": "toggle",
+                    "label": "prefs.notif.dnd_critical",
+                    "description": "prefs.notif.dnd_critical.desc",
+                    "keywords": "critical urgent battery alarm bypass dnd"
+                },
+                {
+                    "key": "notifications.dnd.schedule.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notif.schedule",
+                    "description": "prefs.notif.schedule.desc",
+                    "keywords": "schedule night quiet hours automatic dnd time"
                 }
             ]
         }

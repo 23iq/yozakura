@@ -7,34 +7,29 @@
   "x-file": "config/notch.json",
   "properties": {
     "enabled": {
-      "title": "Enabled",
+      "title": "Show the island",
       "type": "boolean",
       "default": true,
+      "description": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
       "x-settings": {
-        "category": "layout",
-        "section": "parts",
-        "label": "prefs.layout.builder",
-        "entry": "layout.builder",
-        "entryTitle": "Bar, notch and dock",
-        "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
-      },
-      "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.enabled",
+        "control": "toggle",
+        "keywords": "island notch show hide on off enable disable"
+      }
     },
     "position": {
       "title": "Island edge",
       "type": "string",
       "default": "top",
-      "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
+      "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
         "label": "prefs.label.island_edge",
         "control": "selector",
-        "keywords": "notch position top bottom left right side vertical edge",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "notch position top bottom left right side vertical edge"
       },
       "enum": [
         "top",
@@ -53,7 +48,7 @@
       "title": "Island alignment",
       "type": "string",
       "default": "center",
-      "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
+      "description": "Where the island sits along its edge. Panels always open toward the middle of the screen.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
@@ -105,7 +100,7 @@
       "title": "Hide until hovered",
       "type": "boolean",
       "default": false,
-      "description": "Hide the notch until the pointer reaches it.",
+      "description": "Hide the island until the pointer reaches it.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
@@ -119,20 +114,16 @@
       }
     },
     "noMediaDisplay": {
-      "title": "No Media Display",
+      "title": "No media display",
       "type": "string",
       "default": "userHost",
-      "description": "What the notch shows when nothing is playing.",
+      "description": "What the island shows when nothing is playing.",
       "x-settings": {
         "category": "notch",
-        "section": "media",
+        "section": "notch",
         "label": "shell.no_media_display",
         "control": "selector",
-        "keywords": "idle text user host compositor custom nothing playing",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "idle text user host compositor custom nothing playing"
       },
       "enum": [
         "userHost",
@@ -146,27 +137,19 @@
       }
     },
     "customText": {
-      "title": "Custom Text",
+      "title": "Custom text",
       "type": "string",
       "default": "Yozakura",
       "description": "Text shown in the idle notch.",
       "x-settings": {
         "category": "notch",
-        "section": "media",
+        "section": "notch",
         "label": "shell.notch.custom_text",
         "control": "text",
         "keywords": "custom text label idle",
         "visibleWhen": {
-          "all": [
-            {
-              "key": "notch.enabled",
-              "equals": true
-            },
-            {
-              "key": "notch.noMediaDisplay",
-              "equals": "custom"
-            }
-          ]
+          "key": "notch.noMediaDisplay",
+          "equals": "custom"
         }
       }
     },
@@ -207,7 +190,7 @@
       "x-unit": "ms"
     },
     "expandOn": {
-      "title": "Open Panels On",
+      "title": "Open panels on",
       "type": "string",
       "default": "hover",
       "description": "Open media, activities and download panels on hover or only on click.",
@@ -216,11 +199,7 @@
         "section": "notch",
         "label": "shell.notch.expand_on",
         "control": "selector",
-        "keywords": "notch panel expand open hover click activities media downloads",
-        "visibleWhen": {
-          "key": "notch.enabled",
-          "equals": true
-        }
+        "keywords": "notch panel expand open hover click activities media downloads"
       },
       "enum": [
         "hover",
@@ -389,14 +368,14 @@
       }
     },
     "activitiesIn": {
-      "title": "Live Activities In",
+      "title": "Activities show in",
       "type": "string",
       "default": "auto",
       "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
       "x-settings": {
         "category": "notch",
         "section": "activities",
-        "label": "prefs.notch.activities_in",
+        "label": "prefs.notch.activities_where",
         "control": "selector",
         "keywords": "live activities chips bar notch downloads timer recording grow place"
       },
@@ -412,13 +391,13 @@
       }
     },
     "liveActivities": {
-      "title": "Live Activities",
+      "title": "What counts as an activity",
       "type": "object",
-      "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
+      "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
       "x-settings": {
         "category": "notch",
         "section": "activities",
-        "label": "shell.activities",
+        "label": "prefs.notch.activity_kinds",
         "control": "custom",
         "component": "ActivitiesEditor",
         "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"

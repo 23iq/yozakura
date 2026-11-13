@@ -7,17 +7,31 @@ import qs.modules.services
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../../lockscreen/styles/LockStyleRegistry.js" as LockStyles
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
-// Lock screen style gallery: every style of the registry rendered live by
-// the real lock screen view (LockView in preview mode: no focus, no cava),
-// over your wallpaper, with your tone, position and media settings.
+// Lock screen style gallery: every style of the registry pictured by the
+// real lock screen view (LockView in preview mode: no focus, no cava), over
+// your wallpaper, with your tone, position and media settings. The views
+// are built one after the other and each is captured to a still picture
+// once it has revealed (grabToImage), then destroyed: the page costs one
+// lock screen at a time while it opens and nothing once it is drawn (the
+// six live, animated full-size views it used to keep cost ~200 ms per
+// visit and warned when torn down). A change of what they show (wallpaper,
+// tone, position, media, status) pictures them again.
 Item {
     id: root
 
     property var entry
     readonly property string current: SettingsStore.get("lockscreen.style") ?? LockStyles.DEFAULT_ID
-    readonly property int columns: width < 560 ? 1 : (width < 920 ? 2 : 3)
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: LockStyles.styles.length
+    readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, Space.m, root.stripCount, Space.px(150))
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaper: {
         const m = root.manager;
@@ -30,49 +44,129 @@ Item {
     }
     // Every preview is laid out on this virtual screen, then scaled down.
     readonly property size screen: Qt.size(1600, 900)
+    // The style being pictured (index into LockStyles.styles); past the
+    // end: all done.
+    property int building: 0
+    // A capture cannot happen while the window is hidden (grabToImage
+    // refuses, or its callback waits for a frame that never comes): the
+    // picture in progress pauses and is taken again once it shows.
+    property bool stalled: false
+    readonly property bool canGrab: root.visible && root.Window.window !== null && root.Window.window.visible
+    onCanGrabChanged: {
+        if (root.canGrab && root.stalled) {
+            root.stalled = false;
+            const b = root.building;
+            root.building = -1;
+            Qt.callLater(() => root.building = b);
+        }
+    }
+    // What the pictures show: a change pictures them again.
+    readonly property string look: JSON.stringify([root.wallpaper, SettingsStore.get("lockscreen.tone"), SettingsStore.get("lockscreen.position"), SettingsStore.get("lockscreen.showMedia"), SettingsStore.get("lockscreen.showStatus"), SettingsStore.get("theme.lightMode")])
+    onLookChanged: root.building = 0
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        spacing: Space.m
+        height: grid.height + (root.strip ? Space.m * 2 : 0)
+        contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: LockStyles.styles
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            // inset: the ring, glow and lift of a picture never clip
+            x: root.strip ? Space.m : 0
+            y: root.strip ? Space.m : 0
+            columns: root.columns
+            spacing: Space.m
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round((width - 16) * root.screen.height / root.screen.width)
-                selected: root.current === modelData.id
-                icon: modelData.icon
-                title: I18n.t(modelData.labelKey)
-                subtitle: I18n.t(modelData.descKey)
-                onClicked: SettingsStore.set("lockscreen.style", modelData.id)
+            Repeater {
+                model: LockStyles.styles
 
-                Item {
-                    objectName: "lockPreview:" + card.modelData.id
-                    width: root.screen.width
-                    height: root.screen.height
-                    scale: (card.width - 16) / root.screen.width
-                    transformOrigin: Item.TopLeft
-                    // Clicks go to the card, never to the preview's field.
-                    enabled: false
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    required property int index
+                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(200))
+                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * root.screen.height / root.screen.width)
+                    inset: root.strip
+                    selected: root.current === modelData.id
+                    title: I18n.t(modelData.labelKey)
+                    onClicked: SettingsStore.set("lockscreen.style", modelData.id)
 
-                    LockView {
+                    Item {
+                        id: shot
+                        objectName: "lockPreview:" + card.modelData.id
+                        readonly property bool live: card.index === root.building
+                        // the still picture of the last capture
+                        property var grabbed: null
                         anchors.fill: parent
-                        preview: true
-                        startAnim: true
-                        styleId: card.modelData.id
-                        username: Brand.home.split("/").pop()
-                        hostname: Brand.appId
-                        wallpaperSource: root.wallpaper
+
+                        Image {
+                            anchors.fill: parent
+                            source: shot.grabbed ? shot.grabbed.url : ""
+                            fillMode: Image.PreserveAspectCrop
+                            smooth: true
+                        }
+                        Item {
+                            id: stagePort
+                            width: root.screen.width
+                            height: root.screen.height
+                            scale: shot.width / root.screen.width
+                            transformOrigin: Item.TopLeft
+                            // Clicks go to the card, never to the preview's field.
+                            enabled: false
+
+                            Loader {
+                                id: liveView
+                                anchors.fill: parent
+                                active: shot.live
+                                sourceComponent: LockView {
+                                    preview: true
+                                    startAnim: true
+                                    styleId: card.modelData.id
+                                    username: Brand.home.split("/").pop()
+                                    hostname: Brand.appId
+                                    wallpaperSource: root.wallpaper
+                                }
+                                onLoaded: settle.restart()
+                            }
+                        }
+                        // Captured once the reveal and the wallpaper settled.
+                        Timer {
+                            id: settle
+                            interval: 900
+                            onTriggered: {
+                                if (!liveView.item) {
+                                    root.building++;
+                                    return;
+                                }
+                                if (!root.canGrab) {
+                                    root.stalled = true;
+                                    return;
+                                }
+                                const ok = (liveView.item as Item).grabToImage(result => {
+                                    shot.grabbed = result;
+                                    if (shot.live)
+                                        root.building++;
+                                }, Qt.size(Math.max(1, shot.width * 2), Math.max(1, shot.height * 2)));
+                                if (!ok)
+                                    root.stalled = true;
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

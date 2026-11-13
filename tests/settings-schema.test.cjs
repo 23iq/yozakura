@@ -47,7 +47,7 @@ test('validation catches drift', () => {
     assert.match(problems, /duplicate entry id 'bar\.compact'/);
 });
 
-test('sidebar groups reference existing categories, each listed once', () => {
+test('destinations reference existing categories, each listed once', () => {
     const seen = new Set();
     for (const g of Categories.groups) {
         assert.ok(tr(g.title), g.title);
@@ -57,7 +57,7 @@ test('sidebar groups reference existing categories, each listed once', () => {
             seen.add(id);
         }
     }
-    assert.equal(Categories.ordered()[0].id, 'layout');
+    assert.equal(Categories.ordered()[0].id, 'appearance');
 });
 
 test('registry files, legacy panels and links exist', () => {
@@ -118,13 +118,14 @@ test('search is generated from the schema', () => {
     const ids = q => SchemaUtil.search(index, q).map(r => r.entryId || r.categoryId);
     assert.ok(ids('kanji').includes('workspaces.numeralStyle'));
     assert.equal(ids('wallpaper folder')[0], 'desktop.wallpaperFolders');
-    // the knob and its macro row (Look > Quick tune) both lead
-    assert.deepEqual(plain(ids('roundness').slice(0, 2)).sort(), ['macro.roundness', 'theme.roundness']);
+    // the macro row (Look > Feel) leads; the knob it moves is not a window row
+    assert.equal(ids('roundness')[0], 'macro.roundness');
+    assert.ok(!ids('roundness').includes('theme.roundness'));
     assert.ok(ids('matugen').includes('wallpaper.matugenScheme'));
     assert.ok(ids('blur').includes('windows'), 'legacy topics are searchable');
     assert.deepEqual(plain(ids('zzzzqqq')), []);
-    // Every schema entry with a label is indexed.
-    const labelled = SchemaUtil.flatten(Categories.categories).filter(x => x.entry.label).length;
+    // Every window entry with a label is indexed (SchemaUtil.inWindow).
+    const labelled = SchemaUtil.flatten(Categories.categories).filter(x => x.entry.label && SchemaUtil.inWindow(x.entry, x.section)).length;
     assert.equal(index.filter(i => i.entryId).length, labelled);
 });
 

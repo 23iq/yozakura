@@ -1,29 +1,34 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.settings
+import qs.modules.settings.editors
+import qs.modules.settings.stages
 import "../../services/KeyboardModel.js" as KeyboardModel
+import "../../keybinds/KeyNames.js" as KeyNames
+import "../stages/KeyDeck.js" as Deck
 import qs.modules.components.kit
 
-// Settings > Keyboard: layouts (order, variants), how to switch, XKB options
-// and key repeat. Until the user changes something here the compositor's own
-// settings are shown (and stay in effect); every edit goes through
-// KeyboardService.edit(), which takes them over first and applies the change.
-Flickable {
+// Settings > Keyboard, fitted like a converted page (modules/settings/
+// AGENTS.md, PAGE COMPOSITION): the hero is a keyboard drawn from keycaps
+// with the layout in use on its space bar and the keys that switch layouts
+// lit; type in the field under it and the keys you hold light up too.
+// Then one row of cards: your layouts (order, variants, add), how to
+// switch and the common XKB options, key repeat. Until the user changes
+// something here the compositor's own settings are shown (and stay in
+// effect); every edit goes through KeyboardService.edit(), which takes
+// them over first and applies the change.
+FittedFrame {
     id: page
+    stackable: true
+    stackedHeight: row.y + row.height + page.pad
+    rowNeed: Math.max(kbCard1.chrome + kbScroll1.needed, kbCard2.chrome + kbScroll2.needed, kbCard3.chrome + kbScroll3.needed)
 
     required property var category
-
-    contentWidth: width
-    contentHeight: column.implicitHeight + 120
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    flickableDirection: Flickable.VerticalFlick
-    ScrollBar.vertical: ScrollBar {
-        policy: ScrollBar.AsNeeded
-    }
 
     // SettingsShell reveal() hook (search jumps): one page, nothing to scroll to.
     function reveal(section, entry) {
@@ -36,6 +41,8 @@ Flickable {
     // Slider values not saved yet (-1: none); saved together after 350 ms
     property int pendingRate: -1
     property int pendingDelay: -1
+    // keys held in the try field (KeyDeck ids)
+    property var held: []
 
     function saveRepeat() {
         const patch = {};
@@ -61,6 +68,15 @@ Flickable {
         });
     }
 
+    // a Qt key event -> the KeyDeck id it lights ("" for none)
+    function deckKey(key, text) {
+        const mod = KeyNames.qtModifierKey(key);
+        if (mod)
+            return mod;
+        const k = KeyNames.keyFromQt(key, text);
+        return k ? KeyNames.normalizeKey(k) : "";
+    }
+
     Component.onCompleted: {
         KeyboardService.loadCatalog();
         KeyboardService.refreshCurrent();
@@ -74,68 +90,183 @@ Flickable {
         onTriggered: page.saveRepeat()
     }
 
-    Column {
-        id: column
-        width: Math.min(page.width - 64, 820)
-        x: (page.width - width) / 2
-        y: 36
-        spacing: Space.xl
+    // ---- the hero: the keyboard, the try field, what needs saying ---------
+    Item {
+        id: hero
+        readonly property bool fittedHero: true
+        x: page.margin
+        y: Space.s
+        width: page.width - page.margin * 2
+        height: page.heroH
 
-        PageHeader {
-            width: parent.width
-            category: page.category
+        RectangularShadow {
+            anchors.fill: stage
+            radius: Look.radius("surface", stage.height)
+            offset: Qt.vector2d(0, Space.l)
+            blur: Space.xxl * 2
+            color: Qt.alpha(Colors.shadow, 0.55)
         }
+        Stage {
+            id: stage
+            objectName: "keyboardStage"
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(hero.width, hero.height * 16 / 9)
+            height: hero.height
 
-        KeyboardStatus {
-            width: parent.width
-        }
-
-        UnmanagedNote {
-            objectName: "unmanagedNote"
-            width: parent.width
-            visible: Config.keyboardReady && !KeyboardService.managed && !KeyboardService.readFailed
-        }
-
-        LayoutList {
-            objectName: "layoutList"
-            width: parent.width
-            enabled: page.editable
-            layouts: page.kb.layouts
-            catalog: KeyboardService.catalog
-            activeIndex: KeyboardService.active.index
-            showIndicator: Config.keyboardReady && Config.keyboard.showIndicator
-            onChanged: list => page.setLayouts(list)
-            onIndicatorToggled: v => KeyboardService.edit({
-                    "showIndicator": v
-                })
-        }
-
-        KeyboardOptions {
-            objectName: "optionsCard"
-            width: parent.width
-            enabled: page.editable
-            catalog: KeyboardService.catalog
-            switchBind: page.kb.switchBind
-            options: page.kb.options
-            onBindPicked: bind => KeyboardService.edit({
-                    "switchBind": bind
-                })
-            onOptionToggled: (name, on) => page.setOptions(name, on)
-        }
-
-        TypingCard {
-            objectName: "typingCard"
-            width: parent.width
-            enabled: page.editable
-            repeatRate: page.pendingRate >= 0 ? page.pendingRate : page.kb.repeatRate
-            repeatDelay: page.pendingDelay >= 0 ? page.pendingDelay : page.kb.repeatDelay
-            onRateMoved: v => {
-                page.pendingRate = v;
-                repeatSave.restart();
+            Mark {
+                anchors.fill: parent
+                radius: 0
+                color: Qt.alpha(Colors.background, 0.55)
             }
-            onDelayMoved: v => {
-                page.pendingDelay = v;
-                repeatSave.restart();
+            KeyDeck {
+                id: deck
+                objectName: "keyboardDeck"
+                x: Space.xl
+                y: Space.l
+                width: parent.width - Space.xl * 2
+                height: parent.height - tryField.height - Space.l * 3
+                badge: KeyboardService.shortLabel
+                lit: Deck.switchKeys(page.kb.switchBind).concat(page.held)
+            }
+            TryTypingField {
+                id: tryField
+                objectName: "tryField"
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Space.l
+                width: Math.min(parent.width - Space.xl * 2, Space.px(520))
+                onKeyDown: (key, text, mods) => {
+                    const id = page.deckKey(key, text);
+                    if (id !== "" && page.held.indexOf(id) < 0)
+                        page.held = page.held.concat([id]);
+                }
+                onKeyUp: (key, text, mods) => {
+                    const id = page.deckKey(key, text);
+                    page.held = page.held.filter(k => k !== id);
+                }
+                onActiveFocusChanged: if (!activeFocus)
+                    page.held = []
+            }
+
+            // problems first, over the keyboard
+            Column {
+                x: Space.l
+                y: Space.l
+                width: parent.width - Space.l * 2
+                spacing: Space.s
+                KeyboardStatus {
+                    width: parent.width
+                }
+                UnmanagedNote {
+                    objectName: "unmanagedNote"
+                    width: parent.width
+                    visible: Config.keyboardReady && !KeyboardService.managed && !KeyboardService.readFailed
+                }
+            }
+        }
+    }
+
+    KitText {
+        id: hint
+        objectName: "heroHint"
+        x: page.margin
+        y: hero.y + hero.height + Space.s
+        width: page.width - page.margin * 2
+        horizontalAlignment: Text.AlignHCenter
+        role: "secondary"
+        // one line on a fitted page: a long translation shrinks a little
+        // in a narrow window rather than losing its end
+        fontSizeMode: Text.HorizontalFit
+        minimumPixelSize: Math.round(Type.size("caption") * 0.85)
+        text: I18n.t("prefs.keyboard.hero_hint")
+    }
+
+    // ---- the row ------------------------------------------------------------
+    Flow {
+        id: row
+        objectName: "keyboardRow"
+        x: page.margin
+        // stacked (narrow window): under the hint, one card a line
+        y: page.stacked ? hint.y + hint.height + page.gap : page.height - page.rowH - page.pad
+        width: page.width - page.margin * 2
+        spacing: page.gap
+        readonly property real unitW: (row.width - row.spacing * 2) / 3.2
+
+        PageCard {
+            id: kbCard1
+            width: page.stacked ? row.width : row.unitW * 1.2
+            height: page.rowH
+            title: I18n.t("prefs.keyboard.layouts")
+            value: KeyboardService.shortLabel
+            CardScroll {
+                id: kbScroll1
+                anchors.fill: parent
+                LayoutList {
+                    objectName: "layoutList"
+                    width: parent.width
+                    headless: true
+                    enabled: page.editable
+                    layouts: page.kb.layouts
+                    catalog: KeyboardService.catalog
+                    activeIndex: KeyboardService.active.index
+                    showIndicator: Config.keyboardReady && Config.keyboard.showIndicator
+                    onChanged: list => page.setLayouts(list)
+                    onIndicatorToggled: v => KeyboardService.edit({
+                            "showIndicator": v
+                        })
+                }
+            }
+        }
+
+        PageCard {
+            id: kbCard2
+            width: page.stacked ? row.width : row.unitW
+            height: page.rowH
+            title: I18n.t("prefs.keyboard.switching")
+            CardScroll {
+                id: kbScroll2
+                anchors.fill: parent
+                KeyboardOptions {
+                    objectName: "optionsCard"
+                    width: parent.width
+                    headless: true
+                    enabled: page.editable
+                    catalog: KeyboardService.catalog
+                    switchBind: page.kb.switchBind
+                    options: page.kb.options
+                    onBindPicked: bind => KeyboardService.edit({
+                            "switchBind": bind
+                        })
+                    onOptionToggled: (name, on) => page.setOptions(name, on)
+                }
+            }
+        }
+
+        PageCard {
+            id: kbCard3
+            width: page.stacked ? row.width : row.unitW
+            height: page.rowH
+            title: I18n.t("prefs.keyboard.typing")
+            CardScroll {
+                id: kbScroll3
+                anchors.fill: parent
+                TypingCard {
+                    objectName: "typingCard"
+                    width: parent.width
+                    headless: true
+                    showTry: false
+                    enabled: page.editable
+                    repeatRate: page.pendingRate >= 0 ? page.pendingRate : page.kb.repeatRate
+                    repeatDelay: page.pendingDelay >= 0 ? page.pendingDelay : page.kb.repeatDelay
+                    onRateMoved: v => {
+                        page.pendingRate = v;
+                        repeatSave.restart();
+                    }
+                    onDelayMoved: v => {
+                        page.pendingDelay = v;
+                        repeatSave.restart();
+                    }
+                }
             }
         }
     }

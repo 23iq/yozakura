@@ -1,4 +1,4 @@
-"""Settings sidebar footer for the active preset (PresetStatusFooter).
+"""Settings home footer for the active preset (PresetStatusFooter).
 
 Hidden with no active preset; shows the name and the change count; the
 primary action is "Save to preset" for a user preset and "Save as new
@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from settings_env import SettingsEnv  # noqa: E402
+from PySide6.QtCore import QObject  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 env = SettingsEnv("preset-status-footer")
@@ -28,7 +29,14 @@ Window {
 }
 """)
 shell = h.find(win, "shell")
-footer = h.find(win, "presetStatusFooter")
+h.eval(shell, "goHome()")
+# home loads its footer once it has shown (by URL, asynchronously)
+for _ in range(300):
+    footer = win.findChild(QObject, "presetStatusFooter")
+    if footer is not None:
+        break
+    QTest.qWait(10)
+assert footer is not None, "home loads the preset footer after its first frame"
 save = h.find(footer, "presetStatusSave")
 
 

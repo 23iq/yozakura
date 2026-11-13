@@ -20,14 +20,14 @@
       }
     },
     "unit": {
-      "title": "Temperature Unit",
+      "title": "Unit",
       "type": "string",
       "default": "C",
       "description": "Unit used by the weather widgets.",
       "x-settings": {
         "category": "system",
         "section": "weather",
-        "label": "settings.system.temperature_unit",
+        "label": "prefs.sys.unit",
         "control": "selector",
         "keywords": "temperature unit celsius fahrenheit"
       },

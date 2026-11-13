@@ -31,6 +31,8 @@ Item {
     property bool showSession: true
     property real backgroundOpacity: 1
     property bool animate: true
+    // false: the window on a plain ground (the settings stage), no wallpaper
+    property bool desktop: true
 
     readonly property var shownSession: root.showSession ? root.session : root.session.slice(root.session.length - 1)
     readonly property var promptLines: root.preview && root.preview.left && root.preview.left.length > 0 ? root.preview.left : [[]]
@@ -175,17 +177,17 @@ Item {
         id: stage
         anchors.fill: parent
         radius: Look.radius("box")
-        color: Colors.surfaceContainerLowest
+        color: root.desktop ? Colors.surfaceContainerLowest : "transparent"
 
         ScreenBackdrop {
             anchors.fill: parent
             radius: 0
-            visible: wall.status !== Image.Ready
+            visible: root.desktop && wall.status !== Image.Ready
         }
         Image {
             id: wall
             anchors.fill: parent
-            source: root.wallpaper
+            source: root.desktop ? root.wallpaper : ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             sourceSize.width: 1200
@@ -194,6 +196,7 @@ Item {
         Mark {
             anchors.fill: parent
             radius: 0
+            visible: root.desktop
             color: Qt.alpha(Colors.background, 0.18)
         }
 

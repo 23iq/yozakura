@@ -2,9 +2,13 @@
 .import "aimodels.js" as AiModels
 .import "aiusage.js" as AiUsage
 
-// AI bar: general, look and behaviour of the bar, quick ask, CLI agents,
-// MCP servers, selection actions, prompt library and automations. Entry format: see
-// modules/settings/AGENTS.md.
+// Assistant: a composed page. The stage is the Assistant on your screen
+// (AssistantStage); beside it: on, thinking, suggestions; the row: its
+// size, how messages look, what the status strip shows (also a click on
+// the stage's strip). In More: its look
+// and behaviour details, the prompt, the model and context, usage, quick
+// ask, selection actions, automations, MCP servers and CLI agents. Entry
+// format: see modules/settings/AGENTS.md.
 
 var category = {
     "id": "ai",
@@ -12,7 +16,139 @@ var category = {
     "title": "prefs.cat.ai",
     "description": "prefs.cat.ai.desc",
     "keywords": "ai assistant chat sidebar model llm agent claude codex opencode ollama mcp automation prompt",
+    "stage": "AssistantStage",
+    "row": [
+        {
+            "id": "size",
+            "weight": 1.25
+        },
+        "messages",
+        {
+            "id": "bar_strip",
+            "weight": 0.95
+        }
+    ],
     "sections": [
+        {
+            "id": "size",
+            "title": "prefs.ai.section.size",
+            "entries": [
+                {
+                    "key": "ai.appearance.defaultSize",
+                    "type": "selector",
+                    "display": "cards",
+                    "thumb": "AiSizeThumb",
+                    "label": "prefs.ai.default_size",
+                    "description": "prefs.ai.default_size.desc",
+                    "keywords": "size compact wide fullscreen width layout",
+                    "options": [
+                        {
+                            "value": "compact",
+                            "label": "prefs.ai.size_compact",
+                            "icon": "sidebar"
+                        },
+                        {
+                            "value": "wide",
+                            "label": "prefs.ai.size_wide",
+                            "icon": "columns"
+                        },
+                        {
+                            "value": "fullscreen",
+                            "label": "prefs.ai.size_fullscreen",
+                            "icon": "arrowsOutSimple"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "messages",
+            "title": "prefs.ai.section.messages",
+            "entries": [
+                {
+                    "key": "ai.appearance.messageStyle",
+                    "type": "selector",
+                    "display": "cards",
+                    "thumb": "AiMessageThumb",
+                    "label": "prefs.ai.message_style",
+                    "description": "prefs.ai.message_style.desc",
+                    "keywords": "message bubble flat chat style",
+                    "options": [
+                        {
+                            "value": "bubble",
+                            "label": "prefs.ai.style_bubble",
+                            "icon": "chatTeardrop"
+                        },
+                        {
+                            "value": "flat",
+                            "label": "prefs.ai.style_flat",
+                            "icon": "alignLeft"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "bar_strip",
+            "title": "prefs.ai.bar_strip",
+            "entries": [
+                {
+                    "id": "ai.strip.items",
+                    "type": "custom",
+                    "component": "AiStripChips",
+                    "keys": [
+                        "ai.strip.engine",
+                        "ai.strip.effort",
+                        "ai.strip.context",
+                        "ai.strip.cost",
+                        "ai.strip.limit"
+                    ],
+                    "label": "prefs.ai.bar_strip",
+                    "description": "prefs.ai.strip.desc",
+                    "keywords": "status strip engine model effort reasoning context window tokens cost price subscription limit usage"
+                },
+                {
+                    "key": "ai.strip.engine",
+                    "advanced": true,
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_engine",
+                    "description": "prefs.ai.strip_engine.desc",
+                    "keywords": "status strip engine model effort"
+                },
+                {
+                    "key": "ai.strip.effort",
+                    "advanced": true,
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_effort",
+                    "description": "prefs.ai.strip_effort.desc",
+                    "keywords": "status strip reasoning effort thinking level"
+                },
+                {
+                    "key": "ai.strip.context",
+                    "advanced": true,
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_context",
+                    "description": "prefs.ai.strip_context.desc",
+                    "keywords": "status strip context window tokens"
+                },
+                {
+                    "key": "ai.strip.cost",
+                    "advanced": true,
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_cost",
+                    "description": "prefs.ai.strip_cost.desc",
+                    "keywords": "status strip cost tokens price"
+                },
+                {
+                    "key": "ai.strip.limit",
+                    "advanced": true,
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_limit",
+                    "description": "prefs.ai.strip_limit.desc",
+                    "keywords": "status strip subscription limit usage"
+                }
+            ]
+        },
         {
             "id": "center",
             "title": "ai.settings_general",
@@ -39,6 +175,15 @@ var category = {
                     "keywords": "tools mcp function calling"
                 },
                 {
+                    "key": "ai.systemPrompt",
+                    "type": "text",
+                    // prose: a box of a few lines, all of it readable
+                    "multiline": true,
+                    "label": "ai.system_prompt",
+                    "description": "prefs.ai.system_prompt.desc",
+                    "keywords": "system prompt instructions persona"
+                },
+                {
                     "key": "ai.maxToolRounds",
                     "advanced": true,
                     "type": "number",
@@ -58,13 +203,6 @@ var category = {
                     "min": 1,
                     "max": 240,
                     "unit": "min"
-                },
-                {
-                    "key": "ai.systemPrompt",
-                    "type": "text",
-                    "label": "ai.system_prompt",
-                    "description": "prefs.ai.system_prompt.desc",
-                    "keywords": "system prompt instructions persona"
                 }
             ]
         },
@@ -72,30 +210,6 @@ var category = {
             "id": "bar_appearance",
             "title": "prefs.ai.bar_appearance",
             "entries": [
-                {
-                    "key": "ai.appearance.defaultSize",
-                    "type": "selector",
-                    "label": "prefs.ai.default_size",
-                    "description": "prefs.ai.default_size.desc",
-                    "keywords": "size compact wide fullscreen width layout",
-                    "options": [
-                        {
-                            "value": "compact",
-                            "label": "prefs.ai.size_compact",
-                            "icon": "sidebar"
-                        },
-                        {
-                            "value": "wide",
-                            "label": "prefs.ai.size_wide",
-                            "icon": "columns"
-                        },
-                        {
-                            "value": "fullscreen",
-                            "label": "prefs.ai.size_fullscreen",
-                            "icon": "arrowsOutSimple"
-                        }
-                    ]
-                },
                 {
                     "key": "ai.sidebarPosition",
                     "type": "selector",
@@ -110,49 +224,6 @@ var category = {
                         {
                             "value": "right",
                             "label": "prefs.ai.side_right"
-                        }
-                    ]
-                },
-                {
-                    "key": "ai.sidebarWidth",
-                    "advanced": true,
-                    "type": "slider",
-                    "label": "prefs.ai.compact_width",
-                    "description": "prefs.ai.compact_width.desc",
-                    "keywords": "compact width sidebar size",
-                    "min": 320,
-                    "max": 900,
-                    "step": 10,
-                    "unit": "px"
-                },
-                {
-                    "key": "ai.wideWidth",
-                    "advanced": true,
-                    "type": "slider",
-                    "label": "ai.wide_width",
-                    "description": "prefs.ai.wide_width.desc",
-                    "keywords": "wide layout width",
-                    "min": 600,
-                    "max": 2400,
-                    "step": 20,
-                    "unit": "px"
-                },
-                {
-                    "key": "ai.appearance.messageStyle",
-                    "type": "selector",
-                    "label": "prefs.ai.message_style",
-                    "description": "prefs.ai.message_style.desc",
-                    "keywords": "message bubble flat chat style",
-                    "options": [
-                        {
-                            "value": "bubble",
-                            "label": "prefs.ai.style_bubble",
-                            "icon": "chatTeardrop"
-                        },
-                        {
-                            "value": "flat",
-                            "label": "prefs.ai.style_flat",
-                            "icon": "alignLeft"
                         }
                     ]
                 },
@@ -199,7 +270,32 @@ var category = {
                     "keywords": "time timestamp clock message"
                 },
                 {
+                    "key": "ai.sidebarWidth",
+                    "advanced": true,
+                    "type": "slider",
+                    "label": "prefs.ai.compact_width",
+                    "description": "prefs.ai.compact_width.desc",
+                    "keywords": "compact width sidebar size",
+                    "min": 320,
+                    "max": 900,
+                    "step": 10,
+                    "unit": "px"
+                },
+                {
+                    "key": "ai.wideWidth",
+                    "advanced": true,
+                    "type": "slider",
+                    "label": "ai.wide_width",
+                    "description": "prefs.ai.wide_width.desc",
+                    "keywords": "wide layout width",
+                    "min": 600,
+                    "max": 2400,
+                    "step": 20,
+                    "unit": "px"
+                },
+                {
                     "key": "ai.appearance.animations",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.animations",
                     "description": "prefs.ai.animations.desc",
@@ -207,6 +303,7 @@ var category = {
                 },
                 {
                     "key": "ai.appearance.glass",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.glass",
                     "description": "prefs.ai.glass.desc",
@@ -289,7 +386,15 @@ var category = {
                     "keywords": "suggestions chips empty start ideas"
                 },
                 {
+                    "key": "ai.behavior.restoreLastSession",
+                    "type": "toggle",
+                    "label": "prefs.ai.restore_last",
+                    "description": "prefs.ai.restore_last.desc",
+                    "keywords": "restore last session conversation reopen"
+                },
+                {
                     "key": "ai.behavior.suggestionKinds",
+                    "advanced": true,
                     "type": "multiselect",
                     "label": "prefs.ai.suggestion_kinds",
                     "description": "prefs.ai.suggestion_kinds.desc",
@@ -347,14 +452,8 @@ var category = {
                     }
                 },
                 {
-                    "key": "ai.behavior.restoreLastSession",
-                    "type": "toggle",
-                    "label": "prefs.ai.restore_last",
-                    "description": "prefs.ai.restore_last.desc",
-                    "keywords": "restore last session conversation reopen"
-                },
-                {
                     "key": "ai.behavior.autoScroll",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.auto_scroll",
                     "description": "prefs.ai.auto_scroll.desc",
@@ -362,6 +461,7 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.thinkingExpanded",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.thinking_expanded",
                     "description": "prefs.ai.thinking_expanded.desc",
@@ -373,51 +473,11 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.collapseTools",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.collapse_tools",
                     "description": "prefs.ai.collapse_tools.desc",
                     "keywords": "tool action details collapse expand"
-                }
-            ]
-        },
-        {
-            "id": "bar_strip",
-            "title": "prefs.ai.bar_strip",
-            "entries": [
-                {
-                    "key": "ai.strip.engine",
-                    "type": "toggle",
-                    "label": "prefs.ai.strip_engine",
-                    "description": "prefs.ai.strip_engine.desc",
-                    "keywords": "status strip engine model effort"
-                },
-                {
-                    "key": "ai.strip.effort",
-                    "type": "toggle",
-                    "label": "prefs.ai.strip_effort",
-                    "description": "prefs.ai.strip_effort.desc",
-                    "keywords": "status strip reasoning effort thinking level"
-                },
-                {
-                    "key": "ai.strip.context",
-                    "type": "toggle",
-                    "label": "prefs.ai.strip_context",
-                    "description": "prefs.ai.strip_context.desc",
-                    "keywords": "status strip context window tokens"
-                },
-                {
-                    "key": "ai.strip.cost",
-                    "type": "toggle",
-                    "label": "prefs.ai.strip_cost",
-                    "description": "prefs.ai.strip_cost.desc",
-                    "keywords": "status strip cost tokens price"
-                },
-                {
-                    "key": "ai.strip.limit",
-                    "type": "toggle",
-                    "label": "prefs.ai.strip_limit",
-                    "description": "prefs.ai.strip_limit.desc",
-                    "keywords": "status strip subscription limit usage"
                 }
             ]
         },
@@ -428,12 +488,13 @@ var category = {
                 {
                     "key": "ai.quickAsk.enabled",
                     "type": "toggle",
-                    "label": "ai.quick_enabled",
+                    "label": "prefs.ai.quick_use",
                     "description": "prefs.ai.quick.desc",
                     "keywords": "quick ask notch"
                 },
                 {
                     "key": "ai.quickAsk.model",
+                    "advanced": true,
                     "type": "text",
                     "label": "ai.quick_model",
                     "description": "ai.quick_model_hint",
@@ -497,6 +558,7 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importClaude",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_claude",
                     "description": "prefs.ai.mcp_import.desc",
@@ -504,6 +566,7 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importCodex",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_codex",
                     "description": "prefs.ai.mcp_import.desc",
@@ -511,6 +574,7 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importOpencode",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_opencode",
                     "description": "prefs.ai.mcp_import.desc",
@@ -542,6 +606,7 @@ var category = {
                 },
                 {
                     "key": "ai.selection.language",
+                    "advanced": true,
                     "type": "text",
                     "label": "ai.translate_to",
                     "description": "prefs.ai.translate_to.desc",
@@ -598,29 +663,12 @@ var category = {
                     "keywords": "automation schedule cron trigger clipboard screenshot login briefing download"
                 }
             ]
-        },
-        {
-            "id": "providers",
-            "title": "ai.providers",
-            "entries": [
-                {
-                    "id": "ai.providers.link",
-                    "type": "custom",
-                    "component": "PageLink",
-                    "target": "ai-providers",
-                    "linkText": "prefs.ai.providers.open",
-                    "resettable": false,
-                    "label": "ai.providers",
-                    "description": "prefs.ai.providers.desc",
-                    "keywords": "api key provider openai anthropic gemini mistral groq deepseek openrouter lm studio ollama custom endpoint connect"
-                }
-            ]
         }
     ]
 };
 
 // Model picker, effort and context sections (schema/aimodels.js) go right
-// after the status strip.
-category.sections.splice(category.sections.findIndex(s => s.id === "bar_strip") + 1, 0, ...AiModels.sections);
+// after the behaviour.
+category.sections.splice(category.sections.findIndex(s => s.id === "bar_behavior") + 1, 0, ...AiModels.sections);
 // Usage and limits (schema/aiusage.js) after the model/effort/context ones.
-category.sections.splice(category.sections.findIndex(s => s.id === "bar_strip") + 1 + AiModels.sections.length, 0, ...AiUsage.sections);
+category.sections.splice(category.sections.findIndex(s => s.id === "bar_behavior") + 1 + AiModels.sections.length, 0, ...AiUsage.sections);

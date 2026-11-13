@@ -84,7 +84,7 @@
       "x-file": "config/ai.json",
       "properties": {
         "enabled": {
-          "title": "Enable the AI center",
+          "title": "Assistant",
           "type": "boolean",
           "default": true,
           "description": "Sidebar, quick ask and how answers are shown.",
@@ -116,7 +116,7 @@
           "description": "Extra chat models added to the model picker."
         },
         "defaultModel": {
-          "title": "Default engine (Assistant)",
+          "title": "Answers come from",
           "type": "string",
           "default": "",
           "description": "Engine of new Assistant chats, e.g. anthropic:claude-sonnet-4-5, ollama:qwen3 or agent:codex. Empty uses your last choice.",
@@ -178,7 +178,7 @@
           "description": "The assistant sidebar starts pinned open.",
           "x-settings": {
             "category": "ai",
-            "section": "sidebar",
+            "section": "bar_behavior",
             "label": "prefs.sidebar.pinned",
             "control": "toggle",
             "keywords": "assistant sidebar pin pinned startup keep open visible"
@@ -205,7 +205,7 @@
           "maximum": 2400
         },
         "showThinking": {
-          "title": "Show model thinking",
+          "title": "Show thinking",
           "type": "boolean",
           "default": true,
           "description": "Show the reasoning stream of models that expose it (collapsed when done).",
@@ -629,7 +629,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_claude",
                 "control": "toggle",
-                "keywords": "mcp import claude"
+                "keywords": "mcp import claude",
+                "advanced": true
               }
             },
             "importCodex": {
@@ -642,7 +643,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_codex",
                 "control": "toggle",
-                "keywords": "mcp import codex"
+                "keywords": "mcp import codex",
+                "advanced": true
               }
             },
             "importOpencode": {
@@ -655,7 +657,8 @@
                 "section": "mcp",
                 "label": "ai.mcp_import_opencode",
                 "control": "toggle",
-                "keywords": "mcp import opencode"
+                "keywords": "mcp import opencode",
+                "advanced": true
               }
             },
             "disabled": {
@@ -683,14 +686,14 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "title": "Quick ask in the notch",
+              "title": "Use quick ask",
               "type": "boolean",
               "default": true,
               "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
               "x-settings": {
                 "category": "ai",
                 "section": "quickask",
-                "label": "ai.quick_enabled",
+                "label": "prefs.ai.quick_use",
                 "control": "toggle",
                 "keywords": "quick ask notch"
               }
@@ -705,7 +708,8 @@
                 "section": "quickask",
                 "label": "ai.quick_model",
                 "control": "text",
-                "keywords": "quick ask model"
+                "keywords": "quick ask model",
+                "advanced": true
               }
             },
             "width": {
@@ -758,7 +762,8 @@
                 "section": "selection",
                 "label": "ai.translate_to",
                 "control": "text",
-                "keywords": "translate language"
+                "keywords": "translate language",
+                "advanced": true
               }
             },
             "output": {
@@ -981,7 +986,7 @@
               "description": "Size of the AI bar when the shell starts. Switch with the size button or Ctrl+W.",
               "x-settings": {
                 "category": "ai",
-                "section": "bar_appearance",
+                "section": "size",
                 "label": "prefs.ai.default_size",
                 "control": "selector",
                 "keywords": "size compact wide fullscreen width layout"
@@ -1004,7 +1009,7 @@
               "description": "Bubbles on the right, or flat blocks like the answers.",
               "x-settings": {
                 "category": "ai",
-                "section": "bar_appearance",
+                "section": "messages",
                 "label": "prefs.ai.message_style",
                 "control": "selector",
                 "keywords": "message bubble flat chat style"
@@ -1094,7 +1099,8 @@
                 "section": "bar_appearance",
                 "label": "prefs.ai.animations",
                 "control": "toggle",
-                "keywords": "animation motion transition"
+                "keywords": "animation motion transition",
+                "advanced": true
               }
             },
             "glass": {
@@ -1107,7 +1113,8 @@
                 "section": "bar_appearance",
                 "label": "prefs.ai.glass",
                 "control": "toggle",
-                "keywords": "glass blur translucent surface"
+                "keywords": "glass blur translucent surface",
+                "advanced": true
               }
             },
             "opacity": {
@@ -1223,7 +1230,8 @@
                 "visibleWhen": {
                   "key": "ai.behavior.suggestions",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "uniqueItems": true,
               "x-itemLabels": {
@@ -1261,7 +1269,8 @@
                 "section": "bar_behavior",
                 "label": "prefs.ai.auto_scroll",
                 "control": "toggle",
-                "keywords": "scroll follow stream bottom"
+                "keywords": "scroll follow stream bottom",
+                "advanced": true
               }
             },
             "thinkingExpanded": {
@@ -1278,7 +1287,8 @@
                 "visibleWhen": {
                   "key": "ai.showThinking",
                   "equals": true
-                }
+                },
+                "advanced": true
               }
             },
             "collapseTools": {
@@ -1291,7 +1301,8 @@
                 "section": "bar_behavior",
                 "label": "prefs.ai.collapse_tools",
                 "control": "toggle",
-                "keywords": "tool action details collapse expand"
+                "keywords": "tool action details collapse expand",
+                "advanced": true
               }
             }
           },
@@ -1312,7 +1323,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_engine",
                 "control": "toggle",
-                "keywords": "status strip engine model effort"
+                "keywords": "status strip engine model effort",
+                "advanced": true
               }
             },
             "effort": {
@@ -1325,7 +1337,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_effort",
                 "control": "toggle",
-                "keywords": "status strip reasoning effort thinking level"
+                "keywords": "status strip reasoning effort thinking level",
+                "advanced": true
               }
             },
             "context": {
@@ -1338,7 +1351,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_context",
                 "control": "toggle",
-                "keywords": "status strip context window tokens"
+                "keywords": "status strip context window tokens",
+                "advanced": true
               }
             },
             "cost": {
@@ -1351,7 +1365,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_cost",
                 "control": "toggle",
-                "keywords": "status strip cost tokens price"
+                "keywords": "status strip cost tokens price",
+                "advanced": true
               }
             },
             "limit": {
@@ -1364,7 +1379,8 @@
                 "section": "bar_strip",
                 "label": "prefs.ai.strip_limit",
                 "control": "toggle",
-                "keywords": "status strip subscription limit usage"
+                "keywords": "status strip subscription limit usage",
+                "advanced": true
               }
             }
           },
@@ -1381,7 +1397,7 @@
               "description": "Level for models you have not set yourself; a level chosen in a chat is remembered for that model.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.effort_default",
                 "control": "selector",
                 "keywords": "reasoning effort thinking default level budget"
@@ -1417,7 +1433,7 @@
               "description": "The context meter turns amber and offers Compact from this fill level.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_warn",
                 "control": "slider",
                 "step": 5,
@@ -1437,7 +1453,7 @@
               "description": "The context meter turns red from this fill level.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_critical",
                 "control": "slider",
                 "step": 1,
@@ -1457,7 +1473,7 @@
               "description": "Before sending, summarise older messages of an API/Ollama chat when the window is nearly full. Agents compact themselves.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.auto_compact",
                 "control": "toggle",
                 "keywords": "auto compact compaction summarize summary context history"
@@ -1470,7 +1486,7 @@
               "description": "Fill level that triggers automatic compaction.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.auto_compact_at",
                 "control": "slider",
                 "step": 1,
@@ -1494,7 +1510,7 @@
               "description": "How many of your last messages (with their answers) stay verbatim when compacting.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.keep_turns",
                 "control": "number",
                 "keywords": "compact keep recent turns messages verbatim",
@@ -1512,10 +1528,11 @@
               "description": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.compact_model",
                 "control": "text",
-                "keywords": "compact summary model cheap fast"
+                "keywords": "compact summary model cheap fast",
+                "advanced": true
               }
             },
             "overrides": {
@@ -1525,7 +1542,7 @@
               "description": "Window size per model, for models the built-in table does not know or gets wrong.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_overrides",
                 "control": "list",
                 "keywords": "context window override model size tokens custom",
@@ -1546,7 +1563,7 @@
               "description": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_num_ctx",
                 "control": "number",
                 "step": 1024,
@@ -1571,7 +1588,7 @@
               "description": "Where Ollama is probed and asked. Empty uses http://127.0.0.1:11434.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_endpoint",
                 "control": "text",
                 "keywords": "ollama endpoint url host port server remote local",
@@ -1586,7 +1603,7 @@
               "description": "How long a model stays in memory after a reply (5m, 1h, -1 = forever, 0 = unload at once). Empty uses Ollama's default.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.ollama_keep_alive",
                 "control": "text",
                 "keywords": "ollama keep alive unload memory vram minutes",
@@ -1609,7 +1626,7 @@
               "description": "LM Studio's local server. Empty uses http://127.0.0.1:1234/v1.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.lmstudio_endpoint",
                 "control": "text",
                 "keywords": "lm studio lmstudio endpoint url server port local",
@@ -1632,7 +1649,7 @@
               "description": "Longest time one chat request may take, streaming included.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.timeout",
                 "control": "number",
                 "step": 30,
@@ -1658,7 +1675,7 @@
               "description": "Extra attempts after a network error, rate limit or overloaded server, only before any text arrived.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.retries",
                 "control": "number",
                 "keywords": "retry retries rate limit 429 overloaded network error",
@@ -1706,7 +1723,7 @@
               "description": "While the AI bar is open, Ollama and LM Studio are checked again at this interval (they are always checked when the model picker opens). No model is loaded.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "local",
+                "section": "defaults",
                 "label": "prefs.ai.providers.probe_interval",
                 "control": "number",
                 "step": 15,
@@ -1732,7 +1749,7 @@
               "description": "Extra HTTP headers sent to the Custom (OpenAI-compatible) provider, e.g. a proxy's auth header.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.headers",
                 "control": "list",
                 "keywords": "custom endpoint headers proxy auth authorization openai compatible",
@@ -1747,7 +1764,7 @@
               "description": "Sends the optional HTTP-Referer and X-Title headers so requests show up under this app in OpenRouter.",
               "x-settings": {
                 "category": "ai-providers",
-                "section": "requests",
+                "section": "defaults",
                 "label": "prefs.ai.providers.openrouter_attribution",
                 "control": "toggle",
                 "keywords": "openrouter referer title attribution headers app",
@@ -1791,7 +1808,7 @@
               }
             },
             "planFirst": {
-              "title": "Plan first by default",
+              "title": "Plan first",
               "type": "boolean",
               "default": false,
               "description": "The agent writes a plan you can edit before it changes any file",
@@ -1804,7 +1821,7 @@
               }
             },
             "inPlace": {
-              "title": "Work in the current branch by default",
+              "title": "Work in place",
               "type": "boolean",
               "default": false,
               "description": "Off: every task gets its own git worktree and branch, your checkout stays untouched",
@@ -1823,7 +1840,7 @@
               "description": "Further tasks wait in the queue",
               "x-settings": {
                 "category": "ai-code",
-                "section": "queue",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.max_parallel",
                 "control": "number",
                 "keywords": "parallel concurrent slots queue",
@@ -1840,7 +1857,7 @@
               "description": "Continues a task when its agent hits a usage limit; none = wait for the reset",
               "x-settings": {
                 "category": "ai-code",
-                "section": "queue",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.fallback",
                 "control": "selector",
                 "keywords": "fallback limit usage rate agent"
@@ -1859,14 +1876,14 @@
               }
             },
             "notifications": {
-              "title": "Desktop notifications",
+              "title": "Notify me",
               "type": "boolean",
               "default": true,
               "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
               "x-settings": {
                 "category": "ai-code",
                 "section": "notifications",
-                "label": "prefs.ai.tasks.notify",
+                "label": "prefs.ai.tasks.notify_me",
                 "control": "toggle",
                 "keywords": "notification desktop alert"
               }
@@ -1939,7 +1956,7 @@
               "description": "Auto: columns when the bar is wide, a list otherwise",
               "x-settings": {
                 "category": "ai-code",
-                "section": "board",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.layout",
                 "control": "selector",
                 "keywords": "board columns list kanban layout"
@@ -2001,7 +2018,7 @@
               "description": "Newest finished tasks in the Done section",
               "x-settings": {
                 "category": "ai-code",
-                "section": "board",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.done_limit",
                 "control": "number",
                 "step": 5,
@@ -2025,7 +2042,7 @@
               "description": "Show the review of a task as soon as it is ready when no other task is open",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.auto_open_review",
                 "control": "toggle",
                 "keywords": "review open automatically finished"
@@ -2038,7 +2055,7 @@
               "description": "Ask once more before a task is committed to your branch",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.confirm_accept",
                 "control": "toggle",
                 "keywords": "confirm accept commit"
@@ -2051,7 +2068,7 @@
               "description": "Ask before a task's worktree and branch are deleted",
               "x-settings": {
                 "category": "ai-code",
-                "section": "review",
+                "section": "more_tasks",
                 "label": "prefs.ai.tasks.confirm_discard",
                 "control": "toggle",
                 "keywords": "confirm discard delete worktree"
@@ -2084,10 +2101,11 @@
               "description": "Badges in the model picker: tools, vision, reasoning, context size.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_capabilities",
                 "control": "toggle",
-                "keywords": "model picker capabilities badges tools vision thinking context"
+                "keywords": "model picker capabilities badges tools vision thinking context",
+                "advanced": true
               }
             },
             "groupByProvider": {
@@ -2097,10 +2115,11 @@
               "description": "Show the models in one section per provider.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_group",
                 "control": "toggle",
-                "keywords": "model picker group provider sections"
+                "keywords": "model picker group provider sections",
+                "advanced": true
               }
             },
             "showUnconnected": {
@@ -2110,10 +2129,11 @@
               "description": "List them at the end of the picker with a Connect button.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_unconnected",
                 "control": "toggle",
-                "keywords": "model picker providers not connected connect api key"
+                "keywords": "model picker providers not connected connect api key",
+                "advanced": true
               }
             },
             "showRecent": {
@@ -2123,10 +2143,11 @@
               "description": "The models you used last, above the full list.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_recent",
                 "control": "toggle",
-                "keywords": "model picker recent last used"
+                "keywords": "model picker recent last used",
+                "advanced": true
               }
             }
           },
@@ -2146,7 +2167,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_header_button",
                 "control": "toggle",
-                "keywords": "usage button header chart cost screen"
+                "keywords": "usage button header chart cost screen",
+                "advanced": true
               }
             },
             "claudeLimits": {
@@ -2159,7 +2181,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_claude_limits",
                 "control": "toggle",
-                "keywords": "claude subscription limits pro max usage oauth"
+                "keywords": "claude subscription limits pro max usage oauth",
+                "advanced": true
               }
             },
             "notify": {
@@ -2216,10 +2239,10 @@
               "maximum": 100
             },
             "limitWindow": {
-              "title": "Limit shown in the strip",
+              "title": "Limit in the status line",
               "type": "string",
               "default": "auto",
-              "description": "Which subscription window the strip shows for Claude Code and Codex. Automatic picks the fullest one.",
+              "description": "Which subscription window the status line shows for Claude Code and Codex. Automatic picks the fullest one.",
               "x-settings": {
                 "category": "ai",
                 "section": "usage_limits",
@@ -2229,7 +2252,8 @@
                 "visibleWhen": {
                   "key": "ai.strip.limit",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "auto",
@@ -2246,7 +2270,7 @@
               "title": "Tokens next to the cost",
               "type": "boolean",
               "default": true,
-              "description": "The strip shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
+              "description": "The status line shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
               "x-settings": {
                 "category": "ai",
                 "section": "usage_limits",
@@ -2256,7 +2280,8 @@
                 "visibleWhen": {
                   "key": "ai.strip.cost",
                   "equals": true
-                }
+                },
+                "advanced": true
               }
             },
             "currencyStyle": {
@@ -2269,7 +2294,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_currency",
                 "control": "selector",
-                "keywords": "cost currency dollar usd format price"
+                "keywords": "cost currency dollar usd format price",
+                "advanced": true
               },
               "enum": [
                 "symbol",
@@ -2309,7 +2335,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_default_range",
                 "control": "selector",
-                "keywords": "usage screen range today week month"
+                "keywords": "usage screen range today week month",
+                "advanced": true
               },
               "enum": [
                 "today",
@@ -2332,7 +2359,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_sparklines",
                 "control": "toggle",
-                "keywords": "usage chart sparkline per day graph"
+                "keywords": "usage chart sparkline per day graph",
+                "advanced": true
               }
             },
             "hiddenProviders": {
@@ -2345,7 +2373,8 @@
                 "section": "usage_limits",
                 "label": "prefs.ai.usage_hidden",
                 "control": "list",
-                "keywords": "hide providers usage screen ollama local"
+                "keywords": "hide providers usage screen ollama local",
+                "advanced": true
               }
             }
           },
@@ -2603,16 +2632,15 @@
       "x-file": "config/bar.json",
       "properties": {
         "position": {
-          "title": "Bar edge",
+          "title": "Edge",
           "type": "string",
           "default": "top",
           "description": "The screen edge the bar sits on.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.label.bar_edge",
-            "control": "custom",
-            "component": "BarPositionPicker",
+            "control": "selector",
             "keywords": "position edge top bottom left right vertical horizontal",
             "visibleWhen": {
               "key": "bar.panels",
@@ -2624,7 +2652,13 @@
             "bottom",
             "left",
             "right"
-          ]
+          ],
+          "x-enumLabels": {
+            "top": "Top",
+            "bottom": "Bottom",
+            "left": "Left",
+            "right": "Right"
+          }
         },
         "launcherIcon": {
           "title": "Launcher icon",
@@ -2681,7 +2715,7 @@
           "description": "Monitors that show the bar; none selected shows it on every monitor.",
           "x-settings": {
             "category": "bar",
-            "section": "screens",
+            "section": "autohide",
             "label": "prefs.bar.screens",
             "control": "screens",
             "keywords": "bar monitor screen display multi-monitor where",
@@ -2701,10 +2735,11 @@
           "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
           "x-settings": {
             "category": "bar",
-            "section": "screens",
+            "section": "autohide",
             "label": "prefs.bar.firefox_player",
             "control": "toggle",
-            "keywords": "firefox browser media player mpris music video youtube"
+            "keywords": "firefox browser media player mpris music video youtube",
+            "advanced": true
           }
         },
         "frameEnabled": {
@@ -2714,7 +2749,7 @@
           "description": "A border around the whole screen, joined to the bar.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.frame",
             "control": "toggle",
             "keywords": "frame border screen edge outline"
@@ -2727,7 +2762,7 @@
           "description": "Width of the frame on the other edges.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.frame_thickness",
             "control": "slider",
             "step": 1,
@@ -2746,7 +2781,7 @@
           "x-unit": "px"
         },
         "pinnedOnStartup": {
-          "title": "Visible at startup",
+          "title": "Shown at start",
           "type": "boolean",
           "default": true,
           "description": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
@@ -2779,10 +2814,10 @@
           }
         },
         "hoverRegionHeight": {
-          "title": "Bar reveal strip",
+          "title": "Edge that reveals the bar",
           "type": "number",
           "default": 8,
-          "description": "Size of the invisible edge strip that reveals the hidden bar.",
+          "description": "How wide the invisible edge is that brings the hidden bar back.",
           "x-settings": {
             "category": "bar",
             "section": "expert",
@@ -2833,7 +2868,7 @@
           }
         },
         "availableOnFullscreen": {
-          "title": "Over fullscreen apps",
+          "title": "Over full-screen apps",
           "type": "boolean",
           "default": false,
           "description": "Keep the bar reachable when a window is fullscreen.",
@@ -2859,13 +2894,13 @@
           }
         },
         "containBar": {
-          "title": "Bar inside the frame",
+          "title": "Inside the frame",
           "type": "boolean",
           "default": false,
           "description": "Draw the bar inside the frame instead of over it. Applies to the classic, menubar, statusline, ribbon and rail styles.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.contain_bar",
             "control": "toggle",
             "keywords": "frame contain inside bar",
@@ -2937,7 +2972,6 @@
             "section": "clock",
             "label": "prefs.bar.clock_date",
             "control": "toggle",
-            "preview": "ClockPreview",
             "keywords": "clock date day month time"
           }
         },
@@ -2948,10 +2982,10 @@
           "description": "A slimmer notch and island tabs. Styles with a fixed size (menubar, statusline, ribbon, rail) keep their own size.",
           "x-settings": {
             "category": "bar",
-            "section": "style",
+            "section": "shape",
             "label": "prefs.bar.compact",
             "control": "toggle",
-            "keywords": "compact dense slim thin small height"
+            "keywords": "compact dense slim thin small height size"
           }
         },
         "layout": {
@@ -2960,13 +2994,13 @@
           "description": "Bar layout: style and the ordered module ids of each group.",
           "properties": {
             "style": {
-              "title": "Bar style",
+              "title": "Shape",
               "type": "string",
               "default": "classic",
-              "description": "One continuous bar, or floating islands around the notch.",
+              "description": "One continuous bar, or floating islands around the island.",
               "x-settings": {
                 "category": "bar",
-                "section": "style",
+                "section": "shape",
                 "label": "prefs.bar.style",
                 "control": "custom",
                 "component": "BarStyleCards",
@@ -3035,7 +3069,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the start (left/top), in order.",
@@ -3089,7 +3123,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the end (right/bottom), in order.",
@@ -3104,7 +3138,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules tucked into the overflow drawer.",
@@ -3149,11 +3183,11 @@
           "default": [],
           "x-settings": {
             "category": "bar",
-            "section": "panels",
-            "label": "prefs.bar.panels",
-            "entry": "bar.panels.editor",
-            "entryTitle": "Panel layout",
-            "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
+            "section": "layout",
+            "label": "prefs.label.bar_modules",
+            "entry": "bar.panels.modules",
+            "entryTitle": "Arrange",
+            "keywords": "panel modules widgets order arrange drag drop"
           },
           "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock|floating|pills|dock-like|none, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
           "items": {
@@ -3306,7 +3340,7 @@
               "type": "object",
               "properties": {
                 "showWeather": {
-                  "title": "Weather on the clock",
+                  "title": "Weather symbol",
                   "type": "boolean",
                   "default": true,
                   "description": "Lead the clock with the weather symbol instead of the day name.",
@@ -3771,7 +3805,7 @@
           "description": "Palette colors of the other windows' borders.",
           "x-settings": {
             "category": "windows",
-            "section": "borders",
+            "section": "unfocused",
             "label": "prefs.windows.inactive_border",
             "control": "color-role",
             "keywords": "inactive unfocused border color gradient role palette alpha"
@@ -3830,7 +3864,7 @@
           "description": "Radius of window corners.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.windows.rounding",
             "control": "slider",
             "step": 1,
@@ -3855,7 +3889,7 @@
           "description": "Round window corners like the rest of the shell (Appearance › Shape).",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.windows.sync_rounding",
             "control": "toggle",
             "keywords": "sync rounding roundness corners shell theme",
@@ -3897,7 +3931,7 @@
           "description": "Use the shell's shadow opacity for windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.sync_shadow_opacity",
             "control": "toggle",
             "keywords": "sync shadow opacity theme",
@@ -3915,7 +3949,7 @@
           "description": "Use the shell's shadow color for windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.sync_shadow_color",
             "control": "toggle",
             "keywords": "sync shadow color theme",
@@ -3927,18 +3961,19 @@
           }
         },
         "gapsIn": {
-          "title": "Gaps between windows",
+          "title": "Between windows",
           "type": "number",
           "default": 2,
           "description": "Space around each window toward its neighbours (applied on both sides).",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.gaps_in",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "gaps inner spacing between windows padding",
+            "advanced": true,
             "min": 0,
             "max": 50
           },
@@ -3947,18 +3982,19 @@
           "x-unit": "px"
         },
         "gapsOut": {
-          "title": "Gaps to screen edges",
+          "title": "Screen edges",
           "type": "number",
           "default": 4,
           "description": "Space between windows and the edges of the screen.",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.gaps_out",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "gaps outer margin screen edges padding",
+            "advanced": true,
             "min": 0,
             "max": 100
           },
@@ -3967,26 +4003,26 @@
           "x-unit": "px"
         },
         "smartGaps": {
-          "title": "Smart gaps",
+          "title": "No gaps when alone",
           "type": "boolean",
           "default": false,
           "description": "No gaps when a workspace shows a single tiled window.",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.smart_gaps",
             "control": "toggle",
             "keywords": "smart gaps single window no gaps lone fullscreen-like"
           }
         },
         "dimInactive": {
-          "title": "Dim unfocused windows",
+          "title": "Dim unfocused",
           "type": "boolean",
           "default": false,
           "description": "Darken every window except the focused one.",
           "x-settings": {
             "category": "windows",
-            "section": "dim",
+            "section": "unfocused",
             "label": "prefs.windows.dim_inactive",
             "control": "toggle",
             "keywords": "dim inactive unfocused darken focus"
@@ -3999,7 +4035,7 @@
           "description": "How dark unfocused windows get.",
           "x-settings": {
             "category": "windows",
-            "section": "dim",
+            "section": "unfocused",
             "label": "prefs.windows.dim_strength",
             "control": "slider",
             "step": 0.01,
@@ -4025,7 +4061,6 @@
             "section": "layout",
             "label": "prefs.windows.layout",
             "control": "selector",
-            "preview": "WindowsPreview",
             "keywords": "layout tiling dwindle master scrolling preview windows"
           },
           "enum": [
@@ -4040,13 +4075,13 @@
           }
         },
         "shadowEnabled": {
-          "title": "Window shadows",
+          "title": "Shadows",
           "type": "boolean",
           "default": true,
           "description": "Soft shadows under windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadows",
             "control": "toggle",
             "keywords": "shadow drop shadows glow"
@@ -4059,7 +4094,7 @@
           "description": "How far the shadow spreads.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_range",
             "control": "slider",
             "step": 1,
@@ -4131,7 +4166,7 @@
           "description": "Palette color of the focused window's shadow (a bright role makes a glow).",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_color",
             "control": "color-role",
             "keywords": "shadow color glow focused role palette",
@@ -4177,7 +4212,7 @@
           "description": "How strong window shadows are.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_opacity",
             "control": "slider",
             "step": 0.05,
@@ -4717,7 +4752,8 @@
             "label": "prefs.motion.profile",
             "control": "custom",
             "component": "MotionProfileCards",
-            "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed"
+            "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed",
+            "advanced": true
           },
           "enum": [
             "smooth",
@@ -4746,6 +4782,7 @@
               "key": "compositor.motionProfile",
               "notEquals": "off"
             },
+            "advanced": true,
             "min": 0.25,
             "max": 3
           },
@@ -4943,7 +4980,7 @@
           "description": "Show the files of your Desktop folder.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "arrange",
             "label": "prefs.desktop.icons",
             "control": "toggle",
             "keywords": "desktop icons files show hide"
@@ -4956,7 +4993,7 @@
           "description": "Size of desktop icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "arrange",
             "label": "prefs.desktop.icon_size",
             "control": "slider",
             "step": 4,
@@ -4980,7 +5017,7 @@
           "description": "Vertical space between icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "arrange",
             "label": "prefs.desktop.icon_spacing",
             "control": "slider",
             "step": 2,
@@ -4999,13 +5036,13 @@
           "x-unit": "px"
         },
         "textColor": {
-          "title": "Label colour",
+          "title": "Label color",
           "type": "string",
           "default": "overBackground",
-          "description": "Colour of the icon names.",
+          "description": "Color of the icon names.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "arrange",
             "label": "prefs.desktop.icon_text",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -5038,7 +5075,7 @@
           "description": "Blurs the wallpaper behind niri's workspace overview.",
           "x-settings": {
             "category": "overview",
-            "section": "wallpaper",
+            "section": "grid",
             "label": "prefs.desktop.overview_blur",
             "control": "toggle",
             "keywords": "overview blur wallpaper niri workspaces"
@@ -5051,10 +5088,9 @@
           "description": "How one wallpaper turns into the next. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
-            "section": "transition",
+            "section": "panorama",
             "label": "prefs.wall.transition",
             "control": "selector",
-            "preview": "TransitionPreview",
             "keywords": "transition animation grow wipe dissolve fade random shader effect",
             "enabledWhen": {
               "all": [
@@ -5103,7 +5139,7 @@
           "description": "Length of the wallpaper transition. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
-            "section": "transition",
+            "section": "panorama",
             "label": "prefs.wall.transition_duration",
             "control": "slider",
             "step": 50,
@@ -5171,7 +5207,6 @@
             "section": "panorama",
             "label": "prefs.wall.mode",
             "control": "selector",
-            "preview": "PanoramaPreview",
             "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
           },
           "enum": [
@@ -5208,7 +5243,7 @@
           "description": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.depth_layering",
             "control": "toggle",
             "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
@@ -5296,10 +5331,10 @@
           }
         },
         "depthClockInk": {
-          "title": "Clock colour",
+          "title": "Clock color",
           "type": "string",
           "default": "auto",
-          "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
+          "description": "Auto picks light or dark ink from the wallpaper; a palette color follows your theme.",
           "x-settings": {
             "category": "desktop",
             "section": "clock",
@@ -5342,7 +5377,7 @@
           "description": "Show widgets on the desktop. They pause while windows cover them.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widgets_enabled",
             "control": "toggle",
             "keywords": "widgets desktop show hide"
@@ -5355,10 +5390,10 @@
           "description": "Add widgets, then drag and resize them on the desktop (right click on the desktop or the Edit Desktop Widgets shortcut).",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widgets",
             "control": "custom",
-            "component": "DesktopWidgetsEditor",
+            "component": "DesktopWidgetsMore",
             "keywords": "widgets add remove media music calendar events system cpu ram gpu network note sticky weather arrange edit drag",
             "visibleWhen": {
               "key": "desktop.widgetsEnabled",
@@ -5424,7 +5459,7 @@
           "description": "Widgets snap to this grid while you move or resize them.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widget_grid",
             "control": "slider",
             "step": 4,
@@ -5455,7 +5490,7 @@
           "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.widget_variant",
             "control": "selector",
             "keywords": "widget style surface glass background card pane",
@@ -5611,7 +5646,7 @@
           "description": "Screen edge the dock sits on (bottom, left or right). In the bar (integrated) left and right put it at the start or end of the bar, bottom centers it.",
           "x-settings": {
             "category": "dock",
-            "section": "dock",
+            "section": "place",
             "label": "prefs.dock.position",
             "control": "selector",
             "keywords": "dock position edge top bottom left right vertical",
@@ -5689,6 +5724,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 12,
             "max": 96
           },
@@ -5763,10 +5799,10 @@
           "x-unit": "px"
         },
         "hoverRegionHeight": {
-          "title": "Dock reveal strip",
+          "title": "Edge that reveals the dock",
           "type": "number",
           "default": 16,
-          "description": "Size of the invisible edge strip that reveals the hidden dock.",
+          "description": "How wide the invisible edge is that brings the hidden dock back.",
           "x-settings": {
             "category": "dock",
             "section": "autohide",
@@ -5892,7 +5928,8 @@
             "visibleWhen": {
               "key": "dock.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "indicator": {
@@ -5917,7 +5954,8 @@
                   "equals": true
                 }
               ]
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "dot",
@@ -6014,7 +6052,7 @@
           "description": "Monitors that show the dock; none selected shows it on every monitor.",
           "x-settings": {
             "category": "dock",
-            "section": "dock",
+            "section": "place",
             "label": "prefs.dock.screens",
             "control": "screens",
             "keywords": "dock monitor screen display multi-monitor where",
@@ -6143,7 +6181,7 @@
           "description": "Yozakura uses your terminal to launch the tmux manager and show update progress.",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.title",
             "control": "text",
             "keywords": "terminal emulator kitty foot alacritty wezterm ghostty"
@@ -6156,7 +6194,7 @@
           "description": "Use a custom command template for terminals that do not accept the standard `-e` flag",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.advanced",
             "control": "toggle",
             "keywords": "terminal advanced custom command template",
@@ -6170,7 +6208,7 @@
           "description": "$TERMINAL is replaced by the terminal above, $COMMAND by what the shell runs. Examples: \"gnome-terminal -- $COMMAND\", \"konsole -e $COMMAND\".",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.open_with",
             "control": "text",
             "keywords": "terminal command template $TERMINAL $COMMAND gnome-terminal konsole",
@@ -6206,12 +6244,6 @@
             "control": "toggle",
             "keywords": "auto save preset automatically active current own changes"
           }
-        },
-        "settingsShowAll": {
-          "title": "Show all settings",
-          "type": "boolean",
-          "default": false,
-          "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
         }
       },
       "additionalProperties": false
@@ -6318,16 +6350,15 @@
           "description": "Launcher placement and look.",
           "properties": {
             "host": {
-              "title": "Launcher opens in",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+              "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.launcher_host",
+                "category": "launcher",
+                "section": "appearance",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
-                "preview": "LayoutPreview",
                 "keywords": "launcher host spotlight sheet notch centered search"
               },
               "enum": [
@@ -6338,7 +6369,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
               }
@@ -6399,7 +6430,7 @@
               "description": "Show only the search field until you start typing.",
               "x-settings": {
                 "category": "launcher",
-                "section": "appearance",
+                "section": "behavior",
                 "label": "prefs.launcher.compact_when_empty",
                 "control": "toggle",
                 "keywords": "compact empty search field minimal small collapse"
@@ -6414,14 +6445,14 @@
           "description": "Dashboard placement, tabs and widget grid.",
           "properties": {
             "host": {
-              "title": "Dashboard opens in",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+              "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.dashboard_host",
+                "category": "dashboard",
+                "section": "home",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
                 "keywords": "dashboard host spotlight sheet notch side panel"
               },
@@ -6433,7 +6464,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
               }
@@ -6462,7 +6493,7 @@
               }
             },
             "showMetrics": {
-              "title": "Metrics strip",
+              "title": "Metrics row",
               "type": "boolean",
               "default": true,
               "description": "A thin line with CPU, RAM, GPU and network at the bottom; click it to open the metrics tab.",
@@ -6479,10 +6510,10 @@
               }
             },
             "heroTint": {
-              "title": "Tint the player with the art",
+              "title": "Tint the player",
               "type": "boolean",
               "default": true,
-              "description": "The player block takes the colour of the album art, held back so the text stays readable.",
+              "description": "The player block takes the color of the album art, held back so the text stays readable.",
               "x-settings": {
                 "category": "dashboard",
                 "section": "home",
@@ -6515,13 +6546,13 @@
               "items": {
                 "type": "object"
               },
-              "description": "Order and visibility of the dashboard tabs. Drag the grip or use the arrows; widgets are arranged from the dashboard itself with the pencil button.",
+              "description": "Order and visibility of the dashboard tabs. Widgets are arranged from the dashboard itself with the pencil button.",
               "x-settings": {
                 "category": "dashboard",
                 "section": "tabs",
                 "label": "prefs.dashboard.tabs",
                 "control": "custom",
-                "component": "DashboardTabsEditor",
+                "component": "DashboardTabsList",
                 "keywords": "dashboard tabs order hide show reorder widgets wallpapers metrics rail"
               }
             },
@@ -6600,8 +6631,8 @@
               "default": "auto",
               "description": "Auto uses the right edge, or the left one when the bar is on the right.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
+                "category": "menus",
+                "section": "menus",
                 "label": "prefs.layout.sheet_side",
                 "control": "selector",
                 "keywords": "sheet side left right edge vertical bar",
@@ -6658,13 +6689,13 @@
           "additionalProperties": false
         },
         "backdrop": {
-          "title": "Dim the screen behind",
+          "title": "Dim behind",
           "type": "boolean",
           "default": false,
           "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
+            "category": "menus",
+            "section": "menus",
             "label": "prefs.layout.backdrop",
             "control": "toggle",
             "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
@@ -6795,14 +6826,14 @@
           "description": "AI quick ask placement.",
           "properties": {
             "host": {
-              "title": "AI quick ask opens in",
+              "title": "Quick ask opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
+              "description": "Island: inside the island. Card: a small floating card beside the bar. Spotlight: centred over the screen.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.aiquick_host",
+                "category": "ai",
+                "section": "quickask",
+                "label": "prefs.layout.quickask_opens_in",
                 "control": "selector",
                 "keywords": "ai quick ask host card floating spotlight notch island"
               },
@@ -6814,7 +6845,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "card": "Card",
                 "spotlight": "Spotlight"
               }
@@ -6828,14 +6859,14 @@
           "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
           "properties": {
             "host": {
-              "title": "Voice, timers and alarm open in",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
+              "description": "Island: the island grows to show them. Card: a small floating card beside the bar.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.panels_host",
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
                 "keywords": "voice dictation timer hub alarm panels host card floating notch island"
               },
@@ -6846,7 +6877,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "card": "Card"
               }
             }
@@ -6859,14 +6890,14 @@
           "description": "Keybind cheatsheet placement.",
           "properties": {
             "host": {
-              "title": "Keybind cheatsheet",
+              "title": "Shortcut sheet opens in",
               "type": "string",
               "default": "fullscreen",
               "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.cheatsheet_host",
+                "category": "input",
+                "section": "shortcuts",
+                "label": "prefs.layout.sheet_opens_in",
                 "control": "selector",
                 "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
               },
@@ -6893,10 +6924,10 @@
               "title": "Edge",
               "type": "string",
               "default": "auto",
-              "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
+              "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
               "x-settings": {
-                "category": "osd",
-                "section": "osd",
+                "category": "menus",
+                "section": "place",
                 "label": "prefs.osd.position",
                 "control": "selector",
                 "keywords": "osd position edge side top bottom left right",
@@ -6926,11 +6957,10 @@
               "default": "pill",
               "description": "How the volume and brightness indicator looks and where it lives.",
               "x-settings": {
-                "category": "osd",
+                "category": "menus",
                 "section": "osd",
                 "label": "prefs.label.osd_style",
                 "control": "selector",
-                "preview": "OsdPreview",
                 "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
               },
               "enum": [
@@ -6954,14 +6984,13 @@
               "default": 2500,
               "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
               "x-settings": {
-                "category": "osd",
-                "section": "osd",
+                "category": "menus",
+                "section": "place",
                 "label": "prefs.osd.timeout",
                 "control": "slider",
                 "step": 100,
                 "unit": "ms",
                 "keywords": "osd duration timeout how long hide",
-                "advanced": true,
                 "min": 800,
                 "max": 8000
               },
@@ -7112,7 +7141,7 @@
           }
         },
         "showStatus": {
-          "title": "Status strip",
+          "title": "Status line",
           "type": "boolean",
           "default": true,
           "description": "Your name, network and battery along the edge.",
@@ -7151,34 +7180,29 @@
       "x-file": "config/notch.json",
       "properties": {
         "enabled": {
-          "title": "Enabled",
+          "title": "Show the island",
           "type": "boolean",
           "default": true,
+          "description": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
           "x-settings": {
-            "category": "layout",
-            "section": "parts",
-            "label": "prefs.layout.builder",
-            "entry": "layout.builder",
-            "entryTitle": "Bar, notch and dock",
-            "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
-          },
-          "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
+            "category": "notch",
+            "section": "notch",
+            "label": "prefs.notch.enabled",
+            "control": "toggle",
+            "keywords": "island notch show hide on off enable disable"
+          }
         },
         "position": {
           "title": "Island edge",
           "type": "string",
           "default": "top",
-          "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
+          "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
             "label": "prefs.label.island_edge",
             "control": "selector",
-            "keywords": "notch position top bottom left right side vertical edge",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "notch position top bottom left right side vertical edge"
           },
           "enum": [
             "top",
@@ -7197,7 +7221,7 @@
           "title": "Island alignment",
           "type": "string",
           "default": "center",
-          "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
+          "description": "Where the island sits along its edge. Panels always open toward the middle of the screen.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
@@ -7249,7 +7273,7 @@
           "title": "Hide until hovered",
           "type": "boolean",
           "default": false,
-          "description": "Hide the notch until the pointer reaches it.",
+          "description": "Hide the island until the pointer reaches it.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
@@ -7263,20 +7287,16 @@
           }
         },
         "noMediaDisplay": {
-          "title": "No Media Display",
+          "title": "No media display",
           "type": "string",
           "default": "userHost",
-          "description": "What the notch shows when nothing is playing.",
+          "description": "What the island shows when nothing is playing.",
           "x-settings": {
             "category": "notch",
-            "section": "media",
+            "section": "notch",
             "label": "shell.no_media_display",
             "control": "selector",
-            "keywords": "idle text user host compositor custom nothing playing",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "idle text user host compositor custom nothing playing"
           },
           "enum": [
             "userHost",
@@ -7290,27 +7310,19 @@
           }
         },
         "customText": {
-          "title": "Custom Text",
+          "title": "Custom text",
           "type": "string",
           "default": "Yozakura",
           "description": "Text shown in the idle notch.",
           "x-settings": {
             "category": "notch",
-            "section": "media",
+            "section": "notch",
             "label": "shell.notch.custom_text",
             "control": "text",
             "keywords": "custom text label idle",
             "visibleWhen": {
-              "all": [
-                {
-                  "key": "notch.enabled",
-                  "equals": true
-                },
-                {
-                  "key": "notch.noMediaDisplay",
-                  "equals": "custom"
-                }
-              ]
+              "key": "notch.noMediaDisplay",
+              "equals": "custom"
             }
           }
         },
@@ -7351,7 +7363,7 @@
           "x-unit": "ms"
         },
         "expandOn": {
-          "title": "Open Panels On",
+          "title": "Open panels on",
           "type": "string",
           "default": "hover",
           "description": "Open media, activities and download panels on hover or only on click.",
@@ -7360,11 +7372,7 @@
             "section": "notch",
             "label": "shell.notch.expand_on",
             "control": "selector",
-            "keywords": "notch panel expand open hover click activities media downloads",
-            "visibleWhen": {
-              "key": "notch.enabled",
-              "equals": true
-            }
+            "keywords": "notch panel expand open hover click activities media downloads"
           },
           "enum": [
             "hover",
@@ -7533,14 +7541,14 @@
           }
         },
         "activitiesIn": {
-          "title": "Live Activities In",
+          "title": "Activities show in",
           "type": "string",
           "default": "auto",
           "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
           "x-settings": {
             "category": "notch",
             "section": "activities",
-            "label": "prefs.notch.activities_in",
+            "label": "prefs.notch.activities_where",
             "control": "selector",
             "keywords": "live activities chips bar notch downloads timer recording grow place"
           },
@@ -7556,13 +7564,13 @@
           }
         },
         "liveActivities": {
-          "title": "Live Activities",
+          "title": "What counts as an activity",
           "type": "object",
-          "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
+          "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
           "x-settings": {
             "category": "notch",
             "section": "activities",
-            "label": "shell.activities",
+            "label": "prefs.notch.activity_kinds",
             "control": "custom",
             "component": "ActivitiesEditor",
             "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
@@ -7809,8 +7817,8 @@
           "default": "card",
           "description": "A full card, or one compact line that unfolds on hover.",
           "x-settings": {
-            "category": "notch",
-            "section": "activities",
+            "category": "notifications",
+            "section": "presentation",
             "label": "prefs.notifications.notch_style",
             "control": "selector",
             "keywords": "notification notch compact card one line",
@@ -7858,7 +7866,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "corner": "Corner",
             "strips": "Strips"
           }
@@ -7870,7 +7878,7 @@
           "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
           "x-settings": {
             "category": "notifications",
-            "section": "presentation",
+            "section": "where",
             "label": "prefs.notif.position",
             "control": "selector",
             "keywords": "corner position top bottom left right center",
@@ -7924,7 +7932,7 @@
           "description": "Monitors that show notifications.",
           "x-settings": {
             "category": "notifications",
-            "section": "presentation",
+            "section": "where",
             "label": "prefs.notif.screens",
             "control": "screens",
             "keywords": "monitor screen display multi-monitor where"
@@ -8150,7 +8158,7 @@
               "description": "A short chime when a toast appears (never during Do Not Disturb).",
               "x-settings": {
                 "category": "notifications",
-                "section": "sound",
+                "section": "behaviour",
                 "label": "prefs.notif.sound",
                 "control": "toggle",
                 "keywords": "sound chime beep audio play"
@@ -8163,7 +8171,7 @@
               "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
               "x-settings": {
                 "category": "notifications",
-                "section": "sound",
+                "section": "behaviour",
                 "label": "prefs.label.notification_sound_file",
                 "control": "path",
                 "keywords": "sound file custom wav ogg chime",
@@ -8216,14 +8224,14 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "title": "Do Not Disturb",
+              "title": "Silence notifications now",
               "type": "boolean",
               "default": false,
               "description": "Hide toasts and sounds; everything still lands in the history.",
               "x-settings": {
                 "category": "notifications",
                 "section": "dnd",
-                "label": "prefs.notif.dnd",
+                "label": "prefs.notif.dnd_now",
                 "control": "toggle",
                 "keywords": "do not disturb dnd silence quiet focus mute all"
               }
@@ -8265,7 +8273,7 @@
                   "description": "Start time, 24-hour HH:MM.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_from",
                     "control": "text",
                     "keywords": "start begin from time hour",
@@ -8283,7 +8291,7 @@
                   "description": "End time; earlier than the start means the next morning.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_to",
                     "control": "text",
                     "keywords": "end until to time hour",
@@ -8320,7 +8328,7 @@
                   "description": "Days the window starts on.",
                   "x-settings": {
                     "category": "notifications",
-                    "section": "dnd",
+                    "section": "dnd_schedule",
                     "label": "prefs.notif.schedule_days",
                     "control": "multiselect",
                     "keywords": "days week weekdays weekend monday sunday",
@@ -8394,9 +8402,9 @@
           "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
           "x-settings": {
             "category": "overview",
-            "section": "layout",
+            "section": "grid",
             "label": "prefs.overview.rows",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
             "visibleWhen": {
@@ -8456,9 +8464,9 @@
           "description": "Columns of the grid; in the filmstrip, how many workspaces are visible at once.",
           "x-settings": {
             "category": "overview",
-            "section": "layout",
+            "section": "grid",
             "label": "prefs.overview.columns",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "overview columns grid horizontal workspaces count visible",
             "min": 1,
@@ -8474,7 +8482,7 @@
           "description": "Size of each workspace preview relative to the screen.",
           "x-settings": {
             "category": "overview",
-            "section": "size",
+            "section": "grid",
             "label": "prefs.overview.scale",
             "control": "slider",
             "step": 0.01,
@@ -8492,7 +8500,7 @@
           "description": "Gap between workspace previews in the overview.",
           "x-settings": {
             "category": "overview",
-            "section": "size",
+            "section": "grid",
             "label": "prefs.overview.spacing",
             "control": "slider",
             "step": 1,
@@ -8644,13 +8652,13 @@
           }
         },
         "dashboardPersistTabs": {
-          "title": "Persist Dashboard Tabs",
+          "title": "Keep dashboard tabs loaded",
           "type": "boolean",
           "default": false,
           "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "performance.dashboard_persist",
             "control": "toggle",
             "keywords": "dashboard tabs keep loaded memory"
@@ -8663,7 +8671,7 @@
           "description": "Most dashboard tabs kept in memory at once.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "prefs.sys.dashboard_max_tabs",
             "control": "number",
             "keywords": "dashboard tabs memory limit",
@@ -8685,7 +8693,7 @@
           "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "prefs.sys.unload_idle_views",
             "control": "toggle",
             "keywords": "dashboard tabs memory unload idle release",
@@ -8754,13 +8762,13 @@
           "maximum": 60
         },
         "batterySaver": {
-          "title": "Battery Saver",
+          "title": "Battery saver",
           "type": "boolean",
           "default": false,
           "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
           "x-settings": {
-            "category": "system",
-            "section": "performance",
+            "category": "power",
+            "section": "idle",
             "label": "system.performance.battery_saver",
             "control": "toggle",
             "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
@@ -8841,8 +8849,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for clipboard history."
         },
@@ -8855,8 +8863,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for the emoji picker."
         },
@@ -8869,8 +8877,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for tmux sessions."
         },
@@ -8883,8 +8891,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for wallpapers."
         },
@@ -8897,8 +8905,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for notes."
         },
@@ -8911,8 +8919,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that shows only calculator, unit and currency results (e.g. \"= 5 kg in lb\")."
         },
@@ -8925,8 +8933,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for shell commands from assets/commands/commands.json (e.g. \"> preset Neon Tokyo\", \"> dnd\")."
         },
@@ -8939,8 +8947,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for file search in the home directory (fd or plocate)."
         },
@@ -8953,8 +8961,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that sends the query to the AI quick ask."
         },
@@ -8967,8 +8975,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for timers, reminders and the stopwatch (e.g. \"t 10m tea\", \"t 18:00 call mom\", \"t sw\")."
         },
@@ -8981,8 +8989,8 @@
             "section": "providers",
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "Order and prefixes",
+            "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that searches only saved routines (e.g. \"@backup\"; empty lists them all)."
         },
@@ -9022,25 +9030,25 @@
                 "section": "providers",
                 "label": "prefs.launcher.providers",
                 "entry": "launcher.providers",
-                "entryTitle": "Search providers",
-                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+                "entryTitle": "Order and prefixes",
+                "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
               },
               "description": "Order of result groups when no prefix is typed (provider ids).",
               "uniqueItems": true
             },
             "disabled": {
-              "title": "Disabled",
+              "title": "What it searches",
               "type": "array",
               "default": [],
+              "description": "Turn a kind of result on or off; the launcher above follows at once.",
               "x-settings": {
                 "category": "launcher",
-                "section": "providers",
-                "label": "prefs.launcher.providers",
-                "entry": "launcher.providers",
-                "entryTitle": "Search providers",
-                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+                "section": "searches",
+                "label": "prefs.launcher.searches",
+                "control": "custom",
+                "component": "LauncherSearchChips",
+                "keywords": "providers enable disable on off search apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
               },
-              "description": "Launcher providers (and prefix tabs) that are turned off.",
               "items": {
                 "enum": [
                   "calculator",
@@ -9187,7 +9195,7 @@
           "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
           "x-settings": {
             "category": "specials",
-            "section": "behaviour",
+            "section": "list",
             "label": "prefs.label.use_specials",
             "control": "toggle",
             "keywords": "on off disable binds rules launch"
@@ -9464,25 +9472,37 @@
             "section": "language",
             "label": "prefs.label.interface_language",
             "control": "custom",
-            "component": "LanguagePicker",
+            "component": "LanguageCards",
             "keywords": "language locale translation i18n english spanish russian auto"
+          },
+          "enum": [
+            "auto",
+            "en",
+            "es",
+            "ru"
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "en": "English",
+            "es": "Español",
+            "ru": "Русский"
           }
         },
         "updateServiceEnabled": {
-          "title": "Update Service",
+          "title": "Check in the background",
           "type": "boolean",
           "default": true,
           "description": "Look for new releases in the background (about once an hour) and notify you.",
           "x-settings": {
             "category": "updates",
             "section": "updates",
-            "label": "shell.system.update_service",
+            "label": "prefs.updates.service",
             "control": "toggle",
             "keywords": "updates check background notify new version"
           }
         },
         "updateChannel": {
-          "title": "Update channel",
+          "title": "Channel",
           "type": "string",
           "default": "stable",
           "description": "Which versions updates and the update notice follow. Stable: tested releases. Beta: pre-releases to try what comes next, plus every newer stable release. Git: every commit on main, the least stable. Nix installs update through their flake instead.",
@@ -9533,11 +9553,12 @@
                   "default": "yozakura lock",
                   "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "idle",
                     "label": "settings.system.lock_command",
                     "control": "text",
-                    "keywords": "lock screen command idle"
+                    "keywords": "lock screen command idle",
+                    "advanced": true
                   },
                   "format": "command"
                 },
@@ -9547,11 +9568,12 @@
                   "default": "loginctl lock-session",
                   "description": "Runs right before the computer suspends, usually to lock the screen.",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "power",
                     "label": "settings.system.before_sleep",
                     "control": "text",
-                    "keywords": "suspend sleep before lock command power"
+                    "keywords": "suspend sleep before lock command power",
+                    "advanced": true
                   },
                   "format": "command"
                 },
@@ -9561,11 +9583,12 @@
                   "default": "yozakura screen on",
                   "description": "Runs when the computer wakes up, e.g. to turn the screens back on.",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "power",
                     "label": "settings.system.after_sleep",
                     "control": "text",
-                    "keywords": "resume wake after sleep command power screen on"
+                    "keywords": "resume wake after sleep command power screen on",
+                    "advanced": true
                   },
                   "format": "command"
                 }
@@ -9600,8 +9623,8 @@
               },
               "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
               "x-settings": {
-                "category": "system",
-                "section": "idle",
+                "category": "power",
+                "section": "commands",
                 "label": "idle.listeners",
                 "control": "list",
                 "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
@@ -9619,11 +9642,11 @@
               "type": "boolean",
               "default": true,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9633,11 +9656,11 @@
               "type": "boolean",
               "default": true,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9647,11 +9670,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9661,11 +9684,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9675,11 +9698,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9689,11 +9712,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9703,11 +9726,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9717,11 +9740,11 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9746,6 +9769,7 @@
                 "step": 60,
                 "unit": "s",
                 "keywords": "pomodoro work focus length",
+                "advanced": true,
                 "min": 60,
                 "max": 14400
               },
@@ -9766,6 +9790,7 @@
                 "step": 60,
                 "unit": "s",
                 "keywords": "pomodoro break rest length",
+                "advanced": true,
                 "min": 60,
                 "max": 7200
               },
@@ -9783,7 +9808,8 @@
                 "section": "pomodoro",
                 "label": "prefs.timers.pomo_auto",
                 "control": "toggle",
-                "keywords": "pomodoro auto start next phase continue"
+                "keywords": "pomodoro auto start next phase continue",
+                "advanced": true
               }
             },
             "syncSpotify": {
@@ -9793,7 +9819,7 @@
               "description": "Spotify plays while you work and pauses on breaks",
               "x-settings": {
                 "category": "timers",
-                "section": "pomodoro",
+                "section": "extras",
                 "label": "prefs.timers.pomo_spotify",
                 "control": "toggle",
                 "keywords": "pomodoro spotify music pause play"
@@ -9812,8 +9838,8 @@
               "default": "ring",
               "description": "A ring that empties as time runs out, or just the time",
               "x-settings": {
-                "category": "notch",
-                "section": "timers",
+                "category": "timers",
+                "section": "notch",
                 "label": "prefs.timers.style",
                 "control": "selector",
                 "keywords": "notch ring progress text countdown display"
@@ -9854,7 +9880,7 @@
               }
             },
             "alarmPanel": {
-              "title": "Open the alarm in the notch",
+              "title": "Alarm in the island",
               "type": "boolean",
               "default": true,
               "description": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
@@ -9886,7 +9912,7 @@
               "description": "Empty: the built-in tone",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.label.alarm_sound_file",
                 "control": "path",
                 "keywords": "alarm sound file tone custom",
@@ -9904,7 +9930,7 @@
               "description": "How many times the tone plays",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.repeat",
                 "control": "number",
                 "step": 1,
@@ -9933,7 +9959,7 @@
               "description": "Seconds between two tones",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.interval",
                 "control": "number",
                 "step": 1,
@@ -9956,7 +9982,7 @@
               "description": "A soft chime when work turns into a break and back",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.phase_sound",
                 "control": "toggle",
                 "keywords": "pomodoro phase break chime sound",
@@ -9967,7 +9993,7 @@
               }
             },
             "showStopwatch": {
-              "title": "Show the stopwatch",
+              "title": "Stopwatch",
               "type": "boolean",
               "default": true,
               "description": "The running stopwatch appears next to the notch",
@@ -10032,7 +10058,7 @@
               "description": "Title of the Notes note quick notes are appended to (created when missing)",
               "x-settings": {
                 "category": "timers",
-                "section": "input",
+                "section": "extras",
                 "label": "prefs.timers.note_title",
                 "control": "text",
                 "keywords": "quick note inbox notes title capture"
@@ -10097,7 +10123,7 @@
               "description": "A notification with how many notifications arrived and from which apps",
               "x-settings": {
                 "category": "timers",
-                "section": "focus",
+                "section": "extras",
                 "label": "prefs.timers.focus_summary",
                 "control": "toggle",
                 "keywords": "focus summary missed notifications end"
@@ -10182,11 +10208,11 @@
           "default": "sakura-powerline",
           "x-settings": {
             "category": "terminal",
-            "section": "look",
-            "label": "prefs.term.look.prompt",
-            "entry": "terminal.look",
-            "entryTitle": "Prompt",
-            "keywords": "prompt starship oh-my-posh fish powerline nerd font preview theme shell look"
+            "section": "promptmore",
+            "label": "prefs.term.look.full",
+            "entry": "terminal.lookFull",
+            "entryTitle": "Prompt status and gallery",
+            "keywords": "prompt engine install nerd font fish login shell default foreign config preview gallery"
           },
           "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
         },
@@ -10196,7 +10222,7 @@
           "default": "none",
           "x-settings": {
             "category": "terminal",
-            "section": "greeting",
+            "section": "fetch",
             "label": "prefs.term.fetch",
             "entry": "terminal.fetch",
             "entryTitle": "System info greeting",
@@ -10215,7 +10241,7 @@
           "default": "own",
           "x-settings": {
             "category": "terminal",
-            "section": "greeting",
+            "section": "fetch",
             "label": "prefs.term.fetch",
             "entry": "terminal.fetch",
             "entryTitle": "System info greeting",
@@ -10237,7 +10263,7 @@
           "default": "sakura",
           "x-settings": {
             "category": "terminal",
-            "section": "greeting",
+            "section": "fetch",
             "label": "prefs.term.fetch",
             "entry": "terminal.fetch",
             "entryTitle": "System info greeting",
@@ -10257,7 +10283,7 @@
           "default": "",
           "x-settings": {
             "category": "terminal",
-            "section": "greeting",
+            "section": "fetch",
             "label": "prefs.term.fetch",
             "entry": "terminal.fetch",
             "entryTitle": "System info greeting",
@@ -10307,7 +10333,7 @@
           "description": "The kitty cursor. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
           "x-settings": {
             "category": "terminal",
-            "section": "look",
+            "section": "cursor",
             "label": "prefs.term.look.cursor",
             "control": "custom",
             "component": "CursorShapeChips",
@@ -10401,13 +10427,13 @@
           "description": "Corner radius of panels, buttons and islands.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "settings.theme.roundness",
             "control": "slider",
-            "preview": "RoundnessPreview",
             "step": 1,
             "unit": "px",
             "keywords": "radius corners rounded square shape",
+            "advanced": true,
             "min": 0,
             "max": 24
           },
@@ -10416,7 +10442,7 @@
           "x-unit": "px"
         },
         "font": {
-          "title": "UI Font",
+          "title": "Interface font",
           "type": "string",
           "default": "Roboto Condensed",
           "description": "Used for all text in the shell.",
@@ -10438,7 +10464,7 @@
             "section": "typography",
             "label": "settings.theme.ui_font",
             "entry": "theme.font",
-            "entryTitle": "UI Font",
+            "entryTitle": "Interface font",
             "keywords": "font typeface family text size typography"
           },
           "description": "Base UI font size; other sizes scale from it.",
@@ -10447,7 +10473,7 @@
           "x-unit": "px"
         },
         "monoFont": {
-          "title": "Mono Font",
+          "title": "Code font",
           "type": "string",
           "default": "Iosevka Nerd Font Mono",
           "description": "Used for code, paths and the terminal theme.",
@@ -10469,7 +10495,7 @@
             "section": "typography",
             "label": "settings.theme.mono_font",
             "entry": "theme.monoFont",
-            "entryTitle": "Mono Font",
+            "entryTitle": "Code font",
             "keywords": "monospace code terminal font typeface"
           },
           "description": "Monospace font size.",
@@ -10478,7 +10504,7 @@
           "x-unit": "px"
         },
         "tintIcons": {
-          "title": "Tint Icons",
+          "title": "Tint icons",
           "type": "boolean",
           "default": false,
           "description": "Recolor app icons with the palette.",
@@ -10558,7 +10584,7 @@
                 "category": "icons-type",
                 "section": "headings",
                 "label": "prefs.icons_type.heading_font",
-                "control": "text",
+                "control": "font",
                 "keywords": "heading title font typeface family display"
               }
             },
@@ -10596,7 +10622,7 @@
                 "category": "icons-type",
                 "section": "headings",
                 "label": "prefs.icons_type.editorial_font",
-                "control": "text",
+                "control": "font",
                 "keywords": "editorial serif font typeface family sentence bar"
               }
             }
@@ -10610,10 +10636,11 @@
           "description": "Round the corners of the screen.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "settings.theme.enable_corners",
             "control": "toggle",
-            "keywords": "screen corners rounded display edges"
+            "keywords": "screen corners rounded display edges",
+            "advanced": true
           }
         },
         "animDuration": {
@@ -10694,7 +10721,7 @@
               "description": "Shape of the corners of panels, popups and buttons.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.corner_style",
                 "control": "selector",
                 "keywords": "corner style shape squircle cut chamfer tab rounded"
@@ -10719,10 +10746,11 @@
               "description": "Corner style of popups and menus.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.popup_corners",
                 "control": "selector",
-                "keywords": "popup menu corner style shape squircle cut tab"
+                "keywords": "popup menu corner style shape squircle cut tab",
+                "advanced": true
               },
               "enum": [
                 "",
@@ -10746,7 +10774,7 @@
               "description": "Size of the chamfer on cut corners.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.cut_size",
                 "control": "slider",
                 "step": 1,
@@ -10812,7 +10840,7 @@
               "description": "Point popups at the item that opened them.",
               "x-settings": {
                 "category": "menus",
-                "section": "popups",
+                "section": "menus",
                 "label": "prefs.appearance.popup_tail",
                 "control": "toggle",
                 "keywords": "popup tail arrow pointer callout"
@@ -10854,7 +10882,7 @@
               "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_brush",
                 "control": "toggle",
                 "keywords": "signature brush ink stroke highlight selection sumi-e"
@@ -10867,7 +10895,7 @@
               "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_petals",
                 "control": "toggle",
                 "keywords": "signature petals sakura falling lockscreen particles"
@@ -10880,7 +10908,7 @@
               "description": "Sakura petals or maple leaves, tinted with the palette.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_petal_shape",
                 "control": "selector",
                 "keywords": "signature petals leaves maple autumn shape",
@@ -10914,10 +10942,9 @@
               "description": "Where the shadows of the shell's surfaces fall. Sun follows the real sun at your weather location: long, soft shadows at dawn and dusk, short at noon, faint at night.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.mode",
                 "control": "selector",
-                "preview": "LightingPreview",
                 "keywords": "lighting light sun shadow direction time of day dawn dusk noon"
               },
               "enum": [
@@ -10938,7 +10965,7 @@
               "description": "Where the light comes from, clockwise from the top of the screen.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.angle",
                 "control": "slider",
                 "step": 5,
@@ -10963,7 +10990,7 @@
               "description": "A soft light follows the pointer over the bar, notch, dock and popups.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.lantern",
                 "control": "selector",
                 "keywords": "lantern cursor pointer glow light night hover",
@@ -10987,7 +11014,7 @@
               "description": "How strongly the light shows: shadow length, the lit edge, the warm glow at dawn and dusk, the dimmer night and the lantern.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.strength",
                 "control": "selector",
                 "preview": "LightingPreview",
@@ -11024,10 +11051,9 @@
               "description": "The current weather drawn onto the bar, notch, dock and popups: a few raindrops, frost in the corners below 0 °C, a soft haze in fog. Never over text.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.mode",
                 "control": "selector",
-                "preview": "WeatherFxPreview",
                 "keywords": "weather on surfaces rain droplets snow frost heat fog mist petals leaves season ambient"
               },
               "enum": [
@@ -11048,14 +11074,15 @@
               "description": "Drops rest on surfaces while it rains; now and then one runs down. Denser in heavy rain than in drizzle.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.rain",
                 "control": "toggle",
                 "keywords": "rain drizzle droplets drops water glass",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "frost": {
@@ -11065,14 +11092,15 @@
               "description": "Below 0 °C frost creeps in from the corners; while it snows, flakes settle on the top edge.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.frost",
                 "control": "toggle",
                 "keywords": "frost ice snow cold winter flakes freezing",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "heat": {
@@ -11082,14 +11110,15 @@
               "description": "Above 30 °C a faint shimmer passes over the bar now and then.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.heat",
                 "control": "toggle",
                 "keywords": "heat hot shimmer summer haze",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "fog": {
@@ -11099,14 +11128,15 @@
               "description": "A soft haze over surfaces in fog and mist.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.fog",
                 "control": "toggle",
                 "keywords": "fog mist haze",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "seasonal": {
@@ -11116,14 +11146,15 @@
               "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off. The season follows your weather location's hemisphere.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.seasonal",
                 "control": "toggle",
                 "keywords": "season petals leaves spring autumn fall sakura maple",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             }
           },
@@ -11326,7 +11357,7 @@
           "description": "A signature texture on the shell's own surfaces (bar, notch, launcher, popups, settings). App windows are never touched.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.effect",
             "control": "custom",
             "component": "SurfaceEffectCards",
@@ -11350,7 +11381,7 @@
               "description": "How strong the effect is. Lowered automatically when text would become hard to read.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.intensity",
                 "control": "slider",
                 "step": 0.05,
@@ -11373,7 +11404,7 @@
               "description": "A short phosphor flicker when a surface appears (off when animations are off).",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.flicker",
                 "control": "toggle",
                 "keywords": "crt flicker power on phosphor",
@@ -11391,7 +11422,7 @@
               "description": "Rice-paper texture; full on light surfaces, faint on dark ones.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.grain",
                 "control": "slider",
                 "step": 0.05,
@@ -11414,7 +11445,7 @@
               "description": "Paint selections, focus and active pills as ink brush strokes.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.brush_highlights",
                 "control": "toggle",
                 "keywords": "ink brush stroke highlight selection focus sumi-e",
@@ -11443,7 +11474,8 @@
                 "section": "glass",
                 "label": "prefs.glass.enabled",
                 "control": "toggle",
-                "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque"
+                "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque",
+                "advanced": true
               }
             },
             "amount": {
@@ -11462,7 +11494,8 @@
                 "visibleWhen": {
                   "key": "theme.glass.enabled",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "x-specialValues": [
                 {
@@ -17326,14 +17359,14 @@
       "x-file": "config/voice.json",
       "properties": {
         "enabled": {
-          "title": "Enable voice input",
+          "title": "Voice input",
           "type": "boolean",
           "default": true,
           "description": "Push-to-talk to the AI and dictation into any window, recognized on this computer.",
           "x-settings": {
             "category": "voice",
-            "section": "voice",
-            "label": "voice.settings.enabled",
+            "section": "talk",
+            "label": "prefs.voice.enabled",
             "control": "toggle",
             "keywords": "voice enable disable microphone"
           }
@@ -17345,7 +17378,7 @@
           "description": "q5 is lighter and faster, q8 slightly more accurate.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "speech",
             "label": "voice.settings.model",
             "control": "selector",
             "keywords": "whisper model large turbo quantization q5 q8 accuracy",
@@ -17364,14 +17397,14 @@
           }
         },
         "language": {
-          "title": "Speech language",
+          "title": "Language",
           "type": "string",
           "default": "auto",
           "description": "Language you speak. Auto detects it every time.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
-            "label": "prefs.label.speech_language",
+            "section": "speech",
+            "label": "prefs.voice.language",
             "control": "selector",
             "keywords": "speech recognition language auto detect english russian japanese",
             "enabledWhen": {
@@ -17411,10 +17444,10 @@
           "description": "Hold the key while you talk, or tap once to start and once to stop.",
           "x-settings": {
             "category": "voice",
-            "section": "voice",
+            "section": "talk",
             "label": "voice.settings.activation",
             "control": "selector",
-            "keywords": "push to talk hold toggle hands free activation",
+            "keywords": "push to talk hold toggle tap hands free activation",
             "enabledWhen": {
               "key": "voice.enabled",
               "equals": true
@@ -17426,7 +17459,7 @@
           ],
           "x-enumLabels": {
             "push-to-talk": "Hold to talk",
-            "toggle": "Toggle"
+            "toggle": "Tap on, tap off"
           }
         },
         "useGpu": {
@@ -17436,7 +17469,7 @@
           "description": "Much faster when a supported GPU is available.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.use_gpu",
             "control": "toggle",
             "keywords": "gpu cuda vulkan rocm acceleration",
@@ -17502,14 +17535,14 @@
           "x-unit": "s"
         },
         "vadAutoStop": {
-          "title": "Stop when I stop talking",
+          "title": "Stop on a pause",
           "type": "boolean",
           "default": true,
           "description": "In toggle mode, stop listening by itself after a pause.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
-            "label": "voice.settings.vad_auto_stop",
+            "section": "speech",
+            "label": "prefs.voice.auto_stop",
             "control": "toggle",
             "keywords": "vad silence pause auto stop",
             "enabledWhen": {
@@ -17525,7 +17558,7 @@
           "description": "How long a pause ends the recording.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.vad_silence",
             "control": "slider",
             "step": 100,
@@ -17558,7 +17591,7 @@
           "description": "Higher picks up quieter speech, lower ignores more background noise.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.vad_sensitivity",
             "control": "selector",
             "keywords": "vad sensitivity speech detection noise",
@@ -17618,7 +17651,7 @@
           "description": "Cut silence before recognition for faster, cleaner results.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.server_vad",
             "control": "toggle",
             "keywords": "vad trim silence server",
@@ -17635,7 +17668,7 @@
           "description": "How dictated text reaches the focused window.",
           "x-settings": {
             "category": "voice",
-            "section": "dictation",
+            "section": "engine",
             "label": "voice.settings.typing_method",
             "control": "selector",
             "keywords": "dictation wtype ydotool clipboard type paste",
@@ -17658,14 +17691,14 @@
           }
         },
         "punctuation": {
-          "title": "Keep punctuation and capitals",
+          "title": "Punctuation",
           "type": "boolean",
           "default": true,
           "description": "Keep the punctuation and capitals whisper adds.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.punctuation",
+            "label": "prefs.voice.punctuation",
             "control": "toggle",
             "keywords": "dictation punctuation capital letters",
             "enabledWhen": {
@@ -17675,14 +17708,14 @@
           }
         },
         "trailingSpace": {
-          "title": "Add a space after dictation",
+          "title": "Space after",
           "type": "boolean",
           "default": true,
           "description": "Add a space after each dictated phrase so the next one does not stick to it.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.trailing_space",
+            "label": "prefs.voice.trailing_space",
             "control": "toggle",
             "keywords": "dictation trailing space",
             "enabledWhen": {
@@ -17692,14 +17725,14 @@
           }
         },
         "aiAutoSend": {
-          "title": "Send to the AI immediately",
+          "title": "Send at once",
           "type": "boolean",
           "default": false,
           "description": "Send voice questions to the AI without reviewing them first.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.ai_auto_send",
+            "label": "prefs.voice.auto_send",
             "control": "toggle",
             "keywords": "assistant ai voice send immediately",
             "enabledWhen": {
@@ -17715,7 +17748,7 @@
           "description": "How long the transcript stays on screen after dictation.",
           "x-settings": {
             "category": "voice",
-            "section": "dictation",
+            "section": "engine",
             "label": "voice.settings.preview",
             "control": "slider",
             "step": 100,
@@ -17763,14 +17796,14 @@
           }
         },
         "unit": {
-          "title": "Temperature Unit",
+          "title": "Unit",
           "type": "string",
           "default": "C",
           "description": "Unit used by the weather widgets.",
           "x-settings": {
             "category": "system",
             "section": "weather",
-            "label": "settings.system.temperature_unit",
+            "label": "prefs.sys.unit",
             "control": "selector",
             "keywords": "temperature unit celsius fahrenheit"
           },
@@ -17794,7 +17827,7 @@
       "x-file": "config/workspaces.json",
       "properties": {
         "shown": {
-          "title": "Workspaces shown",
+          "title": "Workspace count",
           "type": "number",
           "default": 10,
           "description": "How many workspace slots the bar shows.",
@@ -17802,7 +17835,7 @@
             "category": "bar",
             "section": "workspaces",
             "label": "prefs.bar.ws_shown",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "workspaces count number visible desktops",
             "min": 1,
@@ -17838,11 +17871,12 @@
             "visibleWhen": {
               "key": "workspaces.showNumbers",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "showNumbers": {
-          "title": "Show numbers",
+          "title": "Numbers",
           "type": "boolean",
           "default": false,
           "description": "Label workspaces with their number.",
@@ -17855,7 +17889,7 @@
           }
         },
         "dynamic": {
-          "title": "Dynamic",
+          "title": "Only used ones",
           "type": "boolean",
           "default": false,
           "description": "Only show workspaces that are in use.",
@@ -17916,7 +17950,7 @@
           "format": "font-family"
         },
         "indicatorStyle": {
-          "title": "Active indicator",
+          "title": "Active mark",
           "type": "string",
           "default": "pill",
           "description": "Shape that marks the active workspace.",
@@ -17925,7 +17959,7 @@
             "section": "workspaces",
             "label": "prefs.bar.ws_indicator",
             "control": "custom",
-            "component": "IndicatorStyleChips",
+            "component": "IndicatorCards",
             "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
           },
           "enum": [
@@ -17963,7 +17997,7 @@
           ]
         },
         "branchColor": {
-          "title": "Blossom colour",
+          "title": "Blossom color",
           "type": "string",
           "default": "primary",
           "description": "Palette role of the blossoms and buds. The active workspace always takes the accent.",
@@ -18015,18 +18049,13 @@
   },
   "x-categories": [
     {
-      "id": "layout",
-      "title": "Layout",
-      "description": "Where the bar, island and dock sit on the screen."
-    },
-    {
       "id": "appearance",
-      "title": "Appearance",
+      "title": "Theme & colors",
       "description": "Theme mode, colors, fonts, shape and motion."
     },
     {
       "id": "icons-type",
-      "title": "Icons & Type",
+      "title": "Fonts & icons",
       "description": "Icon weight, fonts and heading style."
     },
     {
@@ -18036,12 +18065,12 @@
     },
     {
       "id": "bar",
-      "title": "Bar & Islands",
+      "title": "Bar",
       "description": "Style, modules, placement, clock and workspaces of the bar."
     },
     {
       "id": "notch",
-      "title": "Notch & Activities",
+      "title": "Island",
       "description": "The dynamic island and live activities."
     },
     {
@@ -18061,12 +18090,12 @@
     },
     {
       "id": "desktop",
-      "title": "Desktop & Clock",
+      "title": "Widgets & clock",
       "description": "Depth clock, desktop widgets and icons."
     },
     {
       "id": "lockscreen",
-      "title": "Lockscreen & Login",
+      "title": "Lock screen",
       "description": "Lock screen style, layout and media, and the matching login screen."
     },
     {
@@ -18075,13 +18104,8 @@
       "description": "Popups, history and do not disturb."
     },
     {
-      "id": "osd",
-      "title": "On-screen display",
-      "description": "Volume and brightness indicator: style, edge and timing."
-    },
-    {
       "id": "menus",
-      "title": "Menus",
+      "title": "Menus & OSD",
       "description": "How the bar's popups and menus open."
     },
     {
@@ -18096,27 +18120,27 @@
     },
     {
       "id": "windows",
-      "title": "Windows",
+      "title": "Layout & gaps",
       "description": "Gaps, borders, blur, shadows and motion of your windows."
     },
     {
       "id": "terminal",
-      "title": "Terminal & Apps",
+      "title": "Terminal",
       "description": "Which terminal opens and how apps are launched."
     },
     {
       "id": "input",
-      "title": "Input & Keybinds",
+      "title": "Shortcuts",
       "description": "Keyboard shortcuts for the shell and the compositor."
     },
     {
       "id": "system",
-      "title": "System",
+      "title": "Language & weather",
       "description": "Idle and power, performance, language, weather."
     },
     {
       "id": "voice",
-      "title": "Voice input",
+      "title": "Voice",
       "description": "Local speech recognition, dictation and push-to-talk."
     },
     {
@@ -18131,8 +18155,13 @@
     },
     {
       "id": "updates",
-      "title": "Updates & OCR",
+      "title": "Updates",
       "description": "Update checks and text recognition languages."
+    },
+    {
+      "id": "power",
+      "title": "Power",
+      "description": "Idle, screen off and sleep."
     },
     {
       "id": "network",
@@ -18151,22 +18180,22 @@
     },
     {
       "id": "effects",
-      "title": "Audio effects",
-      "description": "EasyEffects presets and equalizer."
+      "title": "Effects",
+      "description": "EasyEffects presets for speakers and microphone."
     },
     {
       "id": "ai",
-      "title": "AI Assistant",
+      "title": "Chat",
       "description": "Chat, coding agents, desktop control, MCP servers, prompts and automations."
     },
     {
       "id": "ai-providers",
-      "title": "AI providers",
+      "title": "Models & providers",
       "description": "Connect cloud and local models: API keys, servers, the default model and request settings."
     },
     {
       "id": "ai-code",
-      "title": "Code tasks",
+      "title": "Agents & tasks",
       "description": "Hand coding tasks to agents: defaults, queue, review and the task board"
     },
     {
@@ -18191,12 +18220,12 @@
     },
     {
       "id": "keyboard",
-      "title": "Keyboard",
+      "title": "Layouts",
       "description": "Layouts, switching, key repeat and the bar indicator."
     },
     {
       "id": "extras",
-      "title": "Apps & Extras",
+      "title": "Apps",
       "description": "Browsers, chat, games, AI agents and tools, installed in one click."
     },
     {
@@ -18207,89 +18236,81 @@
   ],
   "x-groups": [
     {
-      "id": "layout",
-      "title": "Layout",
-      "categories": [
-        "layout"
-      ]
-    },
-    {
-      "id": "bar",
-      "title": "Bar",
-      "categories": [
-        "bar"
-      ]
-    },
-    {
-      "id": "island",
-      "title": "Island",
-      "categories": [
-        "notch"
-      ]
-    },
-    {
-      "id": "dock",
-      "title": "Dock",
-      "categories": [
-        "dock"
-      ]
-    },
-    {
-      "id": "launcher",
-      "title": "Launcher",
-      "categories": [
-        "launcher"
-      ]
-    },
-    {
-      "id": "dashboard",
-      "title": "Dashboard",
-      "categories": [
-        "dashboard",
-        "ai",
-        "ai-providers",
-        "ai-code"
-      ]
-    },
-    {
-      "id": "popups",
-      "title": "Popups",
-      "categories": [
-        "notifications",
-        "osd",
-        "menus"
-      ]
-    },
-    {
-      "id": "lockscreen",
-      "title": "Lockscreen",
-      "categories": [
-        "lockscreen"
-      ]
-    },
-    {
-      "id": "desktop",
-      "title": "Desktop",
-      "categories": [
-        "desktop",
-        "overview"
-      ]
-    },
-    {
       "id": "look",
       "title": "Look",
       "categories": [
         "appearance",
+        "wallpapers",
         "icons-type",
-        "wallpapers"
+        "presets",
+        "changes"
       ]
     },
     {
-      "id": "presets",
-      "title": "Presets",
+      "id": "screen",
+      "title": "Screen",
       "categories": [
-        "presets",
-        "changes"
+        "bar",
+        "notch",
+        "dock",
+        "desktop",
+        "lockscreen"
+      ]
+    },
+    {
+      "id": "windows",
+      "title": "Windows",
+      "categories": [
+        "windows",
+        "overview",
+        "specials"
+      ]
+    },
+    {
+      "id": "panels",
+      "title": "Panels",
+      "categories": [
+        "launcher",
+        "dashboard",
+        "menus"
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Notifications & focus",
+      "categories": [
+        "notifications",
+        "timers"
+      ]
+    },
+    {
+      "id": "assistant",
+      "title": "Assistant",
+      "categories": [
+        "ai",
+        "ai-providers",
+        "ai-code",
+        "voice"
+      ]
+    },
+    {
+      "id": "keys",
+      "title": "Keyboard",
+      "categories": [
+        "keyboard",
+        "input"
+      ]
+    },
+    {
+      "id": "devices",
+      "title": "Devices",
+      "categories": [
+        "displays",
+        "network",
+        "bluetooth",
+        "sound",
+        "effects",
+        "power"
       ]
     },
     {
@@ -18297,22 +18318,11 @@
       "title": "System",
       "categories": [
         "system",
-        "displays",
-        "keyboard",
-        "windows",
-        "specials",
+        "updates",
         "terminal",
-        "input",
-        "voice",
-        "timers",
-        "routines",
-        "network",
-        "bluetooth",
-        "sound",
-        "effects",
         "extras",
         "mods",
-        "updates",
+        "routines",
         "about"
       ]
     }

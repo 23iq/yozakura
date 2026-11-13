@@ -2,12 +2,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.settings.previews
 import "../Ui.js" as Ui
 
 // Card picture of a screen edge (dock.position): a mini screen with a
 // window and a short dock of app dots on the edge `value`.
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

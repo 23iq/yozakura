@@ -9,14 +9,28 @@ var category = {
     "title": "prefs.cat.notch",
     "description": "prefs.cat.notch.desc",
     "keywords": "notch island dynamic activities visualizer media panels",
+    "stage": "IslandStage",
+    "hero": {
+        "hint": "prefs.notch.hero_hint"
+    },
+    "row": [{ "id": "notch", "weight": 1.2 }, { "id": "media", "weight": 1 }, { "id": "activities", "weight": 1.3 }],
     "sections": [
         {
             "id": "notch",
             "title": "prefs.notch.section.notch",
             "entries": [
                 {
+                    "key": "notch.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notch.enabled",
+                    "description": "prefs.notch.enabled.desc",
+                    "keywords": "island notch show hide on off enable disable"
+                },
+                {
                     "key": "notch.style",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "IslandShapeThumb",
                     "options": [
                         {
                             "value": "attached",
@@ -35,6 +49,80 @@ var category = {
                     "description": "prefs.notch.theme.desc",
                     "keywords": "notch style island attached floating pill dot minimal"
                 },
+                {
+                    "key": "notch.align",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "start",
+                            "label": "prefs.notch.align.start",
+                            "icon": "alignLeft"
+                        },
+                        {
+                            "value": "center",
+                            "label": "prefs.notch.align.center",
+                            "icon": "alignCenter"
+                        },
+                        {
+                            "value": "end",
+                            "label": "prefs.notch.align.end",
+                            "icon": "alignRight"
+                        }
+                    ],
+                    "label": "prefs.label.island_align",
+                    "description": "prefs.notch.align.desc",
+                    "keywords": "notch align alignment left right corner start center end"
+                },
+                {
+                    "key": "notch.keepHidden",
+                    "type": "toggle",
+                    "label": "prefs.notch.hide_until_hovered",
+                    "description": "prefs.notch.keep_hidden.desc",
+                    "keywords": "hide notch autohide"
+                },
+                {
+                    "key": "notch.hoverRegionHeight",
+                    "advanced": true,
+                    "type": "slider",
+                    "min": 8,
+                    "max": 40,
+                    "step": 1,
+                    "unit": "px",
+                    "label": "prefs.notch.hover_region",
+                    "description": "prefs.notch.hover_region.desc",
+                    "keywords": "hover region trigger area reveal"
+                }
+            ]
+        },
+        {
+            "id": "behaviour",
+            "title": "prefs.notch.section.opening",
+            "entries": [
+                {
+                    "key": "notch.expandOn",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "hover",
+                            "label": "shell.notch.expand_on_hover",
+                            "icon": "cursor"
+                        },
+                        {
+                            "value": "click",
+                            "label": "shell.notch.expand_on_click",
+                            "icon": "hand"
+                        }
+                    ],
+                    "label": "shell.notch.expand_on",
+                    "description": "prefs.notch.expand_on.desc",
+                    "keywords": "notch panel expand open hover click activities media downloads"
+                }
+            ]
+        },
+        {
+            "id": "place",
+            "title": "prefs.notch.section.place",
+            "entries": [
                 {
                     "key": "notch.position",
                     "type": "selector",
@@ -63,63 +151,6 @@ var category = {
                     "label": "prefs.label.island_edge",
                     "description": "prefs.notch.position.desc",
                     "keywords": "notch position top bottom left right side vertical edge"
-                },
-                {
-                    "key": "notch.align",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "start",
-                            "label": "prefs.notch.align.start"
-                        },
-                        {
-                            "value": "center",
-                            "label": "prefs.notch.align.center"
-                        },
-                        {
-                            "value": "end",
-                            "label": "prefs.notch.align.end"
-                        }
-                    ],
-                    "label": "prefs.label.island_align",
-                    "description": "prefs.notch.align.desc",
-                    "keywords": "notch align alignment left right corner start center end"
-                },
-                {
-                    "key": "notch.expandOn",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "hover",
-                            "label": "shell.notch.expand_on_hover"
-                        },
-                        {
-                            "value": "click",
-                            "label": "shell.notch.expand_on_click"
-                        }
-                    ],
-                    "label": "shell.notch.expand_on",
-                    "description": "prefs.notch.expand_on.desc",
-                    "keywords": "notch panel expand open hover click activities media downloads"
-                },
-                {
-                    "key": "notch.keepHidden",
-                    "type": "toggle",
-                    "label": "prefs.notch.hide_until_hovered",
-                    "description": "prefs.notch.keep_hidden.desc",
-                    "keywords": "hide notch autohide"
-                },
-                {
-                    "key": "notch.hoverRegionHeight",
-                    "advanced": true,
-                    "type": "slider",
-                    "min": 8,
-                    "max": 40,
-                    "step": 1,
-                    "unit": "px",
-                    "label": "prefs.notch.hover_region",
-                    "description": "prefs.notch.hover_region.desc",
-                    "keywords": "hover region trigger area reveal"
                 }
             ]
         },
@@ -168,7 +199,14 @@ var category = {
                     "label": "prefs.notch.media_visualizer",
                     "description": "prefs.notch.visualizer.desc",
                     "keywords": "audio visualizer cava bars music"
-                },
+                }
+            ]
+        },
+        {
+            // what the island shows while nothing plays (rare)
+            "id": "idle",
+            "title": "prefs.notch.section.idle",
+            "entries": [
                 {
                     "key": "notch.noMediaDisplay",
                     "type": "selector",
@@ -208,43 +246,6 @@ var category = {
             "title": "prefs.notch.section.activities",
             "entries": [
                 {
-                    "key": "notch.activities",
-                    "type": "custom",
-                    "component": "IslandActivitiesEditor",
-                    "label": "prefs.notch.island_activities",
-                    "description": "prefs.notch.island_activities.desc",
-                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
-                },
-                {
-                    "key": "notifications.notchStyle",
-                    "type": "selector",
-                    // only toasts grown from the island use it
-                    "visibleWhen": {
-                        "not": {
-                            "key": "notifications.presentation",
-                            "in": ["corner", "strips"]
-                        }
-                    },
-                    "enabledWhen": {
-                        "key": "notch.enabled",
-                        "equals": true
-                    },
-                    "reason": "prefs.disabled.needs_notch",
-                    "options": [
-                        {
-                            "value": "card",
-                            "label": "prefs.notifications.notch_style.card"
-                        },
-                        {
-                            "value": "compact",
-                            "label": "prefs.notifications.notch_style.compact"
-                        }
-                    ],
-                    "label": "prefs.notifications.notch_style",
-                    "description": "prefs.notifications.notch_style.desc",
-                    "keywords": "notification notch compact card one line"
-                },
-                {
                     "key": "notch.activitiesIn",
                     "type": "selector",
                     "options": [
@@ -261,54 +262,63 @@ var category = {
                             "label": "prefs.notch.activities_in.bar"
                         }
                     ],
-                    "label": "prefs.notch.activities_in",
+                    "label": "prefs.notch.activities_where",
                     "description": "prefs.notch.activities_in.desc",
                     "keywords": "live activities chips bar notch downloads timer recording grow place"
+                },
+                {
+                    "key": "notch.activities",
+                    "type": "custom",
+                    "component": "IslandActivitiesEditor",
+                    "label": "prefs.notch.island_activities",
+                    "description": "prefs.notch.island_activities.desc",
+                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
                 },
                 {
                     "key": "notch.liveActivities",
                     "type": "custom",
                     "component": "ActivitiesEditor",
-                    "label": "shell.activities",
+                    "label": "prefs.notch.activity_kinds",
                     "description": "prefs.notch.activities.desc",
                     "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
-                }
-            ]
-        },
-        {
-            "id": "timers",
-            "title": "prefs.notch.section.timers",
-            "entries": [
+                },
                 {
-                    "key": "system.timers.notchStyle",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "ring",
-                            "label": "prefs.timers.style.ring",
-                            "icon": "circleNotch"
-                        },
-                        {
-                            "value": "text",
-                            "label": "prefs.timers.style.text",
-                            "icon": "textT"
-                        }
-                    ],
-                    "label": "prefs.timers.style",
-                    "description": "prefs.timers.style.desc",
-                    "keywords": "notch ring progress text countdown display"
+                    "id": "notch.notifLink",
+                    "type": "custom",
+                    "component": "PageLink",
+                    "target": "notifications",
+                    "targetSection": "presentation",
+                    "linkText": "prefs.notch.notif_link.open",
+                    "resettable": false,
+                    "label": "prefs.notch.notif_link",
+                    "description": "prefs.notch.notif_link.desc",
+                    "keywords": "notification notch compact card island"
+                },
+                {
+                    "id": "notch.timerLink",
+                    "type": "custom",
+                    "component": "PageLink",
+                    "target": "timers",
+                    "targetSection": "notch",
+                    "linkText": "prefs.notch.timer_link.open",
+                    "resettable": false,
+                    "label": "prefs.notch.timer_link",
+                    "description": "prefs.notch.timer_link.desc",
+                    "keywords": "timer ring text countdown island"
                 }
             ]
         }
     ]
 };
 
-// The notch and media sections only matter while the notch is on (turned on
-// and off in the Layout page); activities and timers also work in the bar.
+// The notch and media rows only matter while the island is on (its switch
+// heads the Island card); activities also work in the bar.
 category.sections.forEach(function (section) {
     if (section.id !== "notch" && section.id !== "media")
         return;
     section.entries.forEach(function (entry) {
+        if (entry.key === "notch.enabled")
+            return;
         var on = {
             "key": "notch.enabled",
             "equals": true

@@ -66,7 +66,11 @@ Item {
         anchors.fill: parent
         from: root.from
         to: root.to
-        value: root.value
+        // a special value under the range ("Style's own", "Auto"): a quiet
+        // knob at the start, the special value's name as the value text
+        value: root.value < root.from ? root.from : root.value
+        alwaysShowKnob: root.value < root.from
+        fillColor: root.value < root.from ? Type.muted : Type.progress
         step: root.stepSize
         showValue: true
         valueWidth: root.valueWidth

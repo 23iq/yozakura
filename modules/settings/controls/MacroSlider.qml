@@ -10,12 +10,15 @@ import "../Macros.js" as Macros
 
 // A macro slider (Macros.js): one step per point, the level name (or
 // "Custom" while a key sits off every point) at the end, the two ends named
-// below. Moving it writes the point's keys through SettingsStore, staged
-// like any other edit (Discard undoes it).
+// below. Moving it writes the point's keys through SettingsStore as one
+// undo step.
 ColumnLayout {
     id: root
 
     property var entry
+    // a card of the page row: one line, no end names (the level name says
+    // where it sits)
+    property bool compact: false
     readonly property var macro: Macros.byId(entry ? entry.macro : "")
     // The live config the level is read from. A glass amount that follows
     // the preset (-1) reads as the preset's own amount.
@@ -26,7 +29,7 @@ ColumnLayout {
         })
     readonly property int level: macro ? Macros.level(macro, ctx) : -1
     readonly property int position: macro ? Macros.nearest(macro, ctx) : 0
-    readonly property var names: macro ? macro.points.map(p => I18n.t(p.label)).concat(I18n.t("prefs.macro.custom")) : []
+    readonly property var names: macro ? macro.points.map(p => I18n.t(p.label)) : []
 
     objectName: "macro:" + (entry ? entry.macro : "")
     spacing: Space.xs
@@ -34,7 +37,8 @@ ColumnLayout {
     function moveTo(index) {
         if (!root.macro)
             return;
-        Macros.writes(root.macro, index, root.ctx).forEach(w => SettingsStore.set(w.key, w.value));
+        const writes = Macros.writes(root.macro, index, root.ctx);
+        SettingsStore.transaction(root.entry.label, () => writes.forEach(w => SettingsStore.set(w.key, w.value)));
     }
 
     // The longest level name of every macro: all rows keep one track width.
@@ -42,7 +46,7 @@ ColumnLayout {
         id: widest
         font.family: Type.family("secondary")
         font.pixelSize: Type.size("secondary")
-        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t(p.label))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
+        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t("prefs.macro.near", I18n.t(p.label)))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
     }
 
     SliderControl {
@@ -52,12 +56,15 @@ ColumnLayout {
         to: root.macro ? root.macro.points.length - 1 : 1
         stepSize: 1
         value: root.position
-        valueLabel: root.level >= 0 ? root.names[root.level] : I18n.t("prefs.macro.custom")
+        // off every point: the one it is closest to, marked as near ("≈
+        // Smooth"), which says more than a bare "Custom"
+        valueLabel: root.level >= 0 ? root.names[root.level] : I18n.t("prefs.macro.near", root.names[root.position] || "")
         valueWidth: Math.ceil(widest.advanceWidth) + Space.xs
         onMoved: v => root.moveTo(Math.round(v))
     }
 
     RowLayout {
+        visible: !root.compact
         Layout.fillWidth: true
         Layout.rightMargin: Math.ceil(widest.advanceWidth) + Space.xs + Space.m
         KitText {
