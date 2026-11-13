@@ -9,6 +9,8 @@ import qs.modules.settings.store
 // wash, so the user sees what that row is about. Declare it inside the
 // part: `StageSpot { keys: ["bar.position"] }`. Keys match by prefix both
 // ways (bar.layout matches bar.layout.left and the other way round).
+// A change of one of them flashes the part briefly too (the changed part
+// of the preview), whichever control made it.
 Mark {
     id: spot
 
@@ -16,7 +18,26 @@ Mark {
     // Room around the part (px) and the corner radius of the ring.
     property real spread: Space.xs
     property real cornerRadius: Space.smallRadius
-    readonly property bool lit: SettingsStore.focusKeys.length > 0 && spot.keys.some(k => SettingsStore.focusKeys.some(f => f === k || f.startsWith(k + ".") || k.startsWith(f + ".")))
+    function matches(f) {
+        return spot.keys.some(k => f === k || f.startsWith(k + ".") || k.startsWith(f + "."));
+    }
+    // just changed (a short flash)
+    property bool flashing: false
+    readonly property bool lit: spot.flashing || (SettingsStore.focusKeys.length > 0 && SettingsStore.focusKeys.some(f => spot.matches(f)))
+    Connections {
+        target: SettingsStore
+        function onValueSet(key, value) {
+            if (spot.matches(String(key))) {
+                spot.flashing = true;
+                unflash.restart();
+            }
+        }
+    }
+    Timer {
+        id: unflash
+        interval: 700
+        onTriggered: spot.flashing = false
+    }
 
     anchors.fill: parent
     anchors.margins: -spot.spread

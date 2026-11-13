@@ -110,6 +110,12 @@ check(not own_errors, "QML errors while loading pages:\n  " + "\n  ".join(own_er
 select("bar")
 r = row("bar.compact")
 check(h.eval(r, "modified") is False, "compact starts at default")
+# the whole row of a switch is its hit target
+area = ev('w.findItem("rowToggleArea", w.findItem("settingRow:bar.compact"))')
+check(area is not None, "a switch row has a whole-row hit area")
+h.eval(area, "clicked(null)")
+check(ev("Config.bar.compact") is True, "a press anywhere on the row flips the switch")
+ev("SettingsStore.set('bar.compact', false)")
 ev("SettingsStore.set('bar.compact', true)")
 check(ev("Config.bar.compact") is True, "toggle writes Config.bar.compact")
 check(ev("GlobalStates.shellHasChanges") is False and ev("SettingsStore.hasChanges") is False,

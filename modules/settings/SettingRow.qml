@@ -320,6 +320,18 @@ FocusScope {
         }
     }
 
+    // a switch row: the whole row is the hit target (under the switch, so a
+    // press on the switch itself is the switch's)
+    MouseArea {
+        objectName: "rowToggleArea"
+        anchors.fill: parent
+        z: -1
+        enabled: row.type === "toggle" && row.usable && !row.dimmed && !!row.entry.key
+        visible: enabled
+        cursorShape: Qt.PointingHandCursor
+        onClicked: SettingsStore.set(row.entry.key, !row.value)
+    }
+
     // a press on a waiting row turns its card's switch on, then reaches the
     // control under it (picking a clock style turns the clock on)
     MouseArea {
