@@ -103,3 +103,13 @@ test('wallpaper defaults come from one source', () => {
     assert.equal(Defaults.get('wallpaper.activeColorPreset'), WallpaperDefaults.ACTIVE_COLOR_PRESET);
     assert.equal(Defaults.get('wallpaper.wallPath'), undefined);
 });
+
+test('Ui.on connects a runtime object\'s signal, or says it cannot', () => {
+    const seen = [];
+    const sig = { connect: fn => seen.push(fn) };
+    const fn = () => 1;
+    assert.equal(Ui.on({ closed: sig }, 'closed', fn), true);
+    assert.equal(seen[0], fn);
+    assert.equal(Ui.on({}, 'closed', fn), false);
+    assert.equal(Ui.on(null, 'closed', fn), false);
+});

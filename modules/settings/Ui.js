@@ -121,3 +121,13 @@ function invoke(obj, name, args) {
         return obj[name].apply(obj, args || []);
     return undefined;
 }
+
+// Connect `fn` to the signal `name` of an object known only at runtime (a
+// Loader's item loaded by URL). False when it has no such signal.
+function on(obj, name, fn) {
+    if (obj && obj[name] && typeof obj[name].connect === "function") {
+        obj[name].connect(fn);
+        return true;
+    }
+    return false;
+}

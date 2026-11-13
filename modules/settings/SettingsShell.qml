@@ -120,7 +120,7 @@ Item {
         if (id === "save")
             PresetStudio.afterFlush(() => PresetStatusService.save(toast));
         else if (id === "saveAs")
-            saveAsDialog.item.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
+            Ui.invoke(saveAsDialog.item, "ask", [I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast))]);
         else if (id === "changes")
             shell.changesOpen = true;
         else if (id === "revert")
@@ -221,7 +221,6 @@ Item {
     Loader {
         id: editBanner
         width: parent.width
-        height: item ? item.height : 0
         z: 5
         active: shell.overlaysReady
         asynchronous: true
@@ -325,7 +324,7 @@ Item {
         active: shell.overlaysReady
         asynchronous: true
         source: Qt.resolvedUrl("presets/PresetToast.qml")
-        onLoaded: item.detailsRequested.connect(() => shell.presetAction("changes"))
+        onLoaded: Ui.on(item, "detailsRequested", () => shell.presetAction("changes"))
     }
 
     Loader {
@@ -338,9 +337,9 @@ Item {
         onLoaded: {
             item.open = Qt.binding(() => shell.changesOpen);
             item.index = Qt.binding(() => homeView.index);
-            item.closed.connect(() => shell.changesOpen = false);
-            item.actionRequested.connect(id => shell.presetAction(id));
-            item.navigate.connect((c, sec, e) => shell.navigate(c, sec, e));
+            Ui.on(item, "closed", () => shell.changesOpen = false);
+            Ui.on(item, "actionRequested", id => shell.presetAction(id));
+            Ui.on(item, "navigate", (c, sec, e) => shell.navigate(c, sec, e));
         }
     }
 
