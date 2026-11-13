@@ -6,6 +6,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.thumbs
 import "../controls/Strip.js" as Strip
 import "../../bar/panels/PanelStyles.js" as PanelStyles
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // One card per panel style (PanelStyles.js registry), each pictured as a
@@ -22,7 +23,7 @@ Item {
     readonly property int stripCount: PanelStyles.STYLES.filter(s => !s.hidden).length
     // landscape pictures (16:10) with the title under them (Strip.js)
     readonly property real stripWidth: Strip.landscapeWidth(root.width, root.fillHeight, root.stripCount, Space.m, Space.s + Type.size("secondary") * 1.4, Space.px(96))
-    readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(4, Math.floor(width / 180)))
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, Space.m, root.stripCount, Space.px(124))
     readonly property var styles: PanelStyles.STYLES.filter(s => !s.hidden)
     readonly property int currentIndex: root.panel ? root.styles.findIndex(s => s.id === root.panel.style) : -1
     signal picked(string style)
@@ -63,7 +64,7 @@ Item {
                 delegate: ChoiceCard {
                     id: card
                     required property var modelData
-                    width: root.strip ? root.stripWidth : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(150))
                     previewHeight: Math.round(width * 10 / 16)
                     selected: root.panel !== null && root.panel.style === modelData.id
                     icon: root.strip ? "" : modelData.icon

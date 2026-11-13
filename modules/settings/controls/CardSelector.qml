@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import "PictureGrid.js" as PictureGrid
 import "../Registry.js" as Registry
 
 // A selector shown as cards (schema `display: "cards"`): one ChoiceCard per
@@ -27,9 +28,10 @@ Item {
     // all whole when they fit at a small picture each (three or fewer: always),
     // else as many as fit at a regular size and a peek of the next
     readonly property real stripWidth: root.stripCount <= 3 || root.stripCount * Space.px(60) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
-    readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(root.options.length, Math.floor((width + grid.columnSpacing) / (Space.px(150) + grid.columnSpacing))))
+    // compact pictures: about 130 px, five or six a row in a wide card
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.options.length, Space.px(124))
     // A few options do not stretch into huge cards.
-    readonly property real cardWidth: Math.min((width - grid.columnSpacing * (columns - 1)) / columns, Space.px(240))
+    readonly property real cardWidth: PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(150))
     readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
@@ -52,8 +54,8 @@ Item {
             x: root.strip ? Space.m : 0
             y: root.strip ? Space.m : 0
             columns: root.columns
-            rowSpacing: Space.l
-            columnSpacing: root.strip ? Space.m : Space.l
+            rowSpacing: Space.m
+            columnSpacing: Space.m
 
             Repeater {
                 model: root.options
@@ -63,7 +65,7 @@ Item {
                     required property var modelData
                     objectName: "card:" + card.modelData.value
                     width: root.strip ? root.stripWidth : root.cardWidth
-                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.56)
+                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.6)
                     inset: root.strip
                     selected: root.value === card.modelData.value
                     title: I18n.t(card.modelData.label)

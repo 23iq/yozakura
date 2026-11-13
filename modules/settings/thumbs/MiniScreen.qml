@@ -5,10 +5,12 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings.previews
 
-// The screen of a card picture: your wallpaper (the palette's backdrop
-// while there is none) with its corners rounded like the card's preview
-// area. Thumbs draw their miniature on top; `u` is one hundredth of the
-// width, so shapes keep their proportions at any card size.
+// The ground of a card picture: a plain raised fill with its corners
+// rounded like the card's preview area, so the option's object is the
+// subject. `desktop: true` (only where the wallpaper is the subject: the
+// wallpaper's fit and transition) shows your wallpaper instead. Thumbs draw
+// on top; `u` is one hundredth of the width, so shapes keep their
+// proportions at any card size.
 Item {
     id: root
 
@@ -23,18 +25,26 @@ Item {
         const shown = path && m.getDisplaySource ? m.getDisplaySource(path) : path;
         return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
     }
+    property bool desktop: false
     default property alias content: area.data
 
     clip: true
 
+    Mark {
+        anchors.fill: parent
+        visible: !root.desktop
+        radius: Space.smallRadius
+        color: Look.raisedFill(false)
+    }
     ScreenBackdrop {
         anchors.fill: parent
+        visible: root.desktop
         radius: Space.smallRadius
     }
     Image {
         anchors.fill: parent
-        visible: status === Image.Ready
-        source: root.wallpaper
+        visible: root.desktop && status === Image.Ready
+        source: root.desktop ? root.wallpaper : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true

@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.controls
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.settings.store
 
 // Matugen scheme picker: one card per scheme, previewed with the palette
@@ -24,8 +25,8 @@ Item {
     // a strip of swatch cards in a card of the page row (its height)
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
-    readonly property int columns: root.strip ? Math.max(1, root.schemes.length) : Math.max(2, Math.min(4, Math.floor((width + Space.m) / 170)))
-    readonly property real cardWidth: root.strip ? Math.max(Space.px(96), (root.fillHeight - Space.xl) * 1.3) : (width - grid.columnSpacing * (columns - 1)) / columns
+    readonly property int columns: root.strip ? Math.max(1, root.schemes.length) : PictureGrid.columns(width, grid.columnSpacing, root.schemes.length, Space.px(124))
+    readonly property real cardWidth: root.strip ? Math.max(Space.px(96), (root.fillHeight - Space.xl) * 1.3) : PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(150))
 
     implicitHeight: root.strip ? root.fillHeight : column.implicitHeight
 
@@ -64,7 +65,7 @@ Item {
                 y: root.strip ? Space.m : 0
                 columns: root.columns
                 rowSpacing: Space.l
-                columnSpacing: root.strip ? Space.m : Space.l
+                columnSpacing: Space.m
 
                 Repeater {
                     model: root.schemes

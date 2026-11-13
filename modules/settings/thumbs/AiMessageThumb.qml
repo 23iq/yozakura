@@ -3,12 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
-import qs.modules.settings.previews
 
 // Card picture of how the Assistant's messages look
 // (ai.appearance.messageStyle): bubbles (yours on the right, filled) or
 // flat text, one message under the other.
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

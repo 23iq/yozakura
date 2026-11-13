@@ -1,12 +1,11 @@
 import QtQuick
 import qs.modules.theme
-import qs.modules.settings.previews
 import "../Ui.js" as Ui
 
 // Card picture of a corner style (theme.shape.corners): a panel hanging
 // from the top edge, outlined with the style `value` (round | squircle |
 // cut | tab: square where the panel meets its edge, round elsewhere).
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

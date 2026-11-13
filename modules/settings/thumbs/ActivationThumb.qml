@@ -3,12 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
-import qs.modules.settings.previews
 
 // Card picture of how voice input starts (voice.activation): a keycap over
 // a time line. Hold to talk: the key stays down while the waveform runs.
 // Toggle: a tap starts it, a tap (or a pause) ends it.
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

@@ -9,6 +9,7 @@ import qs.modules.components.kit
 // the transition's shape: a growing circle, a wipe, dissolving blocks, an
 // even fade, a die for random, a hard cut for none.
 MiniScreen {
+    desktop: true
     id: root
 
     property var entry

@@ -4,12 +4,11 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
-import qs.modules.settings.previews
 
 // Card picture of an interface language (system.language): a greeting in
 // that language over today's date as it writes it. Auto shows the
 // detected language faintly with a wand.
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry
