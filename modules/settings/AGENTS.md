@@ -362,6 +362,30 @@ A page is one scrolling column: header (DestinationHeader, outside the
 scroll: always visible, undo included), then the stage, the hint and every
 card of the tab. Nothing hides in a sheet; the page scrolls.
 
+- Previews are the thing itself, big and readable, never a shrunk desktop
+  where the desktop is not the subject. Strip stages (`pageWide: true`,
+  `preferredHeight`): the Bar (ScreenMini drawn page-wide and cropped to
+  the bar: the real clock face and workspace indicator, every module
+  glyph; a click on a module scrolls to and flashes its card), the Island
+  (drawn big in its shape, a state picked with chips: at rest, music,
+  notification, timer), the Dock (the real indicator styles, magnification
+  on hover), and on a plain ground the Launcher, the Dashboard and the
+  Chat. Where a thing sits is its Edge row, not the hero. Every StageSpot
+  flashes briefly when one of its keys changes. settings-fit wants the
+  smallest glyph on the bar, island and dock strips at 10 px or more.
+- Picture cards: compact (controls/PictureGrid.js: about 96 to 150 px,
+  five or six a row in a wide card, wrapped, never clipped), the object
+  drawn on a plain ground (thumbs/MiniScreen `desktop: false`,
+  thumbs/ThumbGround); the wallpaper only where it is the subject (fit,
+  transition) and in real captures (lock styles, presets). Names wrap to
+  two lines, the chosen one ringed, checked and on a tonal fill; a compact
+  card's description is its tooltip.
+- Order: cards of plain rows first, then those of a big control (pictures,
+  an editor, a list), the lead (`row`) ones first in each
+  (BentoLayout.order); compact picture editors never make a card wide
+  (BentoLayout.COMPACT_PICTURES). settings-fit counts the whole rows on the
+  first screen (8 with a stage, 14 without); the tabs still short of it are
+  a ratchet (`SHORT`).
 - `stage` (category): only a tab whose subject is the desktop has a
   desktop stage (a `Registry.DESKTOP_STAGES` entry: Bar, Island, Dock,
   Widgets & clock, Lock screen, Notifications, Menus & OSD, Windows,
@@ -394,8 +418,9 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   the keys it writes in `keys` (tests/settings-pages.test.cjs).
 
 Hand-written one-screen pages (Displays, Keyboard, About; `fitted: true`)
-keep their FittedFrame layout; they are checked at the default size, not
-yet at the minimum (tests/settings-fit-min.test.py lists them).
+keep their FittedFrame layout; under ~820 px they stack their cards one a
+line and scroll (`stackable`, `stacked`, `stackedHeight`; FittedFrame is a
+Flickable that only scrolls then: a page must not declare `contentHeight`).
 
 Making a stage: `stages/<Name>Stage.qml` with a `Stage` root, registered
 in `Registry.STAGES` (and in `DESKTOP_STAGES` or `PLAIN_STAGES`). For
@@ -552,9 +577,11 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
   parts, stage / hint / cards, home tiles; elided or overflowing text;
   picture options out of reach; stage size) drives
   `settings-fit` (1180x780, every tab, after gates / selectors / long
-  values, no binding or polish loop), `settings-fit-min` (640x480, ru),
+  values, no binding or polish loop, first-screen density, strip glyphs), `settings-fit-min` (640x480, ru),
   `settings-fit-large` (1600x1000, es), `settings-fit-looks` (every visual
-  language, dark and light); `settings-stability` (nothing moves 0 / 200 ms
+  language, dark and light), all with every kit text ~8 % wider
+  (`SettingsEnv(text_wider=0.08)`: a fit within a few percent of eliding
+  fails here, not on another machine's fonts); `settings-stability` (nothing moves 0 / 200 ms
   / 1 s / 2 s after a page shows, nor on hover) and `settings-resize`
   (columns switch once each way). Page tests: `settings-personal`,
   `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
