@@ -291,6 +291,17 @@ Flickable {
         }
     }
 
+    // a soft pill behind the hint: it stays readable over any wallpaper
+    // (the ambient shows through between the stage and the row)
+    Mark {
+        visible: heroHint.visible && heroHint.text !== ""
+        opacity: heroHint.opacity
+        width: heroHint.contentWidth + Space.l * 2
+        height: heroHint.height + Space.xs * 2
+        x: heroHint.x + (heroHint.width - width) / 2
+        y: heroHint.y - Space.xs
+        color: Look.cardFill(false)
+    }
     KitText {
         id: heroHint
         objectName: "heroHint"
