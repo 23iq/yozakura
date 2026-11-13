@@ -257,6 +257,14 @@ for sid in lock_styles:
     until(lambda: ev(f'w.findItem("lockPreview:{sid}") !== null'), f"gallery preview for {sid}")  # noqa: B023
 until(lambda: ev('w.findItem("lockPreview:glass").grabbed !== null'), "every style is pictured, one after the other")
 check(ev('w.findItem("lockPreview:glass").children[1].children[0].active') is False, "no live lock view stays after its picture")
+# the stage: the real lock screen in the chosen style, pictured, then no
+# live view; a change shows it live and pictures it again
+until(lambda: ev('w.findItem("lockStage") !== null && w.findItem("lockStage").grabbed !== null'), "the stage pictures the real lock screen")
+check(ev('w.findItem("lockStage").live') is False and ev('w.findItem("lockView").active') is False, "the stage keeps no live lock view")
+ev("SettingsStore.set('lockscreen.position', 'top')")
+check(ev('w.findItem("lockStage").live') is True, "a change shows the live view at once")
+until(lambda: ev('w.findItem("lockStage").live') is False, "...and pictures it again")
+ev("SettingsStore.undo()")
 ev('w.findItem("lockPreview:paper").parent.parent.parent.clicked()')
 check(ev("Config.lockscreen.style") == "paper", "card click selects the style")
 check(ev("GlobalStates.shellHasChanges") is False, "style change applies live")

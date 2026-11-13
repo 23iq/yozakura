@@ -180,8 +180,20 @@ function place(items, cols, gap, fixed, reserved) {
         height = Math.max(height, end);
         floor = Math.min(floor, end);
     });
-    // the last card of each column reaches down to the tallest one: the
-    // page ends on one line, never on a ragged blank two columns wide
+    // the last card of a column reaches down to the tallest one when the
+    // column beside it ends short too: the page never ends on a ragged blank
+    // two columns wide (a blank of one column under a short card stays: a
+    // card stretched far down beside a tall one reads as empty)
+    var ends = used.map(function (list) {
+        var end = 0;
+        list.forEach(function (r) {
+            end = Math.max(end, r[1]);
+        });
+        return end;
+    });
+    function short(col) {
+        return col >= 0 && col < cols && ends[col] < height - 0.5;
+    }
     var extra = places.map(function (pl, n) {
         var h = items[n].height > 0 ? items[n].height + gap : 0;
         if (h <= 0 || !pl)
@@ -193,6 +205,8 @@ function place(items, cols, gap, fixed, reserved) {
             if (o.col < pl.col + pl.span && pl.col < o.col + o.span)
                 return 0;
         }
+        if (!short(pl.col - 1) && !short(pl.col + pl.span))
+            return 0;
         return Math.max(0, height - (pl.y + h));
     });
     return {

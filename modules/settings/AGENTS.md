@@ -55,7 +55,8 @@ modules/settings/
 ├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
 ├── SettingsPage.qml        a schema category: compact stage (by URL, recedes on scroll), hint, card bento
 ├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
-├── BentoLayout.js          pure: page columns, card spans, masonry places / floor (same test)
+├── BentoLayout.js          pure: page columns, card spans, masonry places / floor / widen / stretch (same test)
+├── RowLines.js            pure: a card's rows in lines (picture rows side by side; settings-row-lines.test.cjs)
 ├── SettingsSection.qml     one section as a kit Card of SettingRows (window entries only)
 ├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
 ├── UndoPill.qml            "<what> changed · Undo" after every change (Redo after an undo)
@@ -69,7 +70,7 @@ modules/settings/
 ├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES; DESKTOP_STAGES (the
 │                           tabs whose subject is the desktop), PLAIN_STAGES (stages on a plain ground)
 ├── stages/                 Stage.qml (frame; `calm` = plain card fill, no wallpaper), ScreenMini.qml,
-│                           StageSpot.qml, EdgePicker.qml; desktop stages Bar, Island, Dock, Desktop,
+│                           StageSpot.qml; desktop stages Bar, Island, Dock, Desktop,
 │                           Lock, Notif, Osd, Windows, Wallpaper; plain stages Power, Updates, Terminal
 │                           and the list bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys,
 │                           Providers, Routines); pure helpers WindowTiles / DesktopPlace / OsdPlace /
@@ -158,8 +159,7 @@ branches on the language name (`Look`).
 Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-01.png --palette default
 --languages ink,glass,tiles,classic,device [--mode light] [--size 1180x2400] home|PAGE...`
 (`home` with `--search Q` shows results, `--hover ENTRY` lights a stage part,
-`--undo` shows the pill, `--eval barEdgePicker:preview='left'` a hovered
-edge).
+`--undo` shows the pill, `--set KEY=JSON` overrides a config key).
 `--devices`: believable live services for the device pages
 (`tests/lib/device_fixtures.py`: a laptop battery and profiles, two monitors,
 two keyboard layouts, Wi-Fi networks, Bluetooth devices, speakers and a
@@ -300,7 +300,9 @@ costs nothing until opened and gives all its memory back when closed.
   bento synchronously each build frame so no card moves once shown. No row
   object exists for an out-of-window entry.
 - Heavy live previews become pictures: the lock screen gallery builds one
-  LockView at a time, captures it (`grabToImage`) and destroys it.
+  LockView at a time, captures it (`grabToImage`) and destroys it; the Lock
+  screen stage does the same with the chosen style at stage size (a change
+  shows the live view at once, then pictures it again).
 - Measure with the audit harness (scratch scripts based on
   `tests/lib/settings_env.py`: window load to the first `frameSwapped` for
   home; `select()` to the host's `pageReady` and to `item.complete` for a
@@ -377,7 +379,8 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   flashes briefly when one of its keys changes. settings-fit wants the
   smallest glyph on the bar, island and dock strips at 10 px or more.
 - Picture cards: compact (controls/PictureGrid.js: about 96 to 150 px,
-  five or six a row in a wide card, wrapped, never clipped), the object
+  five or six a row in a wide card, wrapped, never clipped; the columns
+  stretch to fill the row, up to about 190 px), the object
   drawn on a plain ground (thumbs/MiniScreen `desktop: false`,
   thumbs/ThumbGround); the wallpaper only where it is the subject (fit,
   transition) and in real captures (lock styles, presets). Names wrap to
@@ -394,9 +397,19 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   (BentoLayout.WIDE_EDITORS) or a picture choice of more than three
   options (two columns, six pictures a row); a page with as many wide
   cards as narrow ones uses two columns, and the columns share the page's
-  width. The layout probe fails on an empty column (three or more cards)
-  or a column ending more than about a card above the tallest while cards
-  remain below the fold.
+  width. On a page of three columns a narrow card fills a free top slot
+  before any card goes under another; a card with a free column beside it
+  on its line takes that column too (a band always uses the whole width);
+  the last card of a column stretches down to the tallest column when the
+  column beside it ends short too (no ragged blank two columns wide). A
+  desktop stage on a page of three columns stands in the first column, the
+  cards beside and under it (`SettingsPage.beside`, a reserved block of
+  `place`). Inside a card, picture choices that follow each other share
+  one line when their pictures fit it (RowLines.js: Wallpaper's two fits
+  beside its six transitions). The layout probe fails on an empty column
+  (three or more cards), a column ending more than about a card above the
+  tallest while cards remain below the fold, and a blank wider than one
+  column and over 120 px tall inside the first screen's content.
 - One thing once: no card holds a single plain row (Categories.mergeInto
   folds it into the card it belongs with; moveEntry puts a feature's switch
   at the head of its card), a card header shows no value summary (the
@@ -415,7 +428,9 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   `PLAIN_STAGES`, drawn on the card fill (`Stage.calm`), never on the
   wallpaper. A tab where a miniature explains nothing has no stage.
 - `hero.hint`: one line under the stage saying what a click on it does.
-  `hero.foot`: a strip along the stage's foot (Wallpaper's library).
+  `hero.foot`: a strip along the stage's foot (Wallpaper's library); on a
+  wide page it stands beside the miniature as a grid as tall as it
+  (`SettingsPage.footSide`).
 - `row`: the lead section ids: those cards come first (the 3 to 5 most
   changed settings). Every other section follows in the bento.
 - `form: "list"`: the stage is a short band (a fifth of the page) over the
@@ -445,8 +460,9 @@ Making a stage: `stages/<Name>Stage.qml` with a `Stage` root, registered
 in `Registry.STAGES` (and in `DESKTOP_STAGES` or `PLAIN_STAGES`). For
 anything placed on the screen use `ScreenMini` and draw your part in its
 overlay with its geometry (`freeRect`, `islandRect`, `edgeDepth`, `unit`).
-Direct manipulation: EdgePicker (edges), dashed zones (kit `DashedFrame`)
-for places, `partsClickable` for the island / dock; write through
+Direct manipulation: dashed zones (kit `DashedFrame`) for places (the
+Widgets & clock stage offers "Move here" on the side the clock does not
+use, where its style can go: DesktopPlace.js), `partsClickable` for the island / dock; write through
 `SettingsStore.transaction("prefs.undo.<x>_moved")`; keep the row too (it
 is the keyboard path).
 
@@ -503,10 +519,8 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
    `SettingsStore.get` so the stage follows every change; animate changes
    with `Behavior` (Motion.glide) or a short settle animation.
 6b. Direct manipulation: where a part sits is chosen ON the miniature.
-   An edge choice gets an `EdgePicker` in the ScreenMini overlay (`edges`,
-   `current`, `busy`, `reach`, `ghostThickness`, `ghostSpan`, signal
-   `picked(edge)`: hover shows a ghost and "Move here"); a corner / place
-   choice gets ghost targets like NotifStage (hover shows the thing there,
+   An edge choice is its row of picture cards (the stage is a strip); a
+   corner / place choice gets ghost targets like NotifStage (hover shows the thing there,
    click moves it); `partsClickable` + `partPicked(part)` makes the island
    and the dock open their tab (`SettingsStore.navigate`). Write through
    `SettingsStore.transaction("prefs.undo.<thing>_moved", ...)`: a
@@ -544,8 +558,6 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
   `barOpacity`, `cornerRadius`, default `overlay` children in screen
   coordinates; read-only geometry `unit`, `freeRect`, `islandRect`,
   `islandEdge`, `depths`, `edgeDepth(edge)`, `panels`, `sketches`.
-- `EdgePicker`: see CONVERTING 6b; `preview` forces a hovered edge
-  (renders, tests).
 - `StageSpot`: `keys`, `spread`, `cornerRadius`; lit while
   `SettingsStore.focusKeys` (set by `SettingsStore.point(owner, keys)` /
   `unpoint(owner)`) matches a key by prefix.
