@@ -29,6 +29,8 @@ Stage {
     readonly property bool vertical: stage.currentEdge === "left" || stage.currentEdge === "right"
     // the band of the bar and the island hanging from it, never taller than
     // a vertical bar's top part needs
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool strip: true
     readonly property real preferredHeight: stage.vertical ? Space.px(240) : Math.round(mini.edgeDepth(stage.currentEdge) + mini.unit * 2)
 
     // the card a module is edited in

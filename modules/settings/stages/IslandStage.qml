@@ -55,6 +55,8 @@ Stage {
 
     // the island's height at this stage's scale (a real one is ~36 px)
     readonly property real u: Math.round(Space.px(44) * (stage.shape === "pill" ? 0.86 : 1))
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool strip: true
     readonly property real preferredHeight: Math.round(stage.u * 2.4 + Space.controlM + Space.l * 2)
 
     stageHeight: stage.preferredHeight

@@ -29,6 +29,8 @@ Stage {
 
     // the launcher's unit: a row is about 1.15 of it (a real one ~ 40 px)
     readonly property real u: Space.px(30)
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool strip: true
     readonly property real preferredHeight: Space.px(250)
 
     stageHeight: stage.preferredHeight

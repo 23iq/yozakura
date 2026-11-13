@@ -190,7 +190,10 @@ Flickable {
             height: Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself
-            width: Math.round(page.listForm || stageLoader.asked > 0 ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
+            // a strip stage (`strip: true`) takes the page's width (a flag,
+            // never its height: that follows from the width)
+            readonly property bool strip: !!stageLoader.item && stageLoader.item.strip === true
+            width: Math.round(page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl
@@ -198,7 +201,7 @@ Flickable {
             // (the bar, the island): a plain stage, no picture
             onLoaded: {
                 if (item && "calm" in item)
-                    item.calm = Qt.binding(() => page.plainStage || stageLoader.asked > 0);
+                    item.calm = Qt.binding(() => page.plainStage || stageLoader.strip);
             }
 
             // a soft shadow under the stage

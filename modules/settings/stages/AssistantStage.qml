@@ -17,6 +17,8 @@ Stage {
 
     // the chat's unit at this stage's scale (its text is 0.6 of it)
     readonly property real u: Space.px(24)
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool strip: true
     readonly property real preferredHeight: Space.px(250)
     readonly property bool on: SettingsStore.get("ai.enabled") !== false
     readonly property string side: SettingsStore.get("ai.sidebarPosition") === "left" ? "left" : "right"

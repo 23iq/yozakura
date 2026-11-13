@@ -176,7 +176,18 @@ Window {
         var band = [];
         if (stage && stage.active && shown(stage) && stage.height > 0) {
             band.push(["stage", rect(stage)]);
-            out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false };
+            // the smallest glyph drawn on the stage (text and icon fonts), in
+            // window px: a preview must be legible
+            var glyph = 1e9;
+            walk(stage, x => {
+                if (!x.visible || x.opacity < 0.01) return false;
+                if (x.font === undefined || x.text === undefined || typeof x.text !== "string" || x.text === "") return;
+                var r = rect(x);
+                if (!onScreen(r) || x.height <= 0) return;
+                var px = (x.font.pixelSize > 0 ? x.font.pixelSize : x.font.pointSize * 1.33) * (r[3] / x.height);
+                glyph = Math.min(glyph, px);
+            });
+            out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
         }
         if (hint && shown(hint) && hint.text !== "") band.push(["hint", rect(hint)]);
         if (cards.length > 0 && page.contentY === 0) {
