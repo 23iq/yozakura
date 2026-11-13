@@ -369,8 +369,11 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   glyph; a click on a module scrolls to and flashes its card), the Island
   (drawn big in its shape, a state picked with chips: at rest, music,
   notification, timer), the Dock (the real indicator styles, magnification
-  on hover), and on a plain ground the Launcher, the Dashboard and the
-  Chat. Where a thing sits is its Edge row, not the hero. Every StageSpot
+  on hover), and on a plain ground the Launcher, the Dashboard, the Chat,
+  a notification (a toast at its real size, grouped, from the island or
+  as a strip; with corner toasts a small screen whose corners move them)
+  and the real OSD beside a bar menu in the popup style (a small screen
+  whose edges move the OSD). Where a thing sits is its Edge row, not the hero. Every StageSpot
   flashes briefly when one of its keys changes. settings-fit wants the
   smallest glyph on the bar, island and dock strips at 10 px or more.
 - Picture cards: compact (controls/PictureGrid.js: about 96 to 150 px,
@@ -380,10 +383,26 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   transition) and in real captures (lock styles, presets). Names wrap to
   two lines, the chosen one ringed, checked and on a tonal fill; a compact
   card's description is its tooltip.
-- Order: cards of plain rows first, then those of a big control (pictures,
-  an editor, a list), the lead (`row`) ones first in each
-  (BentoLayout.order); compact picture editors never make a card wide
-  (BentoLayout.COMPACT_PICTURES). settings-fit counts the whole rows on the
+- Order: the card of the tab's master switch (`<feature>.enabled`) first,
+  then cards of plain rows, then those of a big control (pictures, an
+  editor, a list), the lead (`row`) ones first in each (BentoLayout.order).
+- Placement (BentoLayout.place): each card goes to the highest free place
+  that holds it (the shortest column, or a hole beside a wide card); among
+  equal places, the one that lifts the shortest column. Once the page is
+  whole a card keeps its column (a toggle moves it up or down, never
+  across). A card is one column unless it holds a wide editor
+  (BentoLayout.WIDE_EDITORS) or a picture choice of more than three
+  options (two columns, six pictures a row); a page with as many wide
+  cards as narrow ones uses two columns, and the columns share the page's
+  width. The layout probe fails on an empty column (three or more cards)
+  or a column ending more than about a card above the tallest while cards
+  remain below the fold.
+- One thing once: no card holds a single plain row (Categories.mergeInto
+  folds it into the card it belongs with; moveEntry puts a feature's switch
+  at the head of its card), a card header shows no value summary (the
+  card's control shows it), a row is never named like its card, labels are
+  in sentence case (tests/settings-page-unique.test.cjs). Translated text
+  wraps, never elides; only data (file, network, model names) may. settings-fit counts the whole rows on the
   first screen (8 with a stage, 14 without); the tabs still short of it are
   a ratchet (`SHORT`).
 - `stage` (category): only a tab whose subject is the desktop has a
@@ -579,9 +598,9 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
   `settings-fit` (1180x780, every tab, after gates / selectors / long
   values, no binding or polish loop, first-screen density, strip glyphs), `settings-fit-min` (640x480, ru),
   `settings-fit-large` (1600x1000, es), `settings-fit-looks` (every visual
-  language, dark and light), all with every kit text ~8 % wider
-  (`SettingsEnv(text_wider=0.08)`: a fit within a few percent of eliding
-  fails here, not on another machine's fonts); `settings-stability` (nothing moves 0 / 200 ms
+  language, dark and light), all with the bundled UI fonts pinned
+  (`SettingsEnv(pin_fonts=True)`: Inter and IBM Plex Mono, the same glyphs
+  on every machine) and every kit text 20 % wider (`text_wider=0.2`); `settings-stability` (nothing moves 0 / 200 ms
   / 1 s / 2 s after a page shows, nor on hover) and `settings-resize`
   (columns switch once each way). Page tests: `settings-personal`,
   `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
