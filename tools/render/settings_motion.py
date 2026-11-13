@@ -15,8 +15,10 @@ Scenes:
                and the page's columns switch once each way
   scroll       on Screen > Bar, the page scrolls down and back: the stage
                recedes, the header and tabs stay
-  edge-click   on Screen > Bar, the left edge of the miniature is
-               hovered (a ghost bar, "Move here") and clicked: the bar moves
+  module-click on Screen > Bar, the clock on the bar strip is clicked: the
+               page scrolls to the Clock card and flashes it; then the
+               compact switch: the strip shrinks and its part flashes
+  island-states on Screen > Island, the state chips are stepped through
   windows-gap  on Windows, the gap grip between the windows is dragged: the
                gaps widen live, the readout follows, one undo step
   power-idle   on Power, the Sleep knob of the idle timeline is dragged
@@ -43,9 +45,9 @@ from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-SCENES = ("tile-hover", "tile-open", "gate-toggle", "resize", "scroll", "edge-click", "windows-gap", "power-idle")
+SCENES = ("tile-hover", "tile-open", "gate-toggle", "resize", "scroll", "module-click", "island-states", "windows-gap", "power-idle")
 # the page a scene starts on ("" = home)
-PAGES = {"edge-click": "bar", "windows-gap": "windows", "power-idle": "power", "gate-toggle": "bar", "scroll": "bar"}
+PAGES = {"module-click": "bar", "island-states": "notch", "windows-gap": "windows", "power-idle": "power", "gate-toggle": "bar", "scroll": "bar"}
 
 
 class Recorder:
@@ -167,19 +169,24 @@ Window {{
             env.h.eval(page, f"contentY = Math.min({y}, contentHeight - height)")
             rec.grab(30)
         rec.grab(300)
-    elif name == "edge-click":
-        mini = sr.find_visual(root, "barStageScreen")
-        left = mini.mapToScene(mini.boundingRect().topLeft())
-        spot = QPoint(int(left.x()) + 6, int(left.y() + mini.height() / 2))
+    elif name == "module-click":
+        clock = sr.find_visual(root, "barModule:clock")
+        spot = centre(clock)
         rec.grab(200)
         glide(win, rest, spot, rec, 10)
-        rec.grab(600)
+        rec.grab(300)
         QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, spot)
+        rec.grab(1300)
+        env.h.eval(shell, "SettingsStore.set('bar.compact', true)")
         rec.grab(900)
-        glide(win, spot, rest, rec, 6)
-        rec.grab(400)
-        env.h.eval(shell, "SettingsStore.undo()")
-        rec.grab(800)
+        env.h.eval(shell, "SettingsStore.set('bar.compact', false)")
+        rec.grab(700)
+    elif name == "island-states":
+        stage = sr.find_visual(root, "islandStage")
+        rec.grab(300)
+        for st in ("media", "notification", "timer", "rest"):
+            stage.setProperty("showing", st)
+            rec.grab(700)
     elif name in ("windows-gap", "power-idle"):
         knob = sr.find_visual(root, "windowsGapGripArea" if name == "windows-gap" else "idleKnob:sleep")
         a = centre(knob)
