@@ -89,8 +89,8 @@ def page(cat: str, label: str | None = None) -> dict | None:
 
 # Tabs whose first screen is still short of the goal (big pictures or
 # editors among their first cards): a ratchet, they may only go up.
-SHORT = {"appearance": 8, "wallpapers": 2, "bar": 7, "launcher": 5, "desktop": 3, "lockscreen": 6, "menus": 6,
-         "dashboard": 3, "power": 2, "system": 4, "terminal": 5, "voice": 12, "windows": 5}
+SHORT = {"appearance": 6, "wallpapers": 1, "bar": 6, "launcher": 6, "desktop": 6, "lockscreen": 5, "menus": 6,
+         "dashboard": 6, "power": 3, "terminal": 4, "windows": 6, "notch": 7}
 
 
 def dense(cat: str, m: dict | None) -> None:

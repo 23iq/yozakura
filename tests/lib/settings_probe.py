@@ -170,6 +170,27 @@ Window {
             }
         });
         pairs("cards", cards, out.overlaps);
+        // columns: where each ends, and whether one is empty
+        var bento = find("pageBento", page);
+        if (bento && bento.cols > 1) {
+            var unit = bento.colW + bento.gap, ends = [], used = [], hs = [], last = [];
+            for (var c = 0; c < bento.cols; c++) { ends.push(0); used.push(false); last.push(0); }
+            walk(bento, x => {
+                if (!x.visible || String(x.objectName).indexOf("settingsSection:") !== 0) return x === bento;
+                if (x.height <= 0) return false;
+                var c0 = Math.round(x.x / unit), span = Math.max(1, Math.round((x.width + bento.gap) / unit));
+                for (var k = c0; k < Math.min(bento.cols, c0 + span); k++) {
+                    if (x.y + x.height >= ends[k]) last[k] = x.height;
+                    ends[k] = Math.max(ends[k], x.y + x.height);
+                    used[k] = true;
+                }
+                hs.push(x.height);
+                return false;
+            });
+            out.columns = { "cols": bento.cols, "ends": ends.map(Math.round), "used": used, "cards": hs.length, "last": last.map(Math.round),
+                            "meanCard": hs.length ? Math.round(hs.reduce((a, h) => a + h, 0) / hs.length) : 0,
+                            "viewBottom": Math.round(page.height - (bento.mapToItem(page, 0, 0).y)) };
+        }
         // stage, hint, cards: one band under the other
         var stage = find("pageStage", page);
         var hint = find("heroHint", page);
@@ -241,6 +262,19 @@ def problems(m: dict | None, label: str) -> list[str]:
         out.append(f"{label}: text painted outside {item[1]}: {item[0]!r} {item[2]} vs {item[3]}")
     for name, r, sr in m["unreachable"]:
         out.append(f"{label}: option out of reach: {name} {r} outside {sr}")
+    col = m.get("columns")
+    if col and col["cards"] >= 3 and col["cols"] >= 2:
+        if not all(col["used"]):
+            out.append(f"{label}: a column of cards is empty ({col['ends']})")
+        tallest = max(col["ends"])
+        # cards remain below the fold: no column ends more than about one
+        # card above the tallest (that column's last card, or one and a half
+        # of an average card)
+        if tallest > col["viewBottom"]:
+            room = max(col["meanCard"] * 1.5, col["last"][col["ends"].index(tallest)] + 1)
+            for k, end in enumerate(col["ends"]):
+                if tallest - end > room:
+                    out.append(f"{label}: column {k} ends {tallest - end} px above the tallest (cards {col['meanCard']} px)")
     st = m.get("stage")
     if st and st["h"] > st["pageH"] / 3 + 2:
         out.append(f"{label}: the stage takes more than a third of the page ({st['h']} of {st['pageH']})")

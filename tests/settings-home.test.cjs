@@ -71,7 +71,8 @@ test('page cards: 1 to 3 columns, masonry without overlap', () => {
 
 test('a page of wide cards uses two columns, not an empty third', () => {
     assert.equal(BentoLayout.fit(3, [2, 2, 2]), 2);
-    assert.equal(BentoLayout.fit(3, [2, 1, 2]), 3);
+    assert.equal(BentoLayout.fit(3, [2, 1, 2]), 2);
+    assert.equal(BentoLayout.fit(3, [2, 1, 1, 2, 1]), 3);
     assert.equal(BentoLayout.fit(1, [2]), 1);
     // one narrow card: one column (centred), not a row of empty ones
     assert.equal(BentoLayout.fit(3, [1]), 1);

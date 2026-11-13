@@ -70,6 +70,18 @@ Flickable {
     onEnterReadyChanged: if (enterReady)
         Qt.callLater(() => page.settled = true)
 
+    // every card placed inside the viewport is built (a card still to build
+    // has no height: it would appear, or grow, after the page showed; cards
+    // fill holes above others, so build order alone does not decide it)
+    function viewportBuilt() {
+        const places = bento.places;
+        for (let i = 0; i < places.length; i++) {
+            if (places[i] && body.y + places[i].y < page.height && page.rank[i] >= page.builtSections)
+                return false;
+        }
+        return true;
+    }
+
     function buildAll() {
         builtSections = sectionCount;
     }
@@ -81,7 +93,7 @@ Flickable {
             // still to come land out of sight (masonry puts a card at the
             // top of the shortest column)
             bento.relayout();
-            if (!page.filled && page.height > 0 && body.y + bento.floor >= page.height)
+            if (!page.filled && page.height > 0 && body.y + bento.floor >= page.height && page.viewportBuilt())
                 page.filled = true;
             const start = Date.now();
             do {
@@ -289,7 +301,9 @@ Flickable {
             readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
             // the cards that show (a section without a window row is no card)
             readonly property int cols: BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
-            readonly property real colW: (parent.width - gap * (fullCols - 1)) / fullCols
+            // two or three columns share the page's width; one card alone keeps
+            // a column's width (centred), never stretched across
+            readonly property real colW: bento.cols >= 2 ? (parent.width - gap * (cols - 1)) / cols : (parent.width - gap * (fullCols - 1)) / fullCols
             // card places {x, y, w} (in page order), re-run when a card's
             // height or visibility changes
             property var places: []

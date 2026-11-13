@@ -48,19 +48,34 @@ function place(items, cols, gap, fixed) {
         }
         return ys[ys.length - 1];
     }
+    function bottom(col) {
+        var end = 0;
+        used[col].forEach(function (r) {
+            end = Math.max(end, r[1]);
+        });
+        return end;
+    }
     var places = [];
     items.forEach(function (it, n) {
         var span = Math.max(1, Math.min(cols, it.span || 1));
         var h = it.height > 0 ? it.height + gap : 0;
-        var best = 0, bestY = Infinity;
+        var best = 0, bestY = Infinity, bestFloor = -Infinity;
         var keep = fixed && fixed[n] && fixed[n].col + span <= cols ? fixed[n].col : -1;
         for (var c = 0; c + span <= cols; c++) {
             if (keep >= 0 && c !== keep)
                 continue;
             var y = lowest(c, span, h);
-            if (y < bestY - 0.5) {
+            // among equally high places, the one that lifts the shortest
+            // column most (a wide card over an empty column, not beside it)
+            var low = Infinity;
+            for (var k = 0; k < cols; k++) {
+                var end = k >= c && k < c + span ? y + h : bottom(k);
+                low = Math.min(low, end);
+            }
+            if (y < bestY - 0.5 || (Math.abs(y - bestY) <= 0.5 && low > bestFloor + 0.5)) {
                 bestY = y;
                 best = c;
+                bestFloor = low;
             }
         }
         places.push({
@@ -116,16 +131,19 @@ function spanOf(section, inWindow) {
 
 // Columns a page uses out of `cols`: never more than its cards fill (one
 // narrow card takes one column, centred, never a row of empty ones), and
-// when every card is wide (spans >= 2) two at most.
+// two at most unless narrow cards outnumber the wide ones.
 function fit(cols, spans) {
     var list = spans || [];
-    var narrow = list.some(function (s) {
+    var narrow = list.filter(function (s) {
         return s < 2;
-    });
+    }).length;
+    var wide = list.length - narrow;
     var total = list.reduce(function (a, s) {
         return a + s;
     }, 0);
-    return Math.max(1, Math.min(narrow ? cols : Math.min(cols, 2), total || cols));
+    // as many wide cards as narrow ones: two columns (a wide card in three
+    // leaves a hole beside it that the few narrow ones cannot fill)
+    return Math.max(1, Math.min(narrow > wide ? cols : Math.min(cols, 2), total || cols));
 }
 
 // How much room a card's rows take per row: 0 for plain rows (switches,
