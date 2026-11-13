@@ -22,6 +22,8 @@ var category = {
                     "id": "terminal.look",
                     "type": "custom",
                     "component": "PromptStrip",
+                    // three prompts in view: the switches stand beside them
+                    "pictures": 3,
                     "keys": ["terminal.prompt"],
                     "label": "prefs.term.look.prompt",
                     "description": "prefs.term.look.prompt.desc",

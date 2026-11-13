@@ -10689,7 +10689,7 @@
           "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, the classic surface variants, or a hardware device with knobs and segment readouts",
           "x-settings": {
             "category": "appearance",
-            "section": "language",
+            "section": "mode",
             "label": "prefs.appearance.language",
             "control": "selector",
             "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit"

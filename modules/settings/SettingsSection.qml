@@ -54,13 +54,17 @@ Card {
         return pics.length === 1 && sectionRoot.visibleEntries.length <= 3 ? pics[0] : null;
     }
     // the rows in lines: picture choices that follow each other share one
-    // when their pictures fit it (RowLines.js); a card of the page row keeps
-    // one row a line
-    // one row a line (set only when the grouping changes: a resize that keeps
-    // it rebuilds no row)
+    // when their pictures fit it, short rows stand beside pictures that
+    // leave room (RowLines.js); a card of the page row keeps one row a line.
+    // Set only when the grouping changes (a resize that keeps it rebuilds
+    // no row).
+    readonly property real pictureMax: Space.px(190)
     property var lines: sectionRoot.groupLines()
     function groupLines() {
-        return sectionRoot.fixed ? sectionRoot.entries.map((e, i) => [i]) : RowLines.lines(sectionRoot.entries, sectionRoot.contentWidth, Space.m, Space.px(96));
+        return sectionRoot.fixed ? sectionRoot.entries.map((e, i) => ({
+                    "rows": [i],
+                    "side": []
+                })) : RowLines.layout(sectionRoot.entries, sectionRoot.contentWidth, Space.m, Space.px(96), sectionRoot.pictureMax, Space.px(280), Space.px(720));
     }
     function regroup() {
         const next = sectionRoot.groupLines();
@@ -85,11 +89,10 @@ Card {
             return headSwitch;
         for (let i = 0; i < rows.count; i++) {
             const line = rows.itemAt(i);
-            for (let j = 0; line && j < line.count; j++) {
-                const r = line.itemAt(j);
+            const all = line ? line.items() : [];
+            for (const r of all)
                 if (Ui.prop(r, "entryId") === entryId)
                     return r;
-            }
         }
         return null;
     }
@@ -186,6 +189,30 @@ Card {
                 width: rowsBox.width
                 spacing: 0
 
+                Component {
+                    id: rowDelegate
+
+                    SettingRow {
+                        id: lineItem
+                        // the entry's index in the card
+                        required property var modelData
+                        readonly property var e: sectionRoot.entries[lineItem.modelData] || ({})
+                        readonly property string eid: lineItem.e.id || lineItem.e.key || ""
+                        width: lineItem.parent && lineItem.parent.rowWidth ? lineItem.parent.rowWidth(lineItem.modelData) : rowsColumn.width
+                        entry: lineItem.e
+                        // the card's heading already names it: no second label
+                        bare: sectionRoot.single !== null || (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!lineItem.e.label && !!sectionRoot.section.title && I18n.t(lineItem.e.label) === I18n.t(sectionRoot.section.title))
+                        dense: true
+                        // waits on one switch: shown, greyed (CardGate); a press
+                        // on it turns that switch on
+                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(lineItem.eid) >= 0
+                        previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
+                        // a single picture / editor fills the card
+                        fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
+                        previousEntry: lineItem.modelData > 0 ? sectionRoot.entries[lineItem.modelData - 1] : null
+                    }
+                }
+
                 Repeater {
                     id: rows
                     model: sectionRoot.pending || !sectionRoot.shown || sectionRoot.suppressed ? [] : sectionRoot.lines
@@ -193,35 +220,39 @@ Card {
                     delegate: Row {
                         id: lineRow
                         required property var modelData
-                        readonly property var line: lineRow.modelData
-                        readonly property int count: lineRepeater.count
-                        function itemAt(j) {
-                            return lineRepeater.itemAt(j);
+                        readonly property var line: lineRow.modelData.rows
+                        readonly property var side: lineRow.modelData.side
+                        readonly property real picturesW: RowLines.picturesWidth(sectionRoot.entries, lineRow.modelData, rowsColumn.width, Space.m, sectionRoot.pictureMax)
+                        function items() {
+                            const out = [];
+                            for (let j = 0; j < lineRepeater.count; j++)
+                                out.push(lineRepeater.itemAt(j));
+                            for (let j = 0; j < sideRepeater.count; j++)
+                                out.push(sideRepeater.itemAt(j));
+                            return out;
+                        }
+                        function rowWidth(i) {
+                            return lineRow.side.length > 0 ? lineRow.picturesW : RowLines.share(sectionRoot.entries, lineRow.line, lineRow.line.indexOf(i), rowsColumn.width, Space.m);
                         }
                         spacing: Space.m * 2
 
                         Repeater {
                             id: lineRepeater
                             model: lineRow.line
-
-                            delegate: SettingRow {
-                                id: lineItem
-                                // the entry's index in the card
-                                required property var modelData
-                                readonly property var e: sectionRoot.entries[lineItem.modelData] || ({})
-                                readonly property string eid: lineItem.e.id || lineItem.e.key || ""
-                                width: RowLines.share(sectionRoot.entries, lineRow.line, lineRow.line.indexOf(lineItem.modelData), rowsColumn.width, Space.m)
-                                entry: lineItem.e
-                                // the card's heading already names it: no second label
-                                bare: sectionRoot.single !== null || (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!lineItem.e.label && !!sectionRoot.section.title && I18n.t(lineItem.e.label) === I18n.t(sectionRoot.section.title))
-                                dense: true
-                                // waits on one switch: shown, greyed (CardGate); a press
-                                // on it turns that switch on
-                                preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(lineItem.eid) >= 0
-                                previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
-                                // a single picture / editor fills the card
-                                fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
-                                previousEntry: lineItem.modelData > 0 ? sectionRoot.entries[lineItem.modelData - 1] : null
+                            delegate: rowDelegate
+                        }
+                        // short rows beside the pictures
+                        Column {
+                            id: sideColumn
+                            visible: lineRow.side.length > 0
+                            width: Math.max(0, rowsColumn.width - lineRow.picturesW - lineRow.spacing)
+                            function rowWidth(i) {
+                                return sideColumn.width;
+                            }
+                            Repeater {
+                                id: sideRepeater
+                                model: lineRow.side
+                                delegate: rowDelegate
                             }
                         }
                     }

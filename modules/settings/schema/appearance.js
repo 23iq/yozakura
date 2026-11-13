@@ -14,7 +14,7 @@ var category = {
     "icon": "paintBrush",
     "title": "prefs.cat.appearance",
     "description": "prefs.cat.appearance.desc",
-    "row": ["language", "palette", "tune"],
+    "row": ["mode", "palette", "tune"],
     "keywords": "theme look style colors fonts dark light",
     "sections": [
         {
@@ -25,6 +25,8 @@ var category = {
                     "id": "theme.mode",
                     "type": "custom",
                     "component": "ThemeModeCards",
+                    // three pictures: shares a line with the visual style
+                    "pictures": 3,
                     "keys": ["theme.lightMode", "theme.oledMode"],
                     "label": "prefs.appearance.mode",
                     "description": "prefs.appearance.mode.desc",
