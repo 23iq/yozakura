@@ -16,7 +16,7 @@ var category = {
         "right": ["terminal.enabled", "terminal.cursorBlink"],
         "hint": "prefs.term.hero_hint"
     },
-    "row": [{ "id": "look", "weight": 1.4 }, { "id": "greeting", "weight": 0.85 }, "cursor"],
+    "row": [{ "id": "look", "weight": 1.25 }, { "id": "greeting", "weight": 1.15 }, { "id": "cursor", "weight": 0.9 }],
     "sections": [
         {
             "id": "look",

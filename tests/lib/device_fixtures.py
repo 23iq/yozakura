@@ -275,9 +275,27 @@ def _terminal_look() -> str:
     from settings_env import TERMINAL_LOOK_STUB
     from terminal_env import PRESETS, sample_previews
     previews = {f"starship:{k}": v for k, v in sample_previews().items()}
+    # fastfetch looks with what they print (the sakura logo is the default)
+    looks = [{"id": "sakura", "name": "Sakura", "logo": True}, {"id": "boxed", "name": "Boxed", "logo": True},
+             {"id": "minimal", "name": "Minimal", "logo": False}]
+    pink, mute = "#f5adff", "#9f8c8d"
+    info = [[{"text": "user", "fg": pink, "bold": True}, {"text": "@yozakura"}],
+            [{"text": "os    ", "fg": mute}, {"text": "Arch Linux"}],
+            [{"text": "wm    ", "fg": mute}, {"text": "Hyprland"}],
+            [{"text": "shell ", "fg": mute}, {"text": "fish"}]]
+    logo = ["  ▄▄  ", " ▀██▀ ", "  ▀▀  ", "      "]
+    fetch = {
+        "sakura|sakura|": {"lines": [[{"text": logo[i], "fg": pink}] + info[i] for i in range(4)]},
+        "boxed|sakura|": {"lines": [[{"text": "╭──────────────╮", "fg": mute}]]
+                          + [[{"text": "│ ", "fg": mute}] + info[i] for i in range(3)]
+                          + [[{"text": "╰──────────────╯", "fg": mute}]]},
+        "minimal|sakura|": {"lines": info},
+    }
     return (TERMINAL_LOOK_STUB
             .replace("    property var presets: []", f"    property var presets: {json.dumps(PRESETS)}")
-            .replace("    property var previews: ({})", f"    property var previews: ({json.dumps(previews)})"))
+            .replace("    property var previews: ({})", f"    property var previews: ({json.dumps(previews)})")
+            .replace("    property var fetchPresets: []", f"    property var fetchPresets: {json.dumps(looks)}")
+            .replace("    property var fetchPreviews: ({})", f"    property var fetchPreviews: ({json.dumps(fetch)})"))
 
 
 SERVICES = {
