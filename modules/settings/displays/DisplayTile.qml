@@ -143,13 +143,23 @@ StyledRect {
         }
     }
 
+    // the labels on a card fill: readable over any wallpaper, light or dark
+    Mark {
+        anchors.centerIn: labels
+        width: Math.min(tile.width - Space.s * 2, Math.max(l1.implicitWidth, l2.visible ? l2.implicitWidth : 0, l3.visible ? l3.implicitWidth : 0) + Space.l * 2)
+        height: labels.height + Space.s * 2
+        radius: Look.radius("box", height)
+        color: Look.cardFill(false)
+    }
     Column {
+        id: labels
         anchors.centerIn: parent
         anchors.verticalCenterOffset: tile.height < 110 ? 10 : 0
         width: parent.width - 24
         spacing: Space.xs / 2
 
         KitText {
+            id: l1
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: DisplayFormat.title(tile.output, tile.config)
@@ -157,6 +167,7 @@ StyledRect {
             font.weight: Font.DemiBold
         }
         KitText {
+            id: l2
             role: "caption"
             width: parent.width
             visible: tile.height > 60
@@ -166,6 +177,7 @@ StyledRect {
             color: Colors.overSurfaceVariant
         }
         KitText {
+            id: l3
             role: "caption"
             width: parent.width
             visible: tile.height > 84
