@@ -13,8 +13,10 @@ import qs.modules.components.kit
 // the selected mod's details and settings, rebuild / restart / rollback of
 // the generation. Every action goes through ModsService; installing and
 // enabling ask for the trust confirmation first.
-Item {
+FittedFrame {
     id: page
+    listForm: true
+    hasHint: false
 
     required property var category
 
@@ -89,11 +91,7 @@ Item {
     // over one row of tall cards: the installed mods (search, sort, drag to
     // reorder), the selected mod's details and settings, and adding a mod
     // (package source, the version-check bypass). Each card scrolls inside.
-    readonly property bool listForm: true
     readonly property real contentHeight: page.height
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real bandH: Math.round(Math.max(Space.px(110), page.height * 0.2))
     readonly property var mods: ModsService.mods ?? []
     readonly property int onCount: page.mods.filter(m => m.enabled).length
 

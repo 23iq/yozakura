@@ -20,7 +20,7 @@ import qs.modules.components.kit
 // rate, scale ("Aa" that grows) and night light. Edits build a draft;
 // Apply runs it for 15 s on every screen with a "keep these settings?"
 // prompt (DisplayConfirmOverlay); keeping it saves it. Night light is live.
-Item {
+FittedFrame {
     id: page
 
     required property var category
@@ -40,14 +40,6 @@ Item {
     readonly property var selectedOutput: page.selectedConfig ? DisplayFormat.outputFor(DisplaysService.outputs, page.selectedName) : null
     readonly property bool active: !!page.selectedConfig && page.selectedConfig.enabled !== false
     readonly property bool busy: DisplaysService.pending || DisplaysService.applying || page.overlap.length > 0
-
-    // the page template's measures (SettingsPage)
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real pad: Space.l
-    readonly property real sideW: Math.min(Space.px(220), page.width * 0.19)
-    readonly property real rowH: Look.cardRowHeight
-    readonly property real heroH: Math.max(Space.px(160), page.height - Space.s - Space.xl - page.gap - page.rowH - page.pad)
 
     // SettingsShell calls reveal() on search jumps for every page type; this
     // page has no entries to scroll to.
@@ -118,6 +110,8 @@ Item {
     // ---- the hero: the arrangement and the picked monitor beside it --------
     Item {
         id: hero
+        // the page's hero (tests/settings-fit.test.py)
+        readonly property bool fittedHero: true
         x: page.margin
         y: Space.s
         width: page.width - page.margin * 2

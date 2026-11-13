@@ -19,7 +19,7 @@ import "PresetModel.js" as PresetModel
 // look, Mix, Import); under it one row of cards: every preset as a strip of
 // pictures (the active one ringed; a click looks at it on the stage) and
 // the studio's own settings. Nothing scrolls but the strip.
-Item {
+FittedFrame {
     id: root
 
     required property var category
@@ -31,10 +31,6 @@ Item {
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaperFile: root.manager ? (root.manager.currentWallpaper || "") : ""
     readonly property string wallpaper: root.manager && root.wallpaperFile && root.manager.getDisplaySource ? root.manager.getDisplaySource(root.wallpaperFile) : root.wallpaperFile
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real rowH: Look.cardRowHeight
-    readonly property real sideW: Math.min(Space.px(240), root.width * 0.21)
 
     signal action(string name, string id)
     signal openPreset(string name)

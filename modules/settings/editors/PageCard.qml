@@ -11,6 +11,8 @@ Card {
     property string title: ""
     property string value: ""
     default property alias body: content.data
+    // a card of a fitted page's row (tests/settings-fit.test.py)
+    readonly property bool fittedCard: true
     readonly property real room: Math.max(0, card.height - card.padding * 2 - heading.height - card.spacing)
 
     padding: Look.boxPadding + Space.s

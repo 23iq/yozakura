@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.settings
 import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
@@ -15,15 +16,13 @@ import "../../extras/ExtrasModel.js" as ExtrasModel
 // holding the optional-software catalog (CatalogHost: category chips, the
 // grid, notices and the install bar; it scrolls inside the card). Installs
 // run in the backend queue; the page only selects and reports.
-Item {
+FittedFrame {
     id: page
+    listForm: true
+    hasHint: false
 
     required property var category
-    readonly property bool listForm: true
     readonly property real contentHeight: page.height
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real bandH: Math.round(Math.max(Space.px(120), page.height * 0.22))
     readonly property var entries: ExtrasService.catalog ? (ExtrasService.catalog.entries || []) : []
     readonly property var installed: page.entries.filter(e => ExtrasModel.cardState(ExtrasService.status[e.id], ExtrasService.progress[e.id]) === "installed")
     readonly property var running: ExtrasService.activeJobs.length > 0 ? ExtrasService.activeJobs[0] : null

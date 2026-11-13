@@ -13,19 +13,16 @@ import qs.modules.globals
 // (your wallpaper, the mark glowing, the name, the version, one line about
 // it), then one row of cards: the version and its updates, the useful
 // places (setup again, the config folder, the source) and the legal notes.
-Item {
+FittedFrame {
     id: page
+    hasHint: false
 
     required property var category
-
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real pad: Space.l
-    readonly property real rowH: Look.cardRowHeight
 
     // the identity scene
     Stage {
         id: scene
+        readonly property bool fittedHero: true
         objectName: "aboutScene"
         readonly property real room: page.height - Space.s - page.gap - page.rowH - page.pad
         x: Math.round((page.width - width) / 2)
@@ -98,6 +95,7 @@ Item {
         Card {
             width: cards.cardW
             height: page.rowH
+            readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.version")
             }
@@ -124,6 +122,7 @@ Item {
         Card {
             width: cards.cardW
             height: page.rowH
+            readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.places")
             }
@@ -154,6 +153,7 @@ Item {
             id: legalCard
             width: cards.cardW
             height: page.rowH
+            readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.legal")
             }

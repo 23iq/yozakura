@@ -2,7 +2,8 @@
 
 // Special workspaces (Hyprland scratchpads): the list editor (templates,
 // name, icon, accent, toggle + send binds, apps, preload) and the runtime
-// options, as a list page (form "list", no band: the list is the page).
+// options, as a list page (form "list", no band: the list is the page,
+// the switch beside it).
 // Global like the keybinds: presets never carry them. Logic:
 // modules/specials/. Entry format: see modules/settings/AGENTS.md.
 
@@ -13,13 +14,11 @@ var category = {
     "description": "prefs.cat.specials.desc",
     "keywords": "special workspaces scratchpad scratchpads hidden workspace telegram discord chat music dev notes toggle send window apps preload",
     "form": "list",
-    "row": [
-        {
-            "id": "list",
-            "weight": 3.2
-        },
-        "behaviour"
-    ],
+    // no band: the switch stands in a side column beside the list
+    "hero": {
+        "right": ["specials.enabled"]
+    },
+    "row": ["list"],
     "sections": [
         {
             "id": "list",

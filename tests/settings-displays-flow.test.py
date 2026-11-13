@@ -1,15 +1,9 @@
-"""Hand-written device pages fit the default window (1180x780), offscreen,
-with the device fixtures (tests/lib/device_fixtures.py).
-
-Displays and Keyboard are hand-written pages (they edit a draft / a live
-service, not config keys), composed like a converted page (modules/settings/
-AGENTS.md, PAGE COMPOSITION): hero, hint, one row of cards at the foot.
-settings-fit.test.py checks schema pages only; this checks these: every
-card of the row and every item of the hero ends inside the page, the hero
-ends above the row, nothing scrolls. Plus the Displays flow on the fitted
-page: a scale step and a refresh chip patch the picked monitor's draft,
-Apply hands the draft to DisplaysService (its 15 s keep / revert session).
-"""
+"""The Displays flow on its fitted page, offscreen, with the device
+fixtures (tests/lib/device_fixtures.py): a scale step and a refresh chip
+patch the picked monitor's draft, Apply hands the draft to DisplaysService
+(its 15 s keep / revert session), night light turns on live. That the page
+fits the window is checked with the other fitted pages
+(settings-fit.test.py)."""
 import json
 import sys
 from pathlib import Path
@@ -23,9 +17,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-PAGES = {"displays": "displaysRow", "keyboard": "keyboardRow"}
-
-env = SettingsEnv("settings-devices-fit", devices=True)
+env = SettingsEnv("settings-displays-flow", devices=True)
 h = env.h
 failures: list[str] = []
 
@@ -53,21 +45,6 @@ Window {
         return null;
     }
     function page() { var host = findItem("settingsPage"); return host ? host.item : null }
-    // {h, row: [top, bottom], cards: [bottoms], heroBottom}
-    function measure(rowName) {
-        var p = page(), row = findItem(rowName, p);
-        if (!p || !row) return null;
-        var top = row.mapToItem(p, 0, 0).y;
-        var cards = [];
-        for (var i = 0; i < row.children.length; i++) {
-            var c = row.children[i];
-            if (c.visible) cards.push(Math.round(c.mapToItem(p, 0, c.height).y));
-        }
-        var hint = findItem("heroHint", p);
-        return { "h": p.height, "top": Math.round(top), "cards": cards,
-                 "hint": hint ? Math.round(hint.mapToItem(p, 0, hint.height).y) : 0,
-                 "contentH": p.contentHeight === undefined ? p.height : p.contentHeight };
-    }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
 }""")
 shell = h.find(win, "shell")
@@ -76,20 +53,6 @@ shell = h.find(win, "shell")
 def ev(expr):
     return h.eval(win, expr)
 
-
-for cat, row in PAGES.items():
-    h.eval(shell, f'select("{cat}")')
-    check(env.wait_page(win), f"{cat}: page built")
-    QTest.qWait(300)
-    m = json.loads(ev(f'JSON.stringify(measure("{row}"))'))
-    if m is None:
-        check(False, f"{cat}: a row of cards ({row})")
-        continue
-    check(len(m["cards"]) >= 2, f"{cat}: a row of cards ({len(m['cards'])})")
-    for b in m["cards"]:
-        check(b <= m["h"] + 1, f"{cat}: a card ends inside the page ({b} <= {m['h']})")
-    check(m["hint"] <= m["top"], f"{cat}: the hero and its hint end above the row ({m['hint']} <= {m['top']})")
-    check(m["contentH"] <= m["h"] + 1, f"{cat}: the page does not scroll")
 
 # the Displays flow on the fitted page
 h.eval(shell, 'select("displays")')
@@ -110,7 +73,7 @@ h.eval(ev('w.findItem("nightToggle", w.page())'), "toggled(true)")
 check(ev("NightLightClient.active") is True, "night light turns on live")
 
 if failures:
-    print(f"settings-devices-fit: {len(failures)} failure(s)")
+    print(f"settings-displays-flow: {len(failures)} failure(s)")
     h.exit(1)
-print("settings-devices-fit: ok")
+print("settings-displays-flow: ok")
 h.exit(0)

@@ -19,8 +19,10 @@ import "../schema/Categories.js" as Categories
 // holds the one primary action: put them all back (one undo step). The
 // list fills the card under it; a row resets that one setting (live, one
 // undo step) or opens it on its page (window rows only).
-Item {
+FittedFrame {
     id: page
+    listForm: true
+    hasHint: false
 
     required property var category
     // "defaults" | "preset" (only offered while a preset is applied)
@@ -32,11 +34,6 @@ Item {
     readonly property var index: SchemaUtil.buildSearchIndex(Categories.categories, k => I18n.t(k))
     readonly property var groups: page.presetMode ? ChangesModel.fromPreset(PresetStatusService.changes, page.index, page.pages, k => I18n.t(k)) : ChangesModel.fromDefaults(page.pages, SettingsStore.resetContext, e => SettingsStore.isModified(e), k => SettingsStore.defaultValue(k), k => I18n.t(k))
     readonly property int total: ChangesModel.count(page.groups)
-
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real pad: Space.l
-    readonly property real bandH: Math.round(Math.max(Space.px(120), page.height * 0.24))
 
     function resetRow(change) {
         if (change.entry)
@@ -60,6 +57,7 @@ Item {
     // the band: how many, where, since what, and the one action
     Stage {
         id: band
+        readonly property bool fittedHero: true
         objectName: "changesBand"
         x: page.margin
         y: Space.s
@@ -150,6 +148,7 @@ Item {
     // the list, in one tall card
     Card {
         id: listCard
+        readonly property bool fittedCard: true
         objectName: "changesList"
         x: page.margin
         y: band.y + band.height + page.gap

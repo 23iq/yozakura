@@ -200,6 +200,9 @@ check(h.eval(mini, "depths.left") > 0 and h.eval(mini, "freeRect.x") >= h.eval(m
 h.eval(mini, "panelPicked(1)")
 check(ev("SettingsStore.selectedPanel") == 1, "a click on the rail picks it")
 QTest.qWait(100)
+# the bars editor is in the More sheet, built on first open
+ev('w.findItem("settingsPage").item.moreBuilt = true')
+QTest.qWait(50)
 editor = ev('w.findItem("settingRow:bar.panels.editor")')
 check(editor is not None and h.eval(editor, "shown") is True, "the bars editor shows while several bars are set")
 ev("SettingsStore.set('bar.panels', [])")

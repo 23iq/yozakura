@@ -61,19 +61,43 @@ Flickable {
     // page, full width) and one row of tall cards taking the rest; the list
     // scrolls inside its card. Default: the 16:9 stage over a short row.
     readonly property bool listForm: page.fitted && page.category.form === "list"
-    readonly property real bandH: page.stageUrl !== "" ? Math.round(Math.max(Space.px(120), page.height * 0.24, heroLeftCol.height + Space.l, heroRightCol.height + Space.l)) : 0
-    readonly property real rowH: page.listForm ? Math.max(Look.cardRowHeight, page.height - Space.s - page.bandH - (page.hero.hint ? Space.xl : 0) - page.gap - page.pad) : Look.cardRowHeight
-    readonly property real pad: Space.l
+    // a list page without a band: its `hero` entries stand in a side column
+    // beside the row (left / right), the row takes the rest of the width
+    readonly property bool sideOnly: page.listForm && page.stageUrl === "" && page.heroIds.length > 0
+    readonly property real sideLeft: page.sideOnly && (page.hero.left || []).length > 0 ? page.sideW + page.gap : 0
+    readonly property real sideRight: page.sideOnly && (page.hero.right || []).length > 0 ? page.sideW + page.gap : 0
+    // the template measures (FittedFrame, shared with the hand-written pages)
+    readonly property real bandH: frame.bandH
+    readonly property real rowH: frame.rowH
+    readonly property real pad: frame.pad
     // sections of a fitted page that are not in the row (in the sheet)
     readonly property var moreSections: page.fitted ? (page.category.sections || []).map((s, i) => ({
                 "section": s,
                 "index": i
-            })).filter(x => page.rowIds.indexOf(x.section.id) < 0) : []
+            })).filter(x => page.rowIds.indexOf(x.section.id) < 0 && (x.section.entries || []).some(e => SchemaUtil.inWindow(e, x.section) && page.heroIds.indexOf(e.key || e.id) < 0)) : []
+    // the ones that open as a card now (compositor gate, visibleWhen): the
+    // count on the More chip
+    readonly property int moreShown: page.moreSections.filter(x => SettingsStore.sectionShown(x.section)).length
     property bool moreOpen: false
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
+    // the sheet's cards are built on its first open (or a search that
+    // lands in it), not with the page
+    property bool moreBuilt: false
+    onMoreOpenChanged: if (moreOpen)
+        moreBuilt = true
+    readonly property real margin: frame.margin
+    readonly property real gap: frame.gap
     // the side columns of the hero
-    readonly property real sideW: Math.min(Space.px(220), page.width * 0.19)
+    readonly property real sideW: frame.sideW
+    FittedFrame {
+        id: frame
+        width: page.width
+        height: page.height
+        visible: false
+        listForm: page.listForm
+        hasHint: !!page.hero.hint
+        band: page.stageUrl !== ""
+        bandMin: Math.max(heroLeftCol.height, heroRightCol.height) + Space.l
+    }
     function heroEntries(ids) {
         const out = [];
         for (const id of ids || []) {
@@ -140,6 +164,8 @@ Flickable {
     // Scroll to an entry (or a section), flash it and give it focus.
     function reveal(sectionId, entryId) {
         buildAll();
+        if (page.moreSections.some(x => x.section.id === sectionId || (x.section.entries || []).some(e => (e.id || e.key) === entryId)))
+            page.moreBuilt = true;
         // place the cards now (twice: a card's new width can rewrap it)
         bento.relayout();
         bento.relayout();
@@ -214,7 +240,7 @@ Flickable {
         y: Space.s + (page.fitted ? 0 : page.contentY * 0.35)
         width: page.width - page.margin * 2
         height: stageLoader.active ? stageLoader.height : 0
-        visible: stageLoader.active
+        visible: stageLoader.active || page.sideOnly
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7
         transformOrigin: Item.Top
@@ -226,7 +252,7 @@ Flickable {
             readonly property int sideCount: (page.hero.left || []).length > 0 ? ((page.hero.right || []).length > 0 ? 2 : 1) : ((page.hero.right || []).length > 0 ? 1 : 0)
             readonly property real room: heroArea.width - (page.sideW + page.gap) * sideCount
             // fitted: the height the header, hint and row leave
-            readonly property real fitHeight: page.height - Space.s - (page.hero.hint ? Space.xl : 0) - page.gap - page.rowH - page.pad
+            readonly property real fitHeight: frame.heroH
             height: Math.round(page.listForm ? page.bandH : (page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460)))))
             // the list form's band spans the room beside the side columns
             width: Math.round(page.listForm ? room : Math.min(room, height * 16 / 9))
@@ -236,6 +262,11 @@ Flickable {
             x: groupX + ((page.hero.left || []).length > 0 ? page.sideW + page.gap : 0)
             active: page.stageUrl !== ""
             source: page.stageUrl
+            // the list form's band: a calm backdrop under its text
+            onLoaded: {
+                if (item && "calm" in item)
+                    item.calm = Qt.binding(() => page.listForm);
+            }
 
             // a deep shadow under the stage
             RectangularShadow {
@@ -251,9 +282,9 @@ Flickable {
         Column {
             id: heroLeftCol
             objectName: "heroLeft"
-            x: stageLoader.x - page.gap - page.sideW
+            x: page.sideOnly ? 0 : stageLoader.x - page.gap - page.sideW
             width: page.sideW
-            y: Space.l
+            y: page.sideOnly ? body.y - heroArea.y : Space.l
             spacing: Space.s
             Repeater {
                 model: page.heroEntries(page.hero.left)
@@ -269,9 +300,9 @@ Flickable {
         Column {
             id: heroRightCol
             objectName: "heroRight"
-            x: stageLoader.x + stageLoader.width + page.gap
+            x: page.sideOnly ? heroArea.width - page.sideW : stageLoader.x + stageLoader.width + page.gap
             width: page.sideW
-            y: Space.l
+            y: page.sideOnly ? body.y - heroArea.y : Space.l
             spacing: Space.s
             Repeater {
                 model: page.heroEntries(page.hero.right)
@@ -319,8 +350,8 @@ Flickable {
     Item {
         id: body
         z: 1
-        width: page.width - page.margin * 2
-        x: page.margin
+        width: page.width - page.margin * 2 - page.sideLeft - page.sideRight
+        x: page.margin + page.sideLeft
         y: page.fitted ? page.height - page.rowH - page.pad : (heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + Space.xl : Space.s)
         height: bento.height + (note.visible ? note.height + Space.l : 0)
 
@@ -431,7 +462,7 @@ Flickable {
 
         KitText {
             id: note
-            objectName: "compositorOnlyNote"
+            objectName: page.fitted ? "" : "compositorOnlyNote"
             y: bento.height + Space.l
             width: parent.width
             visible: page.gated.count > 0 && !page.fitted
@@ -448,15 +479,30 @@ Flickable {
     Chip {
         id: moreChip
         objectName: "pageMore"
-        visible: page.fitted && page.moreSections.length > 0
+        visible: page.fitted && page.moreShown > 0
         x: page.width - page.margin - width
         y: heroHint.visible ? heroHint.y + (heroHint.height - height) / 2 : page.height - page.rowH - page.pad - page.gap / 2 - height
         z: 3
         quiet: true
         dense: true
         icon: Icons.faders
-        text: I18n.t("prefs.page.more").replace("%1", page.moreSections.length)
+        text: I18n.t("prefs.page.more").replace("%1", page.moreShown)
         onClicked: page.moreOpen = true
+    }
+
+    // Fitted page: the compositor gate's note at the start of the hint line
+    // (the rows it hides are not in the window on this compositor).
+    Chip {
+        objectName: page.fitted ? "compositorOnlyNote" : ""
+        visible: page.fitted && page.gated.count > 0
+        x: page.margin
+        y: moreChip.y
+        z: 3
+        quiet: true
+        dense: true
+        icon: Icons.info
+        maxLabelWidth: Math.max(Space.px(120), (page.width - heroHint.contentWidth) / 2 - page.margin - Space.px(60))
+        text: page.gated.count > 0 ? I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors)) : ""
     }
 
     Scrim {
@@ -506,7 +552,7 @@ Flickable {
 
                 Repeater {
                     id: moreRepeater
-                    model: page.moreSections
+                    model: page.moreBuilt ? page.moreSections : []
                     delegate: SettingsSection {
                         required property var modelData
                         width: moreColumn.width

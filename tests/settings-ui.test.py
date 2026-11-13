@@ -85,6 +85,11 @@ def select(cat: str) -> None:
 
 def row(entry_id: str):
     found = ev(f'w.findItem("settingRow:{entry_id}")')
+    if found is None:
+        # a fitted page builds its More sheet on first open
+        ev('(function () { var p = w.findItem("settingsPage").item; if (p && p.moreBuilt !== undefined) p.moreBuilt = true; })()')
+        QTest.qWait(50)
+        found = ev(f'w.findItem("settingRow:{entry_id}")')
     check(found is not None, f"row {entry_id} exists")
     return found
 
@@ -359,6 +364,9 @@ check(h.eval(row("notifications.status"), "Notifications.sent.length") == 1, "te
 
 # Terminal & Apps: per-app theming toggles + glass link
 select("terminal")
+# the app theming card is in the More sheet, built on first open
+ev('w.findItem("settingsPage").item.moreBuilt = true')
+QTest.qWait(100)
 tog = ev('w.findItem("appTheme:discord")')
 check(tog is not None, "app theming row for discord")
 h.eval(tog, "toggled(false)")

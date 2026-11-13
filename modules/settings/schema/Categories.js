@@ -97,15 +97,17 @@ var HOME = [
 // with a live value (Widgets: desktop widgets and the overview).
 var PILLS = ["network", "sound", "power", "desktop", "apps", "system"];
 
-// A hand-written page (Registry.PAGES[name]).
-function page(id, icon, name, keywords) {
+// A hand-written page (Registry.PAGES[name]); `fitted`: composed like a
+// converted page on a FittedFrame (tests/settings-fit.test.py checks it).
+function page(id, icon, name, keywords, fitted) {
     return {
         "id": id,
         "icon": icon,
         "title": "prefs.cat." + id,
         "description": "prefs.cat." + id + ".desc",
         "keywords": keywords,
-        "page": name
+        "page": name,
+        "fitted": fitted === true
     };
 }
 
@@ -165,7 +167,7 @@ var categories = [
         "form": "list",
         "row": ["mods_list", "mods_details"]
     }),
-    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom"),
+    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom", true),
     {
         "id": "presets",
         "icon": "magicWand",
@@ -182,7 +184,8 @@ var categories = [
         "title": "prefs.cat.displays",
         "description": "prefs.cat.displays.desc",
         "keywords": "displays monitors screens resolution refresh rate hz scale dpi rotation rotate arrange layout position vrr adaptive sync identify hdmi displayport",
-        "page": "Displays"
+        "page": "Displays",
+        "fitted": true
     },
     {
         "id": "keyboard",
@@ -190,7 +193,8 @@ var categories = [
         "title": "prefs.cat.keyboard",
         "description": "prefs.cat.keyboard.desc",
         "keywords": "keyboard layout layouts language russian english variant switch alt shift caps lock escape ctrl compose xkb options key repeat rate delay indicator type typing",
-        "page": "Keyboard"
+        "page": "Keyboard",
+        "fitted": true
     },
     {
         "id": "extras",
@@ -208,7 +212,8 @@ var categories = [
         "title": "prefs.cat.about",
         "description": "prefs.cat.about.desc",
         "keywords": "about version credits license notice yozakura",
-        "page": "AboutPage"
+        "page": "AboutPage",
+        "fitted": true
     }
 ];
 

@@ -22,7 +22,7 @@ import qs.modules.components.kit
 // something here the compositor's own settings are shown (and stay in
 // effect); every edit goes through KeyboardService.edit(), which takes
 // them over first and applies the change.
-Item {
+FittedFrame {
     id: page
 
     required property var category
@@ -40,13 +40,6 @@ Item {
     property int pendingDelay: -1
     // keys held in the try field (KeyDeck ids)
     property var held: []
-
-    // the page template's measures (SettingsPage)
-    readonly property real margin: Space.xl
-    readonly property real gap: Space.l
-    readonly property real pad: Space.l
-    readonly property real rowH: Look.cardRowHeight
-    readonly property real heroH: Math.max(Space.px(160), page.height - Space.s - Space.xl - page.gap - page.rowH - page.pad)
 
     function saveRepeat() {
         const patch = {};
@@ -97,6 +90,7 @@ Item {
     // ---- the hero: the keyboard, the try field, what needs saying ---------
     Item {
         id: hero
+        readonly property bool fittedHero: true
         x: page.margin
         y: Space.s
         width: page.width - page.margin * 2

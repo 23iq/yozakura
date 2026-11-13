@@ -7,10 +7,12 @@ tab this checks, after the page is built: the page does not scroll, every
 row card ends inside the page, the stage ends above the row, the side
 columns end above the row, and a picture card's strip is one row.
 
-Destinations still exempt (no `row` yet, they keep the scrolling bento):
-changes, keyboard, input, displays, windows, specials, about, network,
-bluetooth, sound, effects, power. A test below fails when
-a category gains a `row` and is not in CONVERTED, so the list stays true.
+The hand-written fitted pages (category `fitted`: Displays, Keyboard,
+About, Changes, on a FittedFrame) are checked the same way: their hero
+(`fittedHero`) ends above their row, every row card (`fittedCard`) ends
+inside the page. They run with the device fixtures
+(tests/lib/device_fixtures.py). Every category with a `row` or `fitted`
+must be in CONVERTED, so the list stays true.
 """
 import json
 import sys
@@ -25,12 +27,17 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
-             "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods", "voice", "timers", "routines", "ai", "ai-providers", "ai-code", "system", "updates", "windows", "power", "network", "bluetooth", "sound", "effects", "input", "specials"]
+CONVERTED = [
+    "bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
+    "wallpapers", "launcher", "dashboard", "desktop", "overview", "terminal", "presets", "extras", "mods",
+    "voice", "timers", "routines", "ai", "ai-providers", "ai-code", "system", "updates",
+    "windows", "power", "network", "bluetooth", "sound", "effects", "input", "specials",
+    "displays", "keyboard", "about", "changes",
+]
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
-env = SettingsEnv("settings-fit")
+env = SettingsEnv("settings-fit", devices=True)
 h = env.h
 failures: list[str] = []
 
@@ -58,23 +65,23 @@ Window {
             kids = kids.concat([item.contentItem]);
         for (var i = 0; i < kids.length; i++) walk(kids[i], fn);
     }
-    function withRow() { return Categories.categories.filter(c => (c.row || []).length > 0).map(c => c.id) }
+    function withRow() { return Categories.categories.filter(c => (c.row || []).length > 0 || c.fitted === true).map(c => c.id) }
     // {scrolls, page h, row cards [name, bottom], stage bottom, row top, sides bottom}
     function measure() {
         var host = null;
         walk(w.contentItem, x => { if (!host && x.objectName === "settingsPage") host = x; });
         var page = host ? host.item : null;
         if (!page) return null;
-        var out = { "h": page.height, "contentH": page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0 };
+        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true };
         walk(page, x => {
             var n = String(x.objectName);
-            if (n.indexOf("settingsSection:") === 0 && x.visible && x.fixed) {
+            if (((n.indexOf("settingsSection:") === 0 && x.fixed) || x.fittedCard === true) && x.visible) {
                 var p = x.mapToItem(page, 0, 0);
                 out.cards.push([n, Math.round(p.y + x.height)]);
                 out.rowTop = Math.min(out.rowTop, Math.round(p.y));
             }
-            if (n === "pageStage" && x.visible) {
-                out.stage = Math.round(x.mapToItem(page, 0, x.height).y);
+            if ((n === "pageStage" || x.fittedHero === true) && x.visible) {
+                out.stage = Math.max(out.stage, Math.round(x.mapToItem(page, 0, x.height).y));
                 out.stageH = x.height;
             }
             if ((n === "heroLeft" || n === "heroRight") && x.visible)
@@ -102,7 +109,8 @@ def fits(label: str) -> None:
         check(bottom <= m["h"] + 1, f"{label}: {name} ends inside the page ({bottom} > {m['h']})")
     if m["stage"] >= 0:
         check(m["stage"] <= m["rowTop"], f"{label}: the stage ends above the row ({m['stage']} > {m['rowTop']})")
-    check(m["sides"] <= m["rowTop"], f"{label}: the side columns end above the row ({m['sides']} > {m['rowTop']})")
+    if not m["beside"]:
+        check(m["sides"] <= m["rowTop"], f"{label}: the side columns end above the row ({m['sides']} > {m['rowTop']})")
     if m["list"]:
         # the list form: a short band, the cards take the rest
         check(m["stageH"] <= m["h"] * 0.3, f"{label}: the list form's band is short ({m['stageH']})")
