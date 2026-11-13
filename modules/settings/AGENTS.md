@@ -384,8 +384,8 @@ Schema fields (category):
   Without a `stage` the row takes the whole page; its `hero` entries then
   stand in a side column beside the row (Special workspaces: the switch
   beside the list). `bandShare` (default 0.24): the share of the page the
-  band takes, for a band that is the page's main control (Sound 0.5: two
-  big sliders; Effects 0.4), so the cards under it hold their content.
+  band takes, for a band that is the page's main control. Prefer filling
+  the cards (device rows with their own volume, app icons) to a tall band.
   The band is calm (Stage `calm`, set by the page): the wallpaper blurred
   and darkened, never a sharp picture under text and controls.
 - `fitted: true` on a hand-written page's category (Displays, Keyboard,

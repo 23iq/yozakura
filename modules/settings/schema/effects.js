@@ -14,8 +14,6 @@ var category = {
     "keywords": "equalizer easyeffects bass audio effects presets noise microphone",
     "form": "list",
     "stage": "EffectsBand",
-    // the cards hold a few presets each: the band takes more of the page
-    "bandShare": 0.4,
     "hero": {
         "hint": "prefs.effects.hint"
     },

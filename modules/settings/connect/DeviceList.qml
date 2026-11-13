@@ -8,8 +8,9 @@ import qs.modules.components.kit
 // audio devices): rows of a glyph, a name, a state line and a trailing
 // mark, the picked one washed in the accent; it scrolls inside its card
 // with a fade at the foot while more is below. `rows`: [{key, icon, title,
-// line, on, trailing}] (icon / trailing: Icons names). `empty`: what an
-// empty list says.
+// line, on, trailing, volume}] (icon / trailing: Icons names; volume: a
+// level 0..1.5 the row shows as its own volume line, -1 or absent: none).
+// `empty`: what an empty list says.
 Item {
     id: root
 
@@ -17,7 +18,13 @@ Item {
     property string current: ""
     property string empty: ""
     property real fillHeight: 0
+    // a short list (sound devices, effect presets): the rows grow to share
+    // the card's height (up to a roomy tile each) instead of leaving it empty
+    property bool stretch: false
+    readonly property real baseH: Space.controlM + Space.s
     signal picked(string key)
+    // a row's volume line moved (the rows with a `volume`)
+    signal volumeMoved(string key, real value)
 
     implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3
     clip: true
@@ -40,9 +47,13 @@ Item {
             id: row
             required property var modelData
             readonly property bool chosen: modelData.key === root.current
+            readonly property bool hasVolume: (row.modelData.volume ?? -1) >= 0
             objectName: "deviceRow:" + modelData.key
             width: list.width
-            height: Space.controlM + Space.s
+            readonly property real need: root.baseH + (row.hasVolume ? Space.controlS : 0)
+            height: root.stretch && root.rows.length > 0 ? Math.max(row.need, Math.min(row.need * 1.9, (list.height - list.spacing * (root.rows.length - 1)) / root.rows.length)) : row.need
+            // the extra height of a stretched row, split around its content
+            readonly property real lift: Math.round((row.height - row.need) / 2)
 
             Mark {
                 anchors.fill: parent
@@ -52,17 +63,18 @@ Item {
             Icon {
                 id: glyph
                 x: Space.m
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenter: titles.verticalCenter
                 icon: Icons[row.modelData.icon] ?? Icons.circle
-                role: "title"
+                role: root.stretch ? "display" : "title"
                 tone: row.modelData.on ? "accent" : "secondary"
             }
             Column {
+                id: titles
                 anchors.left: glyph.right
                 anchors.leftMargin: Space.m
                 anchors.right: tail.left
                 anchors.rightMargin: Space.s
-                anchors.verticalCenter: parent.verticalCenter
+                y: row.lift + Math.round((root.baseH - height) / 2)
                 KitText {
                     width: parent.width
                     role: "body"
@@ -83,11 +95,34 @@ Item {
                 id: tail
                 anchors.right: parent.right
                 anchors.rightMargin: Space.m
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenter: titles.verticalCenter
                 visible: (row.modelData.trailing || "") !== ""
                 icon: Icons[row.modelData.trailing || "circle"] ?? ""
                 role: "caption"
                 tone: "muted"
+            }
+            // the device's own volume, under its name
+            LineSlider {
+                id: level
+                objectName: "deviceVolume:" + row.modelData.key
+                visible: row.hasVolume
+                // over the row's click area (it is the last child)
+                z: 1
+                anchors.left: titles.left
+                anchors.right: parent.right
+                anchors.rightMargin: Space.m
+                y: row.lift + Space.controlM
+                height: Space.controlS
+                from: 0
+                to: 1.5
+                step: 0.05
+                value: Math.max(0, row.modelData.volume ?? 0)
+                showValue: true
+                valueText: Math.round(level.value * 100) + " %"
+                onMoved: v => {
+                    root.volumeMoved(row.modelData.key, v);
+                    level.value = Qt.binding(() => Math.max(0, row.modelData.volume ?? 0));
+                }
             }
             MouseArea {
                 id: area

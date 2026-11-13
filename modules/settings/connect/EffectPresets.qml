@@ -11,6 +11,7 @@ DeviceList {
     readonly property var presets: (root.output ? EasyEffectsService.outputPresets : EasyEffectsService.inputPresets) || []
     readonly property string active: String((root.output ? EasyEffectsService.activeOutputPreset : EasyEffectsService.activeInputPreset) || "")
 
+    stretch: true
     objectName: root.output ? "outputPresets" : "inputPresets"
     current: root.active
     empty: I18n.t(EasyEffectsService.available ? "prefs.effects.no_presets" : "prefs.effects.missing")

@@ -83,8 +83,7 @@ Stage {
         LevelSlider {
             objectName: ch.objectName + "Slider"
             width: ch.width
-            // as big as the band allows: it is the page's main control
-            height: Math.max(Space.controlL, Math.round(band.height * 0.38))
+            height: Math.max(Space.controlL, Math.round(band.height * 0.3))
             enabled: ch.node !== null
             from: 0
             to: 1.5

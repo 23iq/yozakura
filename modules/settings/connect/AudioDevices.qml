@@ -1,8 +1,10 @@
 import QtQuick
+import Quickshell.Services.Pipewire
 import qs.modules.services
 
 // Sound > the outputs (entry.output: true) or the inputs: every device
-// with the one in use lit; a click makes it the one in use.
+// with the one in use lit and its own volume line; a click makes it the one
+// in use.
 DeviceList {
     id: root
 
@@ -11,6 +13,7 @@ DeviceList {
     readonly property var nodes: (root.output ? Audio.outputDevices : Audio.inputDevices) || []
     readonly property var inUse: root.output ? (Audio.sink ?? null) : (Audio.source ?? null)
 
+    stretch: true
     objectName: root.output ? "outputDevices" : "inputDevices"
     current: root.inUse ? String(root.inUse.id) : ""
     empty: I18n.t("prefs.sound.no_device")
@@ -20,8 +23,18 @@ DeviceList {
                 "title": Audio.friendlyDeviceName(n),
                 "line": root.inUse && n.id === root.inUse.id ? I18n.t("prefs.sound.in_use") : "",
                 "on": !!root.inUse && n.id === root.inUse.id,
-                "trailing": ""
+                "trailing": "",
+                "volume": n.audio ? Number(n.audio.volume ?? -1) : -1
             }))
+    // device volumes report only while tracked
+    PwObjectTracker {
+        objects: root.nodes
+    }
+    onVolumeMoved: (key, v) => {
+        const n = root.nodes.find(x => String(x.id) === key);
+        if (n)
+            Audio.setNodeVolume(n, v);
+    }
     onPicked: key => {
         const n = root.nodes.find(x => String(x.id) === key);
         if (!n)
