@@ -14,7 +14,7 @@ var category = {
         "right": ["notch.enabled", "notch.keepHidden", "notch.disableHoverExpansion"],
         "hint": "prefs.notch.hero_hint"
     },
-    "row": ["notch", "media", "activities"],
+    "row": [{ "id": "notch", "weight": 1.05 }, { "id": "behaviour", "weight": 0.8 }, { "id": "media", "weight": 0.9 }, { "id": "activities", "weight": 1.3 }],
     "sections": [
         {
             // the island itself on / off (beside the stage, hero.right): the
@@ -38,6 +38,8 @@ var category = {
                 {
                     "key": "notch.style",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "IslandShapeThumb",
                     "options": [
                         {
                             "value": "attached",
@@ -56,6 +58,82 @@ var category = {
                     "description": "prefs.notch.theme.desc",
                     "keywords": "notch style island attached floating pill dot minimal"
                 },
+                {
+                    "key": "notch.keepHidden",
+                    "type": "toggle",
+                    "label": "prefs.notch.hide_until_hovered",
+                    "description": "prefs.notch.keep_hidden.desc",
+                    "keywords": "hide notch autohide"
+                },
+                {
+                    "key": "notch.hoverRegionHeight",
+                    "advanced": true,
+                    "type": "slider",
+                    "min": 8,
+                    "max": 40,
+                    "step": 1,
+                    "unit": "px",
+                    "label": "prefs.notch.hover_region",
+                    "description": "prefs.notch.hover_region.desc",
+                    "keywords": "hover region trigger area reveal"
+                }
+            ]
+        },
+        {
+            "id": "behaviour",
+            "title": "prefs.notch.section.behaviour",
+            "entries": [
+                {
+                    "key": "notch.align",
+                    "type": "selector",
+                    "iconOnly": true,
+                    "options": [
+                        {
+                            "value": "start",
+                            "label": "prefs.notch.align.start",
+                            "icon": "alignLeft"
+                        },
+                        {
+                            "value": "center",
+                            "label": "prefs.notch.align.center",
+                            "icon": "alignCenter"
+                        },
+                        {
+                            "value": "end",
+                            "label": "prefs.notch.align.end",
+                            "icon": "alignRight"
+                        }
+                    ],
+                    "label": "prefs.label.island_align",
+                    "description": "prefs.notch.align.desc",
+                    "keywords": "notch align alignment left right corner start center end"
+                },
+                {
+                    "key": "notch.expandOn",
+                    "type": "selector",
+                    "iconOnly": true,
+                    "options": [
+                        {
+                            "value": "hover",
+                            "label": "shell.notch.expand_on_hover",
+                            "icon": "cursor"
+                        },
+                        {
+                            "value": "click",
+                            "label": "shell.notch.expand_on_click",
+                            "icon": "hand"
+                        }
+                    ],
+                    "label": "shell.notch.expand_on",
+                    "description": "prefs.notch.expand_on.desc",
+                    "keywords": "notch panel expand open hover click activities media downloads"
+                }
+            ]
+        },
+        {
+            "id": "place",
+            "title": "prefs.notch.section.place",
+            "entries": [
                 {
                     "key": "notch.position",
                     "type": "selector",
@@ -84,158 +162,13 @@ var category = {
                     "label": "prefs.label.island_edge",
                     "description": "prefs.notch.position.desc",
                     "keywords": "notch position top bottom left right side vertical edge"
-                },
-                {
-                    "key": "notch.align",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "start",
-                            "label": "prefs.notch.align.start"
-                        },
-                        {
-                            "value": "center",
-                            "label": "prefs.notch.align.center"
-                        },
-                        {
-                            "value": "end",
-                            "label": "prefs.notch.align.end"
-                        }
-                    ],
-                    "label": "prefs.label.island_align",
-                    "description": "prefs.notch.align.desc",
-                    "keywords": "notch align alignment left right corner start center end"
-                },
-                {
-                    "key": "notch.expandOn",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "hover",
-                            "label": "shell.notch.expand_on_hover"
-                        },
-                        {
-                            "value": "click",
-                            "label": "shell.notch.expand_on_click"
-                        }
-                    ],
-                    "label": "shell.notch.expand_on",
-                    "description": "prefs.notch.expand_on.desc",
-                    "keywords": "notch panel expand open hover click activities media downloads"
-                },
-                {
-                    "key": "notch.keepHidden",
-                    "type": "toggle",
-                    "label": "prefs.notch.hide_until_hovered",
-                    "description": "prefs.notch.keep_hidden.desc",
-                    "keywords": "hide notch autohide"
-                },
-                {
-                    "key": "notch.hoverRegionHeight",
-                    "advanced": true,
-                    "type": "slider",
-                    "min": 8,
-                    "max": 40,
-                    "step": 1,
-                    "unit": "px",
-                    "label": "prefs.notch.hover_region",
-                    "description": "prefs.notch.hover_region.desc",
-                    "keywords": "hover region trigger area reveal"
                 }
             ]
         },
         {
-            "id": "media",
-            "title": "prefs.notch.section.media",
+            "id": "activity_details",
+            "title": "prefs.notch.section.activity_details",
             "entries": [
-                {
-                    // notch.disableHoverExpansion shown positively: on = the
-                    // island grows into the media panel (the key stays).
-                    "key": "notch.disableHoverExpansion",
-                    "type": "toggle",
-                    "invert": true,
-                    "label": "prefs.notch.media_panel",
-                    "description": "prefs.notch.media_panel.desc",
-                    "keywords": "media panel card player hover expand grow preview disable"
-                },
-                {
-                    "key": "notch.mediaStyle",
-                    "enabledWhen": {
-                        "key": "notch.disableHoverExpansion",
-                        "equals": false
-                    },
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "row",
-                            "label": "prefs.notch.media_style.row"
-                        },
-                        {
-                            "value": "artwork",
-                            "label": "prefs.notch.media_style.artwork"
-                        }
-                    ],
-                    "label": "prefs.notch.media_panel_style",
-                    "description": "prefs.notch.media_style.desc",
-                    "keywords": "media player panel style row artwork album cover spotify"
-                },
-                {
-                    "key": "notch.visualizer",
-                    "enabledWhen": {
-                        "key": "notch.disableHoverExpansion",
-                        "equals": false
-                    },
-                    "type": "toggle",
-                    "label": "prefs.notch.media_visualizer",
-                    "description": "prefs.notch.visualizer.desc",
-                    "keywords": "audio visualizer cava bars music"
-                },
-                {
-                    "key": "notch.noMediaDisplay",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "userHost",
-                            "label": "shell.notch.user_host"
-                        },
-                        {
-                            "value": "compositor",
-                            "label": "shell.notch.compositor"
-                        },
-                        {
-                            "value": "custom",
-                            "label": "theme.custom"
-                        }
-                    ],
-                    "label": "shell.no_media_display",
-                    "description": "prefs.notch.idle.desc",
-                    "keywords": "idle text user host compositor custom nothing playing"
-                },
-                {
-                    "key": "notch.customText",
-                    "type": "text",
-                    "visibleWhen": {
-                        "key": "notch.noMediaDisplay",
-                        "equals": "custom"
-                    },
-                    "label": "shell.notch.custom_text",
-                    "description": "prefs.notch.custom_text.desc",
-                    "keywords": "custom text label idle"
-                }
-            ]
-        },
-        {
-            "id": "activities",
-            "title": "prefs.notch.section.activities",
-            "entries": [
-                {
-                    "key": "notch.activities",
-                    "type": "custom",
-                    "component": "IslandActivitiesEditor",
-                    "label": "prefs.notch.island_activities",
-                    "description": "prefs.notch.island_activities.desc",
-                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
-                },
                 {
                     "key": "notifications.notchStyle",
                     "type": "selector",
@@ -293,6 +226,107 @@ var category = {
                     "label": "shell.activities",
                     "description": "prefs.notch.activities.desc",
                     "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+                }
+            ]
+        },
+        {
+            "id": "media",
+            "title": "prefs.notch.section.media",
+            "entries": [
+                {
+                    // notch.disableHoverExpansion shown positively: on = the
+                    // island grows into the media panel (the key stays).
+                    "key": "notch.disableHoverExpansion",
+                    "type": "toggle",
+                    "invert": true,
+                    "label": "prefs.notch.media_panel",
+                    "description": "prefs.notch.media_panel.desc",
+                    "keywords": "media panel card player hover expand grow preview disable"
+                },
+                {
+                    "key": "notch.mediaStyle",
+                    "enabledWhen": {
+                        "key": "notch.disableHoverExpansion",
+                        "equals": false
+                    },
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "row",
+                            "label": "prefs.notch.media_style.row"
+                        },
+                        {
+                            "value": "artwork",
+                            "label": "prefs.notch.media_style.artwork"
+                        }
+                    ],
+                    "label": "prefs.notch.media_panel_style",
+                    "description": "prefs.notch.media_style.desc",
+                    "keywords": "media player panel style row artwork album cover spotify"
+                },
+                {
+                    "key": "notch.visualizer",
+                    "enabledWhen": {
+                        "key": "notch.disableHoverExpansion",
+                        "equals": false
+                    },
+                    "type": "toggle",
+                    "label": "prefs.notch.media_visualizer",
+                    "description": "prefs.notch.visualizer.desc",
+                    "keywords": "audio visualizer cava bars music"
+                }
+            ]
+        },
+        {
+            // what the island shows while nothing plays (rare)
+            "id": "idle",
+            "title": "prefs.notch.section.idle",
+            "entries": [
+                {
+                    "key": "notch.noMediaDisplay",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "userHost",
+                            "label": "shell.notch.user_host"
+                        },
+                        {
+                            "value": "compositor",
+                            "label": "shell.notch.compositor"
+                        },
+                        {
+                            "value": "custom",
+                            "label": "theme.custom"
+                        }
+                    ],
+                    "label": "shell.no_media_display",
+                    "description": "prefs.notch.idle.desc",
+                    "keywords": "idle text user host compositor custom nothing playing"
+                },
+                {
+                    "key": "notch.customText",
+                    "type": "text",
+                    "visibleWhen": {
+                        "key": "notch.noMediaDisplay",
+                        "equals": "custom"
+                    },
+                    "label": "shell.notch.custom_text",
+                    "description": "prefs.notch.custom_text.desc",
+                    "keywords": "custom text label idle"
+                }
+            ]
+        },
+        {
+            "id": "activities",
+            "title": "prefs.notch.section.activities",
+            "entries": [
+                {
+                    "key": "notch.activities",
+                    "type": "custom",
+                    "component": "IslandActivitiesEditor",
+                    "label": "prefs.notch.island_activities",
+                    "description": "prefs.notch.island_activities.desc",
+                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
                 }
             ]
         },
