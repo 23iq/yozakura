@@ -43,7 +43,10 @@ QtObject {
     // Colors
     readonly property color text: Colors.overBackground
     readonly property color secondary: Colors.overSurfaceVariant
-    readonly property color muted: Colors.outline
+    // captions and hints: the outline role pulled 40 % toward the
+    // secondary ink, so small muted text keeps WCAG AA (>= 4.5:1) on the
+    // surfaces in light schemes too (the bare outline is ~3.9:1 there)
+    readonly property color muted: Qt.rgba(Colors.outline.r * 0.6 + Colors.overSurfaceVariant.r * 0.4, Colors.outline.g * 0.6 + Colors.overSurfaceVariant.g * 0.4, Colors.outline.b * 0.6 + Colors.overSurfaceVariant.b * 0.4, 1)
     readonly property color hairline: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.08)
     readonly property color track: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.14)
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)

@@ -51,15 +51,23 @@ Stage {
     }
 
     stageHeight: Space.px(300)
+    // a narrow stage (a pane beside the cards): the gauge over the profiles,
+    // each profile tile wide enough for its name
+    readonly property bool narrow: stage.width > 0 && stage.width < Space.px(640)
+    readonly property real gaugeSize: stage.narrow ? Math.round(Math.min(stage.width * 0.4, Space.px(170))) : Math.round(stage.height * 0.76)
+    readonly property real preferredHeight: stage.narrow ? Math.round(stage.gaugeSize + Space.l + tiles.height + Space.l * 2) : 0
 
-    Row {
+    Grid {
         anchors.centerIn: parent
-        spacing: Math.round(stage.width * 0.07)
+        columns: stage.narrow ? 1 : 2
+        horizontalItemAlignment: Grid.AlignHCenter
+        verticalItemAlignment: Grid.AlignVCenter
+        rowSpacing: Space.l
+        columnSpacing: Math.round(stage.width * 0.07)
 
         Item {
             id: gauge
-            anchors.verticalCenter: parent.verticalCenter
-            width: Math.round(stage.height * 0.76)
+            width: stage.gaugeSize
             height: gauge.width
 
             Ring {
@@ -102,9 +110,8 @@ Stage {
 
         Row {
             id: tiles
-            anchors.verticalCenter: parent.verticalCenter
             spacing: Space.m
-            readonly property real tileW: Math.round(stage.width * 0.17)
+            readonly property real tileW: stage.narrow ? Math.round(Math.min(Space.px(130), (stage.width - Space.l * 2 - Space.m * 2) / 3)) : Math.round(stage.width * 0.17)
 
             Repeater {
                 model: stage.profiles
@@ -113,7 +120,7 @@ Stage {
                     required property var modelData
                     objectName: "powerProfile:" + modelData.id
                     width: tiles.tileW
-                    height: Math.round(tiles.tileW * 1.35)
+                    height: Math.round(tiles.tileW * (stage.narrow ? 0.72 : 1.35))
                     vertical: true
                     enabled: stage.profilesOn
                     opacity: enabled ? 1 : 0.5

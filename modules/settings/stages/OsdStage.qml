@@ -34,7 +34,11 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(188)
+    // a narrow stage (a pane beside the cards): the small screen and the OSD
+    // on one line, the menu under them
+    readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
+    readonly property real topRow: Math.max(screen.visible ? screen.height : 0, osd.height)
+    readonly property real preferredHeight: stage.narrow ? Math.round(Space.m * 3 + stage.topRow + menu.height) : Space.px(188)
 
     stageHeight: stage.preferredHeight
 
@@ -42,8 +46,8 @@ Stage {
     Mark {
         id: screen
         objectName: "osdScreen"
-        anchors.verticalCenter: parent.verticalCenter
-        x: Space.xl
+        y: stage.narrow ? Math.round(Space.m + (stage.topRow - height) / 2) : Math.round((parent.height - height) / 2)
+        x: stage.narrow ? Space.l : Space.xl
         width: Space.px(176)
         height: Math.round(width * 9 / 16)
         radius: Look.radius("box", height)
@@ -71,6 +75,9 @@ Stage {
                     anchors.margins: -Space.s
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.name: I18n.t("common." + edgeMark.modelData)
+                    Accessible.checked: edgeMark.current
                     onClicked: SettingsStore.transaction("prefs.undo.osd_moved", () => SettingsStore.set("layout.osd.position", OsdPlace.positionFor(edgeMark.modelData)))
                 }
             }
@@ -81,8 +88,8 @@ Stage {
     Item {
         id: osd
         objectName: "osdOnStage"
-        anchors.verticalCenter: parent.verticalCenter
-        x: screen.x + screen.width + Space.xl * 2
+        y: stage.narrow ? Math.round(Space.m + (stage.topRow - height) / 2) : Math.round((parent.height - height) / 2)
+        x: screen.visible ? screen.x + screen.width + (stage.narrow ? Space.l : Space.xl * 2) : (stage.narrow ? Math.round((stage.width - width) / 2) : Space.xl)
         width: real.width * real.scale
         height: real.height * real.scale
         Loader {
@@ -91,7 +98,8 @@ Stage {
             width: stage.size.w
             height: stage.size.h
             // the real size, or as large as the band allows
-            scale: Math.min(1, (stage.height - Space.m * 2) / Math.max(1, stage.size.h))
+            // (the room beside the small screen, not osd.x: that follows the width)
+            scale: stage.narrow ? Math.min(1, Space.px(120) / Math.max(1, stage.size.h), (stage.width - (screen.visible ? screen.x + screen.width + Space.l : 0) - Space.l) / Math.max(1, stage.size.w)) : Math.min(1, (stage.height - Space.m * 2) / Math.max(1, stage.size.h))
             source: "../../shell/osd/" + OsdStyles.fileFor(stage.style)
             onLoaded: {
                 Ui.setIfPresent(item, "vertical", Qt.binding(() => stage.vertical));
@@ -110,9 +118,8 @@ Stage {
     Item {
         id: menu
         objectName: "menuOnStage"
-        anchors.right: parent.right
-        anchors.rightMargin: Space.xl
-        anchors.verticalCenter: parent.verticalCenter
+        x: stage.narrow ? Math.round((parent.width - width) / 2) : parent.width - width - Space.xl
+        y: stage.narrow ? Math.round(Space.m * 2 + stage.topRow) : Math.round((parent.height - height) / 2)
         width: Space.px(220)
         height: anchorChip.height + Space.s + popup.height
 

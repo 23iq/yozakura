@@ -7,20 +7,18 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "HomeStatus.js" as HomeStatus
+import "schema/Categories.js" as Categories
 import "Registry.js" as Registry
 
-// One destination on the home bento: a kit Card that is a small live
-// scene of what it opens, drawn from real state (home/<Scene>.qml: the
-// screen miniature, the palette and the UI font, the wallpaper, a toast in
-// its corner, the lock clock, preset cards, a launcher, widgets, a chat,
-// keycaps, the monitors, tiled windows), its name as a heading and one live
-// status line (HomeStatus.js). Only Screen, whose subject is the desktop,
-// is a picture (the screen miniature with your wallpaper, full bleed under
-// a scrim); the others draw a plain scene of their own subject above the
-// name. Scenes are loaded by URL and
-// asynchronously once home has shown its first frame (`live`), so home
-// compiles none of them before it is visible. Hover lifts the tile (the
-// wallpaper swells and follows the pointer); a click / Enter opens it.
+// One destination on the home bento (a kit Card). Screen is a picture: the
+// screen miniature on your wallpaper, full bleed under a scrim; Look a
+// scene (a big "Aa" in the UI font, its name, the palette). Every other
+// tile is its icon on a plate at the top left with what it holds (its
+// tabs) beside it, and at the foot its name and one live status line
+// (HomeStatus.js). Scenes are loaded by URL and asynchronously once home
+// has shown its first frame (`live`), so home compiles none of them before
+// it is visible. Hover lifts the tile and tints the plate; a click / Enter
+// opens it.
 Card {
     id: tile
 
@@ -30,9 +28,18 @@ Card {
     property bool live: true
     readonly property string kind: destination.id
     readonly property bool picture: tile.kind === "screen"
-    // a short wide tile: the scene beside the name, not above it
-    readonly property bool side: false
     readonly property string sceneFile: Registry.scene(tile.kind)
+    // no scene (a destination a picture would not explain at tile size):
+    // its icon on a plate at the top left, what is inside beside it, the
+    // name and status at the foot (one layout for every such tile)
+    readonly property bool glyph: tile.sceneFile === ""
+    // what the destination holds: its tabs, by name
+    // (the first three, then "+N": a whole short line, never cut mid-word)
+    readonly property var tabNames: (tile.destination.categories || []).map(id => {
+        const c = Categories.byId(id);
+        return c ? I18n.t(c.title) : "";
+    }).filter(t => t !== "")
+    readonly property string contents: tile.tabNames.slice(0, 3).join(" · ") + (tile.tabNames.length > 3 ? " · +" + (tile.tabNames.length - 3) : "")
     readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
@@ -49,7 +56,9 @@ Card {
     interactive: true
     fill: !tile.picture
     accented: false
+    Accessible.role: Accessible.Button
     Accessible.name: I18n.t(destination.title)
+    Accessible.description: tile.status
 
     // A scene, by URL, asynchronously, fading in once it is there.
     component Scene: Loader {
@@ -87,18 +96,57 @@ Card {
         width: tile.contentWidth
         height: tile.height - tile.padding * 2
 
+        // the destination's icon on a tonal plate (glyph tiles)
+        Mark {
+            id: plate
+            objectName: "homeTileIcon"
+            visible: tile.glyph
+            // a small tile: never into the name under it
+            width: Math.round(Math.max(Type.iconSize("title") * 1.8, Math.min(Type.iconSize("title") * 2.4, body.height - label.height - Space.m)))
+            height: width
+            radius: Look.radius("control", height)
+            color: tile.hovered || tile.activeFocus ? Look.tonal(Type.accent) : Qt.alpha(Type.text, 0.08)
+            Behavior on color {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
+            Icon {
+                anchors.centerIn: parent
+                icon: Icons[tile.destination.icon] ?? ""
+                role: "title"
+                size: Math.round(Type.iconSize("title") * 1.3)
+                tone: tile.hovered || tile.activeFocus ? "accent" : "text"
+            }
+        }
+
+        // what is inside (its tabs), beside the plate: where a wide tile
+        // would otherwise be blank
+        KitText {
+            objectName: "homeTileContents"
+            // whole or not at all: shown only where it fits beside the plate
+            visible: tile.glyph && tile.contents !== "" && width >= Space.px(120) && implicitHeight <= plate.height * 1.25
+            x: plate.width + Space.m
+            y: Math.round((plate.height - height) / 2)
+            width: body.width - x
+            role: "caption"
+            text: tile.contents
+            wrapMode: Text.WordWrap
+        }
+
         Scene {
             objectName: "homeTileScene"
-            wanted: !tile.picture
-            x: tile.side ? body.width * 0.5 : 0
-            width: tile.side ? body.width * 0.5 : body.width
-            height: tile.side ? body.height : Math.max(0, body.height - label.height - Space.m)
+            wanted: !tile.picture && !tile.glyph
+            visible: !tile.glyph
+            width: body.width
+            height: Math.max(0, body.height - label.height - Space.m)
         }
 
         Column {
             id: label
-            anchors.bottom: parent.bottom
-            width: tile.side ? body.width * 0.5 - Space.s : body.width
+            y: body.height - height
+            width: body.width
             spacing: Space.hairline
 
             KitText {
@@ -106,6 +154,10 @@ Card {
                 role: "title"
                 text: I18n.t(tile.destination.title)
                 color: tile.picture ? Qt.rgba(1, 1, 1, 1) : Type.text
+                // a narrow tile: the name wraps, whole ("Notifications &
+                // focus"), never cut
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
                 elide: Text.ElideRight
             }
             KitText {

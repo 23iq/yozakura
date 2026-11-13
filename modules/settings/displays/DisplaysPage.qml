@@ -24,6 +24,7 @@ FittedFrame {
     id: page
     stackable: true
     stackedHeight: row.y + row.height + page.pad
+    rowNeed: resolutionCard.chrome + resolutionList.needed
 
     required property var category
 
@@ -127,7 +128,9 @@ FittedFrame {
             radius: Look.radius("surface", arrangement.height)
             offset: Qt.vector2d(0, Space.l)
             blur: Space.xxl * 2
-            color: Qt.alpha(Colors.shadow, 0.55)
+            // the cards' own shadow (a fixed dark one showed through the
+            // translucent pane as a grey slab in light schemes)
+            color: Look.cardShadow
         }
         DisplayArrangement {
             id: arrangement
@@ -235,12 +238,14 @@ FittedFrame {
         readonly property real cardW: page.stacked ? row.width : (row.width - row.spacing * 3) / 4
 
         PageCard {
+            id: resolutionCard
             objectName: "displayCard:resolution"
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.resolution")
             value: page.selectedConfig ? DisplayFormat.formatResolution(page.selectedConfig.width, page.selectedConfig.height) : ""
             DisplayResolutionList {
+                id: resolutionList
                 objectName: "resolutionSelector"
                 anchors.fill: parent
                 enabled: page.active
@@ -282,9 +287,9 @@ FittedFrame {
                     dense: true
                     icon: Icons.lightning
                     primary: true
-                    // the rate itself (never a sentence cut in a narrow card); the
-                    // sentence is its accessible name and tooltip
-                    text: DisplayFormat.formatHz(best)
+                    // a short action ("Use 240 Hz": not a second chip of the
+                    // same rate); the sentence is its accessible name and tooltip
+                    text: I18n.t("prefs.displays.refresh_use", DisplayFormat.formatHz(best))
                     Accessible.name: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(best))
                     Tooltip {
                         text: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(upgradeChip.best))

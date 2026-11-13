@@ -15,39 +15,52 @@ const Categories = loadLibrary(path.join(dir, 'schema/Categories.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 const tr = lang => require(`../translations/${lang}.json`);
 
-test('home is three columns, two when narrow, with hysteresis; rows stretch to fill', () => {
-    assert.equal(HomeLayout.columns(900, 240, 2), 3);
-    assert.equal(HomeLayout.columns(600, 240, 2), 2);
-    // near the switch point a grid of three stays three (no flip-flop)
-    assert.equal(HomeLayout.columns(700, 240, 3), 3);
-    assert.equal(HomeLayout.columns(700, 240, 2), 2);
-    assert.equal(HomeLayout.columns(0, 240, 3), 2);
+test('home is six columns, four, then two when narrow, with hysteresis; rows stretch to fill', () => {
+    assert.equal(HomeLayout.columns(1100, 150, 4), 6);
+    assert.equal(HomeLayout.columns(700, 150, 6), 4);
+    assert.equal(HomeLayout.columns(500, 150, 4), 2);
+    // near a switch point the grid keeps its columns (no flip-flop)
+    assert.equal(HomeLayout.columns(880, 150, 6), 6);
+    assert.equal(HomeLayout.columns(880, 150, 4), 4);
+    assert.equal(HomeLayout.columns(0, 150, 6), 2);
     // 3 rows and 2 gaps of 12 fill 556 px
     assert.equal(Math.round(HomeLayout.rowUnit(556, 3, 12, 20) * 3 + 2 * 12), 556);
     // never under the minimum (home scrolls then)
     assert.equal(HomeLayout.rowUnit(100, 3, 12, 150), 150);
 });
 
-test('home tiles are equal cells, three by three, in reading order', () => {
+test('home tiles pack without overlap or holes, the heaviest first', () => {
     const tiles = Categories.home();
-    for (const cols of [2, 3]) {
+    for (const cols of [2, 4, 6]) {
         const { cells, rows } = HomeLayout.pack(tiles, cols);
         assert.equal(cells.length, 9);
-        assert.equal(rows, Math.ceil(9 / cols));
-        cells.forEach((c, i) => {
-            assert.deepEqual([c.w, c.h], [1, 1], c.id);
-            assert.deepEqual([c.col, c.row], [i % cols, Math.floor(i / cols)], c.id);
-        });
+        const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
+        for (const c of cells) {
+            assert.ok(c.col + c.w <= cols, `${c.id} inside ${cols} columns`);
+            for (let y = c.row; y < c.row + c.h; y++)
+                for (let x = c.col; x < c.col + c.w; x++) {
+                    assert.equal(grid[y][x], null, `${c.id} overlaps ${grid[y][x]} (${cols} columns)`);
+                    grid[y][x] = c.id;
+                }
+        }
+        grid.forEach((line, y) => line.forEach((v, x) => assert.ok(v, `hole at ${x},${y} in ${cols} columns`)));
+        assert.equal(cells[0].id, 'screen');
+        assert.deepEqual([cells[0].col, cells[0].row], [0, 0]);
     }
+    // six columns: Screen two thirds wide and two rows tall, Look beside it
+    const six = HomeLayout.pack(tiles, 6).cells;
+    assert.deepEqual([six[0].w, six[0].h], [4, 2]);
+    assert.deepEqual([six[1].id, six[1].col, six[1].w, six[1].h], ['look', 4, 2, 2]);
 });
 
 test('arrow keys move to the next tile that way', () => {
-    const { cells } = HomeLayout.pack(Categories.home(), 3);
+    const { cells } = HomeLayout.pack(Categories.home(), 6);
     const at = id => cells.findIndex(c => c.id === id);
-    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'right')].id, 'screen');
-    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'down')].id, 'panels');
-    assert.equal(HomeLayout.neighbour(cells, at('look'), 'left'), at('look'));
-    assert.equal(HomeLayout.neighbour(cells, at('look'), 'up'), at('look'));
+    assert.equal(cells[HomeLayout.neighbour(cells, at('screen'), 'right')].id, 'look');
+    assert.equal(cells[HomeLayout.neighbour(cells, at('screen'), 'down')].id, 'panels');
+    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'down')].id, 'notifications');
+    assert.equal(HomeLayout.neighbour(cells, at('screen'), 'left'), at('screen'));
+    assert.equal(HomeLayout.neighbour(cells, at('screen'), 'up'), at('screen'));
 });
 
 test('page cards: 1 to 3 columns, masonry without overlap', () => {
@@ -119,12 +132,23 @@ test('every tile has a live status line in every language', () => {
     const en = tr('en');
     const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
     assert.equal(HomeStatus.line('screen', ctx), 'Top bar · island · dock');
-    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 · edge 2');
+    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6\u00a0px · border 2\u00a0px');
     // an "auto" corner is named as the shell resolves it
     assert.equal(HomeStatus.line('notifications', ctx), 'Top right');
     // the former status tiles' live values, in plain words
-    assert.equal(HomeStatus.line('devices', { ...ctx, network: 'Sakura 5G', volume: 0.62, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), 'Sakura 5G · Volume 62 % · 2560×1440 · 144 Hz');
+    // one short line: the network and the volume; the monitor only alone
+    assert.equal(HomeStatus.line('devices', { ...ctx, network: 'Sakura 5G', volume: 0.62, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), 'Sakura 5G · Volume 62\u00a0%');
+    assert.equal(HomeStatus.line('devices', { ...ctx, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), '2560×1440 · 144 Hz');
+    // the first letter is capitalised
+    assert.equal(HomeStatus.line('system', { ...ctx, update: false }), 'Up to date');
     assert.equal(HomeStatus.line('system', { ...ctx, language: 'English', update: false }), 'English · up to date');
+    assert.equal(HomeStatus.line('assistant', ctx), 'On');
+    values['ai.defaultModel'] = 'claude-opus';
+    assert.equal(HomeStatus.line('assistant', ctx), 'claude-opus');
+    values['ai.enabled'] = false;
+    assert.equal(HomeStatus.line('assistant', ctx), 'Off');
+    values['keyboard.layouts'] = [{ layout: 'us' }, { layout: 'ru' }];
+    assert.equal(HomeStatus.line('keys', ctx), 'US, RU');
     assert.equal(HomeStatus.line('panels', ctx), 'Launcher: Auto');
     values['notifications.dnd.enabled'] = true;
     assert.equal(HomeStatus.line('notifications', ctx), 'Do Not Disturb is on');
@@ -133,12 +157,13 @@ test('every tile has a live status line in every language', () => {
     assert.equal(HomeStatus.line('screen', ctx), '2 bars · island');
 });
 
-test('every home tile scene is registered by its full path (the audit sees it) and exists', () => {
+test('every home scene is registered by its full path (the audit sees it) and exists', () => {
     const fs = require('node:fs');
     const Registry = loadLibrary(path.join(dir, 'Registry.js'));
-    for (const g of Categories.home()) {
-        const f = Registry.scene(g.id);
-        assert.ok(f, `${g.id} has a scene`);
+    // Screen and Look are pictures; the other tiles are their icon
+    for (const id of ['screen', 'look']) {
+        const f = Registry.scene(id);
+        assert.ok(f, `${id} has a scene`);
         assert.ok(fs.existsSync(path.join(dir, f)), f);
     }
     const files = fs.readdirSync(path.join(dir, 'home')).filter(f => f.endsWith('Scene.qml'));
@@ -155,6 +180,9 @@ test('the page order: plain rows, then big controls, the lead ones first in each
     ];
     assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'])], [3, 1, 2, 0]);
     assert.deepEqual([...BentoLayout.order(secs, [])], [1, 3, 0, 2]);
+    // one column (two panes, or no stage): the lead cards, then the schema order
+    assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'], null, true)], [2, 3, 0, 1]);
+    assert.deepEqual([...BentoLayout.order(secs, [], null, true)], [0, 1, 2, 3]);
 });
 
 test('a narrow card fills the hole a wide one leaves; fixed columns stay', () => {

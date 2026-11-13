@@ -104,21 +104,16 @@ Item {
                 text: row.description || row.code
                 font.weight: Font.DemiBold
             }
-            Rectangle {
+            // the layout in use: the kit's active chip (the accent marks
+            // what is active; a raw amber badge was off the palette)
+            Chip {
+                objectName: "layoutActive"
                 visible: row.active
                 anchors.verticalCenter: parent.verticalCenter
-                width: activeLabel.implicitWidth + 14
-                height: 18
-                radius: 9
-                color: Ui.alpha(Colors.tertiary, 0.2)
-                KitText {
-                    id: activeLabel
-                    role: "caption"
-                    anchors.centerIn: parent
-                    text: I18n.t("prefs.keyboard.active")
-                    font.weight: Font.DemiBold
-                    color: Colors.tertiary
-                }
+                dense: true
+                active: true
+                Accessible.role: Accessible.StaticText
+                text: I18n.t("prefs.keyboard.active")
             }
         }
         KitText {

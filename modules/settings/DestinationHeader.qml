@@ -41,7 +41,7 @@ Item {
             objectName: "backPill"
             anchors.verticalCenter: parent.verticalCenter
             icon: Icons.arrowLeft
-            size: "l"
+            size: "m"
             focusable: true
             tooltip: I18n.t("prefs.home.back")
             onClicked: header.back()
@@ -152,7 +152,8 @@ Item {
         anchors.right: parent.right
         y: (Space.controlL - height) / 2
         icon: Icons.arrowCounterClockwise
-        size: "l"
+        // "m": a boxed language (glass) draws "l" as a 70 px disc
+        size: "m"
         focusable: true
         enabled: SettingsStore.undoStack.length > 0
         opacity: enabled ? 1 : 0.4
@@ -160,15 +161,16 @@ Item {
         onClicked: SettingsStore.undo()
     }
 
-    SectionLabel {
+    // a real (quiet) button, not grey text: it resets the whole tab
+    PillButton {
         id: resetLabel
         objectName: "pageReset"
         anchors.right: undoButton.left
         anchors.rightMargin: Space.m
         anchors.verticalCenter: undoButton.verticalCenter
-        inset: 0
         visible: header.modifiedCount > 0
-        action: I18n.t("prefs.common.reset_page")
-        onTriggered: SettingsStore.resetCategory(header.category)
+        kind: "ghost"
+        text: I18n.t("prefs.common.reset_page")
+        onClicked: SettingsStore.resetCategory(header.category)
     }
 }

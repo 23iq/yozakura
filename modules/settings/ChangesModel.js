@@ -23,6 +23,12 @@ function describe(entry, value, tr) {
         if (SchemaUtil.equal(opts[i].value, value))
             return t(opts[i].label);
     }
+    // a slider's named values ("-1" = "Style's own")
+    var special = entry && entry.specialValues;
+    for (var j = 0; special && j < special.length; j++) {
+        if (SchemaUtil.equal(special[j].value, value))
+            return t(special[j].label);
+    }
     if (entry && entry.invert && typeof value === "boolean")
         value = !value;
     var unit = entry && entry.unit ? " " + entry.unit : "";

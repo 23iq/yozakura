@@ -85,7 +85,12 @@ function sketch(panel, W, H, unit, spans) {
     var center = g.center || [];
     var end = (g.end || []);
     var slot = unit * (style.flat ? 0.95 : 1.05);
-    var size = unit * 0.62;
+    // a short edge (a vertical bar of a small miniature): every module
+    // shrinks along the panel so the groups never run into each other
+    var need = length(start.concat(center, end), slot, spans) + unit * (center.length > 0 ? 2.4 : 1.6);
+    var fit = need > len ? Math.max(0.4, len / need) : 1;
+    slot *= fit;
+    var size = unit * 0.62 * fit;
     var shapes = [];
     var icons = [];
     var depth = 0;
@@ -180,7 +185,9 @@ function sketch(panel, W, H, unit, spans) {
             return place(s, panel.edge, W, H);
         }),
         "icons": icons.map(function (i) {
-            return place(i, panel.edge, W, H);
+            var o = place(i, panel.edge, W, H);
+            o.fit = fit;
+            return o;
         }),
         "depth": panel.reserve === false || panel.autohide === "always" ? 0 : depth
     };

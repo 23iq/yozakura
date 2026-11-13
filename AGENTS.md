@@ -127,6 +127,8 @@ surface: `shown`, `strength`, `clicked()`); big controls `Tile`, `LevelSlider`, 
 `Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
 sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
 `Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
+Wheel: `LineSlider` / `LevelSlider` / `Knob` take the wheel only outside a scrolling view or
+once they hold the focus (`WheelGuard.js`): scrolling a page never moves a slider under the pointer.
 Animated lists: `KeyedListModel` (keys -> insert/remove/move, `KeyedSync.js`) under a ListView's
 add/remove/displaced transitions; `displaced` and `move` are a `SettleTransition` (finishes an
 interrupted enter's opacity/scale) and view transitions use NumberAnimation, never Animators. Motion: `Motion.micro` (fills, hover, focus, <= 120 ms),

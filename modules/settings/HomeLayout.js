@@ -1,24 +1,27 @@
 .pragma library
 
-// The home grid (SettingsHome): how many columns a width takes and where
-// each tile sits. Pure, node-tested (tests/settings-home.test.cjs).
-// Every tile is one cell (Categories.HOME: nine equal tiles, three by
-// three); the rows stretch so the grid fills the window (rowUnit).
+// The home bento (SettingsHome): a grid of six columns where a tile's size
+// is the weight of its destination (Categories.HOME: w x h in six-column
+// cells), four columns in a narrower window and two in a narrow one (spans
+// scaled down, see pack). Pure, node-tested (tests/settings-home.test.cjs).
+// The rows stretch so the grid fills the window (rowUnit).
 
-var SPANS = {
-    "big": [6, 8],
-    "wide": [3, 4],
-    "small": [2, 4]
-};
+var FULL = 6;
 
-// Columns for a content width: 3 when three tiles of `minTile` fit, else
-// 2. `current` (the count shown now) gives hysteresis: three stay until the
-// width is a margin under the switch point, so a resize near it never makes
-// the grid flip back and forth.
-function columns(width, minTile, current) {
-    var edge = Math.max(1, minTile) * 3;
-    var margin = current === 3 ? Math.max(1, minTile) * 0.15 : 0;
-    return width >= edge - margin ? 3 : 2;
+// Columns for a content width: 6 when a sixth of it is at least `minCell`,
+// else 4, else 2. `current` (the count shown now) gives hysteresis: a grid
+// keeps its columns until the width is a margin under the switch point, so
+// a resize near it never makes the grid flip back and forth.
+function columns(width, minCell, current) {
+    var cell = Math.max(1, minCell);
+    var counts = [FULL, 4];
+    for (var i = 0; i < counts.length; i++) {
+        var n = counts[i];
+        var margin = current === n ? cell * n * 0.08 : 0;
+        if (width >= cell * n - margin)
+            return n;
+    }
+    return 2;
 }
 
 // The height of one row unit so `rows` units (and their gaps) fill
@@ -50,8 +53,12 @@ function pack(tiles, cols) {
     var cells = [];
     var rows = 0;
     tiles.forEach(function (t) {
-        var span = t.w ? [t.w, t.h || 1] : (SPANS[t.size] || [1, 1]);
-        var w = Math.min(span[0], cols), h = span[1];
+        var span = [t.w || 1, t.h || 1];
+        // fewer columns: the spans shrink with the grid (a third of six
+        // columns stays a third of four, at least one cell); in two columns
+        // a tile wider than half the grid takes the whole width
+        var w = cols >= FULL ? span[0] : cols <= 2 ? (span[0] * 2 > FULL ? cols : 1) : Math.max(1, Math.min(cols, Math.round(span[0] * cols / FULL)));
+        var h = span[1];
         for (var r = 0; ; r++) {
             var placed = false;
             for (var c = 0; c + w <= cols; c++) {
@@ -71,6 +78,16 @@ function pack(tiles, cols) {
             }
             if (placed)
                 break;
+        }
+    });
+    // no hole at the end of a line: the last one-row tile of a line takes
+    // the free cells after it
+    cells.forEach(function (c) {
+        if (c.h !== 1)
+            return;
+        while (c.col + c.w < cols && free(c.col + c.w, c.row, 1, 1)) {
+            take(c.col + c.w, c.row, 1, 1);
+            c.w++;
         }
     });
     return {

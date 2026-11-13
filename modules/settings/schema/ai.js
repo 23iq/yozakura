@@ -177,6 +177,8 @@ var category = {
                 {
                     "key": "ai.systemPrompt",
                     "type": "text",
+                    // prose: a box of a few lines, all of it readable
+                    "multiline": true,
                     "label": "ai.system_prompt",
                     "description": "prefs.ai.system_prompt.desc",
                     "keywords": "system prompt instructions persona"

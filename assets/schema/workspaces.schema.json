@@ -177,7 +177,7 @@
       ]
     },
     "branchColor": {
-      "title": "Blossom colour",
+      "title": "Blossom color",
       "type": "string",
       "default": "primary",
       "description": "Palette role of the blossoms and buds. The active workspace always takes the accent.",

@@ -67,22 +67,6 @@ var category = {
             ]
         },
         {
-            "id": "exclusive",
-            "compositor": "hyprland",
-            "entries": [
-                {
-                    "id": "system.exclusive",
-                    "type": "custom",
-                    "component": "ExclusiveCard",
-                    "compositor": "hyprland",
-                    "resettable": false,
-                    "label": "prefs.exclusive.title",
-                    "description": "prefs.exclusive.desc",
-                    "keywords": "exclusive only shell hyprland waybar mako dunst backup restore minimal config user.lua disable other bars daemons systemd"
-                }
-            ]
-        },
-        {
             "id": "weather",
             "title": "settings.system.weather",
             "entries": [
@@ -245,6 +229,23 @@ var category = {
                     "keywords": "disks mount points storage metrics usage home root"
                 },
                 toggle("system.clipboard.tmpfs", "prefs.sys.clipboard_tmpfs", "prefs.sys.clipboard_tmpfs.desc", "clipboard history tmp tmpfs ram memory reboot privacy")
+            ]
+        },
+        {
+            "id": "exclusive",
+            "title": "prefs.exclusive.section",
+            "compositor": "hyprland",
+            "entries": [
+                {
+                    "id": "system.exclusive",
+                    "type": "custom",
+                    "component": "ExclusiveCard",
+                    "compositor": "hyprland",
+                    "resettable": false,
+                    "label": "prefs.exclusive.title",
+                    "description": "prefs.exclusive.desc",
+                    "keywords": "exclusive only shell hyprland waybar mako dunst backup restore minimal config user.lua disable other bars daemons systemd"
+                }
             ]
         }
     ]

@@ -9,7 +9,8 @@ import qs.modules.components.kit
 // clipped to the card's rounded corners) over a short title. Used by every
 // "pick one of these looks" row. At rest the picture has a hairline edge;
 // hovered it lifts a little and the edge firms up; `selected` rings it in
-// the accent and the title takes the active weight and a check. Keyboard:
+// the accent (inside its edge), puts a check badge in its corner and the
+// title in the active weight. Keyboard:
 // Tab focus with the kit FocusRing, Space / Enter pick. The same in every
 // visual language (the picture is the box). `subtitle` is a second caption
 // line for the rare card whose picture cannot say it. `inset`: the title
@@ -106,20 +107,36 @@ Item {
             }
         }
 
-        // The edge: a hairline at rest, the accent ring when selected.
+        // The edge: a hairline at rest, the accent ring when selected (drawn
+        // inside the picture: never cut by the card or row that holds it).
         Mark {
             anchors.fill: parent
-            anchors.margins: card.selected ? -Space.xs : 0
-            radius: card.radius + (card.selected ? Space.xs : 0)
+            radius: card.radius
             color: "transparent"
-            border.width: card.selected ? Space.stroke - 1 : Space.hairline
+            border.width: card.selected ? Space.stroke : Space.hairline
             border.color: card.selected ? Type.accent : (card.hovered ? Type.track : Type.hairline)
-            Behavior on anchors.margins {
+            Behavior on border.color {
                 enabled: Motion.micro.duration > 0
-                NumberAnimation {
+                ColorAnimation {
                     duration: Motion.micro.duration
-                    easing.type: Motion.micro.easing
                 }
+            }
+        }
+        // The chosen one also carries a check badge in its corner: the
+        // choice reads without telling the accent from the hairline.
+        Mark {
+            objectName: "choiceBadge"
+            visible: card.selected
+            width: Math.round(Type.iconSize("caption") * 1.7)
+            height: width
+            x: parent.width - width - Space.s
+            y: Space.s
+            color: Type.accent
+            Icon {
+                anchors.centerIn: parent
+                icon: Icons.accept
+                role: "caption"
+                tone: "accentInk"
             }
         }
 
@@ -157,10 +174,10 @@ Item {
         }
         Column {
             id: titleCol
-            width: parent.width - (lead.visible ? lead.width + parent.spacing : 0) - (check.visible ? check.width + parent.spacing : 0)
+            width: parent.width - (lead.visible ? lead.width + parent.spacing : 0)
             // the name, whole (as many lines as it needs: a translation is
             // never cut; the pictures of a row stay aligned on top); the
-            // chosen one on a tonal fill
+            // chosen one in the text colour and the active weight
             KitText {
                 id: titleText
                 width: parent.width
@@ -170,17 +187,6 @@ Item {
                 text: card.title
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
-
-                Mark {
-                    z: -1
-                    visible: card.selected
-                    x: -Space.xs
-                    y: -Space.hairline
-                    width: Math.min(titleText.contentWidth, titleText.width) + Space.xs * 2
-                    height: titleText.contentHeight + Space.hairline * 2
-                    radius: Look.radius("small", height)
-                    color: Qt.alpha(Type.accent, 0.16)
-                }
             }
             // a compact card keeps its description for the tooltip
             KitText {
@@ -191,14 +197,6 @@ Item {
                 wrapMode: Text.WordWrap
                 elide: Text.ElideNone
             }
-        }
-        Icon {
-            id: check
-            visible: card.selected
-            anchors.verticalCenter: titleCol.verticalCenter
-            icon: Icons.accept
-            role: "secondary"
-            tone: "accent"
         }
     }
 

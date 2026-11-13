@@ -219,7 +219,7 @@ h.eval(item("presetPick:Kaze"), "clicked()")
 check(h.eval(item("presetName"), "text") == "Kaze" and h.eval(item("presetStageShell"), "edge") == "bottom",
       "presets: a click on a preset shows it on the stage")
 check(h.eval(item("presetApply"), "enabled") is True, "presets: ...and offers to apply it")
-check(item("settingsSection:presets_saving") is not None, "presets: the studio's settings are a card of the row")
+check(item("presetsAutoSave") is not None, "presets: the studio's setting is on the gallery's heading line")
 h.eval(item("presetBrowse"), "clicked()")
 check(h.eval(ev('findItem("settingsPage").item'), "view") == "browse", "presets: Browse opens every preset and part")
 

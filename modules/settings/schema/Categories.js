@@ -55,8 +55,8 @@
 var groups = [
     { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "wallpapers", "icons-type", "presets", "changes"] },
     { "id": "screen", "icon": "frameCorners", "title": "prefs.dest.screen", "categories": ["bar", "notch", "dock", "desktop", "lockscreen"] },
-    { "id": "windows", "icon": "appWindow", "title": "prefs.dest.windows", "categories": ["windows", "overview", "specials"] },
-    { "id": "panels", "icon": "magnifyingGlass", "title": "prefs.dest.panels", "categories": ["launcher", "dashboard", "menus"] },
+    { "id": "windows", "icon": "layout", "title": "prefs.dest.windows", "categories": ["windows", "overview", "specials"] },
+    { "id": "panels", "icon": "dotsNine", "title": "prefs.dest.panels", "categories": ["launcher", "dashboard", "menus"] },
     { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications_focus", "categories": ["notifications", "timers"] },
     { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code", "voice"] },
     { "id": "keys", "icon": "keyboard", "title": "prefs.dest.keyboard", "categories": ["keyboard", "input"] },
@@ -64,12 +64,26 @@ var groups = [
     { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "terminal", "extras", "mods", "routines", "about"] }
 ];
 
-// The home grid: one equal tile per destination, three by three, in
-// reading order (HomeLayout.js). Tile size means nothing; every tile is a
-// scene of what it opens, its name and one live status line.
-var HOME = groups.map(function (g) {
+// The home bento (HomeLayout.js, a grid of six columns): a tile's size is
+// the weight of what it opens. Screen (where everything sits) is the
+// biggest, Look next, the everyday destinations a third of the width, the
+// rarely visited ones a sixth. Reading order is the packing order.
+var HOME_SIZES = {
+    "screen": [4, 2],
+    "look": [2, 2],
+    "panels": [2, 1],
+    "windows": [2, 1],
+    "notifications": [2, 1],
+    "devices": [2, 1],
+    "assistant": [2, 1],
+    "keys": [1, 1],
+    "system": [1, 1]
+};
+var HOME = ["screen", "look", "panels", "windows", "notifications", "devices", "assistant", "keys", "system"].map(function (id) {
     return {
-        "id": g.id
+        "id": id,
+        "w": HOME_SIZES[id][0],
+        "h": HOME_SIZES[id][1]
     };
 });
 
@@ -374,7 +388,10 @@ function tabsOf(categoryId) {
 // Home model: the tiles as destinations.
 function home() {
     return HOME.map(function (t) {
-        return groupById(t.id);
+        return Object.assign({}, groupById(t.id), {
+            "w": t.w,
+            "h": t.h
+        });
     });
 }
 

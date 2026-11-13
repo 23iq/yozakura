@@ -44,6 +44,14 @@ Column {
         }
     }
 
+    // what the bar and the slider under it are: the warmth, candle to
+    // daylight
+    KitText {
+        width: root.width
+        role: "secondary"
+        text: I18n.t("prefs.displays.warmth")
+        opacity: root.on ? 1 : 0.6
+    }
     // candle -> daylight
     Mark {
         width: root.width
@@ -73,5 +81,19 @@ Column {
         showValue: true
         valueText: root.temp + " K"
         onMoved: v => NightLightClient.setTemperature(Math.round(v / 100) * 100)
+    }
+    Item {
+        width: root.width
+        height: warmer.height
+        KitText {
+            id: warmer
+            role: "caption"
+            text: I18n.t("prefs.displays.warmer")
+        }
+        KitText {
+            anchors.right: parent.right
+            role: "caption"
+            text: I18n.t("prefs.displays.cooler")
+        }
     }
 }

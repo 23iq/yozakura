@@ -43,11 +43,13 @@ Item {
     // Off until the first frame: a deep link opens straight on its page.
     property bool animated: false
 
+    // A whole-window morph (the morph token, not a glide: a short glide
+    // reads as a flash at this size), decelerating so it lands softly.
     Behavior on reveal {
-        enabled: shell.animated && Motion.glide.duration > 0
+        enabled: shell.animated && Motion.morph.duration > 0
         NumberAnimation {
-            duration: Motion.glide.duration
-            easing.type: Motion.glide.easing
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -240,8 +242,9 @@ Item {
         visible: shell.reveal < 1
         enabled: shell.atHome
         focus: shell.atHome
-        opacity: 1 - shell.reveal
-        scale: 1 - shell.reveal * 0.03
+        // gone under the growing card early: never two screens at once
+        opacity: Math.max(0, 1 - shell.reveal / 0.35)
+        scale: 1 - Math.min(1, shell.reveal / 0.35) * 0.03
         onDestinationOpened: (id, tile) => shell.openDestination(id, tile)
         onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
         onPresetAction: id => shell.presetAction(id)
@@ -263,8 +266,12 @@ Item {
         width: o.w + (shell.width - o.w) * t
         height: o.h + (shell.height - o.h) * t
         radius: Look.bigRadius(Space.controlXL) * (1 - t)
-        color: Look.raisedFill(false)
-        opacity: Math.min(1, (1 - t) * 4)
+        // opaque (a translucent box over a fading home and a fading page
+        // was three layers at once): the window's own ground, then it
+        // gives way to the page in the last third
+        readonly property color ground: Look.cardFill(false)
+        color: Qt.rgba(ground.r, ground.g, ground.b, 1)
+        opacity: t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3)
     }
 
     FocusScope {
@@ -276,8 +283,9 @@ Item {
         visible: shell.reveal > 0
         enabled: !shell.atHome
         focus: !shell.atHome
-        // the page arrives once the box has nearly grown
-        opacity: Math.max(0, (shell.reveal - 0.4) / 0.6)
+        // the page arrives once the card has grown and the page is laid
+        // out (it never reflows in view)
+        opacity: page.pageReady ? Math.max(0, (shell.reveal - 0.6) / 0.4) : 0
 
         DestinationHeader {
             id: header
@@ -299,6 +307,25 @@ Item {
             onLoaded: {
                 if (shell.pendingReveal)
                     revealTimer.restart();
+            }
+        }
+
+        // once the page scrolls, a hairline under the header: cards slide
+        // under a clear edge instead of being cut mid-heading
+        Mark {
+            objectName: "headerEdge"
+            x: Space.xl
+            y: page.y - Space.xs
+            width: parent.width - Space.xl * 2
+            height: Space.hairline
+            radius: 0
+            color: Type.hairline
+            opacity: (Ui.prop(page.item, "contentY") || 0) > Space.s ? 1 : 0
+            Behavior on opacity {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                }
             }
         }
     }

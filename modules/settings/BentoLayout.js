@@ -279,7 +279,7 @@ function heaviness(section, inWindow) {
 // the ones holding a big control (pictures, an editor, a list), each with
 // the lead ids first (as listed), then in schema order. The first screen
 // shows the most rows that way, the lead ones at its top.
-function order(sections, leadIds, inWindow) {
+function order(sections, leadIds, inWindow, single) {
     var secs = sections || [];
     var lead = (leadIds || []).map(function (id) {
         for (var i = 0; i < secs.length; i++)
@@ -309,6 +309,10 @@ function order(sections, leadIds, inWindow) {
     all = all.filter(function (i) {
         return i !== master;
     });
+    // one column (two panes): importance order, the lead cards then the
+    // schema's order; a masonry wants the light cards first to fill holes
+    if (single)
+        return head.concat(all);
     var light = all.filter(function (i) {
         return heaviness(secs[i], inWindow) === 0;
     });

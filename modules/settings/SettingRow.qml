@@ -92,8 +92,20 @@ FocusScope {
     // the longest word of the label (a label wraps between words, never
     // inside one) and the room the inline dropdown / font control takes:
     // when both do not fit on one line the control goes under the label
+    // A screen reader names the control by its row: the label, and the
+    // description (the label's tooltip) as its description. A control that
+    // names itself (a dropdown's current value) keeps the row label first.
+    function nameControl(item) {
+        if (!item)
+            return;
+        const label = I18n.t(row.entry.label || "");
+        const own = item.Accessible.name || "";
+        item.Accessible.name = own && own !== label ? label + ": " + own : label;
+        if (row.entry.description)
+            item.Accessible.description = I18n.t(row.entry.description);
+    }
     readonly property real labelWordNeed: String(I18n.t(entry.label || "")).split(" ").reduce((w, word) => Math.max(w, row.textWidth(word)), 0)
-    readonly property real inlineNeed: row.dropdown ? Math.max(row.selectorAsDropdown ? width * 0.48 : 0, Math.min(row.dropdownNeed, width * 0.6)) : (type === "selector" && !row.asCards ? row.selectorWidth : (type === "font" ? width * (entry.sizeKey ? 0.8 : 0.6) : 0))
+    readonly property real inlineNeed: row.dropdown ? Math.max(row.selectorAsDropdown ? width * 0.48 : 0, Math.min(row.dropdownNeed, width * 0.6)) : (type === "selector" && !row.asCards ? row.selectorWidth : (type === "font" ? width * (entry.sizeKey ? 0.7 : 0.6) : 0))
     // a measured text width with a 10 % margin: the fonts of another machine
     // can run a few percent wider, and a name must still fit whole
     function textWidth(text: string): real {
@@ -114,7 +126,7 @@ FocusScope {
     // a choice between looks is always pictures (every option visible,
     // wrapped: CardSelector), whatever the card holds
     readonly property bool asCards: entry.display === "cards"
-    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || ((row.dropdown || (type === "selector" && !row.asCards) || (type === "font" && row.dense)) && row.labelWordNeed + row.inlineNeed + Space.l * 4 + Space.xl > width) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "text" && entry.multiline === true) || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || ((row.dropdown || (type === "selector" && !row.asCards) || (type === "font" && row.dense)) && row.labelWordNeed + row.inlineNeed + Space.l * 4 + Space.xl > width) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
@@ -301,10 +313,11 @@ FocusScope {
                 id: inlineControl
                 objectName: "rowControl"
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.8 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.dropdown ? Math.max(row.selectorAsDropdown ? body.width * 0.48 : 0, Math.min(row.dropdownNeed, body.width * 0.6)) : -1)))
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.7 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.dropdown ? Math.max(row.selectorAsDropdown ? body.width * 0.48 : 0, Math.min(row.dropdownNeed, body.width * 0.6)) : -1)))
                 focus: !row.stacked
                 active: row.built && !row.stacked
                 sourceComponent: row.fixable && !row.dimmed ? fixComponent : row.controlComponent()
+                onLoaded: row.nameControl(item)
             }
         }
 
@@ -315,6 +328,7 @@ FocusScope {
             active: row.built && row.stacked
             visible: active
             sourceComponent: row.controlComponent()
+            onLoaded: row.nameControl(item)
         }
 
         // A page not converted yet may still show a live preview under a
@@ -449,6 +463,7 @@ FocusScope {
             text: row.value ?? ""
             placeholder: row.entry.placeholder ? I18n.t(row.entry.placeholder) : ""
             monospace: !!row.entry.monospace
+            multiline: row.entry.multiline === true
             invalid: !SchemaUtil.matchesPattern(row.entry, input.text)
             onEdited: t => {
                 if (SchemaUtil.matchesPattern(row.entry, t))

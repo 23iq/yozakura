@@ -41,7 +41,11 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(176)
+    // a narrow stage (a pane beside the cards): the small screen above the
+    // toast instead of beside it
+    readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
+    readonly property bool stacked: stage.narrow && stage.corners
+    readonly property real preferredHeight: stage.stacked ? Math.round(screen.height + cornerName.height + toast.height + Space.xs + Space.m * 3 + Space.s * 2) : Space.px(176)
 
     stageHeight: stage.preferredHeight
 
@@ -49,8 +53,8 @@ Stage {
     Item {
         id: shown
         objectName: "notifShown"
-        anchors.centerIn: parent
-        anchors.horizontalCenterOffset: stage.corners ? Space.px(90) : 0
+        x: Math.round((stage.width - width) / 2 + (stage.corners && !stage.stacked ? Space.px(90) : 0))
+        y: stage.stacked ? Math.round(cornerName.y + cornerName.height + Space.m) : Math.round((stage.height - height) / 2)
         width: toast.width
         height: toast.height
 
@@ -76,7 +80,7 @@ Stage {
             objectName: "notifToast"
             readonly property bool island: stage.presentation === "notch"
             readonly property bool strip: stage.presentation === "strips"
-            width: toast.island && stage.compactIsland ? Space.px(300) : (toast.strip ? Space.px(120) : Space.px(380))
+            width: Math.min(stage.width - Space.l * 2, toast.island && stage.compactIsland ? Space.px(300) : (toast.strip ? Space.px(120) : Space.px(380)))
             height: toast.strip ? stage.height - Space.m * 2 : (toast.island && stage.compactIsland ? Space.px(44) : body.implicitHeight + Space.m * 2)
             variant: toast.island ? "bg" : "popup"
             enableShadow: true
@@ -184,8 +188,8 @@ Stage {
         id: screen
         objectName: "notifScreen"
         visible: stage.corners
-        anchors.verticalCenter: parent.verticalCenter
-        x: Space.xl
+        y: stage.stacked ? Space.m : Math.round((parent.height - height - cornerName.height - Space.xs) / 2)
+        x: stage.stacked ? Math.round((parent.width - width) / 2) : Space.xl
         width: Space.px(176)
         height: Math.round(width * 9 / 16)
         radius: Look.radius("box", height)
@@ -214,12 +218,16 @@ Stage {
                     anchors.margins: -Space.xs
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.name: I18n.t("prefs.notif.position." + place.modelData)
+                    Accessible.checked: place.current
                     onClicked: SettingsStore.transaction("prefs.undo.notif_moved", () => SettingsStore.set("notifications.position", place.modelData))
                 }
             }
         }
     }
     KitText {
+        id: cornerName
         visible: stage.corners
         anchors.top: screen.bottom
         anchors.topMargin: Space.xs

@@ -703,7 +703,7 @@ ink,glass,tiles --mode dark|light`), and view the PNGs.
 
 **Add a settings category.** `modules/settings/schema/<id>.js` + import in
 `Categories.js`, as a tab of one of the nine destinations (`groups`; home
-shows them 3x3, so prefer a tab to a new destination); a stage only if the
+shows them as a weighted bento, so prefer a tab to a new destination); a stage only if the
 tab is about the desktop (`Registry.DESKTOP_STAGES`), picture cards per
 "CONVERTING A PAGE" in `modules/settings/AGENTS.md`.
 

@@ -37,12 +37,12 @@ Flickable {
     readonly property real footH: page.heroIds.length > 0 && page.stageUrl !== "" ? Space.px(76) : 0
     // a wide page puts the foot beside the stage (the library as a grid as
     // tall as the miniature) instead of under it: one band, not two
-    readonly property bool footSide: page.footH > 0 && heroArea.width - page.height / 3 * 16 / 9 - Space.l >= Space.px(480)
+    readonly property bool footSide: !page.split && page.footH > 0 && heroArea.width - page.height / 3 * 16 / 9 - Space.l >= Space.px(480)
     // `row`: the sections that lead the page, in this order
     readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
     // the sections in page order: the lead ones first, then cards of plain
     // rows, then cards of big controls (BentoLayout.order)
-    readonly property var order: BentoLayout.order(page.category.sections || [], page.leadIds, SchemaUtil.inWindow)
+    readonly property var order: BentoLayout.order(page.category.sections || [], page.leadIds, SchemaUtil.inWindow, page.importanceOrder)
     // rank of a section in the page order (built in this order too)
     readonly property var rank: {
         const out = [];
@@ -57,6 +57,21 @@ Flickable {
     readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inWindow(e, sec)).map(e => e.key)), [])
     readonly property real margin: Space.xl
     readonly property real gap: Look.screenGap
+    // Two columns (a wide page with a stage, not a list band): the stage
+    // and its hint head the right column, the cards fill both columns in
+    // importance order and flow on under the stage (no blank pane beside a
+    // short stage, no stage over the cards).
+    readonly property bool split: page.stageUrl !== "" && !page.listForm && page.width - page.margin * 2 >= Space.px(900)
+    // a Screen tab in two panes: its stage is the whole screen with the
+    // tab's own stage as a loupe under it (stages/ScreenCanvas.qml)
+    readonly property string canvasPart: page.split ? (Registry.SCREEN_PARTS[page.category.id] || "") : ""
+    // no stage: one readable column, centred (no masonry holes)
+    readonly property bool solo: page.stageUrl === "" && !page.listForm
+    // importance order (the lead cards, then the schema's): one column, or
+    // two columns that start beside the stage
+    readonly property bool oneColumn: page.solo
+    readonly property bool importanceOrder: page.split || page.solo
+    readonly property real cardsW: page.solo ? Math.min(page.width - page.margin * 2, Space.px(760)) : page.width - page.margin * 2
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -184,9 +199,9 @@ Flickable {
     // A desktop stage (a 16:9 screen) on a wide page (two or three columns)
     // stands in the first column, the cards beside and under it (no blank band beside a
     // centred stage); a strip, a band or a narrower page keeps it on top.
-    readonly property bool beside: !!stageLoader.stage && !stageLoader.strip && !page.listForm && !page.plainStage && bento.fullCols >= 3 && bento.cols >= 2 && page.footH === 0
+    readonly property bool beside: !page.split && !!stageLoader.stage && !stageLoader.strip && !page.listForm && !page.plainStage && bento.fullCols >= 3 && bento.cols >= 2 && page.footH === 0
     // the block the stage and its hint take in the first column
-    readonly property real besideH: page.beside ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) : 0
+    readonly property real besideH: page.beside || page.split ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) : 0
     onBesideChanged: Qt.callLater(bento.relayout)
     onBesideHChanged: Qt.callLater(bento.relayout)
 
@@ -194,10 +209,11 @@ Flickable {
     Item {
         id: heroArea
         objectName: "pageHero"
-        readonly property real recede: page.beside ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
-        x: page.beside ? body.x + bento.x : page.margin
-        y: page.beside ? body.y : Space.s + page.contentY * 0.35
-        width: page.beside ? bento.colW : page.width - page.margin * 2
+        readonly property real recede: page.beside || page.split ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
+        x: page.split ? body.x + bento.x + bento.colW + bento.gap : page.beside ? body.x + bento.x : page.margin
+        y: page.split || page.beside ? body.y : Space.s + page.contentY * 0.35
+        z: 2
+        width: page.split || page.beside ? bento.colW : page.width - page.margin * 2
         height: stageLoader.active ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0
         visible: stageLoader.active
         scale: 1 - heroArea.recede * 0.12
@@ -214,16 +230,32 @@ Flickable {
             readonly property var stage: stageLoader.item
             readonly property real asked: stageLoader.stage && stageLoader.stage.preferredHeight > 0 ? stageLoader.stage.preferredHeight : 0
             // beside the cards: the column's width, a third of the page at most
-            height: page.beside ? Math.round(Math.min(heroArea.width * 9 / 16, page.height / 3)) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            height: page.split ? Math.round(stageLoader.asked > 0 ? Math.min(stageLoader.asked, page.height - page.margin * 2) : heroArea.width * 9 / 16) : page.beside ? Math.round(Math.min(heroArea.width * 9 / 16, page.height / 3)) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself
             // a strip stage (`pageWide: true`) takes the page's width (a flag,
             // never its height: that follows from the width)
             readonly property bool strip: !!stageLoader.stage && stageLoader.stage.pageWide === true
-            width: Math.round(page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
+            width: Math.round(page.split || page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: page.footSide ? 0 : (heroArea.width - width) / 2
             active: page.stageUrl !== ""
-            source: page.stageUrl
+            // the stage to show: the tab's own, or (a Screen tab in two panes)
+            // the Screen canvas with the tab's stage as its loupe; reloaded
+            // when the window crosses the two-pane width
+            readonly property string canvasPart: page.canvasPart
+            onCanvasPartChanged: stageLoader.load()
+            Component.onCompleted: stageLoader.load()
+            function load() {
+                if (!stageLoader.active)
+                    return;
+                if (page.canvasPart !== "")
+                    stageLoader.setSource(Qt.resolvedUrl(Registry.stage("ScreenCanvas")), {
+                        "part": page.canvasPart,
+                        "loupeUrl": page.stageUrl
+                    });
+                else
+                    stageLoader.setSource(page.stageUrl);
+            }
             // a page that is not about the desktop, or a strip of the thing itself
             // (the bar, the island): a plain stage, no picture
             onLoaded: {
@@ -268,10 +300,13 @@ Flickable {
     KitText {
         id: heroHint
         objectName: "heroHint"
-        visible: heroArea.visible && !!page.hero.hint
-        x: page.beside ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
+        // (none while the stage says its part is off: the hint would talk
+        // about something not there)
+        visible: heroArea.visible && !!page.hero.hint && !(stageLoader.stage && stageLoader.stage.offNote === true)
+        z: 2
+        x: page.beside || page.split ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
         y: heroArea.y + heroArea.height * heroArea.scale + Space.m
-        width: page.beside ? heroArea.width : page.footSide ? stageLoader.width : page.width - page.margin * 2
+        width: page.beside || page.split ? heroArea.width : page.footSide ? stageLoader.width : page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "caption"
         // two lines at most in a narrow window, whole
@@ -285,9 +320,9 @@ Flickable {
     Item {
         id: body
         z: 1
-        width: page.width - page.margin * 2
-        x: page.margin
-        y: heroArea.visible && !page.beside ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
+        width: page.cardsW
+        x: page.solo ? Math.round((page.width - page.cardsW) / 2) : page.margin
+        y: heroArea.visible && !page.beside && !page.split ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
         height: bento.height + (note.visible ? note.height + page.gap : 0)
 
         Item {
@@ -299,6 +334,10 @@ Flickable {
             property int fullCols: 1
             function pickCols() {
                 const w = body.width;
+                if (page.oneColumn || page.split) {
+                    bento.fullCols = page.split ? 2 : 1;
+                    return;
+                }
                 const n = BentoLayout.columns(w, Space.px(340));
                 // fewer columns only once the width is clearly under the
                 // switch point
@@ -311,9 +350,13 @@ Flickable {
                 }
             }
             Component.onCompleted: bento.pickCols()
+            readonly property bool oneColumn: page.oneColumn
+            onOneColumnChanged: bento.pickCols()
+            readonly property bool split: page.split
+            onSplitChanged: bento.pickCols()
             readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
             // the cards that show (a section without a window row is no card)
-            readonly property int cols: BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
+            readonly property int cols: page.split ? 2 : BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
             // two or three columns share the page's width; one card alone keeps
             // a column's width (centred), never stretched across
             readonly property real colW: bento.cols >= 2 ? (parent.width - gap * (cols - 1)) / cols : (parent.width - gap * (fullCols - 1)) / fullCols
@@ -346,7 +389,10 @@ Flickable {
                 for (const i of page.order) {
                     const s = sections.itemAt(i);
                     items.push({
-                        "span": Math.max(bento.spans[i] || 1, bento.grownCols === bento.cols ? (bento.grown[i] || 1) : 1),
+                        // two columns beside the stage: every card one column
+                        // wide (a wide one would drop under the stage and
+                        // break the importance order)
+                        "span": page.split ? 1 : Math.max(bento.spans[i] || 1, bento.grownCols === bento.cols ? (bento.grown[i] || 1) : 1),
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
                 }
@@ -355,9 +401,9 @@ Flickable {
                 // for a new column count, they are placed afresh (content
                 // that loads late still balances the columns)
                 const keep = bento.frozen && bento.assigned !== null && bento.assignedCols === bento.cols;
-                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, page.beside ? [
+                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, page.beside || page.split ? [
                     {
-                        "col": 0,
+                        "col": page.split ? 1 : 0,
                         "span": 1,
                         "height": page.besideH + bento.gap
                     }

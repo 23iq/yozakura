@@ -162,7 +162,7 @@ Item {
                 width: parent.width
                 role: "secondary"
                 text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.body", ExclusiveService.status.backup ?? "") : I18n.t("prefs.exclusive.confirm.enable.body")
-                wrapMode: Text.WrapAnywhere
+                wrapMode: Text.Wrap
             }
             Row {
                 spacing: Space.s

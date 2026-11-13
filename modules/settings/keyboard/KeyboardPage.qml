@@ -26,6 +26,7 @@ FittedFrame {
     id: page
     stackable: true
     stackedHeight: row.y + row.height + page.pad
+    rowNeed: Math.max(kbCard1.chrome + kbScroll1.needed, kbCard2.chrome + kbScroll2.needed, kbCard3.chrome + kbScroll3.needed)
 
     required property var category
 
@@ -192,11 +193,13 @@ FittedFrame {
         readonly property real unitW: (row.width - row.spacing * 2) / 3.2
 
         PageCard {
+            id: kbCard1
             width: page.stacked ? row.width : row.unitW * 1.2
             height: page.rowH
             title: I18n.t("prefs.keyboard.layouts")
             value: KeyboardService.shortLabel
             CardScroll {
+                id: kbScroll1
                 anchors.fill: parent
                 LayoutList {
                     objectName: "layoutList"
@@ -216,10 +219,12 @@ FittedFrame {
         }
 
         PageCard {
+            id: kbCard2
             width: page.stacked ? row.width : row.unitW
             height: page.rowH
             title: I18n.t("prefs.keyboard.switching")
             CardScroll {
+                id: kbScroll2
                 anchors.fill: parent
                 KeyboardOptions {
                     objectName: "optionsCard"
@@ -238,10 +243,12 @@ FittedFrame {
         }
 
         PageCard {
+            id: kbCard3
             width: page.stacked ? row.width : row.unitW
             height: page.rowH
             title: I18n.t("prefs.keyboard.typing")
             CardScroll {
+                id: kbScroll3
                 anchors.fill: parent
                 TypingCard {
                     objectName: "typingCard"

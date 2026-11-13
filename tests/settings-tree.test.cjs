@@ -24,17 +24,22 @@ const TABS = {
     system: ['system', 'updates', 'terminal', 'extras', 'mods', 'routines', 'about'],
 };
 
-test('home is nine equal tiles, one per destination, titled (en, es, ru) and with an icon', () => {
+test('home is the nine destinations, sized by weight, titled (en, es, ru) and with an icon', () => {
     const home = Categories.home();
-    assert.deepEqual(plain(home.map(g => g.id)), TILES);
+    assert.deepEqual(plain(home.map(g => g.id)).sort(), [...TILES].sort(), 'one tile per destination');
     assert.equal(Categories.pills, undefined, 'no status-tile row');
+    const area = g => g.w * g.h;
     for (const g of home) {
-        assert.equal(g.w, undefined, `${g.id}: tiles carry no size`);
+        assert.ok(g.w >= 1 && g.h >= 1, `${g.id}: a size in six-column cells`);
         for (const lang of ['en', 'es', 'ru'])
             assert.ok(tr(lang)[g.title], `${lang} ${g.title}`);
         assert.ok(g.icon, g.id);
         assert.ok(g.categories.length > 0, g.id);
     }
+    // reading order is weight order: no tile is bigger than one before it
+    home.forEach((g, i) => i > 0 && assert.ok(area(g) <= area(home[i - 1]), `${g.id} after a smaller tile`));
+    assert.equal(home[0].id, 'screen', 'Screen is the biggest tile');
+    assert.equal(home[1].id, 'look', 'Look comes next');
 });
 
 test('the destinations and their tabs', () => {

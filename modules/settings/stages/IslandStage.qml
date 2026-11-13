@@ -57,8 +57,11 @@ Stage {
     readonly property real u: Math.round(Space.px(56) * (stage.shape === "pill" ? 0.86 : 1))
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    // as tall as the island and its room, no more
-    readonly property real preferredHeight: Math.round(stage.u * 1.6 + Space.m * 2)
+    // a narrow stage (the loupe of the Screen canvas): the state chips go
+    // under the island instead of beside it
+    readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
+    // as tall as the island and its room (and the chips under it), no more
+    readonly property real preferredHeight: Math.round(stage.u * 1.6 + Space.m * 2 + (stage.narrow ? chips.implicitHeight + Space.m : 0))
 
     stageHeight: stage.preferredHeight
     calm: true
@@ -85,7 +88,7 @@ Stage {
         width: Math.round(Math.max(content.implicitWidth + stage.u * 1.2, stage.u * 5))
         height: stage.u + (attached ? r : 0)
         // centred in the room the chips leave (or at its start / end)
-        readonly property real room: stage.width - chips.width - Space.xl * 3
+        readonly property real room: stage.narrow ? stage.width - Space.xl * 2 : stage.width - chips.width - Space.xl * 3
         x: stage.align === "start" ? Space.xl : (stage.align === "end" ? room - width + Space.xl : (room - width) / 2 + Space.xl)
         y: island.attached ? (stage.atBottom ? band.y + band.height - height + r : band.y - r) : (stage.atBottom ? band.y + band.height - height - Space.s : band.y + Space.s)
         variant: "bg"
@@ -235,10 +238,9 @@ Stage {
     Segmented {
         id: chips
         objectName: "islandStates"
-        // beside the island, on the right
-        anchors.right: parent.right
-        anchors.rightMargin: Space.xl
-        anchors.verticalCenter: parent.verticalCenter
+        // beside the island, on the right; under it on a narrow stage
+        x: stage.narrow ? Math.round((parent.width - width) / 2) : parent.width - width - Space.xl
+        y: stage.narrow ? (stage.atBottom ? Space.m : parent.height - height - Space.m) : Math.round((parent.height - height) / 2)
         visible: stage.islandOn
         model: stage.stateList.map(s => ({
                     "name": "islandState:" + s.id,

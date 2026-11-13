@@ -11,6 +11,8 @@ Item {
     id: root
 
     property var options: []
+    // the height of the whole list (the page grows its row to it where it can)
+    readonly property real needed: list.contentHeight
     property string value: ""
     signal selected(string value)
 

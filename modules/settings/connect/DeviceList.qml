@@ -6,8 +6,9 @@ import qs.modules.components.kit
 
 // The list of a connect page's card (Wi-Fi networks, Bluetooth devices,
 // audio devices): rows of a glyph, a name, a state line and a trailing
-// mark, the picked one washed in the accent; it scrolls inside its card
-// with a fade at the foot while more is below. `rows`: [{key, icon, title,
+// mark, the picked one washed in the accent; as tall as its rows (the page
+// scrolls), scrolling inside its card with a fade at the foot only past
+// eight rows or in a fixed-height host (`fillHeight`). `rows`: [{key, icon, title,
 // line, on, trailing, volume}] (icon / trailing: Icons names; volume: a
 // level 0..1.5 the row shows as its own volume line, -1 or absent: none).
 // `empty`: what an empty list says.
@@ -26,7 +27,11 @@ Item {
     // a row's volume line moved (the rows with a `volume`)
     signal volumeMoved(string key, real value)
 
-    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3
+    // as tall as its rows (the page scrolls, not the card); an inner
+    // scroll only past eight rows; an empty list keeps room for its note
+    readonly property real rowsHeight: root.rows.reduce((h, r) => h + root.baseH + ((r.volume ?? -1) >= 0 ? Space.controlS : 0), 0) + Math.max(0, root.rows.length - 1) * Space.xs
+    readonly property real capHeight: (root.baseH + Space.xs) * 8
+    implicitHeight: root.fillHeight > 0 ? root.fillHeight : (root.rows.length === 0 ? Space.controlL * 2 : Math.min(root.rowsHeight, root.capHeight))
     clip: true
 
     KitText {

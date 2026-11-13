@@ -53,6 +53,8 @@ Stage {
             x: 0
             // the bar with even padding around it
             y: stage.currentEdge === "bottom" ? crop.height - height - Space.m : Space.m
+            // a magnified strip: glyphs at 10 px or more on a narrow pane too
+            minUnit: Space.px(19)
             showWindows: false
             showDock: false
             corners: false

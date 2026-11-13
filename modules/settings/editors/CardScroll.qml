@@ -8,6 +8,8 @@ Item {
     id: root
 
     default property alias content: column.data
+    // the height the content wants (the card grows to it where it can)
+    readonly property real needed: column.height
 
     clip: true
 

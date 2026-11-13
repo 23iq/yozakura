@@ -83,22 +83,29 @@ def page(cat: str, label: str | None = None) -> dict | None:
             check(cat in DESKTOP or not st["desktop"], f"{cat}: a desktop stage on a page that is not about the desktop")
             # the strips of the bar, island, dock, toasts and OSD read at a glance
             if cat in ("bar", "notch", "dock", "notifications", "menus"):
-                check(st["glyph"] >= 10, f"{cat}: the smallest glyph on the stage is {st['glyph']} px (want 10)")
+                # (0: nothing but the Screen canvas, e.g. the island off: no loupe)
+                check(st["glyph"] == 0 or st["glyph"] >= 10, f"{cat}: the smallest glyph on the stage is {st['glyph']} px (want 10)")
     return m
 
 
 # Tabs whose first screen is still short of the goal (big pictures or
 # editors among their first cards): a ratchet, they may only go up.
-SHORT = {"appearance": 7, "wallpapers": 1, "bar": 6, "launcher": 6, "desktop": 5, "lockscreen": 5, "menus": 6,
-         "dashboard": 6, "power": 2, "terminal": 4, "windows": 6, "notch": 7}
+# Lowered on 2026-11-13 when pages became one readable column (two panes:
+# cards beside a sticky stage; no stage: one centred column) instead of a
+# masonry of two or three columns: fewer rows reach the first screen, by
+# design (the owner chose readability over density).
+SHORT = {"appearance": 2, "wallpapers": 1, "bar": 4, "launcher": 5, "desktop": 5, "lockscreen": 5, "menus": 5,
+         "dashboard": 6, "power": 2, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 3,
+         "ai": 7, "voice": 6, "timers": 7}
 
 
 def dense(cat: str, m: dict | None) -> None:
     """The first screen at 1180x780 shows the stage and at least 8 whole rows
-    on a page with a stage, 14 on a plain page (or every row it has)."""
+    on a page with a stage, 9 on a plain page (one column; or every row it
+    has)."""
     if m is None or m["home"] or not m["schema"] or m["list"]:
         return
-    want = min(8 if m["stage"] is not None else 14, m["rowsTotal"])
+    want = min(8 if m["stage"] is not None else 9, m["rowsTotal"])
     if cat in SHORT and SHORT[cat] < want:
         check(m["rows"] >= SHORT[cat], f"{cat}: {m['rows']} whole rows on the first screen, fewer than before ({SHORT[cat]})")
         return

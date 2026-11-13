@@ -76,7 +76,10 @@ Item {
 
     // Module size in stage pixels: a bar of a 1920 px screen at the scale
     // of the stage, never so small that a glyph stops reading.
-    readonly property real unit: Math.max(Space.px(16), Math.round(screen.width * 0.03)) * (screen.compact ? 0.86 : 1)
+    // the smallest module size: a strip that magnifies the bar (the Bar
+    // loupe) asks for more so its glyphs read
+    property real minUnit: Space.px(16)
+    readonly property real unit: Math.max(screen.minUnit, Math.round(screen.width * 0.03)) * (screen.compact ? 0.86 : 1)
     readonly property real frameWidth: screen.frame ? Math.max(Space.xs, Math.round(screen.unit * 0.3)) : 0
     // Slots the wide modules take (the real clock and workspace strip).
     readonly property var spans: ({
@@ -340,7 +343,7 @@ Item {
                                 onLoaded: {
                                     item.now = new Date(2026, 3, 9, 21, 47);
                                     item.textColor = Qt.binding(() => Colors.overBackground);
-                                    item.fontSize = Qt.binding(() => Math.round(screen.unit * 0.66));
+                                    item.fontSize = Qt.binding(() => Math.round(screen.unit * 0.66 * (slot.modelData.fit || 1)));
                                     item.face = Qt.binding(() => screen.face);
                                     item.use12h = Qt.binding(() => screen.use12h);
                                     item.vertical = Qt.binding(() => panel.vertical);
@@ -359,7 +362,7 @@ Item {
                             anchors.centerIn: parent
                             visible: slot.modelData.id === "workspaces"
                             columns: panel.vertical ? 1 : screen.workspaces
-                            readonly property real cell: Math.round(screen.unit * 0.85)
+                            readonly property real cell: Math.round(screen.unit * 0.85 * (slot.modelData.fit || 1))
                             Repeater {
                                 model: slot.modelData.id === "workspaces" ? screen.workspaces : 0
                                 delegate: Item {

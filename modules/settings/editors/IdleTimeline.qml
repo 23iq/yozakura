@@ -51,7 +51,7 @@ Item {
     readonly property var ids: Steps.STEPS.map(s => s.id)
     readonly property real knob: Space.controlXS
     // knob centres on the track, pushed apart where times nearly meet
-    readonly property var centres: Steps.spread(root.ids.map(id => track.x + Steps.toPos(root.steps[id]) * track.width), root.knob + Space.xs, track.x, track.x + track.width)
+    readonly property var centres: Steps.spread(root.ids.map(id => track.x + Steps.toPos(root.steps[id]) * track.width), root.knob + Space.s, track.x, track.x + track.width)
 
     function commit() {
         const id = root.dragging, v = root.dragValue;
@@ -161,6 +161,9 @@ Item {
             readonly property bool on: step.value !== null
             readonly property bool active: root.dragging === modelData || knobArea.containsMouse
             objectName: "idleStep:" + modelData
+            // a screen reader names the step and its time
+            Accessible.role: Accessible.Slider
+            Accessible.name: I18n.t(root.meta[step.modelData].label) + ": " + Steps.label(step.value, k => I18n.t(k))
             x: root.centres[index] - width / 2
             y: track.y + track.height / 2 - height / 2
             width: root.knob

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
+import "WheelGuard.js" as WheelGuard
 
 // A chunky level slider (volume, brightness): a pill track on the raised
 // surface (Look.raisedFill) with a tonal fill (Look.tonal; `strong`: solid
@@ -200,7 +201,14 @@ Item {
             if (mouse.onCap && m.x < root.cap)
                 root.iconClicked();
         }
-        onWheel: w => root.stepBy((w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1)
+        onWheel: w => {
+            // a scrolling page keeps the wheel unless this has the focus
+            if (!WheelGuard.owns(root)) {
+                w.accepted = false;
+                return;
+            }
+            root.stepBy((w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1);
+        }
     }
 
     // The detail zone: a caret behind a short divider.

@@ -75,4 +75,6 @@ test('values of a custom editor (no options) read as words, not ids', () => {
     assert.equal(Changes.describe({ type: 'custom' }, 'islands', t), 'Islands');
     assert.equal(Changes.describe({ type: 'custom' }, '/home/me/a b.png', t), '/home/me/a b.png');
     assert.equal(Changes.describe({ type: 'slider', unit: 'px' }, 4, t), '4 px');
+    // a slider's named value reads as its name, never the raw number
+    assert.equal(Changes.describe({ type: 'slider', unit: 'px', specialValues: [{ value: -1, label: 'own' }] }, -1, t), t('own'));
 });

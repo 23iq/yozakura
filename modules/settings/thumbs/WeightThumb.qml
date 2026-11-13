@@ -15,9 +15,8 @@ Item {
     readonly property string family: Icons.families[String(root.value)] || "Phosphor-Bold"
 
     Grid {
-        // above the card's title (ChoiceCard inset)
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round((root.height * 0.72 - height) / 2)
+        // centred in the picture (the card's title is under it)
+        anchors.centerIn: parent
         columns: 2
         spacing: Space.s
         Repeater {

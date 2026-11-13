@@ -30,7 +30,9 @@ var category = {
         "hint": "prefs.bar.hero_hint"
     },
     // One row of cards under the stage.
-    "row": ["style", "shape", "layout"],
+    // the bar being edited (the list beside the canvas), where it sits,
+    // its shape, then its modules
+    "row": ["panels", "style", "shape", "layout"],
     "sections": [
         {
             "id": "panels",

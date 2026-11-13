@@ -44,7 +44,11 @@ Flickable {
     property real bandShare: 0.24
     readonly property real bandH: frame.listForm && frame.band ? Math.round(Math.max(Space.px(120), frame.height * frame.bandShare, frame.bandMin)) : 0
     // the row of cards: one card height, or (list form) the rest of the page
-    readonly property real rowH: frame.listForm ? Math.max(Look.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Look.cardRowHeight
+    // the height the cards of the row want (a page sets it from its cards'
+    // content): the row grows to it, the hero gives up the room, so a card
+    // never scrolls inside itself while the window has room for it
+    property real rowNeed: 0
+    readonly property real rowH: frame.listForm ? Math.max(Look.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Math.max(Look.cardRowHeight, Math.min(frame.rowNeed, frame.height - Space.s - frame.hintH - frame.gap - frame.pad - Space.px(200)))
     readonly property real rowY: frame.height - frame.rowH - frame.pad
     // the stage form's hero: the height the hint and the row leave
     readonly property real heroH: Math.max(Space.px(160), frame.height - Space.s - frame.hintH - frame.gap - frame.rowH - frame.pad)

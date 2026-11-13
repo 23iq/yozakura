@@ -10,16 +10,18 @@ import "../../keybinds/BindModel.js" as BindModel
 
 // Shortcuts > every bind, grouped (BindModel.GROUPS: a small heading, then
 // one compact KeybindRow each; a click opens it to edit, record keys and
-// change the action), filtered by the search beside it. One list that
-// scrolls inside its card, with a fade at the foot while more is below;
-// a bind just added or searched for is scrolled into view.
+// change the action), filtered by the search beside it. The whole list in
+// its card (the page scrolls); a bind just added or searched for is
+// scrolled into view.
 Item {
     id: root
 
     property var entry
     property real fillHeight: 0
     objectName: "shortcutList"
-    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 4
+    // every bind, as tall as the list (the page scrolls, not the card);
+    // only a fixed-height host (`fillHeight`) scrolls it inside
+    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Math.max(Space.controlL * 2, column.height)
     clip: true
 
     Flickable {
@@ -27,6 +29,7 @@ Item {
         anchors.fill: parent
         contentWidth: width
         contentHeight: column.height
+        interactive: root.fillHeight > 0 && contentHeight > height
         boundsBehavior: Flickable.StopAtBounds
 
         Column {
@@ -92,8 +95,19 @@ Item {
         function onRevealRequested(uid) {
             Qt.callLater(() => {
                 const item = root.find(column, "keybindRow:" + uid);
-                if (item)
+                if (!item)
+                    return;
+                if (flick.interactive) {
                     flick.contentY = Math.max(0, Math.min(item.mapToItem(column, 0, 0).y - Space.l, flick.contentHeight - flick.height));
+                    return;
+                }
+                // the list is whole: the page scrolls to the row
+                for (let p = root.parent; p; p = p.parent) {
+                    if (typeof p.revealItem === "function") {
+                        p.revealItem(item);
+                        break;
+                    }
+                }
             });
         }
     }

@@ -90,7 +90,10 @@ for lang, density in CASES:
     assert h.eval(get("title"), "font.weight") == 600, tag
     assert h.eval(get("label"), "font.capitalization") == 1, tag  # AllUppercase
     assert h.eval(get("label"), "font.letterSpacing") > 0, tag
-    assert h.eval(get("label"), "color.toString()") == h.eval(win, "Colors.outline.toString()"), tag
+    # labels and captions use the muted ink: the outline pulled toward the
+    # secondary ink (WCAG AA for small text in light schemes too)
+    assert h.eval(get("label"), "color.toString()") == h.eval(win, "Type.muted.toString()"), tag
+    assert h.eval(win, "Type.muted.toString()") != h.eval(win, "Colors.outline.toString()"), tag
     assert h.eval(get("secondary"), "color.toString()") == h.eval(win, "Colors.overSurfaceVariant.toString()"), tag
     # The ink on the accent is a real color (a property named on<Prop> would
     # compile as a change handler and stay invalid).

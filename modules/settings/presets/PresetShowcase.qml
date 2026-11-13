@@ -38,6 +38,8 @@ FittedFrame {
     signal mixRequested
     signal importRequested
     signal browseRequested
+    // the action column beside the stage: wide enough for two buttons a line
+    readonly property real actionsW: Math.round(Math.min(Space.px(300), Math.max(Space.px(240), root.width * 0.25)))
 
     Component.onCompleted: SchemePreviews.refresh()
 
@@ -53,10 +55,10 @@ FittedFrame {
         Stage {
             id: stage
             objectName: "pageStage"
-            readonly property real room: hero.width - root.sideW - root.gap
+            readonly property real room: hero.width - root.actionsW - root.gap
             height: Math.round(Math.max(Space.px(160), Math.min(hero.height, room * 9 / 16, Space.px(560))))
             width: Math.round(Math.min(room, height * 16 / 9))
-            x: (hero.width - (width + root.gap + root.sideW)) / 2
+            x: (hero.width - (width + root.gap + root.actionsW)) / 2
             backdrop: false
 
             // a deep shadow under the stage
@@ -82,7 +84,7 @@ FittedFrame {
             id: side
             objectName: "presetSide"
             x: stage.x + stage.width + root.gap
-            width: root.sideW
+            width: root.actionsW
             y: Space.s
             spacing: Space.s
 
@@ -104,7 +106,7 @@ FittedFrame {
                 width: parent.width
                 spacing: Space.xs
                 Repeater {
-                    model: root.shown ? (root.shown.tags || []).slice(0, 4) : []
+                    model: root.shown ? (root.shown.tags || []).slice(0, 3) : []
                     // the preset's tags: read-only labels at full ink (a
                     // disabled chip was nearly invisible)
                     delegate: Chip {
@@ -122,41 +124,42 @@ FittedFrame {
             PillButton {
                 objectName: "presetApply"
                 width: parent.width
-                kind: "filled"
+                // the preset in use: a quiet tonal state, not a loud
+                // disabled primary
+                kind: root.shown && root.shown.active ? "tonal" : "filled"
                 icon: root.shown && root.shown.active ? "check" : "magicWand"
                 text: root.shown && root.shown.active ? I18n.t("prefs.presets.in_use") : I18n.t("prefs.presets.apply")
                 enabled: !!root.shown && !root.shown.active && !root.locked
                 onClicked: root.action(root.shown.name, "apply")
             }
-            PillButton {
-                objectName: "presetTry"
+            // try it for a while, or open it to change it
+            Row {
                 width: parent.width
-                kind: "tonal"
-                icon: "clock"
-                text: I18n.t("prefs.presets.try", PresetStudio.trialSeconds)
-                enabled: !!root.shown && !root.shown.active && !root.locked
-                onClicked: root.action(root.shown.name, "try")
+                spacing: Space.xs
+                PillButton {
+                    objectName: "presetTry"
+                    width: (parent.width - parent.spacing) / 2
+                    kind: "tonal"
+                    icon: "clock"
+                    text: I18n.t("prefs.presets.try", PresetStudio.trialSeconds)
+                    enabled: !!root.shown && !root.shown.active && !root.locked
+                    onClicked: root.action(root.shown.name, "try")
+                }
+                PillButton {
+                    objectName: "presetEdit"
+                    width: (parent.width - parent.spacing) / 2
+                    kind: "ghost"
+                    icon: "pencil"
+                    text: I18n.t("prefs.presets.edit")
+                    enabled: !!root.shown
+                    onClicked: root.openPreset(root.shown.name)
+                }
             }
-            PillButton {
-                objectName: "presetEdit"
+            Divider {
                 width: parent.width
-                kind: "ghost"
-                icon: "pencil"
-                text: I18n.t("prefs.presets.edit")
-                enabled: !!root.shown
-                onClicked: root.openPreset(root.shown.name)
             }
-        }
-
-        // the studio's own actions: save what is on screen now (a card),
-        // then mix, browse everything, import, on the stage's foot
-        Card {
-            objectName: "presetSaveCard"
-            x: side.x
-            y: studio.y - height - Space.s
-            width: root.sideW
-            padding: Space.s
-            shadow: false
+            // the studio's own actions, each named: save what is on screen
+            // now, mix, browse everything, import
             PillButton {
                 objectName: "saveCurrentLook"
                 width: parent.width
@@ -165,33 +168,37 @@ FittedFrame {
                 text: I18n.t("prefs.presets.save_current")
                 onClicked: root.saveRequested()
             }
-        }
-        Row {
-            id: studio
-            objectName: "presetStudioActions"
-            x: side.x
-            y: stage.height - height
-            spacing: Space.xs
-            IconButton {
-                objectName: "presetMix"
-                size: "s"
-                icon: Icons.faders
-                tooltip: I18n.t("prefs.presets.tab.mixer")
-                onClicked: root.mixRequested()
-            }
-            IconButton {
-                objectName: "presetBrowse"
-                size: "s"
-                icon: Icons.squaresFour
-                tooltip: I18n.t("prefs.presets.browse")
-                onClicked: root.browseRequested()
-            }
-            IconButton {
-                objectName: "importPreset"
-                size: "s"
-                icon: Icons.downloadSimple
-                tooltip: I18n.t("prefs.presets.import")
-                onClicked: root.importRequested()
+            Row {
+                id: studio
+                objectName: "presetStudioActions"
+                width: parent.width
+                spacing: Space.xs
+                readonly property real each: (width - spacing * 2) / 3
+                PillButton {
+                    objectName: "presetMix"
+                    width: studio.each
+                    kind: "ghost"
+                    icon: "faders"
+                    text: I18n.t("prefs.presets.tab.mixer")
+                    onClicked: root.mixRequested()
+                }
+                PillButton {
+                    objectName: "presetBrowse"
+                    width: studio.each
+                    kind: "ghost"
+                    icon: "squaresFour"
+                    text: I18n.t("prefs.presets.browse_short")
+                    Accessible.description: I18n.t("prefs.presets.browse")
+                    onClicked: root.browseRequested()
+                }
+                PillButton {
+                    objectName: "importPreset"
+                    width: studio.each
+                    kind: "ghost"
+                    icon: "downloadSimple"
+                    text: I18n.t("prefs.presets.import")
+                    onClicked: root.importRequested()
+                }
             }
         }
     }
@@ -218,13 +225,12 @@ FittedFrame {
         y: root.height - root.rowH - Space.l
         width: root.width - root.margin * 2
         height: root.rowH
-        readonly property real savingW: Math.round((row.width - root.gap) * 0.3)
 
         Card {
             id: stripCard
             objectName: "settingsSection:presets_gallery"
             readonly property bool fixed: true
-            width: row.width - row.savingW - root.gap
+            width: row.width
             height: row.height
             padding: Look.boxPadding + Space.s
             spacing: Space.s
@@ -237,12 +243,16 @@ FittedFrame {
                     role: "title"
                     text: I18n.t("prefs.presets.gallery")
                 }
-                KitText {
+                // the studio's one setting, on the gallery's heading line
+                // (it had a whole card of its own)
+                SettingRow {
                     id: count
+                    objectName: "presetsAutoSave"
                     anchors.right: parent.right
                     anchors.verticalCenter: heading.verticalCenter
-                    role: "secondary"
-                    text: PresetStudio.active ? PresetStudio.active : I18n.t("prefs.presets.custom")
+                    width: Math.min(Space.px(420), parent.width - heading.implicitWidth - Space.xl)
+                    dense: true
+                    entry: (((root.category.sections || [])[0] || {}).entries || [])[0] || ({})
                 }
             }
 
@@ -329,18 +339,6 @@ FittedFrame {
                     flick: flick
                 }
             }
-        }
-
-        SettingsSection {
-            objectName: "settingsSection:presets_saving"
-            x: stripCard.width + root.gap
-            width: row.savingW
-            height: row.height
-            section: (root.category.sections || [])[0] || ({
-                    "id": "presets_saving",
-                    "entries": []
-                })
-            fixed: true
         }
     }
 }

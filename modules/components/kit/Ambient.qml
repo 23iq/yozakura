@@ -44,8 +44,9 @@ Item {
         anchors.fill: parent
         visible: !img.plain && img.opacity > 0
         opacity: img.shown && img.status === Image.Ready ? img.strength : 0
-        // decoded tiny: the blur starts soft and costs nothing
-        sourceSize.width: 96
+        // decoded very small: no shape of the wallpaper survives (a moon or a
+        // flower read as a smudge behind the content), only its colours
+        sourceSize.width: 24
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
@@ -55,8 +56,11 @@ Item {
         layer.effect: MultiEffect {
             blurEnabled: true
             blur: 1
-            blurMax: 48
+            blurMax: 64
             saturation: 0.35
+            // highlights pressed toward the mid tones: a colour field, no glare
+            contrast: -0.45
+            brightness: -0.06
         }
         Behavior on opacity {
             enabled: Motion.glide.duration > 0

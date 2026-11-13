@@ -29,7 +29,7 @@ ColumnLayout {
         })
     readonly property int level: macro ? Macros.level(macro, ctx) : -1
     readonly property int position: macro ? Macros.nearest(macro, ctx) : 0
-    readonly property var names: macro ? macro.points.map(p => I18n.t(p.label)).concat(I18n.t("prefs.macro.custom")) : []
+    readonly property var names: macro ? macro.points.map(p => I18n.t(p.label)) : []
 
     objectName: "macro:" + (entry ? entry.macro : "")
     spacing: Space.xs
@@ -46,7 +46,7 @@ ColumnLayout {
         id: widest
         font.family: Type.family("secondary")
         font.pixelSize: Type.size("secondary")
-        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t(p.label))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
+        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t("prefs.macro.near", I18n.t(p.label)))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
     }
 
     SliderControl {
@@ -56,7 +56,9 @@ ColumnLayout {
         to: root.macro ? root.macro.points.length - 1 : 1
         stepSize: 1
         value: root.position
-        valueLabel: root.level >= 0 ? root.names[root.level] : I18n.t("prefs.macro.custom")
+        // off every point: the one it is closest to, marked as near ("≈
+        // Smooth"), which says more than a bare "Custom"
+        valueLabel: root.level >= 0 ? root.names[root.level] : I18n.t("prefs.macro.near", root.names[root.position] || "")
         valueWidth: Math.ceil(widest.advanceWidth) + Space.xs
         onMoved: v => root.moveTo(Math.round(v))
     }

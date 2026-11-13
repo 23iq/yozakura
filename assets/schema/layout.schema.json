@@ -175,7 +175,7 @@
           "title": "Tint the player",
           "type": "boolean",
           "default": true,
-          "description": "The player block takes the colour of the album art, held back so the text stays readable.",
+          "description": "The player block takes the color of the album art, held back so the text stays readable.",
           "x-settings": {
             "category": "dashboard",
             "section": "home",

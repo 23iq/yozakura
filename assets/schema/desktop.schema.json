@@ -69,10 +69,10 @@
       "x-unit": "px"
     },
     "textColor": {
-      "title": "Label colour",
+      "title": "Label color",
       "type": "string",
       "default": "overBackground",
-      "description": "Colour of the icon names.",
+      "description": "Color of the icon names.",
       "x-settings": {
         "category": "desktop",
         "section": "arrange",
@@ -364,10 +364,10 @@
       }
     },
     "depthClockInk": {
-      "title": "Clock colour",
+      "title": "Clock color",
       "type": "string",
       "default": "auto",
-      "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
+      "description": "Auto picks light or dark ink from the wallpaper; a palette color follows your theme.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",

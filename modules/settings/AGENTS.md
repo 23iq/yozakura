@@ -11,13 +11,17 @@ The frame is a **showcase** over an **ambient** background (kit Ambient:
 the wallpaper blurred, darkened and vignetted; at full strength only at
 home and on desktop pages, toned down on the others). It opens on a home
 screen (the brand, one big search "What do you want to change?", undo and
-nine equal destination tiles in a 3x3 grid, each a small live scene, its
-name and one plain status line) and a tile grows into its destination. A
-destination page is one scrolling column of cards: a round back button,
-the title, the tabs and undo stay on top; under them a compact **stage**
-(a third of the page at most) only where the desktop is the subject, a
-one-line hint, then every card of the tab (no "More" sheet; the stage
-recedes as the page scrolls). Search, modified / reset state, the CLI /
+the nine destinations as a bento whose tile sizes follow their weight:
+Screen and Look big live scenes, the others their icon on a plate with
+their tabs named beside it, each with its name and a plain status line)
+and an opaque card grows from the tile into its destination. A destination
+page: a round back button, the title, the tabs, Reset page and undo stay on
+top (a hairline under them once the page scrolls); under them, on a wide
+window, two equal columns: the **stage** with its hint heads the right one
+and the cards fill both in importance order, flowing on under the stage
+(the Screen tabs: the whole screen as a canvas, the tab's own stage as a
+loupe under it); a page without a stage is one centred column of cards
+(no "More" sheet). Search, modified / reset state, the CLI /
 MCP catalog and the audits are all generated from the same declarations.
 
 Design rules (owner's brief, binding for every page; in this order: clear,
@@ -45,15 +49,18 @@ modules/settings/
 ├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
 ├── SettingsShell.qml       the frame: home <-> destination (shared-element growth), shortcuts,
 │                           UndoPill, preset overlays; select / openDestination / goHome / navigate
-├── SettingsHome.qml        brand, search (window rows, value shown), undo, the 3x3 tile grid, preset footer
-├── HomeTile.qml            one destination tile (kit Card): its scene (home/<X>Scene.qml, by URL), name, status
-├── home/                   tile scenes: Layout (ScreenMini; the only one on the wallpaper), Look, Windows,
-│                           Launcher, Notif, Assistant, Keys, Displays (plain monitors), System; NameScrim
+├── SettingsHome.qml        brand, search (window rows, value shown), undo, the weighted tile bento, preset footer
+├── HomeTile.qml            one destination tile (kit Card): a scene (home/<X>Scene.qml, by URL) or its icon
+│                           on a plate (`glyph`; side by side with the name on a wide tile), name, status
+├── home/                   tile scenes: Layout (ScreenMini; the only one on the wallpaper), Look (Aa + font
+│                           name + palette strip); NameScrim
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
-├── HomeLayout.js           pure: home columns, tile packing, arrow-key neighbours (same test)
+├── HomeLayout.js           pure: home columns (6 / 4 / 2), weighted tile packing (no holes), arrow-key
+│                           neighbours (same test)
 ├── DestinationHeader.qml   back pill, title, centred tabs (kit Segmented), Reset page
 ├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
-├── SettingsPage.qml        a schema category: compact stage (by URL, recedes on scroll), hint, card bento
+├── SettingsPage.qml        a schema category: two columns (`split`: the stage heads the right one), one centred
+│                           column without a stage (`solo`), the stage-on-top bento in a narrow window
 ├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor / widen / stretch (same test)
 ├── RowLines.js            pure: a card's rows in lines (picture rows side by side; settings-row-lines.test.cjs)
@@ -107,33 +114,50 @@ branches on the language name (`Look`).
   solid in tiles / device / classic, a soft RectangularShadow); `accented`
   rings and glows the card the screen is about.
 - Home: header (brand, a boxed `SearchField`, undo), then the nine
-  destination tiles in a 3x3 grid (`HomeLayout.columns`: 3, or 2 in a
-  narrow window with a 15 % hysteresis; equal tiles, `Look.screenGap`
-  between them and around), then the preset footer. Each tile is a kit
-  `Card` (`interactive`: lifts on hover, springs on press, FocusRing) with a
-  scene from real state (home/*.qml, `required property Card tile`). Only
-  the Screen tile draws the wallpaper (it is about the desktop); the others
-  are plain: palette + "Aa", a toast stack, a launcher, a chat, keycaps,
-  the monitor arrangement as plain shapes, tiled windows, the version and
-  language. Name = `title` role, status one size down (`secondary`), plain
-  words (HomeStatus.js). A scene must not declare a property named like an
+  destinations as a bento sized by weight (`Categories.HOME_SIZES`, in
+  six-column cells: Screen 4x2, Look 2x2, Panels / Windows / Notifications /
+  Devices / Assistant 2x1, Keyboard and System 1x1; `HomeLayout.columns`:
+  6, 4 or 2 with hysteresis, spans scale down, the last tile of a line
+  takes a hole after it; `Look.screenGap` between them and around), then
+  the preset footer. Each tile is a kit `Card` (`interactive`: lifts on
+  hover, springs on press, FocusRing; an `Accessible` button with its
+  status as description). Screen draws the screen miniature on the
+  wallpaper, Look a big "Aa" with the font's name and the palette strip;
+  every other tile is its icon on a plate at the top left (accent tonal on
+  hover / focus) with its tabs named beside it (`homeTileContents`), the
+  name and status at the foot (one layout for all of them). Name = `title` role, status one size down
+  (`secondary`), plain words (HomeStatus.js). A scene must not declare a property named like an
   Item anchor line (`top`, `bottom`, `left`, `right`, ...): it hangs the
   type loader.
-- Opening: a box grows from the tile to the window (Motion.glide) while
-  home recedes and the page fades in; going back reverses it. A deep link
+- Opening: an opaque card (the card fill at full alpha) grows from the
+  tile to the window (`Motion.morph`); home is gone under it in the first
+  third, the page fades in over the last 40 % and only once it is laid
+  out (`SettingsPageHost.pageReady`): never two screens at once; going
+  back reverses it. A deep link
   (`<app> run settings <id>`, `GlobalStates.settingsCategory` at open)
   opens straight on its page with no motion.
 - Destination: `DestinationHeader` = back pill (IconButton), title role,
   the tabs centred (`Segmented`, `focusable`, Left / Right), Reset page on
   the right; a tab to the right slides the page in from the right
   (`SettingsPageHost.direction`).
-- Page body (SettingsPage): the stage (a `Registry.DESKTOP_STAGES` tab:
-  16:9, at most a third of the page; a `PLAIN_STAGES` one: a wide strip on
-  the card fill; a list page's band: a fifth of the page), one hint line
-  (two at most in a narrow window), then every card of the tab in a bento
-  (`BentoLayout.js`, 1 to 3 columns with hysteresis, never more columns
-  than the cards fill). Cards size to their content; the page scrolls.
-  The lead sections (`row`) come first. A card (SettingsSection) has a
+- Page body (SettingsPage): with a stage and a content width of 900 px or
+  more, two equal columns (`split`): the stage and its hint head the right
+  column (a reserved block of `BentoLayout.place`), the cards, each one
+  column wide, fill both in importance order (the `row` lead sections,
+  then the schema order: `BentoLayout.order(..., single)`) and flow on
+  under the stage (no blank pane under a short stage). A stage in a column
+  is asked for its height (`preferredHeight`) or is 16:9; stages built as
+  page-wide strips have a `narrow` layout (Notifications: the small screen
+  over the toast; Menus & OSD: screen and OSD on a line, the menu under
+  them; Power: the gauge over the profiles; Island: the state chips under
+  the island). The Bar, Island and Dock tabs show `stages/ScreenCanvas.qml`
+  (`Registry.SCREEN_PARTS`): the whole screen (bars, island, dock; the
+  tab's part ringed; a bar picks it, the island / dock open their tab, the
+  bar's modules scroll to their card) with the tab's own stage as a loupe
+  under it (none for a vertical bar or a part that is off). Without a
+  stage: one centred column of cards (`solo`, 760 px at most). A narrow
+  window keeps the stack: stage on top, a bento (`BentoLayout.js`, 1 to 3
+  columns) under it. A card (SettingsSection) has a
   heading (`title` role) with the current value on the right when it holds
   one setting; such a card's picture / editor row drops its own label
   (`SettingRow.bare`).
@@ -151,8 +175,14 @@ branches on the language name (`Look`).
   narrow card); hover / focus = the language's hover box; a search jump =
   accent wash + focus.
 - Picture cards: `ChoiceCard` - the picture is the card (rounded mask, a
-  hairline edge, lifts on hover); selected = accent ring + title in the
-  active weight + check; FocusRing on keyboard focus.
+  hairline edge, lifts on hover); selected = the accent ring drawn inside
+  the edge (never clipped) + a check badge in the picture's corner + the
+  title in the active weight; FocusRing on keyboard focus.
+- Accessibility: a row names its control (`SettingRow.nameControl`: the
+  label; `Accessible.description` = the entry's description); direct
+  manipulation targets on a stage (corners, edges) are `Accessible` radio
+  buttons named by their place; `Type.muted` keeps small text at WCAG AA
+  (>= 4.5:1) in light schemes too; the Switch shows the kit FocusRing.
 - Stage: `Stage` = wallpaper (palette backdrop without one) in a rounded,
   hair-lined frame, Look.radius("surface"); the miniature on top.
 - Undo pill: popup surface, springs in, stays 5 s (longer while hovered).
@@ -182,7 +212,7 @@ Screen (Bar, Island, Dock, Widgets & clock, Lock screen) | Windows (Layout
 (Chat, Models & providers, Agents & tasks, Voice) | Keyboard (Layouts,
 Shortcuts) | Devices (Displays, Network, Bluetooth, Sound, Effects, Power) |
 System (Language & weather, Updates, Terminal, Apps, Mods, Routines,
-About). `HOME` = the groups in that order (nine equal tiles); `home()` the
+About). `HOME` = the destinations in weight order with their sizes (HOME_SIZES); `home()` the
 model. A category is one tab: its `title` is the tab label. Tabs are
 composed from schema files: `withSections` (Menus & OSD gets the OSD
 sections, Bar the bar builder of layout.js, Chat the sidebar sections),
@@ -336,7 +366,8 @@ in|notIn}}`, `{all|any: [...]}`, `{not: ...}`), `reason` (why an
 under-row preview, unconverted pages only), `component` (custom editor),
 `keys` (every key a composite entry reads / resets), `sizeKey` / `sizeUnit`
 (font), `resettable: false`, `compositor`, `id`, `target` (PageLink),
-`invert` (a toggle shown on for false), `surface` (a host picker's surface
+`invert` (a toggle shown on for false), `multiline` (a text row of prose:
+a wrapping box of a few lines, commits on focus loss or Ctrl+Enter), `surface` (a host picker's surface
 id: the row notes "Island is off - shown as X"; the stage draws it).
 `lazy: true` (a heavy custom editor in a card of the page row: compiled and
 built on the frame after the page shows, asynchronously; the card height is
@@ -384,7 +415,7 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   drawn on a plain ground (thumbs/MiniScreen `desktop: false`,
   thumbs/ThumbGround); the wallpaper only where it is the subject (fit,
   transition) and in real captures (lock styles, presets). Names wrap to
-  two lines, the chosen one ringed, checked and on a tonal fill; a compact
+  two lines, the chosen one ringed inside its edge, with a check badge; a compact
   card's description is its tooltip.
 - Order: the card of the tab's master switch (`<feature>.enabled`) first,
   then cards of plain rows, then those of a big control (pictures, an
@@ -416,7 +447,7 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   card's control shows it), a row is never named like its card, labels are
   in sentence case (tests/settings-page-unique.test.cjs). Translated text
   wraps, never elides; only data (file, network, model names) may. settings-fit counts the whole rows on the
-  first screen (8 with a stage, 14 without); the tabs still short of it are
+  first screen (8 with a stage, 9 without: one column); the tabs still short of it are
   a ratchet (`SHORT`).
 - `stage` (category): only a tab whose subject is the desktop has a
   desktop stage (a `Registry.DESKTOP_STAGES` entry: Bar, Island, Dock,

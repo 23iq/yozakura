@@ -146,7 +146,17 @@ var DESKTOP_STAGES = {
 // the launcher, the dashboard and the chat.
 var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage", "LauncherStage", "DashboardStage", "AssistantStage"];
 
+// Tabs of the Screen destination whose two-pane stage is the whole screen
+// (stages/ScreenCanvas.qml) with their own stage as its loupe: the part each
+// edits.
+var SCREEN_PARTS = {
+    "bar": "bar",
+    "notch": "island",
+    "dock": "dock"
+};
+
 var STAGES = {
+    "ScreenCanvas": "stages/ScreenCanvas.qml",
     "BarStage": "stages/BarStage.qml",
     "IslandStage": "stages/IslandStage.qml",
     "DockStage": "stages/DockStage.qml",
@@ -186,16 +196,11 @@ var PAGES = {
 
 // Home tile scenes (HomeTile, loaded by URL once home has shown), by
 // destination id.
+// Home tiles drawn as a scene (the others are their icon on a plate,
+// HomeTile.glyph): only where a picture reads at tile size.
 var SCENES = {
     "look": "home/LookScene.qml",
-    "screen": "home/LayoutScene.qml",
-    "windows": "home/WindowsScene.qml",
-    "panels": "home/LauncherScene.qml",
-    "notifications": "home/NotifScene.qml",
-    "assistant": "home/AssistantScene.qml",
-    "keys": "home/KeysScene.qml",
-    "devices": "home/DisplaysScene.qml",
-    "system": "home/SystemScene.qml"
+    "screen": "home/LayoutScene.qml"
 };
 
 function scene(id) {

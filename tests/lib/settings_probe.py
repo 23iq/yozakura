@@ -227,13 +227,16 @@ Window {
             var glyph = 1e9;
             walk(stage, x => {
                 if (!x.visible || x.opacity < 0.01) return false;
+                // the Screen canvas is a whole-screen overview; legibility is
+                // its loupe's job (the tab's own strip under it)
+                if (x.objectName === "screenCanvasMini") return false;
                 if (x.font === undefined || x.text === undefined || typeof x.text !== "string" || x.text === "") return;
                 var r = rect(x);
                 if (!onScreen(r) || x.height <= 0) return;
                 var px = (x.font.pixelSize > 0 ? x.font.pixelSize : x.font.pointSize * 1.33) * (r[3] / x.height);
                 glyph = Math.min(glyph, px);
             });
-            out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
+            out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false, "split": page.split === true, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
         }
         if (hint && shown(hint) && hint.text !== "") band.push(["hint", rect(hint)]);
         // the stage and its hint against every card (on top of the cards or
@@ -300,8 +303,12 @@ def problems(m: dict | None, label: str) -> list[str]:
     for k, y, _run in (col or {}).get("holes", []):
         out.append(f"{label}: a blank wider than a column beside cards (columns {k}-{k + 1}, from y {y}, over 120 px)")
     st = m.get("stage")
-    if st and st["h"] > st["pageH"] / 3 + 2:
+    # stacked (stage over the cards): a third of the page at most; two panes
+    # (stage beside the cards, held in view): it fits the view
+    if st and not st.get("split") and st["h"] > st["pageH"] / 3 + 2:
         out.append(f"{label}: the stage takes more than a third of the page ({st['h']} of {st['pageH']})")
+    if st and st.get("split") and st["h"] > st["pageH"]:
+        out.append(f"{label}: the stage beside the cards is taller than the view ({st['h']} of {st['pageH']})")
     return out
 
 

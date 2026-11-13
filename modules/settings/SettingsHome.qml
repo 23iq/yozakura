@@ -15,10 +15,10 @@ import "HomeLayout.js" as HomeLayout
 import "Ui.js" as Ui
 
 // The home screen of the settings window: the sakura brand, one large
-// search field and undo, then nine equal tiles three by three (HomeTile,
-// each a small scene of what it opens, its name and one live status line;
-// two columns in a narrow window, the rows stretched so home fills the
-// window). Typing anywhere searches; the results
+// search field and undo, then the nine destinations as a bento whose tile
+// sizes follow their weight (HomeTile: Screen and Look a live scene, the
+// others their icon; each with its name and a live status line; fewer
+// columns in a narrow window, the rows stretched so home fills it). Typing anywhere searches; the results
 // (window rows only, with their current value) replace the bento; Enter
 // opens the first, Esc clears. Arrows move between tiles, Enter opens one.
 // Cheap by design: no page is created here, the tiles read config only.
@@ -71,8 +71,9 @@ FocusScope {
             Qt.callLater(() => home.warm = true);
     }
     readonly property var tiles: Categories.home()
-    // three columns, two in a narrow window (with hysteresis)
-    property int columns: 3
+    // six columns (tiles sized by weight, Categories.HOME), four or two in
+    // a narrower window (with hysteresis)
+    property int columns: 6
     readonly property real margin: Space.xl
     readonly property real gap: Look.screenGap
     readonly property var packing: HomeLayout.pack(home.tiles, home.columns)
@@ -212,7 +213,7 @@ FocusScope {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     icon: Icons.arrowCounterClockwise
-                    size: "l"
+                    size: "m"
                     focusable: true
                     enabled: SettingsStore.undoStack.length > 0
                     opacity: enabled ? 1 : 0.4
@@ -274,14 +275,13 @@ FocusScope {
             Item {
                 id: grid
                 objectName: "homeGrid"
-                // three columns, two in a narrow window (with hysteresis)
-                onWidthChanged: home.columns = HomeLayout.columns(grid.width, Space.px(240), home.columns)
+                onWidthChanged: home.columns = HomeLayout.columns(grid.width, Space.px(150), home.columns)
                 width: parent.width
                 visible: home.query.length === 0
                 readonly property real gap: home.gap
                 readonly property real colW: (width - gap * (home.columns - 1)) / home.columns
                 readonly property real avail: flick.height - home.margin * 2 - header.height - home.gap
-                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(150))
+                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(118))
                 height: home.packing.rows * rowH + Math.max(0, home.packing.rows - 1) * gap
 
                 Repeater {

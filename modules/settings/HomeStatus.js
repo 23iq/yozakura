@@ -30,7 +30,7 @@ function tabsLine(dest, tr) {
 
 function layout(ctx) {
     var panels = ctx.get("bar.panels") || [];
-    var bars = panels.length > 1 ? ctx.tr("prefs.home.bars").replace("%1", panels.length) : ctx.tr("prefs.home.edge." + (ctx.get("bar.position") || "top"));
+    var bars = panels.length > 1 ? ctx.tr("prefs.home.bars").replace("%1", panels.length) : ctx.tr("prefs.home.edge." + ((panels[0] && panels[0].edge) || ctx.get("bar.position") || "top"));
     var parts = [bars];
     if (ctx.get("notch.enabled") !== false)
         parts.push(ctx.tr("prefs.home.island"));
@@ -54,6 +54,10 @@ function displays(ctx) {
         return "";
     var o = on[0];
     return o.width + "×" + o.height + (o.refresh > 0 ? " · " + Math.round(o.refresh) + " Hz" : "") + (on.length > 1 ? " · +" + (on.length - 1) : "");
+}
+
+function capital(s) {
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 function line(dest, ctx) {
@@ -89,7 +93,8 @@ function line(dest, ctx) {
             }).filter(function (l) {
                 return l !== "";
             });
-            return layouts.length > 0 ? ctx.tr("prefs.home.sub.keys") + " · " + layouts.join(", ") : tabsLine(dest, ctx.tr);
+            // the layouts themselves (the tile already lists its tabs)
+            return layouts.length > 0 ? layouts.join(", ") : tabsLine(dest, ctx.tr);
         }
     case "devices":
         {
@@ -98,18 +103,25 @@ function line(dest, ctx) {
                 parts.push(ctx.network);
             if (typeof ctx.volume === "number" && ctx.volume >= 0)
                 parts.push(ctx.tr("prefs.home.volume").replace("%1", Math.round(ctx.volume * 100)));
+            // the monitors only when there is nothing else to say (one short line)
             var d = displays(ctx);
-            if (d)
+            if (d && parts.length === 0)
                 parts.push(d);
             return parts.length > 0 ? parts.join(" · ") : tabsLine(dest, ctx.tr);
         }
+    case "assistant":
+        if (ctx.get("ai.enabled") === false)
+            return ctx.tr("common.off");
+        return String(ctx.get("ai.defaultModel") || "") || ctx.tr("common.on");
     case "system":
         {
             var sys = [];
             if (ctx.language)
                 sys.push(ctx.language);
             sys.push(ctx.tr(ctx.update ? "prefs.home.update" : "prefs.home.uptodate"));
-            return sys.join(" · ");
+            // "up to date" is a mid-line phrase; leading the line it starts
+            // with a capital
+            return capital(sys.join(" · "));
         }
     default:
         return tabsLine(dest, ctx.tr);
