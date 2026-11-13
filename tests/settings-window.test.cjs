@@ -63,6 +63,29 @@ test('the window stays small: about 150 rows when every page is curated', () => 
     assert.ok(of('appearance') + of('icons-type') <= 24, `Look: ${of('appearance') + of('icons-type')} rows`);
 });
 
+test('every converted page keeps its row budget', () => {
+    // window rows per tab (beside the stage, in the row and in More; `part`
+    // entries not counted), a little room over what each page has now:
+    // a page that grows past it is re-curated (`advanced`), not squeezed in
+    const BUDGET = {
+        'layout': 8, 'icons-type': 7, 'wallpapers': 8, 'notch': 17, 'dock': 16,
+        'overview': 6, 'launcher': 9, 'desktop': 13, 'lockscreen': 9, 'notifications': 18,
+        'osd': 3, 'menus': 5, 'dashboard': 6, 'specials': 3, 'windows': 13,
+        'terminal': 11, 'input': 3, 'system': 5, 'voice': 16, 'timers': 19,
+        'routines': 2, 'updates': 4, 'power': 4, 'network': 3, 'bluetooth': 3,
+        'sound': 4, 'effects': 3, 'ai': 30, 'ai-providers': 4, 'ai-code': 18,
+        'presets': 2,
+    };
+    const of = id => windowItems().filter(x => x.category.id === id && !x.entry.part).length;
+    for (const [id, max] of Object.entries(BUDGET))
+        assert.ok(of(id) <= max, `${id}: ${of(id)} rows (budget ${max})`);
+    // every tab with a `row` has a budget here
+    for (const c of all)
+        if ((c.row || []).length > 0 && !['bar', 'appearance', 'extras', 'mods'].includes(c.id))
+            assert.ok(c.id in BUDGET, `${c.id} has a row budget`);
+    assert.ok(windowItems().length < 300, `${windowItems().length} window rows in all`);
+});
+
 test('a setting has one control in the window (Bar and Look)', () => {
     const seen = {};
     for (const x of windowItems()) {
