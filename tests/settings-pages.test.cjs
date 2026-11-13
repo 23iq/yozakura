@@ -18,6 +18,9 @@ function owners() {
     for (const cat of Categories.categories) {
         for (const sec of cat.sections || []) {
             for (const e of sec.entries) {
+                // a `part` edits a key another entry owns (declared there)
+                if (e.part === true)
+                    continue;
                 const keys = new Set(e.keys || []);
                 if (e.key)
                     keys.add(e.key);
@@ -93,6 +96,15 @@ test('settings live on the page of the element they control', () => {
     };
     for (const [key, page] of Object.entries(expect))
         assert.deepEqual(own[key], [page], key);
+});
+
+test('a part declares the keys it writes (Reset page and search cover them)', () => {
+    const windows = Categories.byId('windows');
+    const corners = windows.sections.flatMap(s => s.entries).find(e => e.id === 'windows.corners');
+    assert.equal(corners.part, true);
+    assert.deepEqual([...corners.keys].sort(), ['compositor.rounding', 'compositor.syncRoundness']);
+    // the owner stays Look
+    assert.deepEqual(owners()['compositor.rounding'], ['appearance']);
 });
 
 test('page titles are unique', () => {

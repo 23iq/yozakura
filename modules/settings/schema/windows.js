@@ -222,6 +222,11 @@ var category = {
                     "id": "windows.corners",
                     "type": "custom",
                     "component": "WindowCornersEditor",
+                    // the window rounding is Look's key (appearance.js,
+                    // advanced there); this is its control in the window,
+                    // so Reset page and search on Windows cover it
+                    "keys": ["compositor.rounding", "compositor.syncRoundness"],
+                    "part": true,
                     "label": "prefs.windows.corners",
                     "description": "prefs.windows.corners.desc",
                     "keywords": "rounding radius corners round square window"
