@@ -25,12 +25,6 @@ Stage {
 
     stageHeight: Space.px(150)
 
-    Mark {
-        anchors.fill: parent
-        radius: 0
-        color: Qt.alpha(Colors.background, 0.55)
-    }
-
     KeyDeck {
         id: deck
         objectName: "keysDeck"

@@ -18,12 +18,6 @@ Stage {
 
     stageHeight: Space.px(150)
 
-    Mark {
-        anchors.fill: parent
-        radius: 0
-        color: Qt.alpha(Colors.background, 0.55)
-    }
-
     Column {
         x: Space.xxl
         width: parent.width - x - tile.width - Space.xxl * 2

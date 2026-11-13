@@ -30,12 +30,6 @@ Stage {
 
     stageHeight: Space.px(170)
 
-    Mark {
-        anchors.fill: parent
-        radius: band.radius
-        color: Qt.alpha(Colors.shadow, 0.45)
-    }
-
     // where answers come from
     Row {
         id: source

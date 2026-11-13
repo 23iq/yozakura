@@ -46,13 +46,6 @@ Stage {
     stageHeight: Space.px(170)
     Component.onCompleted: RoutinesService.ensureTools()
 
-    // the wallpaper sits back behind the strip
-    Mark {
-        anchors.fill: parent
-        radius: band.radius
-        color: Qt.alpha(Colors.shadow, 0.45)
-    }
-
     Row {
         id: strip
         objectName: "routineStrip"
