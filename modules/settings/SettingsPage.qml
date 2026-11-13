@@ -186,13 +186,15 @@ Flickable {
             // a third of the page at most, 16:9, never taller than a band
             // needs (a list page's band is short)
             // a stage that is a strip (the bar, the dock) asks for its height
-            readonly property real asked: stageLoader.item && stageLoader.item.preferredHeight > 0 ? stageLoader.item.preferredHeight : 0
+            // the loaded stage, untyped (stages declare what they ask for)
+            readonly property var stage: stageLoader.item
+            readonly property real asked: stageLoader.stage && stageLoader.stage.preferredHeight > 0 ? stageLoader.stage.preferredHeight : 0
             height: Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself
             // a strip stage (`pageWide: true`) takes the page's width (a flag,
             // never its height: that follows from the width)
-            readonly property bool strip: !!stageLoader.item && stageLoader.item.pageWide === true
+            readonly property bool strip: !!stageLoader.stage && stageLoader.stage.pageWide === true
             width: Math.round(page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""

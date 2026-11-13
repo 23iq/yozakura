@@ -71,7 +71,7 @@ Stage {
         y: stage.atBottom ? chips.y - height - Space.s : 0
         variant: "barbg"
         enableShadow: false
-        radius: 0
+        radius: Look.radius("small", height)
         opacity: 0.55
     }
 

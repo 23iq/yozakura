@@ -9,8 +9,8 @@ import qs.modules.components.kit
 // workspaces, the screen showing one slice of it (bracketed), the other
 // workspaces dashed beside it.
 MiniScreen {
-    desktop: true
     id: root
+    desktop: true
 
     property var entry
     property var value: "fill"

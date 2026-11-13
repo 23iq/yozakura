@@ -87,7 +87,7 @@ Stage {
         y: parent.height - height - (stage.floating ? Space.l : Space.s)
         variant: "bg"
         enableShadow: stage.floating
-        radius: stage.floating ? Math.min(Styling.radius(4), height / 2) : Math.min(Styling.radius(0), height / 2)
+        radius: stage.floating ? Look.radius("round", height) : Math.min(Styling.radius(0), height / 2)
         Behavior on width {
             enabled: Motion.glide.duration > 0
             NumberAnimation {
