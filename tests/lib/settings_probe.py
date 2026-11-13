@@ -232,6 +232,19 @@ def problems(m: dict | None, label: str) -> list[str]:
     return out
 
 
+def settled_probe(h, win, label: str) -> dict | None:
+    """A probe of the layout once it has settled: a page still placing a
+    picture that just loaded (a row 2 px taller for one polish) is probed
+    again 400 ms later; what is still wrong then is a fault (motion between
+    frames is settings-stability's job)."""
+    from PySide6.QtTest import QTest
+    m = json.loads(h.eval(win, "JSON.stringify(probe())"))
+    if problems(m, label):
+        QTest.qWait(400)
+        m = json.loads(h.eval(win, "JSON.stringify(probe())"))
+    return m
+
+
 class Sweep:
     """Walks home and tabs of a probe window and collects failures.
 
@@ -258,7 +271,7 @@ class Sweep:
     def probe(self, label: str, settle_ms: int | None = None) -> dict | None:
         from PySide6.QtTest import QTest
         QTest.qWait(self.settle_ms if settle_ms is None else settle_ms)
-        m = json.loads(self.h.eval(self.win, "JSON.stringify(probe())"))
+        m = settled_probe(self.h, self.win, label)
         for p in problems(m, label):
             self.check(False, p)
         return m

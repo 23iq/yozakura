@@ -31,7 +31,7 @@ from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
-from settings_probe import problems, window  # noqa: E402
+from settings_probe import problems, settled_probe, window  # noqa: E402
 
 DESKTOP = {"bar", "notch", "dock", "desktop", "lockscreen", "notifications", "menus", "windows", "wallpapers"}
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
@@ -67,7 +67,7 @@ density: dict[str, int] = {}
 
 def probe(label: str, settle_ms: int = 250) -> dict | None:
     QTest.qWait(settle_ms)
-    m = json.loads(h.eval(win, "JSON.stringify(probe())"))
+    m = settled_probe(h, win, label)
     for p in problems(m, label):
         check(False, p)
     return m

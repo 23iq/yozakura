@@ -263,9 +263,8 @@ def sfind(name: str):
 
 
 sev('select("desktop")')
-# the full editor and the clock details live in the page's "More" sheet
+# the full editor and the clock details are cards of the page (it scrolls)
 wait_until(lambda: sfind("settingsPage") is not None and sev('!!w.findItem("settingsPage").item'))
-sev('w.findItem("settingsPage").item.moreOpen = true')
 wait_until(lambda: sfind("addWidget:calendar") is not None)
 sev("SettingsStore.set('desktop.depthClock', true)")
 settle()
@@ -299,6 +298,10 @@ h.eval(poster, "clicked()")
 check(sev("Config.desktop.depthClockStyle") == "poster", "gallery writes the style")
 swatch = sfind("swatch:tertiary")
 check(swatch is not None, "ink swatch")
+# a window tall enough for the whole page (the page scrolls; the pointer
+# needs the swatch on screen)
+shell_win.resize(shell_win.width(), 3000)
+settle()
 QTest.mouseClick(shell_win, Qt.LeftButton, Qt.NoModifier, center(swatch))
 check(sev("Config.desktop.depthClockInk") == "tertiary", "swatch writes the ink role")
 

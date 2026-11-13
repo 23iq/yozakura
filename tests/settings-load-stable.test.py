@@ -144,7 +144,8 @@ check(all(f["opacity"] == 0 for f in frames), "open: no page is built behind hom
 
 shell = h.find(win, "shell")
 for cat in ("appearance", "wallpapers", "system", "desktop", "notch", "bar"):
-    frames = record(lambda cat=cat: h.eval(shell, f'select("{cat}")'))
+    # (a long page under a loaded machine can take most of a second to show)
+    frames = record(lambda cat=cat: h.eval(shell, f'select("{cat}")'), 1500)
     rows_stable(f"switch to {cat}", frames)
     check(
         wait_until(lambda: h.eval(win, 'findItem("settingsPage").opacity * findItem("settingsPageView").opacity') == 1),
