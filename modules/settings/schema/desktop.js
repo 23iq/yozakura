@@ -76,7 +76,6 @@ var category = {
     "keywords": "desktop icons clock depth wallpaper widgets",
     "stage": "DesktopStage",
     "hero": {
-        "right": ["desktop.widgetsEnabled", "desktop.depthClock", "desktop.enabled"],
         "hint": "prefs.desktop.hero_hint"
     },
     // icon size is a rare knob: in More, with the arrangement

@@ -49,11 +49,6 @@ var category = {
     "title": "prefs.cat.timers",
     "description": "prefs.cat.timers.desc",
     "keywords": "timers timer alarm reminder stopwatch pomodoro focus mode do not disturb quick note clock notch countdown",
-    "stage": "TimersStage",
-    "hero": {
-        "right": ["system.timers.showSeconds", "system.timers.showStopwatch"],
-        "hint": "prefs.timers.hero_hint"
-    },
     "row": ["pomodoro", "alarm", "focus"],
     "sections": [
         {

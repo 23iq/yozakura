@@ -26,7 +26,6 @@ var category = {
     "keywords": "dock taskbar apps favorites pinned running launcher",
     "stage": "DockStage",
     "hero": {
-        "right": ["dock.enabled", "dock.hoverToReveal", "dock.pinnedOnStartup"],
         "hint": "prefs.dock.hero_hint"
     },
     "row": [{ "id": "dock", "weight": 1.3 }, { "id": "size", "weight": 1.25 }, { "id": "content", "weight": 0.8 }],

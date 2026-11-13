@@ -67,11 +67,6 @@ var category = {
     "title": "prefs.cat.voice",
     "description": "prefs.cat.voice.desc",
     "keywords": "voice input speech whisper microphone dictation talk stt push to talk",
-    "stage": "VoiceStage",
-    "hero": {
-        "right": ["voice.enabled", "voice.vadAutoStop", "voice.aiAutoSend"],
-        "hint": "prefs.voice.hero_hint"
-    },
     "row": ["talk", "speech", "dictation"],
     "sections": [
         {

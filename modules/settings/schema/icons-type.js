@@ -10,7 +10,6 @@ var category = {
     "icon": "textAa",
     "title": "prefs.cat.icons_type",
     "description": "prefs.cat.icons_type.desc",
-    "stage": "TypeStage",
     "row": [{ "id": "icons", "weight": 0.9 }, { "id": "typography", "weight": 1.5 }, { "id": "headings", "weight": 0.95 }],
     "keywords": "icons weight phosphor regular bold fill fonts typography heading title case uppercase typeface",
     "sections": [

@@ -11,10 +11,6 @@ var category = {
     "title": "prefs.cat.overview",
     "description": "prefs.cat.overview.desc",
     "keywords": "overview expose mission control workspaces grid strip filmstrip",
-    "stage": "OverviewStage",
-    "hero": {
-        "hint": "prefs.overview.hero_hint"
-    },
     "row": [{ "id": "layout", "weight": 1.2 }, "grid", { "id": "size", "weight": 0.8 }],
     "sections": [
         {

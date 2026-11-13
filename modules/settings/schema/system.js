@@ -24,10 +24,6 @@ var category = {
     "title": "prefs.cat.system",
     "description": "prefs.cat.system.desc",
     "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard polkit password",
-    "stage": "SystemStage",
-    "hero": {
-        "hint": "prefs.sys.hero_hint"
-    },
     "row": [
         {
             "id": "language",

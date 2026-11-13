@@ -12,20 +12,17 @@ import "SchemaUtil.js" as SchemaUtil
 import "BentoLayout.js" as BentoLayout
 import "Registry.js" as Registry
 
-// A schema-driven destination tab, one composed screen: the hero in the
-// middle (the stage: the live miniature of what the tab controls, `stage`
-// in the schema, large, with a deep shadow) with the controls that act on
-// space beside it (`hero.left` / `hero.right`: entries shown as side
-// controls instead of in a card) and a hint under it (`hero.hint`); then
-// one row of equal-height cards that fills the width (`row`: section ids),
-// then any other section as a card of a bento (BentoLayout.js: one to
-// three columns, a card with picture cards or an editor takes two). The
-// hero recedes (scales down, fades) as the cards scroll up under it.
-// A page with a `row` is FITTED: exactly the stage (+ side columns), the hint
-// and the row of cards (Look.cardRowHeight, at the bottom), no page scroll;
-// the stage takes the height left. Its other sections open in a sheet
-// ("More", MoreSheet behaviour inside this file), never under the fold.
-// Nothing here is category specific.
+// A schema-driven tab, one scrolling page: an optional compact stage at the
+// top (`stage`: the live picture of what the tab places or styles, at most
+// about a third of the page; only tabs about something on the desktop have
+// one, see Registry.DESKTOP_STAGES) with a one-line hint under it
+// (`hero.hint`) and, for Wallpaper, a film strip along its foot
+// (`hero.foot`); then every section of the tab as a card of a masonry
+// (BentoLayout.js: one to three columns, cards as tall as their rows; a
+// card with pictures or an editor takes two columns). `row` names the
+// cards that come first, in that order. Nothing is hidden behind a sheet:
+// every window row of the tab is on the page, and the stage recedes as the
+// cards scroll up over it. Nothing here is category specific.
 Flickable {
     id: page
 
@@ -34,87 +31,31 @@ Flickable {
     readonly property var gated: CompositorGate.hiddenBy(page.category.sections, YozdService.compositorName)
     readonly property string stageUrl: page.category.stage ? Qt.resolvedUrl(Registry.stage(page.category.stage)) : ""
     readonly property var hero: page.category.hero || ({})
-    // entries shown beside the stage (by key or id), not in their card
-    readonly property var heroIds: (page.hero.left || []).concat(page.hero.right || []).concat(page.hero.foot || [])
-    // `hero.foot`: entries in a strip along the stage's foot (a film strip
-    // of pictures: the wallpaper library), as wide as the stage
-    readonly property real footH: (page.hero.foot || []).length > 0 ? Space.px(76) : 0
-    // `row`: section ids, or {id, weight} for a card wider or narrower than
-    // the others (weight 1 by default)
-    readonly property var rowIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
-    readonly property var rowWeights: (page.category.row || []).map(r => typeof r === "string" ? 1 : (r.weight || 1))
-    // the row is laid out only once all its cards exist (equal heights)
-    readonly property int lastRowIndex: (page.category.sections || []).reduce((m, sec, i) => page.rowIds.indexOf(sec.id) >= 0 ? i : m, -1)
-    // Build order: a fitted page builds its row cards first (in row order),
-    // the sheet's sections after (they are not on screen); others in order.
-    readonly property var buildRank: {
+    // `hero.foot`: entries in a strip along the stage's foot (the wallpaper
+    // library), as wide as the stage; not in their card
+    readonly property var heroIds: page.hero.foot || []
+    readonly property real footH: page.heroIds.length > 0 && page.stageUrl !== "" ? Space.px(76) : 0
+    // `row`: the sections that lead the page, in this order
+    readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
+    // the sections in page order: the lead ones first, then the rest
+    readonly property var order: {
         const secs = page.category.sections || [];
-        if (!page.fitted)
-            return secs.map((s, i) => i);
-        const inRow = secs.map((s, i) => i).filter(i => page.rowIds.indexOf(secs[i].id) >= 0);
-        const rest = secs.map((s, i) => i).filter(i => page.rowIds.indexOf(secs[i].id) < 0);
-        const rank = [];
-        inRow.concat(rest).forEach((i, k) => rank[i] = k);
-        return rank;
+        const idx = secs.map((s, i) => i);
+        const lead = page.leadIds.map(id => secs.findIndex(s => s.id === id)).filter(i => i >= 0);
+        return lead.concat(idx.filter(i => lead.indexOf(i) < 0));
     }
-    readonly property int rowCount: (page.category.sections || []).filter(sec => page.rowIds.indexOf(sec.id) >= 0).length
-    readonly property bool fitted: page.rowIds.length > 0
-    // `form: "list"` (a page whose substance is a list: networks, devices,
-    // shortcuts, providers): a short hero band (about a quarter of the
-    // page, full width) and one row of tall cards taking the rest; the list
-    // scrolls inside its card. Default: the 16:9 stage over a short row.
-    readonly property bool listForm: page.fitted && page.category.form === "list"
-    // a list page without a band: its `hero` entries stand in a side column
-    // beside the row (left / right), the row takes the rest of the width
-    readonly property bool sideOnly: page.listForm && page.stageUrl === "" && page.heroIds.length > 0
-    readonly property real sideLeft: page.sideOnly && (page.hero.left || []).length > 0 ? page.sideW + page.gap : 0
-    readonly property real sideRight: page.sideOnly && (page.hero.right || []).length > 0 ? page.sideW + page.gap : 0
-    // the template measures (FittedFrame, shared with the hand-written pages)
-    readonly property real bandH: frame.bandH
-    readonly property real rowH: frame.rowH
-    readonly property real pad: frame.pad
-    // sections of a fitted page that are not in the row (in the sheet)
-    readonly property var moreSections: page.fitted ? (page.category.sections || []).map((s, i) => ({
-                "section": s,
-                "index": i
-            })).filter(x => page.rowIds.indexOf(x.section.id) < 0 && (x.section.entries || []).some(e => SchemaUtil.inWindow(e, x.section) && page.heroIds.indexOf(e.key || e.id) < 0)) : []
-    // the ones that open as a card now (compositor gate, visibleWhen): the
-    // count on the More chip
-    readonly property int moreShown: page.moreSections.filter(x => SettingsStore.sectionShown(x.section)).length
-    property bool moreOpen: false
-    // the sheet's cards are built on its first open (or a search that
-    // lands in it), not with the page
-    property bool moreBuilt: false
-    onMoreOpenChanged: if (moreOpen)
-        moreBuilt = true
-    readonly property real margin: frame.margin
-    readonly property real gap: frame.gap
-    // the side columns of the hero
-    readonly property real sideW: frame.sideW
-    FittedFrame {
-        id: frame
-        width: page.width
-        height: page.height
-        visible: false
-        listForm: page.listForm
-        hasHint: !!page.hero.hint
-        band: page.stageUrl !== ""
-        bandMin: Math.max(heroLeftCol.height, heroRightCol.height) + Space.l
-        bandShare: page.category.bandShare || 0.24
-    }
-    function heroEntries(ids) {
+    // rank of a section in the page order (built in this order too)
+    readonly property var rank: {
         const out = [];
-        for (const id of ids || []) {
-            for (const sec of page.category.sections || []) {
-                const e = (sec.entries || []).find(x => x.key === id || x.id === id);
-                if (e) {
-                    out.push(e);
-                    break;
-                }
-            }
-        }
+        page.order.forEach((i, k) => out[i] = k);
         return out;
     }
+    readonly property bool listForm: page.category.form === "list"
+    // every key a window row of this page edits (a card offers no "Turn on"
+    // for a switch that is a row of the page)
+    readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inWindow(e, sec)).map(e => e.key)), [])
+    readonly property real margin: Space.xl
+    readonly property real gap: Look.screenGap
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -125,6 +66,11 @@ Flickable {
     // SettingsPageHost keeps the page hidden until `enterReady`.
     property bool filled: false
     readonly property bool enterReady: complete || filled
+    // once shown, cards glide to new places (a toggle that shows rows):
+    // before, they land in place
+    property bool settled: false
+    onEnterReadyChanged: if (enterReady)
+        Qt.callLater(() => page.settled = true)
 
     function buildAll() {
         builtSections = sectionCount;
@@ -137,7 +83,7 @@ Flickable {
             // still to come land out of sight (masonry puts a card at the
             // top of the shortest column)
             bento.relayout();
-            if (!page.filled && page.height > 0 && (page.fitted ? page.builtSections >= page.rowCount : page.builtSections > page.lastRowIndex) && (page.fitted || body.y + bento.floor >= page.height))
+            if (!page.filled && page.height > 0 && body.y + bento.floor >= page.height)
                 page.filled = true;
             const start = Date.now();
             do {
@@ -149,7 +95,7 @@ Flickable {
     }
 
     contentWidth: width
-    contentHeight: page.fitted ? page.height : body.y + body.height + Space.xxl * 3
+    contentHeight: body.y + body.height + page.margin
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -168,28 +114,10 @@ Flickable {
     // Scroll to an entry (or a section), flash it and give it focus.
     function reveal(sectionId, entryId) {
         buildAll();
-        if (page.moreSections.some(x => x.section.id === sectionId || (x.section.entries || []).some(e => (e.id || e.key) === entryId)))
-            page.moreBuilt = true;
         // place the cards now (twice: a card's new width can rewrap it)
         bento.relayout();
         bento.relayout();
         let target = null;
-        for (let i = 0; i < moreRepeater.count; i++) {
-            const s = moreRepeater.itemAt(i) as SettingsSection;
-            if (!s)
-                continue;
-            const hit = entryId ? s.rowFor(entryId) : (s.sectionId === sectionId ? s : null);
-            if (hit) {
-                page.moreOpen = true;
-                moreFlick.contentY = Math.max(0, Math.min(hit.mapToItem(moreColumn, 0, 0).y - Space.l, moreFlick.contentHeight - moreFlick.height));
-                if (entryId) {
-                    SettingsStore.highlightedEntry = entryId;
-                    unflash.restart();
-                    hit.forceActiveFocus();
-                }
-                return;
-            }
-        }
         for (let i = 0; i < sections.count; i++) {
             const s = sections.itemAt(i) as SettingsSection;
             if (!s)
@@ -233,18 +161,16 @@ Flickable {
         onTriggered: SettingsStore.highlightedEntry = ""
     }
 
-    // The hero: the stage in the middle, the spatial controls beside it,
-    // receding as the page scrolls.
+    // The stage: compact, centred, receding as the page scrolls.
     Item {
         id: heroArea
         objectName: "pageHero"
         readonly property real recede: Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
-        readonly property bool sides: page.heroIds.length > 0
         x: page.margin
-        y: Space.s + (page.fitted ? 0 : page.contentY * 0.35)
+        y: Space.s + page.contentY * 0.35
         width: page.width - page.margin * 2
         height: stageLoader.active ? stageLoader.height + (page.footH > 0 ? Space.s + page.footH : 0) : 0
-        visible: stageLoader.active || page.sideOnly
+        visible: stageLoader.active
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7
         transformOrigin: Item.Top
@@ -252,78 +178,27 @@ Flickable {
         Loader {
             id: stageLoader
             objectName: "pageStage"
-            // as large as the window allows next to the side columns
-            readonly property int sideCount: (page.hero.left || []).length > 0 ? ((page.hero.right || []).length > 0 ? 2 : 1) : ((page.hero.right || []).length > 0 ? 1 : 0)
-            readonly property real room: heroArea.width - (page.sideW + page.gap) * sideCount
-            // fitted: the height the header, hint and row leave
-            readonly property real fitHeight: frame.heroH - (page.footH > 0 ? Space.s + page.footH : 0)
-            height: Math.round(page.listForm ? page.bandH : (page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460)))))
-            // the list form's band spans the room beside the side columns
-            width: Math.round(page.listForm ? room : Math.min(room, height * 16 / 9))
-            // the stage and its side column(s) centred as one group
-            readonly property real groupWidth: width + (page.sideW + page.gap) * sideCount
-            readonly property real groupX: (heroArea.width - groupWidth) / 2
-            x: groupX + ((page.hero.left || []).length > 0 ? page.sideW + page.gap : 0)
+            // a third of the page at most, 16:9, never taller than a band
+            // needs (a list page's band is short)
+            height: Math.round(page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300))))
+            width: Math.round(page.listForm ? heroArea.width : Math.min(heroArea.width, height * 16 / 9))
+            x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl
-            // the list form's band: a calm backdrop under its text
+            // the list form's band: a plain status band, no picture
             onLoaded: {
                 if (item && "calm" in item)
                     item.calm = Qt.binding(() => page.listForm);
             }
 
-            // a deep shadow under the stage
+            // a soft shadow under the stage
             RectangularShadow {
                 z: -1
                 anchors.fill: parent
                 radius: Look.radius("surface", parent.height)
-                offset: Qt.vector2d(0, Space.l)
-                blur: Space.xxl * 2
-                color: Qt.alpha(Colors.shadow, 0.55)
-            }
-        }
-
-        Column {
-            id: heroLeftCol
-            objectName: "heroLeft"
-            x: page.sideOnly ? 0 : stageLoader.x - page.gap - page.sideW
-            width: page.sideW
-            y: page.sideOnly ? body.y - heroArea.y : Space.l
-            spacing: Space.s
-            Repeater {
-                model: page.heroEntries(page.hero.left)
-                delegate: SettingRow {
-                    required property var modelData
-                    width: page.sideW
-                    entry: modelData
-                    bare: true
-                }
-            }
-        }
-
-        Column {
-            id: heroRightCol
-            objectName: "heroRight"
-            x: page.sideOnly ? heroArea.width - page.sideW : stageLoader.x + stageLoader.width + page.gap
-            width: page.sideW
-            y: page.sideOnly ? body.y - heroArea.y : Space.l
-            spacing: Space.s
-            Repeater {
-                model: page.heroEntries(page.hero.right)
-                delegate: Card {
-                    id: side
-                    required property var modelData
-                    width: page.sideW
-                    padding: Space.s
-                    visible: sideRow.shown
-                    SettingRow {
-                        id: sideRow
-                        width: side.contentWidth
-                        entry: side.modelData
-                        // waiting on one switch: dimmed, a press turns it on
-                        selfGate: true
-                    }
-                }
+                offset: Qt.vector2d(0, Space.m)
+                blur: Space.xxl
+                color: Qt.alpha(Colors.shadow, 0.4)
             }
         }
 
@@ -336,7 +211,7 @@ Flickable {
             y: stageLoader.height + Space.s
             width: stageLoader.width
             Repeater {
-                model: page.heroEntries(page.hero.foot)
+                model: page.footH > 0 ? (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => page.heroIds.indexOf(e.key || e.id) >= 0)), []) : []
                 delegate: SettingRow {
                     required property var modelData
                     width: heroFoot.width
@@ -349,8 +224,7 @@ Flickable {
         }
     }
 
-    // a soft pill behind the hint: it stays readable over any wallpaper
-    // (the ambient shows through between the stage and the row)
+    // a soft pill behind the hint: it stays readable over any background
     Mark {
         visible: heroHint.visible && heroHint.text !== ""
         opacity: heroHint.opacity
@@ -365,7 +239,7 @@ Flickable {
         objectName: "heroHint"
         visible: heroArea.visible && !!page.hero.hint
         x: page.margin
-        y: heroArea.y + heroArea.height * heroArea.scale + (page.fitted ? Space.s : Space.m)
+        y: heroArea.y + heroArea.height * heroArea.scale + Space.s
         width: page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "secondary"
@@ -373,61 +247,51 @@ Flickable {
         text: page.hero.hint ? I18n.t(page.hero.hint) : ""
     }
 
-    // The cards: the row, then the bento.
+    // The cards.
     Item {
         id: body
         z: 1
-        width: page.width - page.margin * 2 - page.sideLeft - page.sideRight
-        x: page.margin + page.sideLeft
-        y: page.fitted ? page.height - page.rowH - page.pad : (heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + Space.xl : Space.s)
-        height: bento.height + (note.visible ? note.height + Space.l : 0)
+        width: page.width - page.margin * 2
+        x: page.margin
+        y: heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.s * 2 : 0) + page.gap + Space.s : Space.s
+        height: bento.height + (note.visible ? note.height + page.gap : 0)
 
         Item {
             id: bento
             objectName: "pageBento"
             readonly property real gap: page.gap
-            readonly property int fullCols: BentoLayout.columns(parent.width, Space.px(300))
+            // columns with hysteresis: a resize near a breakpoint never makes
+            // the cards flip back and forth
+            property int fullCols: 1
+            function pickCols() {
+                const w = body.width;
+                const n = BentoLayout.columns(w, Space.px(340));
+                // fewer columns only once the width is clearly under the
+                // switch point
+                bento.fullCols = n < bento.fullCols && BentoLayout.columns(w + Space.px(24), Space.px(340)) >= bento.fullCols ? bento.fullCols : n;
+            }
+            Connections {
+                target: body
+                function onWidthChanged() {
+                    bento.pickCols();
+                }
+            }
+            Component.onCompleted: bento.pickCols()
             readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
-            // the sections of the bento (the row's are laid out apart)
-            readonly property var restSpans: (page.category.sections || []).filter(s => page.rowIds.indexOf(s.id) < 0).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
-            readonly property int cols: page.rowIds.length > 0 ? fullCols : BentoLayout.fit(fullCols, restSpans)
+            readonly property int cols: BentoLayout.fit(fullCols, bento.spans)
             readonly property real colW: (parent.width - gap * (fullCols - 1)) / fullCols
-            // card places {x, y, w, h} (h < 0: its own height), re-run
-            // when a card's height or visibility changes
+            // card places {x, y, w} (in page order), re-run when a card's
+            // height or visibility changes
             property var places: []
             property real floor: 0
-            width: page.rowIds.length > 0 ? parent.width : colW * cols + gap * (cols - 1)
+            width: colW * cols + gap * (cols - 1)
             x: (parent.width - width) / 2
             height: 0
 
             function relayout() {
-                // the row: equal widths, the tallest card's height
-                const inRow = [];
-                let rowH = 0;
-                for (let i = 0; i < sections.count; i++) {
-                    const s = sections.itemAt(i) as SettingsSection;
-                    if (s && page.rowIds.indexOf(s.sectionId) >= 0 && s.visible) {
-                        inRow.push(i);
-                        rowH = page.fitted ? page.rowH : Math.max(rowH, s.implicitHeight);
-                    }
-                }
-                const weightOf = i => page.rowWeights[page.rowIds.indexOf((page.category.sections[i] || {}).id)] || 1;
-                const totalWeight = inRow.reduce((t, i) => t + weightOf(i), 0);
-                const unitW = inRow.length > 0 ? (bento.width - bento.gap * (inRow.length - 1)) / totalWeight : 0;
-                const rowX = [];
-                inRow.reduce((x, i, k) => {
-                    rowX[k] = x;
-                    return x + unitW * weightOf(i) + bento.gap;
-                }, 0);
-                const top = inRow.length > 0 ? rowH + bento.gap : 0;
-                // the rest: masonry
                 const items = [];
-                const rest = [];
-                for (let i = 0; i < sections.count; i++) {
+                for (const i of page.order) {
                     const s = sections.itemAt(i);
-                    if (page.rowIds.indexOf((page.category.sections[i] || {}).id) >= 0 || page.fitted)
-                        continue;
-                    rest.push(i);
                     items.push({
                         "span": bento.spans[i] || 1,
                         "height": s && s.visible ? s.implicitHeight : 0
@@ -435,24 +299,17 @@ Flickable {
                 }
                 const r = BentoLayout.place(items, bento.cols, bento.gap);
                 const out = [];
-                inRow.forEach((i, k) => out[i] = {
-                        "x": rowX[k],
-                        "y": 0,
-                        "w": unitW * weightOf(i),
-                        "h": rowH
-                    });
-                rest.forEach((i, k) => {
+                page.order.forEach((i, k) => {
                     const pl = r.places[k];
                     out[i] = {
                         "x": pl.col * (bento.colW + bento.gap),
-                        "y": top + pl.y,
-                        "w": pl.span * bento.colW + (pl.span - 1) * bento.gap,
-                        "h": -1
+                        "y": pl.y,
+                        "w": pl.span * bento.colW + (pl.span - 1) * bento.gap
                     };
                 });
                 bento.places = out;
-                bento.height = top + r.height;
-                bento.floor = top + r.floor;
+                bento.height = r.height;
+                bento.floor = r.floor;
             }
             onColsChanged: Qt.callLater(bento.relayout)
             onWidthChanged: Qt.callLater(bento.relayout)
@@ -468,18 +325,24 @@ Flickable {
                     readonly property var place: bento.places[index] || ({
                             "x": 0,
                             "y": 0,
-                            "w": bento.width,
-                            "h": -1
+                            "w": bento.width
                         })
                     section: modelData
                     exclude: page.heroIds
-                    pending: page.buildRank[index] >= page.builtSections
-                    fixed: page.fitted && page.rowIds.indexOf(modelData.id) >= 0
-                    suppressed: page.fitted && page.rowIds.indexOf(modelData.id) < 0
+                    pageKeys: page.pageKeys
+                    pending: page.rank[index] >= page.builtSections
                     x: card.place.x
                     y: card.place.y
                     width: card.place.w
-                    height: card.fixed ? page.rowH : (card.place.h > 0 ? card.place.h : implicitHeight)
+                    height: implicitHeight
+                    // a card that moves (rows shown or hidden above it) glides
+                    Behavior on y {
+                        enabled: page.settled && Motion.glide.duration > 0
+                        NumberAnimation {
+                            duration: Motion.glide.duration
+                            easing.type: Motion.glide.easing
+                        }
+                    }
                     onImplicitHeightChanged: Qt.callLater(bento.relayout)
                     onVisibleChanged: Qt.callLater(bento.relayout)
                     Component.onCompleted: Qt.callLater(bento.relayout)
@@ -489,115 +352,14 @@ Flickable {
 
         KitText {
             id: note
-            objectName: page.fitted ? "" : "compositorOnlyNote"
-            y: bento.height + Space.l
+            objectName: "compositorOnlyNote"
+            y: bento.height + page.gap
             width: parent.width
-            visible: page.gated.count > 0 && !page.fitted
+            visible: page.gated.count > 0
             role: "caption"
             color: Type.muted
             wrapMode: Text.WordWrap
-            text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
-        }
-    }
-
-    // Fitted page: its other sections, from "More" at the end of the hint
-    // line, in a sheet from the right (scrolls inside; Esc / a click
-    // outside closes it).
-    Chip {
-        id: moreChip
-        objectName: "pageMore"
-        visible: page.fitted && page.moreShown > 0
-        x: page.width - page.margin - width
-        y: heroHint.visible ? heroHint.y + (heroHint.height - height) / 2 : page.height - page.rowH - page.pad - page.gap / 2 - height
-        z: 3
-        quiet: true
-        dense: true
-        icon: Icons.faders
-        text: I18n.t("prefs.page.more").replace("%1", page.moreShown)
-        onClicked: page.moreOpen = true
-    }
-
-    // Fitted page: the compositor gate's note at the start of the hint line
-    // (the rows it hides are not in the window on this compositor).
-    Chip {
-        objectName: page.fitted ? "compositorOnlyNote" : ""
-        visible: page.fitted && page.gated.count > 0
-        x: page.margin
-        y: moreChip.y
-        z: 3
-        quiet: true
-        dense: true
-        icon: Icons.info
-        maxLabelWidth: Math.max(Space.px(120), (page.width - heroHint.contentWidth) / 2 - page.margin - Space.px(60))
-        text: page.gated.count > 0 ? I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors)) : ""
-    }
-
-    Scrim {
-        objectName: "pageMoreScrim"
-        width: page.width
-        height: page.height
-        z: 8
-        shown: page.moreOpen
-        // hidden, it must not take the clicks of the page under it
-        visible: page.moreOpen || opacity > 0
-        onClicked: page.moreOpen = false
-    }
-
-    Card {
-        id: moreSheet
-        objectName: "pageMoreSheet"
-        z: 9
-        width: Math.min(page.width - page.margin * 2, Space.px(460))
-        height: page.height - page.pad * 2
-        x: page.moreOpen ? page.width - width - page.pad : page.width + Space.l
-        y: page.pad
-        visible: page.fitted && (page.moreOpen || x < page.width)
-        padding: Space.m
-        Keys.onEscapePressed: page.moreOpen = false
-        Behavior on x {
-            enabled: Motion.glide.duration > 0
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-
-        Flickable {
-            id: moreFlick
-            objectName: "pageMoreScroll"
-            width: moreSheet.contentWidth
-            height: moreSheet.height - moreSheet.padding * 2
-            contentWidth: width
-            contentHeight: moreColumn.height
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-
-            Column {
-                id: moreColumn
-                width: moreFlick.width
-                spacing: Space.m
-
-                Repeater {
-                    id: moreRepeater
-                    model: page.moreBuilt ? page.moreSections : []
-                    delegate: SettingsSection {
-                        required property var modelData
-                        width: moreColumn.width
-                        section: modelData.section
-                        exclude: page.heroIds
-                        pending: page.buildRank[modelData.index] >= page.builtSections
-                        shadow: false
-                    }
-                }
-                KitText {
-                    width: parent.width
-                    visible: page.gated.count > 0
-                    role: "caption"
-                    color: Type.muted
-                    wrapMode: Text.WordWrap
-                    text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
-                }
-            }
+            text: page.gated.count > 0 ? I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors)) : ""
         }
     }
 }

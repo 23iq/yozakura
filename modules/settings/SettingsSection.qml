@@ -31,11 +31,16 @@ Card {
     readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0 && !(section.toggle && e.key === section.toggle))
     // A card of the page row whose rows wait on one switch: they show
     // dimmed, with one "Turn on" for the card (CardGate.js).
-    readonly property var gate: sectionRoot.fixed ? CardGate.gate(sectionRoot.entries, SettingsStore.get, k => SettingsStore.entryByKey[k] || null) : null
+    readonly property var gate: CardGate.gate(sectionRoot.entries, SettingsStore.get, k => SettingsStore.entryByKey[k] || null)
+    // keys of the switches shown elsewhere on the page: the card offers no
+    // "Turn on" of its own for one of them (one control per key on a page);
+    // its waiting rows stay dimmed and a press on one flips that switch
+    property var pageKeys: []
+    readonly property bool offersTurnOn: sectionRoot.gate !== null && sectionRoot.pageKeys.indexOf(sectionRoot.gate.fix.key) < 0
     readonly property bool shown: sectionRoot.entries.length > 0 && (SettingsStore.sectionShown(section) || sectionRoot.gate !== null)
     // A row card whose rows all wait (the thing is turned off): it stays and
     // says so instead of vanishing from the row.
-    readonly property bool waiting: sectionRoot.fixed && sectionRoot.entries.length > 0 && !sectionRoot.shown
+    readonly property bool waiting: false
     // one setting: its value beside the heading, no label of its own
     readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e) || (sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(e.id || e.key) >= 0))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
@@ -118,7 +123,7 @@ Card {
         Chip {
             id: gateChip
             objectName: "sectionTurnOn"
-            visible: sectionRoot.gate !== null
+            visible: sectionRoot.offersTurnOn
             anchors.right: parent.right
             anchors.verticalCenter: heading.verticalCenter
             dense: true
@@ -171,7 +176,7 @@ Card {
                         width: rowsColumn.width
                         entry: modelData
                         bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key))
-                        dense: sectionRoot.fixed
+                        dense: true
                         // waits on the card's switch: shown dimmed (CardGate)
                         preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0
                         previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null

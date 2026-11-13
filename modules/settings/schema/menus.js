@@ -9,8 +9,8 @@ var category = {
     "title": "prefs.cat.menus",
     "description": "prefs.cat.menus.desc",
     "keywords": "popup menu tooltip open animation tail gap",
-    "stage": "OpensStage",
-    "hero": { "hint": "prefs.layout.hero_hint" },
+    "stage": "OsdStage",
+    "hero": { "hint": "prefs.osd.hero_hint" },
     "row": ["menus", "popups"],
     "sections": [
     {
@@ -20,7 +20,6 @@ var category = {
             {
                 "key": "layout.powermenu.style",
                 "type": "selector",
-                "iconOnly": true,
                 "surface": "powermenu",
                 "options": [
                     {

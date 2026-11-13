@@ -27,8 +27,6 @@ var category = {
     "stage": "BarStage",
     // Beside the stage: the bars (left), when the bar shows (right).
     "hero": {
-        "left": ["bar.panels.list"],
-        "right": ["bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen"],
         "hint": "prefs.bar.hero_hint"
     },
     // One row of cards under the stage.

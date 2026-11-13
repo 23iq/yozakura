@@ -14,11 +14,6 @@ var category = {
     "icon": "paintBrush",
     "title": "prefs.cat.appearance",
     "description": "prefs.cat.appearance.desc",
-    "stage": "LookStage",
-    "hero": {
-        "left": ["theme.mode"],
-        "right": ["theme.tintIcons", "theme.signatures.brushHighlight", "theme.signatures.petals"]
-    },
     "row": ["language", "palette", "tune"],
     "keywords": "theme look style colors fonts dark light",
     "sections": [

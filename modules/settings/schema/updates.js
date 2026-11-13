@@ -13,10 +13,6 @@ var category = {
     "title": "prefs.cat.updates",
     "description": "prefs.cat.updates.desc",
     "keywords": "updates version release changelog ocr text recognition tesseract languages",
-    "stage": "UpdatesStage",
-    "hero": {
-        "hint": "prefs.updates.hero_hint"
-    },
     "row": ["updates", "ocr"],
     "sections": [
         {

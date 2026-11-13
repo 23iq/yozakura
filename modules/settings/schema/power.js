@@ -34,11 +34,6 @@ var category = {
     "title": "prefs.cat.power",
     "description": "prefs.cat.power.desc",
     "keywords": "power idle sleep suspend lock screen off dim timeout battery hypridle profile performance saver balanced",
-    "stage": "PowerStage",
-    "hero": {
-        "right": ["performance.batterySaver"],
-        "hint": "prefs.power.hero_hint"
-    },
     "row": ["idle", "power"],
     "sections": [
         {

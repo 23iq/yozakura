@@ -25,9 +25,8 @@ Item {
     // Parallax: the wallpaper's offset in px (a hovered home tile follows
     // the pointer a little).
     property point imageShift: Qt.point(0, 0)
-    // A calm backdrop (the band of a list page, with text and controls on
-    // it): the wallpaper blurred and darkened like the window's ambient,
-    // never a sharp picture under the content.
+    // A plain backdrop (the status band of a list page, with text and
+    // controls on it): a card fill, no wallpaper picture at all.
     property bool calm: false
     default property alias content: area.data
     property real radius: Look.radius("surface", stage.height)
@@ -57,25 +56,17 @@ Item {
         ScreenBackdrop {
             anchors.fill: parent
             radius: 0
-            visible: stage.backdrop
+            visible: stage.backdrop && !stage.calm
         }
         Image {
             anchors.fill: parent
-            visible: stage.backdrop && status === Image.Ready
-            source: stage.wallpaper
+            visible: stage.backdrop && !stage.calm && status === Image.Ready
+            source: stage.calm ? "" : stage.wallpaper
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
-            sourceSize.width: stage.calm ? 160 : Math.max(1, stage.width * 1.5)
+            sourceSize.width: Math.max(1, stage.width * 1.5)
             scale: stage.imageScale
-            layer.enabled: stage.calm && visible
-            layer.smooth: true
-            layer.effect: MultiEffect {
-                blurEnabled: true
-                blur: 1
-                blurMax: 48
-                saturation: 0.5
-            }
             transform: Translate {
                 x: stage.imageShift.x
                 y: stage.imageShift.y
@@ -106,7 +97,7 @@ Item {
             anchors.fill: parent
             radius: 0
             visible: stage.calm && stage.backdrop
-            color: Qt.alpha(Colors.background, 0.55)
+            color: Look.cardFill(false)
         }
         Item {
             id: area

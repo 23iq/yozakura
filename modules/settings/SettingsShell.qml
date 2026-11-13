@@ -11,6 +11,7 @@ import qs.modules.settings.store
 import "schema/Categories.js" as Categories
 import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
+import "Registry.js" as Registry
 
 // Settings window content, the "showcase" frame: a home screen
 // (SettingsHome: search + a bento of live tiles + pills) and, once a
@@ -209,6 +210,9 @@ Item {
         // the wallpaper after the first frame (decode + blur cost it; it fades in)
         source: homeView.warm ? SettingsStore.wallpaper : ""
         plain: Config.performance.batterySaver === true
+        // full on home and on the tabs about the desktop; quiet on the
+        // others (the backdrop, not content)
+        strength: Look.ambientStrength * (shell.atHome || !!Registry.DESKTOP_STAGES[shell.currentCategory] ? 1 : 0.3)
     }
 
     // The mouse back button returns home.

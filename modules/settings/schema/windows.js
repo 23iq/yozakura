@@ -27,7 +27,6 @@ var category = {
     "keywords": "windows compositor hyprland gaps borders rounding blur shadows dim layout tiling motion animations",
     "stage": "WindowsStage",
     "hero": {
-        "right": ["compositor.smartGaps", "compositor.dimInactive", "compositor.shadowEnabled"],
         "hint": "prefs.windows.hero_hint"
     },
     "row": ["layout", "gaps", "borders", "corners"],

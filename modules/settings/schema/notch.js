@@ -11,7 +11,6 @@ var category = {
     "keywords": "notch island dynamic activities visualizer media panels",
     "stage": "IslandStage",
     "hero": {
-        "right": ["notch.enabled", "notch.keepHidden", "notch.disableHoverExpansion"],
         "hint": "prefs.notch.hero_hint"
     },
     "row": [{ "id": "notch", "weight": 1.2 }, { "id": "media", "weight": 1 }, { "id": "activities", "weight": 1.3 }],
@@ -61,7 +60,6 @@ var category = {
                 {
                     "key": "notch.align",
                     "type": "selector",
-                    "iconOnly": true,
                     "options": [
                         {
                             "value": "start",
@@ -111,7 +109,6 @@ var category = {
                 {
                     "key": "notch.expandOn",
                     "type": "selector",
-                    "iconOnly": true,
                     "options": [
                         {
                             "value": "hover",
