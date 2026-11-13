@@ -31,7 +31,7 @@ Item {
     // compact pictures: about 130 px, five or six a row in a wide card
     readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.options.length, Space.px(96))
     // A few options do not stretch into huge cards.
-    readonly property real cardWidth: PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(150))
+    readonly property real cardWidth: PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(190))
     readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight

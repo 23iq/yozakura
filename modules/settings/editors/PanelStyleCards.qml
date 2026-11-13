@@ -64,7 +64,7 @@ Item {
                 delegate: ChoiceCard {
                     id: card
                     required property var modelData
-                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(150))
+                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(190))
                     previewHeight: Math.round(width * 10 / 16)
                     selected: root.panel !== null && root.panel.style === modelData.id
                     icon: root.strip ? "" : modelData.icon

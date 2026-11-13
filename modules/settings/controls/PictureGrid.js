@@ -1,9 +1,9 @@
 .pragma library
 
 // The size of picture cards in a grid (CardSelector and the picture
-// editors): compact cards of about `min` px (default 124, five or six a row
-// in a wide card), never wider than `max` (150), at least two a row, never
-// more columns than options.
+// editors): as many columns as cards of about `min` px fit (never more than
+// options, at least two), each column stretched to fill the row up to `max`
+// (callers pass about 190) so a row of pictures ends at the card's edge.
 
 function columns(width, gap, count, min) {
     var m = min || 124;

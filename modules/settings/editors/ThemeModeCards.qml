@@ -159,7 +159,7 @@ Item {
                 delegate: ChoiceCard {
                     id: card
                     required property var modelData
-                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(150))
+                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(190))
                     previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.55)
                     inset: root.strip
                     selected: root.mode === modelData.id

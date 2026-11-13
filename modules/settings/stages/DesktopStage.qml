@@ -9,6 +9,7 @@ import qs.modules.settings.store
 import "../../desktop/widgets/WidgetRegistry.js" as Registry
 import "../SchemaUtil.js" as SchemaUtil
 import "DesktopPlace.js" as DesktopPlace
+import "../../desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
 
 // Stage of Widgets: your desktop with no windows on it, drawn from the live
 // config: the depth clock as it renders (the real DepthClock, its style,
@@ -27,7 +28,10 @@ Stage {
     readonly property bool clockOn: SettingsStore.get("desktop.depthClock") === true
     readonly property string clockStyle: String(SettingsStore.get("desktop.depthClockStyle") || "")
     readonly property string clockInk: String(SettingsStore.get("desktop.depthClockInk") || "auto")
-    readonly property string clockSide: DesktopPlace.clockSide(String(SettingsStore.get("desktop.depthClockPosition") || "auto"))
+    // where the clock is drawn (its real placement), else where the setting says
+    readonly property string clockSide: DesktopPlace.clockSide(String(SettingsStore.get("desktop.depthClockPosition") || "auto"), clock.item ? clock.item.side : "")
+    // the other side, where this style can go ("": none)
+    readonly property string clockTarget: DesktopPlace.moveTarget(stage.clockSide, ClockStyles.get(stage.clockStyle).sides)
     readonly property bool iconsOn: SettingsStore.get("desktop.enabled") === true
     readonly property real iconSize: Number(SettingsStore.get("desktop.iconSize") || 48)
     readonly property string iconInk: String(SettingsStore.get("desktop.textColor") || "overBackground")
@@ -47,6 +51,7 @@ Stage {
         onLoaded: {
             item.styleId = Qt.binding(() => stage.clockStyle);
             item.inkRole = Qt.binding(() => stage.clockInk);
+            item.crop = false;
         }
     }
 
@@ -151,8 +156,8 @@ Stage {
         Item {
             id: zone
             objectName: "desktopClockZone"
-            visible: stage.clockOn
-            readonly property string side: stage.clockSide === "left" ? "right" : "left"
+            visible: stage.clockOn && zone.side !== ""
+            readonly property string side: stage.clockTarget
             width: mini.freeRect.w * 0.34
             height: mini.freeRect.h * 0.36
             x: zone.side === "left" ? mini.freeRect.x + mini.unit : mini.freeRect.x + mini.freeRect.w - width - mini.unit

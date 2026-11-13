@@ -62,9 +62,12 @@ test('page cards: 1 to 3 columns, masonry without overlap', () => {
     assert.equal(places[2].col, 2);
     assert.equal(places[2].y, 60);
     assert.equal(places[3].y, 110);
+    // under the wide card, with the column beside it free on its line, the
+    // last one takes both columns (no hole beside it)
+    assert.deepEqual(plain(places[3]), { col: 0, span: 2, y: 110 });
     assert.equal(height, 260);
-    // the shortest column ends at 100: a next card lands at or below it
-    assert.equal(floor, 100);
+    // the shortest column ends at 140: a next card lands at or below it
+    assert.equal(floor, 140);
     // a span wider than the grid is clamped
     assert.equal(BentoLayout.place([{ span: 2, height: 10 }], 1, 0).places[0].span, 1);
 });
@@ -162,6 +165,22 @@ test('a narrow card fills the hole a wide one leaves; fixed columns stay', () =>
     const kept = BentoLayout.place(grown, 3, 10, r.places);
     assert.equal(kept.places[2].col, 0);
     assert.equal(kept.places[3].col, 0);
+});
+
+test('a lone card of a band takes the free columns beside it', () => {
+    // two cards on the top line of three columns: the second takes the third
+    const two = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 80 }], 3, 10);
+    assert.deepEqual(plain(two.places[0]), { col: 0, span: 1, y: 0 });
+    assert.deepEqual(plain(two.places[1]), { col: 1, span: 2, y: 0 });
+    // a card under a wide one, the other column free on its line: both
+    const r = BentoLayout.place([{ span: 2, height: 100 }, { span: 1, height: 80 }], 2, 10);
+    assert.deepEqual(plain(r.places[1]), { col: 0, span: 2, y: 110 });
+    // a column busy beside it: it stays narrow
+    const busy = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 300 }, { span: 1, height: 50 }], 2, 10);
+    assert.deepEqual(plain(busy.places[2]), { col: 0, span: 1, y: 110 });
+    // fixed places keep their widened span
+    const kept = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 120 }], 3, 10, two.places);
+    assert.equal(kept.places[1].span, 2);
 });
 
 test('the master switch card heads the page', () => {

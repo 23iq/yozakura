@@ -90,7 +90,7 @@
       "description": "Monitors that show the bar; none selected shows it on every monitor.",
       "x-settings": {
         "category": "bar",
-        "section": "screens",
+        "section": "autohide",
         "label": "prefs.bar.screens",
         "control": "screens",
         "keywords": "bar monitor screen display multi-monitor where",
@@ -110,7 +110,7 @@
       "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
       "x-settings": {
         "category": "bar",
-        "section": "screens",
+        "section": "autohide",
         "label": "prefs.bar.firefox_player",
         "control": "toggle",
         "keywords": "firefox browser media player mpris music video youtube",

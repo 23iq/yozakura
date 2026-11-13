@@ -127,10 +127,10 @@ check(ev("Config.bar.compact") is False and h.eval(r, "modified") is False, "res
 # visibleWhen
 ev("SettingsStore.set('bar.frameEnabled', false)")
 settle()
-check(h.eval(row("bar.containBar"), "shown") is False, "inside-the-frame hidden without frame")
+check(h.eval(row("bar.containBar"), "dimmed") is True, "inside-the-frame waits, greyed, without frame")
 ev("SettingsStore.set('bar.frameEnabled', true)")
 settle()
-check(h.eval(row("bar.containBar"), "shown") is True, "inside-the-frame shown with frame")
+check(h.eval(row("bar.containBar"), "dimmed") is False, "inside-the-frame live with frame")
 check(ev('w.findItem("settingRow:bar.frameThickness")') is None, "an out-of-window entry has no row")
 
 # Host/style pickers note where they show while the notch is off

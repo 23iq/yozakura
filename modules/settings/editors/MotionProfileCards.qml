@@ -40,7 +40,7 @@ Item {
                 required property var modelData
                 required property int index
                 objectName: "motionCard:" + modelData.id
-                width: PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(150))
+                width: PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(190))
                 previewHeight: Math.round(width * 0.62)
                 selected: root.current === modelData.id
                 icon: modelData.icon

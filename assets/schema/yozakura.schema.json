@@ -2715,7 +2715,7 @@
           "description": "Monitors that show the bar; none selected shows it on every monitor.",
           "x-settings": {
             "category": "bar",
-            "section": "screens",
+            "section": "autohide",
             "label": "prefs.bar.screens",
             "control": "screens",
             "keywords": "bar monitor screen display multi-monitor where",
@@ -2735,7 +2735,7 @@
           "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
           "x-settings": {
             "category": "bar",
-            "section": "screens",
+            "section": "autohide",
             "label": "prefs.bar.firefox_player",
             "control": "toggle",
             "keywords": "firefox browser media player mpris music video youtube",
@@ -4993,7 +4993,7 @@
           "description": "Size of desktop icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.icon_size",
             "control": "slider",
             "step": 4,
@@ -5017,7 +5017,7 @@
           "description": "Vertical space between icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.icon_spacing",
             "control": "slider",
             "step": 2,
@@ -5042,7 +5042,7 @@
           "description": "Colour of the icon names.",
           "x-settings": {
             "category": "desktop",
-            "section": "widgets",
+            "section": "arrange",
             "label": "prefs.desktop.icon_text",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -5088,7 +5088,7 @@
           "description": "How one wallpaper turns into the next. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
-            "section": "transition",
+            "section": "panorama",
             "label": "prefs.wall.transition",
             "control": "selector",
             "keywords": "transition animation grow wipe dissolve fade random shader effect",
@@ -5139,7 +5139,7 @@
           "description": "Length of the wallpaper transition. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
-            "section": "transition",
+            "section": "panorama",
             "label": "prefs.wall.transition_duration",
             "control": "slider",
             "step": 50,

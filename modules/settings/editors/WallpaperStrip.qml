@@ -13,6 +13,8 @@ import qs.modules.settings.controls
 // and scrolled into view, many at once; a click sets it live. Ends with a
 // "Folders" chip that opens the folder list. Its height is the strip's
 // (`fillHeight`); without one (a card elsewhere) it is a few thumbnails tall.
+// Taller than two rows of thumbnails (beside the stage), it is a grid that
+// scrolls down, its cells stretched to fill the width.
 Item {
     id: root
 
@@ -21,10 +23,15 @@ Item {
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string current: root.manager ? (root.manager.currentWallpaper || "") : ""
     readonly property var paths: root.manager ? (root.manager.wallpaperPaths || []) : []
-    readonly property real thumbH: root.fillHeight > 0 ? root.fillHeight : Space.px(72)
-    readonly property real thumbW: Math.round(root.thumbH * 16 / 9)
+    readonly property real rowH: Space.px(72)
+    readonly property bool grid: root.fillHeight >= root.rowH * 2 + Space.s
+    // the grid: whole rows in the height, as many 16:9 cells as fit a row
+    readonly property int rows: root.grid ? Math.max(2, Math.floor((root.fillHeight + Space.s) / (root.rowH + Space.s))) : 1
+    readonly property real thumbH: root.grid ? Math.floor((root.fillHeight - Space.s * (root.rows - 1)) / root.rows) : root.fillHeight > 0 ? root.fillHeight : root.rowH
+    readonly property int perRow: Math.max(1, Math.floor((root.width + Space.s) / (root.thumbH * 16 / 9 + Space.s)))
+    readonly property real thumbW: root.grid ? Math.floor((root.width + Space.s) / root.perRow) - Space.s : Math.round(root.thumbH * 16 / 9)
 
-    implicitHeight: root.thumbH
+    implicitHeight: root.grid ? root.fillHeight : root.thumbH
 
     function source(path) {
         if (!path || !root.manager)
@@ -47,19 +54,20 @@ Item {
         x: -Space.xs
         y: -Space.xs
         width: root.width + Space.xs * 2
-        height: root.thumbH + Space.xs * 2
+        height: (root.grid ? root.fillHeight : root.thumbH) + Space.xs * 2
         clip: true
 
         ListView {
             id: list
             objectName: "wallpaperStrip"
+            visible: !root.grid
             x: Space.xs
             y: Space.xs
             width: root.width
             height: root.thumbH
             orientation: ListView.Horizontal
             spacing: Space.s
-            model: root.paths
+            model: root.grid ? [] : root.paths
             boundsBehavior: Flickable.StopAtBounds
             cacheBuffer: root.thumbW * 4
             currentIndex: root.paths.indexOf(root.current)
@@ -70,34 +78,14 @@ Item {
             Component.onCompleted: if (currentIndex >= 0)
                 Qt.callLater(() => list.positionViewAtIndex(list.currentIndex, ListView.Contain))
 
-            delegate: ChoiceCard {
-                id: card
-                required property string modelData
-                objectName: "wallpaper:" + root.fileName(card.modelData)
-                width: root.thumbW
-                previewHeight: root.thumbH
-                inset: true
-                selected: card.modelData === root.current
-                title: card.hovered ? root.fileName(card.modelData) : ""
-                onClicked: root.pick(card.modelData)
+            delegate: thumb
 
-                Art {
-                    anchors.fill: parent
-                    radius: 0
-                    source: root.source(card.modelData)
-                }
-                Icon {
-                    visible: root.manager && root.manager.getFileType && root.manager.getFileType(card.modelData) !== "image"
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.margins: Space.xs
-                    icon: Icons.play
-                    role: "caption"
-                    tone: "text"
-                }
-            }
+            footer: root.grid ? null : stripFolders
+        }
 
-            footer: Item {
+        Component {
+            id: stripFolders
+            Item {
                 width: folders.width + Space.s
                 height: list.height
                 Chip {
@@ -109,6 +97,72 @@ Item {
                     text: I18n.t("prefs.wall.section.folders")
                     onClicked: SettingsStore.navigate("wallpapers", "folders", "desktop.wallpaperFolders")
                 }
+            }
+        }
+
+        GridView {
+            id: gridView
+            objectName: "wallpaperGrid"
+            visible: root.grid
+            x: Space.xs
+            y: Space.xs
+            width: root.width + Space.s
+            height: root.fillHeight
+            cellWidth: root.thumbW + Space.s
+            cellHeight: root.thumbH + Space.s
+            model: root.grid ? root.paths : []
+            boundsBehavior: Flickable.StopAtBounds
+            cacheBuffer: root.thumbH * 4
+            currentIndex: root.paths.indexOf(root.current)
+            highlightFollowsCurrentItem: false
+            onCurrentIndexChanged: if (currentIndex >= 0)
+                Qt.callLater(() => gridView.positionViewAtIndex(gridView.currentIndex, GridView.Contain))
+            Component.onCompleted: if (currentIndex >= 0)
+                Qt.callLater(() => gridView.positionViewAtIndex(gridView.currentIndex, GridView.Contain))
+
+            delegate: thumb
+
+            footer: Item {
+                width: gridView.width
+                height: gridFolders.height + Space.s
+                Chip {
+                    id: gridFolders
+                    objectName: "wallpaperFolders"
+                    icon: Icons.folder
+                    text: I18n.t("prefs.wall.section.folders")
+                    onClicked: SettingsStore.navigate("wallpapers", "folders", "desktop.wallpaperFolders")
+                }
+            }
+        }
+    }
+
+    Component {
+        id: thumb
+
+        ChoiceCard {
+            id: card
+            required property string modelData
+            objectName: "wallpaper:" + root.fileName(card.modelData)
+            width: root.thumbW
+            previewHeight: root.thumbH
+            inset: true
+            selected: card.modelData === root.current
+            title: card.hovered ? root.fileName(card.modelData) : ""
+            onClicked: root.pick(card.modelData)
+
+            Art {
+                anchors.fill: parent
+                radius: 0
+                source: root.source(card.modelData)
+            }
+            Icon {
+                visible: root.manager && root.manager.getFileType && root.manager.getFileType(card.modelData) !== "image"
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Space.xs
+                icon: Icons.play
+                role: "caption"
+                tone: "text"
             }
         }
     }

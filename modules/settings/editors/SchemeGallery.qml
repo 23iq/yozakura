@@ -26,7 +26,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int columns: root.strip ? Math.max(1, root.schemes.length) : PictureGrid.columns(width, grid.columnSpacing, root.schemes.length, Space.px(124))
-    readonly property real cardWidth: root.strip ? Math.max(Space.px(96), (root.fillHeight - Space.xl) * 1.3) : PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(150))
+    readonly property real cardWidth: root.strip ? Math.max(Space.px(96), (root.fillHeight - Space.xl) * 1.3) : PictureGrid.cardWidth(width, grid.columnSpacing, columns, Space.px(190))
 
     implicitHeight: root.strip ? root.fillHeight : column.implicitHeight
 

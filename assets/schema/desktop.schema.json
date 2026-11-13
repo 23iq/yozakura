@@ -26,7 +26,7 @@
       "description": "Size of desktop icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.icon_size",
         "control": "slider",
         "step": 4,
@@ -50,7 +50,7 @@
       "description": "Vertical space between icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.icon_spacing",
         "control": "slider",
         "step": 2,
@@ -75,7 +75,7 @@
       "description": "Colour of the icon names.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.icon_text",
         "control": "custom",
         "component": "ColorRoleSwatches",
@@ -121,7 +121,7 @@
       "description": "How one wallpaper turns into the next. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
-        "section": "transition",
+        "section": "panorama",
         "label": "prefs.wall.transition",
         "control": "selector",
         "keywords": "transition animation grow wipe dissolve fade random shader effect",
@@ -172,7 +172,7 @@
       "description": "Length of the wallpaper transition. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
-        "section": "transition",
+        "section": "panorama",
         "label": "prefs.wall.transition_duration",
         "control": "slider",
         "step": 50,

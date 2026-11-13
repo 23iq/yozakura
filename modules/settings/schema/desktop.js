@@ -79,28 +79,8 @@ var category = {
         "hint": "prefs.desktop.hero_hint"
     },
     // icon size is a rare knob: in More, with the arrangement
-    "row": ["widgets", { "id": "clock", "weight": 1.6 }],
+    "row": ["arrange", { "id": "clock", "weight": 1.6 }],
     "sections": [
-        {
-            "id": "widgets",
-            "title": "prefs.desktop.section.widgets",
-            "entries": [
-                {
-                    "id": "desktop.widgetChips",
-                    "type": "custom",
-                    "component": "DesktopWidgetChips",
-                    "keys": ["desktop.widgets"],
-                    "part": true,
-                    "visibleWhen": {
-                        "key": "desktop.widgetsEnabled",
-                        "equals": true
-                    },
-                    "label": "prefs.desktop.widget_chips",
-                    "description": "prefs.desktop.widget_chips.desc",
-                    "keywords": "widgets add remove media music calendar system note weather on off"
-                }
-            ]
-        },
         {
             "id": "clock",
             "title": "prefs.desktop.section.clock",
@@ -190,13 +170,6 @@ var category = {
                     "keywords": "widgets desktop show hide"
                 },
                 {
-                    "key": "desktop.depthLayering",
-                    "type": "toggle",
-                    "label": "prefs.desktop.depth_layering",
-                    "description": "prefs.desktop.depth_layering.desc",
-                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
-                },
-                {
                     "key": "desktop.widgets",
                     "type": "custom",
                     "component": "DesktopWidgetsMore",
@@ -219,6 +192,13 @@ var category = {
                     "label": "prefs.desktop.widget_variant",
                     "description": "prefs.desktop.widget_variant.desc",
                     "keywords": "widget style surface glass background card pane"
+                },
+                {
+                    "key": "desktop.depthLayering",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_layering",
+                    "description": "prefs.desktop.depth_layering.desc",
+                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
                 },
                 {
                     "key": "desktop.widgetGrid",

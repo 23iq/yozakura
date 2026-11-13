@@ -1828,7 +1828,6 @@
   "desktop.widgets.monitor": "Monitor",
   "desktop.widgets.empty": "No widgets yet. Add one above, then arrange it on the desktop.",
   "prefs.desktop.section.clock": "Clock",
-  "prefs.desktop.section.widgets": "Widgets",
   "prefs.desktop.section.icons": "Icons",
   "prefs.desktop.depth_clock": "Depth clock",
   "prefs.desktop.depth_clock.desc": "A big clock drawn behind the subject of your wallpaper.",
@@ -4329,7 +4328,7 @@
   "settings.shell.overview_style_scroll": "Scroll",
   "prefs.desktop.depth_layering": "Depth layering",
   "prefs.desktop.depth_layering.desc": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
-  "prefs.wall.section.panorama": "Fit",
+  "prefs.wall.section.panorama": "Fit and transition",
   "prefs.wall.mode": "Wallpaper mode",
   "prefs.wall.mode.desc": "Fill crops a still image to the screen. Panorama scales it to the screen height: each workspace is a frame of one wide image and the view glides between them.",
   "prefs.wall.mode.fill": "Fill",
@@ -4594,9 +4593,7 @@
   "prefs.launcher.searches.desc": "Turn a kind of result on or off; the launcher above follows at once.",
   "prefs.desktop.hero_hint": "Turn a widget on and it shows on your desktop · click a side to move the clock",
   "prefs.desktop.section.clock_details": "Clock details",
-  "prefs.desktop.section.arrange": "Arrange widgets",
-  "prefs.desktop.widget_chips": "Widgets on the desktop",
-  "prefs.desktop.widget_chips.desc": "Put a widget of a kind on the desktop, or take it away.",
+  "prefs.desktop.section.arrange": "Widgets",
   "prefs.undo.clock_moved": "Clock moved",
   "prefs.desktop.section.icon_details": "Icon labels",
   "prefs.overview.section.grid": "Grid",
@@ -4743,5 +4740,6 @@
   "prefs.home.search_short": "Search",
   "prefs.notif.dnd_now": "Silence notifications now",
   "prefs.ai.quick_use": "Use quick ask",
-  "prefs.ai.tasks.notify_me": "Notify me"
+  "prefs.ai.tasks.notify_me": "Notify me",
+  "prefs.desktop.arrange_on_desktop": "Arrange on desktop"
 }

@@ -239,14 +239,16 @@ function withSections(cat, extra) {
 var categories = [
     mergeInto(Appearance.category, "palette", ["accents"]),
     IconsType.category,
-    Wallpapers.category,
-    withSections(Bar.category, [Layout.builderSection]),
+    mergeInto(Wallpapers.category, "panorama", ["transition"]),
+    mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]),
     mergeInto(Notch.category, "notch", ["behaviour", "place", "idle"]),
     Dock.category,
     mergeInto(Overview.category, "grid", ["size", "wallpaper"]),
     withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),
-    // the clock: its switch, style and details in one card
-    mergeInto(moveEntry(mergeInto(Desktop.category, "widgets", ["icons", "icondetails"]), "desktop.depthClock", "clock"), "clock", ["clockmore"]),
+    // the widgets: one card (the switch, the list with add / remove and one
+    // "Arrange on desktop", the surface and layering, then the icons); the
+    // clock: its switch, style and details in one card
+    mergeInto(moveEntry(mergeInto(Desktop.category, "arrange", ["icons", "icondetails"]), "desktop.depthClock", "clock"), "clock", ["clockmore"]),
     mergeInto(Lockscreen.category, "style", ["tone"]),
     mergeInto(Notifications.category, "behaviour", ["sound", "history"]),
     withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),

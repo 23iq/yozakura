@@ -211,14 +211,11 @@ Window {
             out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
         }
         if (hint && shown(hint) && hint.text !== "") band.push(["hint", rect(hint)]);
-        if (cards.length > 0 && page.contentY === 0) {
-            var top = Math.min.apply(null, cards.map(c => c[1][1]));
-            band.push(["cards", [cards[0][1][0], top, 1, 1]]);
-            band.forEach(b => {
-                if (b[0] !== "cards" && b[1][1] + b[1][3] > top + 1)
-                    out.overlaps.push(["page", b[0], "the first card", b[1], [0, top, 0, 0]]);
-            });
-        }
+        // the stage and its hint against every card (on top of the cards or
+        // beside them in the first column)
+        band.forEach(b => cards.forEach(c => {
+            if (meets(b[1], c[1])) out.overlaps.push(["page", b[0], c[0], b[1], c[1]]);
+        }));
         if (band.length > 1 && band[0][0] === "stage" && band[1][0] === "hint")
             pairs("page", band.slice(0, 2), out.overlaps);
         texts(page, out);

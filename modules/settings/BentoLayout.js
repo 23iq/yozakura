@@ -19,10 +19,29 @@ function columns(width, minCard) {
 // `fixed` (optional, [{col, span}] by item): keep those columns (a card that
 // grows or shrinks after the page showed moves down or up in its own
 // column, never to another one: nothing reshuffles on a toggle).
-function place(items, cols, gap, fixed) {
+// `reserved` (optional, [{col, span, height}]): blocks taken at the top
+// before any card (the stage standing in the first column).
+// A free top slot (a column with nothing at its top) is filled by the next
+// narrow card before any card goes under another one.
+// A card with a free column beside it on its line (the column ends where
+// the card starts, nothing there along its height) takes that column too:
+// the cards of a band always share the page's whole width.
+function place(items, cols, gap, fixed, reserved) {
     var used = [];
     for (var c = 0; c < cols; c++)
         used.push([]);
+    (reserved || []).forEach(function (r) {
+        for (var k = r.col; k < Math.min(cols, r.col + (r.span || 1)); k++)
+            used[k].push([0, r.height]);
+    });
+    function topFree() {
+        for (var k = 0; k < cols; k++)
+            if (!used[k].some(function (r) {
+                return r[0] < 1;
+            }))
+                return true;
+        return false;
+    }
     function free(col, y, h) {
         var list = used[col];
         for (var i = 0; i < list.length; i++)
@@ -56,8 +75,9 @@ function place(items, cols, gap, fixed) {
         return end;
     }
     var places = [];
-    items.forEach(function (it, n) {
-        var span = Math.max(1, Math.min(cols, it.span || 1));
+    function put(n) {
+        var it = items[n];
+        var span = Math.max(1, Math.min(cols, fixed && fixed[n] && fixed[n].span ? fixed[n].span : it.span || 1));
         var h = it.height > 0 ? it.height + gap : 0;
         var best = 0, bestY = Infinity, bestFloor = -Infinity;
         var keep = fixed && fixed[n] && fixed[n].col + span <= cols ? fixed[n].col : -1;
@@ -78,15 +98,79 @@ function place(items, cols, gap, fixed) {
                 bestFloor = low;
             }
         }
-        places.push({
+        places[n] = {
             "col": best,
             "span": span,
             "y": bestY
-        });
+        };
         if (h > 0)
             for (var k = best; k < best + span; k++)
                 used[k].push([bestY, bestY + h]);
+    }
+    // where the item would go (without placing it)
+    function wouldGoUnder(n) {
+        var it = items[n];
+        if (!(it.height > 0))
+            return false;
+        var span = Math.max(1, Math.min(cols, it.span || 1));
+        var low = Infinity;
+        for (var c = 0; c + span <= cols; c++)
+            low = Math.min(low, lowest(c, span, it.height + gap));
+        return low > 0.5;
+    }
+    var pending = items.map(function (it, n) {
+        return n;
     });
+    while (pending.length > 0) {
+        var next = pending[0];
+        if (!fixed && topFree() && wouldGoUnder(next)) {
+            // a narrow card later on takes the free top slot first
+            for (var q = 1; q < pending.length; q++) {
+                var cand = items[pending[q]];
+                if (cand.height > 0 && Math.max(1, Math.min(cols, cand.span || 1)) === 1) {
+                    next = pending[q];
+                    break;
+                }
+            }
+        }
+        put(next);
+        pending.splice(pending.indexOf(next), 1);
+    }
+    if (!fixed)
+        widen();
+    // the cards with a free column beside them on their line take it
+    function endsAt(col, y) {
+        var end = 0;
+        used[col].forEach(function (r) {
+            if (r[1] <= y + 0.5)
+                end = Math.max(end, r[1]);
+        });
+        return end;
+    }
+    function besideFree(col, y, h) {
+        return col >= 0 && col < cols && Math.abs(endsAt(col, y) - y) <= 0.5 && free(col, y, h);
+    }
+    function widen() {
+        places.forEach(function (pl, n) {
+            var h = items[n].height > 0 ? items[n].height + gap : 0;
+            if (h <= 0)
+                return;
+            var grew = true;
+            while (grew) {
+                grew = false;
+                if (besideFree(pl.col + pl.span, pl.y, h)) {
+                    used[pl.col + pl.span].push([pl.y, pl.y + h]);
+                    pl.span += 1;
+                    grew = true;
+                } else if (besideFree(pl.col - 1, pl.y, h)) {
+                    used[pl.col - 1].push([pl.y, pl.y + h]);
+                    pl.col -= 1;
+                    pl.span += 1;
+                    grew = true;
+                }
+            }
+        });
+    }
     var height = 0, floor = Infinity;
     used.forEach(function (list) {
         var end = 0;
@@ -150,11 +234,12 @@ function fit(cols, spans) {
 // How much room a card's rows take per row: 0 for plain rows (switches,
 // short selectors, sliders), 1 for one big control (pictures, an editor, a
 // list). Used to order the cards after the lead ones.
+// (a screens row is a line of chips: light)
 function heaviness(section, inWindow) {
     var heavy = (section && section.entries || []).some(function (e) {
         if (inWindow && !inWindow(e, section))
             return false;
-        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role" || e.display === "cards";
+        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "color-role" || e.display === "cards";
     });
     return heavy ? 1 : 0;
 }

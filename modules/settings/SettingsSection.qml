@@ -8,6 +8,7 @@ import qs.modules.settings.store
 import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
 import "CardGate.js" as CardGate
+import "RowLines.js" as RowLines
 
 // One schema section as a bento card (kit Card): a heading (the section
 // title) with the current value on the right when the card holds one
@@ -40,8 +41,6 @@ Card {
     // A row card whose rows all wait (the thing is turned off): it stays and
     // says so instead of vanishing from the row.
     readonly property bool waiting: false
-    // some row of the card shows by itself (not only dimmed)
-    readonly property bool anyVisible: sectionRoot.entries.some(e => SettingsStore.visible(e))
     // one setting: its value beside the heading, no label of its own
     readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e) || (sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(e.id || e.key) >= 0))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
@@ -54,6 +53,23 @@ Card {
         const pics = sectionRoot.visibleEntries.filter(e => e.display === "cards");
         return pics.length === 1 && sectionRoot.visibleEntries.length <= 3 ? pics[0] : null;
     }
+    // the rows in lines: picture choices that follow each other share one
+    // when their pictures fit it (RowLines.js); a card of the page row keeps
+    // one row a line
+    // one row a line (set only when the grouping changes: a resize that keeps
+    // it rebuilds no row)
+    property var lines: sectionRoot.groupLines()
+    function groupLines() {
+        return sectionRoot.fixed ? sectionRoot.entries.map((e, i) => [i]) : RowLines.lines(sectionRoot.entries, sectionRoot.contentWidth, Space.m, Space.px(96));
+    }
+    function regroup() {
+        const next = sectionRoot.groupLines();
+        if (JSON.stringify(next) !== JSON.stringify(sectionRoot.lines))
+            sectionRoot.lines = next;
+    }
+    onEntriesChanged: sectionRoot.regroup()
+    onContentWidthChanged: sectionRoot.regroup()
+    onFixedChanged: sectionRoot.regroup()
     readonly property real stripHeight: sectionRoot.strip ? Math.max(0, rowsBox.room - (sectionRoot.visibleEntries.length - 1) * (Space.rowHeight + Space.xs) - Space.s * 2) : 0
     // Not built yet: the page fills its sections in a few per frame.
     property bool pending: false
@@ -68,9 +84,12 @@ Card {
         if (sectionRoot.headerToggle && entryId === sectionRoot.headerToggle.key)
             return headSwitch;
         for (let i = 0; i < rows.count; i++) {
-            const r = rows.itemAt(i);
-            if (Ui.prop(r, "entryId") === entryId)
-                return r;
+            const line = rows.itemAt(i);
+            for (let j = 0; line && j < line.count; j++) {
+                const r = line.itemAt(j);
+                if (Ui.prop(r, "entryId") === entryId)
+                    return r;
+            }
         }
         return null;
     }
@@ -169,26 +188,42 @@ Card {
 
                 Repeater {
                     id: rows
-                    model: sectionRoot.pending || !sectionRoot.shown || sectionRoot.suppressed ? [] : sectionRoot.entries
+                    model: sectionRoot.pending || !sectionRoot.shown || sectionRoot.suppressed ? [] : sectionRoot.lines
 
-                    delegate: SettingRow {
+                    delegate: Row {
+                        id: lineRow
                         required property var modelData
-                        required property int index
-                        width: rowsColumn.width
-                        entry: modelData
-                        // the card's heading already names it: no second label
-                        bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!modelData.label && !!sectionRoot.section.title && I18n.t(modelData.label) === I18n.t(sectionRoot.section.title))
-                        dense: true
-                        // waits on the card's switch: shown dimmed (CardGate);
-                        // a row hidden until a switch of this same page is on
-                        // stays hidden (the switch is right there), unless
-                        // the whole card waits: then its rows show dimmed
-                        // (a press on one turns the switch on)
-                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0 && (sectionRoot.offersTurnOn || SettingsStore.visible(modelData) || !sectionRoot.anyVisible)
-                        previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
-                        // a single picture / editor fills the card
-                        fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
-                        previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null
+                        readonly property var line: lineRow.modelData
+                        readonly property int count: lineRepeater.count
+                        function itemAt(j) {
+                            return lineRepeater.itemAt(j);
+                        }
+                        spacing: Space.m * 2
+
+                        Repeater {
+                            id: lineRepeater
+                            model: lineRow.line
+
+                            delegate: SettingRow {
+                                id: lineItem
+                                // the entry's index in the card
+                                required property var modelData
+                                readonly property var e: sectionRoot.entries[lineItem.modelData] || ({})
+                                readonly property string eid: lineItem.e.id || lineItem.e.key || ""
+                                width: RowLines.share(sectionRoot.entries, lineRow.line, lineRow.line.indexOf(lineItem.modelData), rowsColumn.width, Space.m)
+                                entry: lineItem.e
+                                // the card's heading already names it: no second label
+                                bare: sectionRoot.single !== null || (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key)) || (!!lineItem.e.label && !!sectionRoot.section.title && I18n.t(lineItem.e.label) === I18n.t(sectionRoot.section.title))
+                                dense: true
+                                // waits on one switch: shown, greyed (CardGate); a press
+                                // on it turns that switch on
+                                preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(lineItem.eid) >= 0
+                                previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
+                                // a single picture / editor fills the card
+                                fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
+                                previousEntry: lineItem.modelData > 0 ? sectionRoot.entries[lineItem.modelData - 1] : null
+                            }
+                        }
                     }
                 }
             }

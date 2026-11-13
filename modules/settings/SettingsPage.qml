@@ -35,6 +35,9 @@ Flickable {
     // library), as wide as the stage; not in their card
     readonly property var heroIds: page.hero.foot || []
     readonly property real footH: page.heroIds.length > 0 && page.stageUrl !== "" ? Space.px(76) : 0
+    // a wide page puts the foot beside the stage (the library as a grid as
+    // tall as the miniature) instead of under it: one band, not two
+    readonly property bool footSide: page.footH > 0 && heroArea.width - page.height / 3 * 16 / 9 - Space.l >= Space.px(480)
     // `row`: the sections that lead the page, in this order
     readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
     // the sections in page order: the lead ones first, then cards of plain
@@ -178,15 +181,24 @@ Flickable {
         }
     }
 
+    // A desktop stage (a 16:9 screen) on a wide page (two or three columns)
+    // stands in the first column, the cards beside and under it (no blank band beside a
+    // centred stage); a strip, a band or a narrower page keeps it on top.
+    readonly property bool beside: !!stageLoader.stage && !stageLoader.strip && !page.listForm && !page.plainStage && bento.fullCols >= 3 && bento.cols >= 2 && page.footH === 0
+    // the block the stage and its hint take in the first column
+    readonly property real besideH: page.beside ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) : 0
+    onBesideChanged: Qt.callLater(bento.relayout)
+    onBesideHChanged: Qt.callLater(bento.relayout)
+
     // The stage: compact, centred, receding as the page scrolls.
     Item {
         id: heroArea
         objectName: "pageHero"
-        readonly property real recede: Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
-        x: page.margin
-        y: Space.s + page.contentY * 0.35
-        width: page.width - page.margin * 2
-        height: stageLoader.active ? stageLoader.height + (page.footH > 0 ? Space.s + page.footH : 0) : 0
+        readonly property real recede: page.beside ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
+        x: page.beside ? body.x + bento.x : page.margin
+        y: page.beside ? body.y : Space.s + page.contentY * 0.35
+        width: page.beside ? bento.colW : page.width - page.margin * 2
+        height: stageLoader.active ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0
         visible: stageLoader.active
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7
@@ -201,14 +213,15 @@ Flickable {
             // the loaded stage, untyped (stages declare what they ask for)
             readonly property var stage: stageLoader.item
             readonly property real asked: stageLoader.stage && stageLoader.stage.preferredHeight > 0 ? stageLoader.stage.preferredHeight : 0
-            height: Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            // beside the cards: the column's width, a third of the page at most
+            height: page.beside ? Math.round(Math.min(heroArea.width * 9 / 16, page.height / 3)) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself
             // a strip stage (`pageWide: true`) takes the page's width (a flag,
             // never its height: that follows from the width)
             readonly property bool strip: !!stageLoader.stage && stageLoader.stage.pageWide === true
             width: Math.round(page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
-            x: (heroArea.width - width) / 2
+            x: page.footSide ? 0 : (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl
             // a page that is not about the desktop, or a strip of the thing itself
@@ -234,18 +247,18 @@ Flickable {
             id: heroFoot
             objectName: "heroFoot"
             visible: page.footH > 0
-            x: stageLoader.x
-            y: stageLoader.height + Space.s
-            width: stageLoader.width
+            x: page.footSide ? stageLoader.width + Space.l : stageLoader.x
+            y: page.footSide ? 0 : stageLoader.height + Space.s
+            width: page.footSide ? heroArea.width - x : stageLoader.width
             Repeater {
                 model: page.footH > 0 ? (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => page.heroIds.indexOf(e.key || e.id) >= 0)), []) : []
                 delegate: SettingRow {
                     required property var modelData
                     width: heroFoot.width
-                    height: page.footH
+                    height: page.footSide ? stageLoader.height : page.footH
                     entry: modelData
                     bare: true
-                    fillHeight: page.footH - Space.s * 2
+                    fillHeight: (page.footSide ? stageLoader.height : page.footH) - Space.s * 2
                 }
             }
         }
@@ -256,9 +269,9 @@ Flickable {
         id: heroHint
         objectName: "heroHint"
         visible: heroArea.visible && !!page.hero.hint
-        x: page.margin
+        x: page.beside ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
         y: heroArea.y + heroArea.height * heroArea.scale + Space.m
-        width: page.width - page.margin * 2
+        width: page.beside ? heroArea.width : page.footSide ? stageLoader.width : page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "caption"
         // two lines at most in a narrow window, whole
@@ -274,7 +287,7 @@ Flickable {
         z: 1
         width: page.width - page.margin * 2
         x: page.margin
-        y: heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
+        y: heroArea.visible && !page.beside ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
         height: bento.height + (note.visible ? note.height + page.gap : 0)
 
         Item {
@@ -337,7 +350,13 @@ Flickable {
                 // for a new column count, they are placed afresh (content
                 // that loads late still balances the columns)
                 const keep = bento.frozen && bento.assigned !== null && bento.assignedCols === bento.cols;
-                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null);
+                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, page.beside ? [
+                    {
+                        "col": 0,
+                        "span": 1,
+                        "height": page.besideH + bento.gap
+                    }
+                ] : null);
                 if (!keep) {
                     const a = [];
                     page.order.forEach((i, k) => a[i] = r.places[k]);

@@ -30,7 +30,6 @@ var EDITORS = {
     "DesktopWidgetsMore": "editors/DesktopWidgetsMore.qml",
     "ActivitiesEditor": "editors/ActivitiesEditor.qml",
     "DashboardTabsList": "editors/DashboardTabsList.qml",
-    "DesktopWidgetChips": "editors/DesktopWidgetChips.qml",
     "OrderedListEditor": "editors/OrderedListEditor.qml",
     "IslandActivitiesEditor": "editors/IslandActivitiesEditor.qml",
     "AiAgentsEditor": "editors/AiAgentsEditor.qml",
