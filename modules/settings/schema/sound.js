@@ -6,14 +6,14 @@
 // own volume. Live system state (Audio / PipeWire), no config keys. Entry
 // format: see modules/settings/AGENTS.md.
 
-function list(id, title, component, extra, keywords) {
+function list(id, title, description, component, extra, keywords) {
     var entry = {
         "id": "sound." + id,
         "type": "custom",
         "component": component,
         "resettable": false,
         "label": title,
-        "description": title + ".desc",
+        "description": description,
         "keywords": keywords
     };
     for (var k in extra)
@@ -38,10 +38,10 @@ var category = {
     },
     "row": ["outputs", "inputs", "apps"],
     "sections": [
-        list("outputs", "prefs.sound.outputs", "AudioDevices", {
+        list("outputs", "prefs.sound.outputs", "prefs.sound.outputs.desc", "AudioDevices", {
             "output": true
         }, "output speakers headphones hdmi device default"),
-        list("inputs", "prefs.sound.inputs", "AudioDevices", {}, "input microphone mic headset device default"),
-        list("apps", "prefs.sound.apps", "AppVolumes", {}, "apps applications mixer per app volume streams")
+        list("inputs", "prefs.sound.inputs", "prefs.sound.inputs.desc", "AudioDevices", {}, "input microphone mic headset device default"),
+        list("apps", "prefs.sound.apps", "prefs.sound.apps.desc", "AppVolumes", {}, "apps applications mixer per app volume streams")
     ]
 };

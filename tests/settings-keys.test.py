@@ -15,7 +15,6 @@ import headless  # noqa: E402
 
 headless.ensure(gl=True)
 
-from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
