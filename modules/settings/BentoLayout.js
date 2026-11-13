@@ -111,7 +111,7 @@ var WIDE_EDITORS = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "Sche
     "BarLayoutEditor", "PanelsEditor", "PanelModulesCard", "PanelList", "LayoutBuilder", "IdleTimeline", "PromptStrip",
     "FastfetchEditor", "TerminalLookEditor", "AppThemingEditor", "ShortcutList", "KeybindsOverview", "SpecialsEditor",
     "AiProvidersEditor", "PomodoroEditor", "WallpaperStrip", "SurfaceEffectCards", "IndicatorCards", "NumeralCards",
-    "IslandActivitiesEditor", "ActivitiesEditor", "FolderList"];
+    "IslandActivitiesEditor", "ActivitiesEditor", "FolderList", "LauncherPrefixList"];
 
 // The span a schema section asks for: `span` when it sets one, else two
 // columns when it holds a wide control (WIDE_EDITORS, a picture choice of
@@ -124,7 +124,8 @@ function spanOf(section, inWindow) {
             return false;
         if (e.display === "cards")
             return (e.options || []).length > 3;
-        return e.type === "custom" && WIDE_EDITORS.indexOf(e.component) >= 0;
+        // a list of rows that edit text (commands, rules) needs the width
+        return e.type === "list" || (e.type === "custom" && WIDE_EDITORS.indexOf(e.component) >= 0);
     });
     return wide ? 2 : 1;
 }

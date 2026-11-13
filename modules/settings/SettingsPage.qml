@@ -310,6 +310,13 @@ Flickable {
             property bool jump: false
             // the columns of the cards once the page is whole (see relayout)
             property var assigned: null
+            property bool frozen: false
+            Connections {
+                target: page.visible ? SettingsStore : null
+                function onValueSet(key, value) {
+                    bento.frozen = true;
+                }
+            }
             property int assignedCols: 0
             property real floor: 0
             width: colW * cols + gap * (cols - 1)
@@ -325,10 +332,11 @@ Flickable {
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
                 }
-                // once the page is whole and shown, cards keep their columns
-                // (a toggle never reshuffles them); a new column count places
-                // them afresh
-                const keep = page.settled && page.complete && bento.assigned !== null && bento.assignedCols === bento.cols;
+                // after the first change made on the page, cards keep their
+                // columns (a toggle never reshuffles them); until then, and
+                // for a new column count, they are placed afresh (content
+                // that loads late still balances the columns)
+                const keep = bento.frozen && bento.assigned !== null && bento.assignedCols === bento.cols;
                 const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null);
                 if (!keep) {
                     const a = [];
