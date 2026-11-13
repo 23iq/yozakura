@@ -147,10 +147,16 @@ check(not ev('loaded("barRoot")') and not ev('loaded("modulePill")'), "switching
 # settings: effect cards and indicator cards cover the registries
 h.eval(shell, 'select("appearance")')
 pump(600)
+# the cards are in the More sheet, built on first open
+ev('w.findItem("settingsPage").item.moreBuilt = true')
+pump(300)
 for eid in ["none", "crt", "ink"]:
     check(ev(f'w.findItem("effectPanel:{eid}") !== null'), f"effect card for {eid}")
 h.eval(shell, 'select("bar")')
 pump(600)
+# the cards are in the More sheet, built on first open
+ev('w.findItem("settingsPage").item.moreBuilt = true')
+pump(300)
 for sid in ["pill", "underline", "dot", "brush", "bracket"]:
     check(ev(f'w.findItem("card:{sid}") !== null'), f"indicator card for {sid}")
 ev('w.findItem("card:bracket").clicked()')
