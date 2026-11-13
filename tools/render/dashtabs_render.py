@@ -30,9 +30,6 @@ VIEWS = {
     "metrics": ("MetricsTab {}", 860, 430),
     "wifi": ("WifiPanel {}", 520, 420),
     "bluetooth": ("BluetoothPanel {}", 520, 360),
-    "mixer": ("AudioMixerPanel {}", 520, 460),
-    "mixer-input": ("AudioMixerPanel { showOutput: false }", 520, 360),
-    "effects": ("EasyEffectsPanel {}", 520, 340),
     "wallpapers": ("WallpapersTab {}", 860, 470),
 }
 
