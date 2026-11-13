@@ -56,7 +56,7 @@
       "description": "Light or dark version of the style. Styles that only have one keep it.",
       "x-settings": {
         "category": "lockscreen",
-        "section": "tone",
+        "section": "style",
         "label": "prefs.lockscreen.tone",
         "control": "selector",
         "keywords": "lock screen light dark tone mode theme",

@@ -7,7 +7,6 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
-import "ChangesModel.js" as ChangesModel
 import "CardGate.js" as CardGate
 
 // One schema section as a bento card (kit Card): a heading (the section
@@ -56,13 +55,6 @@ Card {
         return pics.length === 1 && sectionRoot.visibleEntries.length <= 3 ? pics[0] : null;
     }
     readonly property real stripHeight: sectionRoot.strip ? Math.max(0, rowsBox.room - (sectionRoot.visibleEntries.length - 1) * (Space.rowHeight + Space.xs) - Space.s * 2) : 0
-    readonly property string value: {
-        const e = sectionRoot.single || sectionRoot.strip;
-        if (!e || !e.key || e.type === "toggle")
-            return "";
-        const v = SettingsStore.get(e.key);
-        return v === undefined || v === null || typeof v === "object" || typeof v === "boolean" ? "" : ChangesModel.describe(e, v, k => I18n.t(k));
-    }
     // Not built yet: the page fills its sections in a few per frame.
     property bool pending: false
     // Shown elsewhere (a fitted page puts its other sections in a sheet):
@@ -106,25 +98,17 @@ Card {
     Item {
         id: headerBox
         width: sectionRoot.contentWidth
-        height: Math.max(heading.implicitHeight, valueText.implicitHeight)
+        height: heading.implicitHeight
         visible: heading.text !== ""
 
         KitText {
             id: heading
             objectName: "sectionHeading"
-            width: parent.width - (valueText.visible ? valueText.implicitWidth + Space.m : 0) - (gateChip.visible ? gateChip.width + Space.m : 0) - (headSwitch.visible ? headSwitch.width + Space.m : 0)
+            // (no value summary: the card's own control shows the value)
+            width: parent.width - (gateChip.visible ? gateChip.width + Space.m : 0) - (headSwitch.visible ? headSwitch.width + Space.m : 0)
             role: "title"
             text: sectionRoot.section.title ? I18n.t(sectionRoot.section.title) : ""
             elide: Text.ElideRight
-        }
-        KitText {
-            id: valueText
-            objectName: "sectionValue"
-            anchors.right: parent.right
-            anchors.verticalCenter: heading.verticalCenter
-            visible: sectionRoot.value !== "" && !gateChip.visible && !headSwitch.visible
-            role: "secondary"
-            text: sectionRoot.value
         }
         Switch {
             id: headSwitch

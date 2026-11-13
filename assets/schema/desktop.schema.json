@@ -26,7 +26,7 @@
       "description": "Size of desktop icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "widgets",
         "label": "prefs.desktop.icon_size",
         "control": "slider",
         "step": 4,
@@ -50,7 +50,7 @@
       "description": "Vertical space between icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "widgets",
         "label": "prefs.desktop.icon_spacing",
         "control": "slider",
         "step": 2,
@@ -75,7 +75,7 @@
       "description": "Colour of the icon names.",
       "x-settings": {
         "category": "desktop",
-        "section": "icondetails",
+        "section": "widgets",
         "label": "prefs.desktop.icon_text",
         "control": "custom",
         "component": "ColorRoleSwatches",
@@ -108,7 +108,7 @@
       "description": "Blurs the wallpaper behind niri's workspace overview.",
       "x-settings": {
         "category": "overview",
-        "section": "wallpaper",
+        "section": "grid",
         "label": "prefs.desktop.overview_blur",
         "control": "toggle",
         "keywords": "overview blur wallpaper niri workspaces"

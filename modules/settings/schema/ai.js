@@ -486,7 +486,7 @@ var category = {
                 {
                     "key": "ai.quickAsk.enabled",
                     "type": "toggle",
-                    "label": "ai.quick_enabled",
+                    "label": "prefs.ai.quick_use",
                     "description": "prefs.ai.quick.desc",
                     "keywords": "quick ask notch"
                 },

@@ -325,7 +325,7 @@
       "description": "Notifications kept in the dashboard after they hide.",
       "x-settings": {
         "category": "notifications",
-        "section": "history",
+        "section": "behaviour",
         "label": "prefs.notif.history",
         "control": "number",
         "step": 10,
@@ -353,7 +353,7 @@
           "description": "A short chime when a toast appears (never during Do Not Disturb).",
           "x-settings": {
             "category": "notifications",
-            "section": "sound",
+            "section": "behaviour",
             "label": "prefs.notif.sound",
             "control": "toggle",
             "keywords": "sound chime beep audio play"
@@ -366,7 +366,7 @@
           "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
           "x-settings": {
             "category": "notifications",
-            "section": "sound",
+            "section": "behaviour",
             "label": "prefs.label.notification_sound_file",
             "control": "path",
             "keywords": "sound file custom wav ogg chime",
@@ -419,14 +419,14 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "title": "Do Not Disturb",
+          "title": "Silence notifications now",
           "type": "boolean",
           "default": false,
           "description": "Hide toasts and sounds; everything still lands in the history.",
           "x-settings": {
             "category": "notifications",
             "section": "dnd",
-            "label": "prefs.notif.dnd",
+            "label": "prefs.notif.dnd_now",
             "control": "toggle",
             "keywords": "do not disturb dnd silence quiet focus mute all"
           }

@@ -4740,5 +4740,8 @@
   "prefs.ai.stage.sug_clip": "Explain the copied error",
   "prefs.ai.stage.sug_song": "What's this song?",
   "prefs.voice.stage.ask": "Ask anything",
-  "prefs.home.search_short": "Search"
+  "prefs.home.search_short": "Search",
+  "prefs.notif.dnd_now": "Silence notifications now",
+  "prefs.ai.quick_use": "Use quick ask",
+  "prefs.ai.tasks.notify_me": "Notify me"
 }

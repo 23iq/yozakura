@@ -124,6 +124,55 @@ function withEntries(cat, sectionId, entries, after) {
     return out;
 }
 
+// A copy of `cat` whose sections `fromIds` are folded into the section
+// `intoId` (their entries appended in order; a section's compositor gate
+// goes onto its entries): a card of one plain row joins the card it belongs
+// with, instead of a heading that repeats its only row.
+function mergeInto(cat, intoId, fromIds) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    var moved = [];
+    fromIds.forEach(function (id) {
+        var sec = cat.sections.filter(function (x) {
+            return x.id === id;
+        })[0];
+        if (!sec)
+            throw new Error("mergeInto: no section " + id + " in " + cat.id);
+        sec.entries.forEach(function (e) {
+            if (sec.compositor && !e.compositor) {
+                var c = {};
+                for (var f in e)
+                    c[f] = e[f];
+                c.compositor = sec.compositor;
+                moved.push(c);
+            } else {
+                moved.push(e);
+            }
+        });
+    });
+    var found = false;
+    out.sections = cat.sections.filter(function (x) {
+        return fromIds.indexOf(x.id) < 0;
+    }).map(function (x) {
+        if (x.id !== intoId)
+            return x;
+        found = true;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = x.entries.concat(moved);
+        return c;
+    });
+    if (!found)
+        throw new Error("mergeInto: no section " + intoId + " in " + cat.id);
+    if (cat.row)
+        out.row = cat.row.filter(function (r) {
+            return fromIds.indexOf(typeof r === "string" ? r : r.id) < 0;
+        });
+    return out;
+}
+
 // A copy of `cat` without its sections `ids`.
 function withoutSections(cat, ids) {
     var out = {};
@@ -152,22 +201,22 @@ function withSections(cat, extra) {
 }
 
 var categories = [
-    Appearance.category,
+    mergeInto(Appearance.category, "palette", ["accents"]),
     IconsType.category,
     Wallpapers.category,
     withSections(Bar.category, [Layout.builderSection]),
-    Notch.category,
+    mergeInto(Notch.category, "notch", ["behaviour", "place", "idle"]),
     Dock.category,
-    Overview.category,
+    mergeInto(Overview.category, "grid", ["size", "wallpaper"]),
     withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),
-    Desktop.category,
-    Lockscreen.category,
-    Notifications.category,
+    mergeInto(Desktop.category, "widgets", ["icons", "icondetails"]),
+    mergeInto(Lockscreen.category, "style", ["tone"]),
+    mergeInto(Notifications.category, "behaviour", ["sound", "history"]),
     withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),
-    withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]),
+    mergeInto(withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]), "home", ["memory"]),
     Specials.category,
-    Windows.category,
-    Terminal.category,
+    mergeInto(mergeInto(mergeInto(Windows.category, "unfocused", ["dim"]), "borders", ["pulse"]), "blur", ["shadows"]),
+    mergeInto(mergeInto(Terminal.category, "look", ["engine"]), "kitty", ["terminal"]),
     withEntries(Input.category, "", [Layout.placed("layout.cheatsheet.host", "prefs.layout.sheet_opens_in")]),
     // OCR languages are a language setting: Language & weather, not Updates
     withSections(System.category, sectionsOf(Updates.category, ["ocr"])),
@@ -180,7 +229,7 @@ var categories = [
     Bluetooth.category,
     Sound.category,
     Effects.category,
-    withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"),
+    mergeInto(mergeInto(withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"), "center", ["model_effort", "context"]), "bar_behavior", ["sidebar"]),
     AiProviders.category,
     AiCode.category,
     Object.assign(page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"), {

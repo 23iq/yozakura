@@ -240,7 +240,7 @@ var category = {
                 {
                     "key": "ai.tasks.notifications",
                     "type": "toggle",
-                    "label": "prefs.ai.tasks.notify",
+                    "label": "prefs.ai.tasks.notify_me",
                     "description": "prefs.ai.tasks.notify.desc",
                     "keywords": "notification desktop alert"
                 },

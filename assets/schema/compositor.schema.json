@@ -188,7 +188,7 @@
       "description": "Use the shell's shadow opacity for windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.sync_shadow_opacity",
         "control": "toggle",
         "keywords": "sync shadow opacity theme",
@@ -206,7 +206,7 @@
       "description": "Use the shell's shadow color for windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.sync_shadow_color",
         "control": "toggle",
         "keywords": "sync shadow color theme",
@@ -279,7 +279,7 @@
       "description": "Darken every window except the focused one.",
       "x-settings": {
         "category": "windows",
-        "section": "dim",
+        "section": "unfocused",
         "label": "prefs.windows.dim_inactive",
         "control": "toggle",
         "keywords": "dim inactive unfocused darken focus"
@@ -292,7 +292,7 @@
       "description": "How dark unfocused windows get.",
       "x-settings": {
         "category": "windows",
-        "section": "dim",
+        "section": "unfocused",
         "label": "prefs.windows.dim_strength",
         "control": "slider",
         "step": 0.01,
@@ -338,7 +338,7 @@
       "description": "Soft shadows under windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadows",
         "control": "toggle",
         "keywords": "shadow drop shadows glow"
@@ -351,7 +351,7 @@
       "description": "How far the shadow spreads.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_range",
         "control": "slider",
         "step": 1,
@@ -423,7 +423,7 @@
       "description": "Palette color of the focused window's shadow (a bright role makes a glow).",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_color",
         "control": "color-role",
         "keywords": "shadow color glow focused role palette",
@@ -469,7 +469,7 @@
       "description": "How strong window shadows are.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_opacity",
         "control": "slider",
         "step": 0.05,
@@ -1179,7 +1179,7 @@
           "description": "While music plays, the focused border and its glow breathe with the beat. Costs nothing when nothing plays.",
           "x-settings": {
             "category": "windows",
-            "section": "pulse",
+            "section": "borders",
             "label": "prefs.windows.border_pulse",
             "control": "toggle",
             "keywords": "music reactive border pulse beat audio cava visualizer neon glow"
@@ -1201,7 +1201,7 @@
           "description": "How much the border dims between beats.",
           "x-settings": {
             "category": "windows",
-            "section": "pulse",
+            "section": "borders",
             "label": "prefs.windows.border_pulse_intensity",
             "control": "slider",
             "step": 0.05,

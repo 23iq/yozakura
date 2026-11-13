@@ -178,7 +178,7 @@
           "description": "The assistant sidebar starts pinned open.",
           "x-settings": {
             "category": "ai",
-            "section": "sidebar",
+            "section": "bar_behavior",
             "label": "prefs.sidebar.pinned",
             "control": "toggle",
             "keywords": "assistant sidebar pin pinned startup keep open visible"
@@ -686,14 +686,14 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "title": "Quick ask in the island",
+              "title": "Use quick ask",
               "type": "boolean",
               "default": true,
               "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
               "x-settings": {
                 "category": "ai",
                 "section": "quickask",
-                "label": "ai.quick_enabled",
+                "label": "prefs.ai.quick_use",
                 "control": "toggle",
                 "keywords": "quick ask notch"
               }
@@ -1397,7 +1397,7 @@
               "description": "Level for models you have not set yourself; a level chosen in a chat is remembered for that model.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.effort_default",
                 "control": "selector",
                 "keywords": "reasoning effort thinking default level budget"
@@ -1433,7 +1433,7 @@
               "description": "The context meter turns amber and offers Compact from this fill level.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_warn",
                 "control": "slider",
                 "step": 5,
@@ -1453,7 +1453,7 @@
               "description": "The context meter turns red from this fill level.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_critical",
                 "control": "slider",
                 "step": 1,
@@ -1473,7 +1473,7 @@
               "description": "Before sending, summarise older messages of an API/Ollama chat when the window is nearly full. Agents compact themselves.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.auto_compact",
                 "control": "toggle",
                 "keywords": "auto compact compaction summarize summary context history"
@@ -1486,7 +1486,7 @@
               "description": "Fill level that triggers automatic compaction.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.auto_compact_at",
                 "control": "slider",
                 "step": 1,
@@ -1510,7 +1510,7 @@
               "description": "How many of your last messages (with their answers) stay verbatim when compacting.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.keep_turns",
                 "control": "number",
                 "keywords": "compact keep recent turns messages verbatim",
@@ -1528,7 +1528,7 @@
               "description": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.compact_model",
                 "control": "text",
                 "keywords": "compact summary model cheap fast",
@@ -1542,7 +1542,7 @@
               "description": "Window size per model, for models the built-in table does not know or gets wrong.",
               "x-settings": {
                 "category": "ai",
-                "section": "context",
+                "section": "center",
                 "label": "prefs.ai.context_overrides",
                 "control": "list",
                 "keywords": "context window override model size tokens custom",
@@ -1876,14 +1876,14 @@
               }
             },
             "notifications": {
-              "title": "Notifications",
+              "title": "Notify me",
               "type": "boolean",
               "default": true,
               "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
               "x-settings": {
                 "category": "ai-code",
                 "section": "notifications",
-                "label": "prefs.ai.tasks.notify",
+                "label": "prefs.ai.tasks.notify_me",
                 "control": "toggle",
                 "keywords": "notification desktop alert"
               }
@@ -2101,7 +2101,7 @@
               "description": "Badges in the model picker: tools, vision, reasoning, context size.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_capabilities",
                 "control": "toggle",
                 "keywords": "model picker capabilities badges tools vision thinking context",
@@ -2115,7 +2115,7 @@
               "description": "Show the models in one section per provider.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_group",
                 "control": "toggle",
                 "keywords": "model picker group provider sections",
@@ -2129,7 +2129,7 @@
               "description": "List them at the end of the picker with a Connect button.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_unconnected",
                 "control": "toggle",
                 "keywords": "model picker providers not connected connect api key",
@@ -2143,7 +2143,7 @@
               "description": "The models you used last, above the full list.",
               "x-settings": {
                 "category": "ai",
-                "section": "model_effort",
+                "section": "center",
                 "label": "prefs.ai.picker_recent",
                 "control": "toggle",
                 "keywords": "model picker recent last used",
@@ -3931,7 +3931,7 @@
           "description": "Use the shell's shadow opacity for windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.sync_shadow_opacity",
             "control": "toggle",
             "keywords": "sync shadow opacity theme",
@@ -3949,7 +3949,7 @@
           "description": "Use the shell's shadow color for windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.sync_shadow_color",
             "control": "toggle",
             "keywords": "sync shadow color theme",
@@ -4022,7 +4022,7 @@
           "description": "Darken every window except the focused one.",
           "x-settings": {
             "category": "windows",
-            "section": "dim",
+            "section": "unfocused",
             "label": "prefs.windows.dim_inactive",
             "control": "toggle",
             "keywords": "dim inactive unfocused darken focus"
@@ -4035,7 +4035,7 @@
           "description": "How dark unfocused windows get.",
           "x-settings": {
             "category": "windows",
-            "section": "dim",
+            "section": "unfocused",
             "label": "prefs.windows.dim_strength",
             "control": "slider",
             "step": 0.01,
@@ -4081,7 +4081,7 @@
           "description": "Soft shadows under windows.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadows",
             "control": "toggle",
             "keywords": "shadow drop shadows glow"
@@ -4094,7 +4094,7 @@
           "description": "How far the shadow spreads.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_range",
             "control": "slider",
             "step": 1,
@@ -4166,7 +4166,7 @@
           "description": "Palette color of the focused window's shadow (a bright role makes a glow).",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_color",
             "control": "color-role",
             "keywords": "shadow color glow focused role palette",
@@ -4212,7 +4212,7 @@
           "description": "How strong window shadows are.",
           "x-settings": {
             "category": "windows",
-            "section": "shadows",
+            "section": "blur",
             "label": "prefs.windows.shadow_opacity",
             "control": "slider",
             "step": 0.05,
@@ -4922,7 +4922,7 @@
               "description": "While music plays, the focused border and its glow breathe with the beat. Costs nothing when nothing plays.",
               "x-settings": {
                 "category": "windows",
-                "section": "pulse",
+                "section": "borders",
                 "label": "prefs.windows.border_pulse",
                 "control": "toggle",
                 "keywords": "music reactive border pulse beat audio cava visualizer neon glow"
@@ -4944,7 +4944,7 @@
               "description": "How much the border dims between beats.",
               "x-settings": {
                 "category": "windows",
-                "section": "pulse",
+                "section": "borders",
                 "label": "prefs.windows.border_pulse_intensity",
                 "control": "slider",
                 "step": 0.05,
@@ -4993,7 +4993,7 @@
           "description": "Size of desktop icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "widgets",
             "label": "prefs.desktop.icon_size",
             "control": "slider",
             "step": 4,
@@ -5017,7 +5017,7 @@
           "description": "Vertical space between icons.",
           "x-settings": {
             "category": "desktop",
-            "section": "icons",
+            "section": "widgets",
             "label": "prefs.desktop.icon_spacing",
             "control": "slider",
             "step": 2,
@@ -5042,7 +5042,7 @@
           "description": "Colour of the icon names.",
           "x-settings": {
             "category": "desktop",
-            "section": "icondetails",
+            "section": "widgets",
             "label": "prefs.desktop.icon_text",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -5075,7 +5075,7 @@
           "description": "Blurs the wallpaper behind niri's workspace overview.",
           "x-settings": {
             "category": "overview",
-            "section": "wallpaper",
+            "section": "grid",
             "label": "prefs.desktop.overview_blur",
             "control": "toggle",
             "keywords": "overview blur wallpaper niri workspaces"
@@ -6181,7 +6181,7 @@
           "description": "Yozakura uses your terminal to launch the tmux manager and show update progress.",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.title",
             "control": "text",
             "keywords": "terminal emulator kitty foot alacritty wezterm ghostty"
@@ -6194,7 +6194,7 @@
           "description": "Use a custom command template for terminals that do not accept the standard `-e` flag",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.advanced",
             "control": "toggle",
             "keywords": "terminal advanced custom command template",
@@ -6208,7 +6208,7 @@
           "description": "$TERMINAL is replaced by the terminal above, $COMMAND by what the shell runs. Examples: \"gnome-terminal -- $COMMAND\", \"konsole -e $COMMAND\".",
           "x-settings": {
             "category": "terminal",
-            "section": "terminal",
+            "section": "kitty",
             "label": "system.terminal.open_with",
             "control": "text",
             "keywords": "terminal command template $TERMINAL $COMMAND gnome-terminal konsole",
@@ -7060,7 +7060,7 @@
           "description": "Light or dark version of the style. Styles that only have one keep it.",
           "x-settings": {
             "category": "lockscreen",
-            "section": "tone",
+            "section": "style",
             "label": "prefs.lockscreen.tone",
             "control": "selector",
             "keywords": "lock screen light dark tone mode theme",
@@ -7199,7 +7199,7 @@
           "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
-            "section": "place",
+            "section": "notch",
             "label": "prefs.label.island_edge",
             "control": "selector",
             "keywords": "notch position top bottom left right side vertical edge"
@@ -7293,7 +7293,7 @@
           "description": "What the island shows when nothing is playing.",
           "x-settings": {
             "category": "notch",
-            "section": "idle",
+            "section": "notch",
             "label": "shell.no_media_display",
             "control": "selector",
             "keywords": "idle text user host compositor custom nothing playing"
@@ -7316,7 +7316,7 @@
           "description": "Text shown in the idle notch.",
           "x-settings": {
             "category": "notch",
-            "section": "idle",
+            "section": "notch",
             "label": "shell.notch.custom_text",
             "control": "text",
             "keywords": "custom text label idle",
@@ -7369,7 +7369,7 @@
           "description": "Open media, activities and download panels on hover or only on click.",
           "x-settings": {
             "category": "notch",
-            "section": "behaviour",
+            "section": "notch",
             "label": "shell.notch.expand_on",
             "control": "selector",
             "keywords": "notch panel expand open hover click activities media downloads"
@@ -8130,7 +8130,7 @@
           "description": "Notifications kept in the dashboard after they hide.",
           "x-settings": {
             "category": "notifications",
-            "section": "history",
+            "section": "behaviour",
             "label": "prefs.notif.history",
             "control": "number",
             "step": 10,
@@ -8158,7 +8158,7 @@
               "description": "A short chime when a toast appears (never during Do Not Disturb).",
               "x-settings": {
                 "category": "notifications",
-                "section": "sound",
+                "section": "behaviour",
                 "label": "prefs.notif.sound",
                 "control": "toggle",
                 "keywords": "sound chime beep audio play"
@@ -8171,7 +8171,7 @@
               "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
               "x-settings": {
                 "category": "notifications",
-                "section": "sound",
+                "section": "behaviour",
                 "label": "prefs.label.notification_sound_file",
                 "control": "path",
                 "keywords": "sound file custom wav ogg chime",
@@ -8224,14 +8224,14 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "title": "Do Not Disturb",
+              "title": "Silence notifications now",
               "type": "boolean",
               "default": false,
               "description": "Hide toasts and sounds; everything still lands in the history.",
               "x-settings": {
                 "category": "notifications",
                 "section": "dnd",
-                "label": "prefs.notif.dnd",
+                "label": "prefs.notif.dnd_now",
                 "control": "toggle",
                 "keywords": "do not disturb dnd silence quiet focus mute all"
               }
@@ -8482,7 +8482,7 @@
           "description": "Size of each workspace preview relative to the screen.",
           "x-settings": {
             "category": "overview",
-            "section": "size",
+            "section": "grid",
             "label": "prefs.overview.scale",
             "control": "slider",
             "step": 0.01,
@@ -8500,7 +8500,7 @@
           "description": "Gap between workspace previews in the overview.",
           "x-settings": {
             "category": "overview",
-            "section": "size",
+            "section": "grid",
             "label": "prefs.overview.spacing",
             "control": "slider",
             "step": 1,
@@ -8658,7 +8658,7 @@
           "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "performance.dashboard_persist",
             "control": "toggle",
             "keywords": "dashboard tabs keep loaded memory"
@@ -8671,7 +8671,7 @@
           "description": "Most dashboard tabs kept in memory at once.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "prefs.sys.dashboard_max_tabs",
             "control": "number",
             "keywords": "dashboard tabs memory limit",
@@ -8693,7 +8693,7 @@
           "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
           "x-settings": {
             "category": "dashboard",
-            "section": "memory",
+            "section": "home",
             "label": "prefs.sys.unload_idle_views",
             "control": "toggle",
             "keywords": "dashboard tabs memory unload idle release",
@@ -10183,7 +10183,7 @@
           "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing. Applies while \"Use this prompt in fish\" is on.",
           "x-settings": {
             "category": "terminal",
-            "section": "engine",
+            "section": "look",
             "label": "prefs.term.look.engine",
             "control": "selector",
             "keywords": "prompt engine starship oh-my-posh omp",
@@ -10300,7 +10300,7 @@
           "description": "Space between the kitty window edge and the text. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
           "x-settings": {
             "category": "terminal",
-            "section": "engine",
+            "section": "look",
             "label": "prefs.term.look.padding",
             "control": "slider",
             "step": 1,
@@ -10523,7 +10523,7 @@
           "description": "Palette color of progress lines, rings and slider fills.",
           "x-settings": {
             "category": "appearance",
-            "section": "accents",
+            "section": "palette",
             "label": "prefs.appearance.progress_role",
             "control": "selector",
             "keywords": "progress slider ring fill accent secondary tertiary color role"

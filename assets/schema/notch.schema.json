@@ -26,7 +26,7 @@
       "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
       "x-settings": {
         "category": "notch",
-        "section": "place",
+        "section": "notch",
         "label": "prefs.label.island_edge",
         "control": "selector",
         "keywords": "notch position top bottom left right side vertical edge"
@@ -120,7 +120,7 @@
       "description": "What the island shows when nothing is playing.",
       "x-settings": {
         "category": "notch",
-        "section": "idle",
+        "section": "notch",
         "label": "shell.no_media_display",
         "control": "selector",
         "keywords": "idle text user host compositor custom nothing playing"
@@ -143,7 +143,7 @@
       "description": "Text shown in the idle notch.",
       "x-settings": {
         "category": "notch",
-        "section": "idle",
+        "section": "notch",
         "label": "shell.notch.custom_text",
         "control": "text",
         "keywords": "custom text label idle",
@@ -196,7 +196,7 @@
       "description": "Open media, activities and download panels on hover or only on click.",
       "x-settings": {
         "category": "notch",
-        "section": "behaviour",
+        "section": "notch",
         "label": "shell.notch.expand_on",
         "control": "selector",
         "keywords": "notch panel expand open hover click activities media downloads"

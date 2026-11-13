@@ -137,7 +137,7 @@
       "description": "Palette color of progress lines, rings and slider fills.",
       "x-settings": {
         "category": "appearance",
-        "section": "accents",
+        "section": "palette",
         "label": "prefs.appearance.progress_role",
         "control": "selector",
         "keywords": "progress slider ring fill accent secondary tertiary color role"

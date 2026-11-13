@@ -4776,5 +4776,8 @@
   "prefs.ai.stage.sug_clip": "Объясни скопированную ошибку",
   "prefs.ai.stage.sug_song": "Что это за песня?",
   "prefs.voice.stage.ask": "Спросите что угодно",
-  "prefs.home.search_short": "Поиск"
+  "prefs.home.search_short": "Поиск",
+  "prefs.notif.dnd_now": "Отключить уведомления сейчас",
+  "prefs.ai.quick_use": "Использовать быстрый вопрос",
+  "prefs.ai.tasks.notify_me": "Уведомлять меня"
 }

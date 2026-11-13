@@ -101,7 +101,7 @@
       "description": "The assistant sidebar starts pinned open.",
       "x-settings": {
         "category": "ai",
-        "section": "sidebar",
+        "section": "bar_behavior",
         "label": "prefs.sidebar.pinned",
         "control": "toggle",
         "keywords": "assistant sidebar pin pinned startup keep open visible"
@@ -609,14 +609,14 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "title": "Quick ask in the island",
+          "title": "Use quick ask",
           "type": "boolean",
           "default": true,
           "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
           "x-settings": {
             "category": "ai",
             "section": "quickask",
-            "label": "ai.quick_enabled",
+            "label": "prefs.ai.quick_use",
             "control": "toggle",
             "keywords": "quick ask notch"
           }
@@ -1320,7 +1320,7 @@
           "description": "Level for models you have not set yourself; a level chosen in a chat is remembered for that model.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.effort_default",
             "control": "selector",
             "keywords": "reasoning effort thinking default level budget"
@@ -1356,7 +1356,7 @@
           "description": "The context meter turns amber and offers Compact from this fill level.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_warn",
             "control": "slider",
             "step": 5,
@@ -1376,7 +1376,7 @@
           "description": "The context meter turns red from this fill level.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_critical",
             "control": "slider",
             "step": 1,
@@ -1396,7 +1396,7 @@
           "description": "Before sending, summarise older messages of an API/Ollama chat when the window is nearly full. Agents compact themselves.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.auto_compact",
             "control": "toggle",
             "keywords": "auto compact compaction summarize summary context history"
@@ -1409,7 +1409,7 @@
           "description": "Fill level that triggers automatic compaction.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.auto_compact_at",
             "control": "slider",
             "step": 1,
@@ -1433,7 +1433,7 @@
           "description": "How many of your last messages (with their answers) stay verbatim when compacting.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.keep_turns",
             "control": "number",
             "keywords": "compact keep recent turns messages verbatim",
@@ -1451,7 +1451,7 @@
           "description": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.compact_model",
             "control": "text",
             "keywords": "compact summary model cheap fast",
@@ -1465,7 +1465,7 @@
           "description": "Window size per model, for models the built-in table does not know or gets wrong.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_overrides",
             "control": "list",
             "keywords": "context window override model size tokens custom",
@@ -1799,14 +1799,14 @@
           }
         },
         "notifications": {
-          "title": "Notifications",
+          "title": "Notify me",
           "type": "boolean",
           "default": true,
           "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
           "x-settings": {
             "category": "ai-code",
             "section": "notifications",
-            "label": "prefs.ai.tasks.notify",
+            "label": "prefs.ai.tasks.notify_me",
             "control": "toggle",
             "keywords": "notification desktop alert"
           }
@@ -2024,7 +2024,7 @@
           "description": "Badges in the model picker: tools, vision, reasoning, context size.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.picker_capabilities",
             "control": "toggle",
             "keywords": "model picker capabilities badges tools vision thinking context",
@@ -2038,7 +2038,7 @@
           "description": "Show the models in one section per provider.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.picker_group",
             "control": "toggle",
             "keywords": "model picker group provider sections",
@@ -2052,7 +2052,7 @@
           "description": "List them at the end of the picker with a Connect button.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.picker_unconnected",
             "control": "toggle",
             "keywords": "model picker providers not connected connect api key",
@@ -2066,7 +2066,7 @@
           "description": "The models you used last, above the full list.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.picker_recent",
             "control": "toggle",
             "keywords": "model picker recent last used",

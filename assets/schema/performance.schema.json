@@ -140,7 +140,7 @@
       "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "performance.dashboard_persist",
         "control": "toggle",
         "keywords": "dashboard tabs keep loaded memory"
@@ -153,7 +153,7 @@
       "description": "Most dashboard tabs kept in memory at once.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.dashboard_max_tabs",
         "control": "number",
         "keywords": "dashboard tabs memory limit",
@@ -175,7 +175,7 @@
       "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.unload_idle_views",
         "control": "toggle",
         "keywords": "dashboard tabs memory unload idle release",

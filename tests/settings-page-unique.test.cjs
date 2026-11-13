@@ -121,3 +121,26 @@ test('only the desktop pages have a desktop stage; the others a plain stage', ()
         assert.ok(!/ScreenMini|ScreenBackdrop|stage\.wallpaper/.test(src.replace(/\/\/.*$/gm, '')), `${band} draws the desktop`);
     }
 });
+
+// A card says each thing once: no card of a single plain row (it joins the
+// card it belongs with: Categories.mergeInto), and no plain row named like
+// its card. A card of one picture choice, editor or list is the thing itself.
+const PLAIN = ['toggle', 'selector', 'slider', 'number', 'text', 'path', 'font', 'macro', 'color-role'];
+const plainRow = e => PLAIN.includes(e.type || 'toggle') && e.display !== 'cards';
+
+test('no card holds a single plain row, no plain row repeats its card title', () => {
+    for (const [lang, tr] of LANGS)
+        for (const cat of Categories.categories) {
+            if (cat.page)
+                continue;
+            for (const s of cat.sections || []) {
+                const shown = (s.entries || []).filter(e => SchemaUtil.inWindow(e, s));
+                if (shown.length === 1 && plainRow(shown[0]))
+                    assert.fail(`${cat.id}: the card ${s.id} holds only ${shown[0].key || shown[0].id}`);
+                const title = s.title ? (tr[s.title] || s.title).toLowerCase() : '';
+                for (const e of shown)
+                    if (title && e.label && plainRow(e) && (tr[e.label] || e.label).toLowerCase() === title)
+                        assert.fail(`${lang} ${cat.id}: the row ${e.key || e.id} repeats its card title "${title}"`);
+            }
+        }
+});

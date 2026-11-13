@@ -445,7 +445,7 @@ var category = {
                 {
                     "key": "notifications.dnd.enabled",
                     "type": "toggle",
-                    "label": "prefs.notif.dnd",
+                    "label": "prefs.notif.dnd_now",
                     "description": "prefs.notif.dnd.desc",
                     "keywords": "do not disturb dnd silence quiet focus mute all"
                 },

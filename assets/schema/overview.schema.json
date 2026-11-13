@@ -124,7 +124,7 @@
       "description": "Size of each workspace preview relative to the screen.",
       "x-settings": {
         "category": "overview",
-        "section": "size",
+        "section": "grid",
         "label": "prefs.overview.scale",
         "control": "slider",
         "step": 0.01,
@@ -142,7 +142,7 @@
       "description": "Gap between workspace previews in the overview.",
       "x-settings": {
         "category": "overview",
-        "section": "size",
+        "section": "grid",
         "label": "prefs.overview.spacing",
         "control": "slider",
         "step": 1,
