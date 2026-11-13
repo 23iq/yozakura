@@ -147,6 +147,8 @@ StyledRect {
             horizontalAlignment: Text.AlignHCenter
             text: DisplayFormat.title(tile.output, tile.config)
             elide: Text.ElideRight
+            // a tile too small for the name keeps its number only
+            opacity: truncated ? 0 : 1
             font.weight: Font.DemiBold
         }
         KitText {
@@ -157,6 +159,8 @@ StyledRect {
             horizontalAlignment: Text.AlignHCenter
             text: tile.config.name
             elide: Text.ElideRight
+            // a tile too small for the name keeps its number only
+            opacity: truncated ? 0 : 1
             color: Colors.overSurfaceVariant
         }
         KitText {
@@ -167,6 +171,8 @@ StyledRect {
             horizontalAlignment: Text.AlignHCenter
             text: DisplayFormat.formatResolution(tile.config.width, tile.config.height) + (tile.config.refresh > 0 ? "  \u00b7  " + DisplayFormat.formatHz(tile.config.refresh) : "")
             elide: Text.ElideRight
+            // a tile too small for the name keeps its number only
+            opacity: truncated ? 0 : 1
             color: Colors.overSurfaceVariant
         }
     }

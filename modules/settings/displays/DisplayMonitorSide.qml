@@ -47,7 +47,10 @@ Column {
                     width: parent.width
                     role: "body"
                     font.weight: Type.weight("title")
-                    elide: Text.ElideRight
+                    // the monitor's name wraps in a narrow side column
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    maximumLineCount: 3
+                    elide: Text.ElideNone
                     text: root.config ? DisplayFormat.title(root.output, root.config) : ""
                 }
                 KitText {
@@ -96,13 +99,17 @@ Column {
         Item {
             visible: root.active
             width: monitor.contentWidth
-            height: vrr.height
+            height: Math.max(vrr.height, vrrLabel.height)
+            // the name wraps in a narrow side column, whole
             KitText {
+                id: vrrLabel
                 anchors.left: parent.left
                 anchors.right: vrr.left
+                anchors.rightMargin: Space.s
                 anchors.verticalCenter: parent.verticalCenter
                 role: "secondary"
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
                 text: I18n.t("prefs.displays.vrr")
             }
             Switch {

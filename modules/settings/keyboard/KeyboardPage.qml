@@ -24,6 +24,8 @@ import qs.modules.components.kit
 // them over first and applies the change.
 FittedFrame {
     id: page
+    stackable: true
+    stackedHeight: row.y + row.height + page.pad
 
     required property var category
 
@@ -164,6 +166,7 @@ FittedFrame {
     }
 
     KitText {
+        id: hint
         objectName: "heroHint"
         x: page.margin
         y: hero.y + hero.height + Space.s
@@ -178,19 +181,19 @@ FittedFrame {
     }
 
     // ---- the row ------------------------------------------------------------
-    Row {
+    Flow {
         id: row
         objectName: "keyboardRow"
         x: page.margin
-        y: page.height - page.rowH - page.pad
+        // stacked (narrow window): under the hint, one card a line
+        y: page.stacked ? hint.y + hint.height + page.gap : page.height - page.rowH - page.pad
         width: page.width - page.margin * 2
-        height: page.rowH
         spacing: page.gap
         readonly property real unitW: (row.width - row.spacing * 2) / 3.2
 
         PageCard {
-            width: row.unitW * 1.2
-            height: row.height
+            width: page.stacked ? row.width : row.unitW * 1.2
+            height: page.rowH
             title: I18n.t("prefs.keyboard.layouts")
             value: KeyboardService.shortLabel
             CardScroll {
@@ -213,8 +216,8 @@ FittedFrame {
         }
 
         PageCard {
-            width: row.unitW
-            height: row.height
+            width: page.stacked ? row.width : row.unitW
+            height: page.rowH
             title: I18n.t("prefs.keyboard.switching")
             CardScroll {
                 anchors.fill: parent
@@ -235,8 +238,8 @@ FittedFrame {
         }
 
         PageCard {
-            width: row.unitW
-            height: row.height
+            width: page.stacked ? row.width : row.unitW
+            height: page.rowH
             title: I18n.t("prefs.keyboard.typing")
             CardScroll {
                 anchors.fill: parent

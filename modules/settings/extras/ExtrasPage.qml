@@ -22,7 +22,6 @@ FittedFrame {
     hasHint: false
 
     required property var category
-    readonly property real contentHeight: page.height
     readonly property var entries: ExtrasService.catalog ? (ExtrasService.catalog.entries || []) : []
     readonly property var installed: page.entries.filter(e => ExtrasModel.cardState(ExtrasService.status[e.id], ExtrasService.progress[e.id]) === "installed")
     readonly property var running: ExtrasService.activeJobs.length > 0 ? ExtrasService.activeJobs[0] : null

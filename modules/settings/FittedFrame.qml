@@ -7,8 +7,21 @@ import qs.modules.components.kit
 // Presets: their root is a FittedFrame). At the default window the page is
 // exactly the hero (a 16:9 stage, or the list form's short band), one hint
 // line and one row of cards at the foot, inside the page padding.
-Item {
+// In a narrow window a page that says `stackable` stacks its row of cards
+// under the hero instead (`stacked`), one card a line, and scrolls: it
+// sets `stackedHeight` (where its last card ends).
+Flickable {
     id: frame
+
+    property bool stackable: false
+    readonly property bool stacked: frame.stackable && frame.width < Space.px(820)
+    property real stackedHeight: 0
+    contentWidth: width
+    contentHeight: frame.stacked ? Math.max(frame.height, frame.stackedHeight) : frame.height
+    interactive: contentHeight > height + 1
+    clip: interactive
+    boundsBehavior: Flickable.StopAtBounds
+    flickableDirection: Flickable.VerticalFlick
 
     // the list form: a short band over tall cards
     property bool listForm: false
@@ -35,5 +48,4 @@ Item {
     readonly property real rowY: frame.height - frame.rowH - frame.pad
     // the stage form's hero: the height the hint and the row leave
     readonly property real heroH: Math.max(Space.px(160), frame.height - Space.s - frame.hintH - frame.gap - frame.rowH - frame.pad)
-    readonly property real contentWidth: frame.width - frame.margin * 2
 }

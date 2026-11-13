@@ -91,7 +91,6 @@ FittedFrame {
     // over one row of tall cards: the installed mods (search, sort, drag to
     // reorder), the selected mod's details and settings, and adding a mod
     // (package source, the version-check bypass). Each card scrolls inside.
-    readonly property real contentHeight: page.height
     readonly property var mods: ModsService.mods ?? []
     readonly property int onCount: page.mods.filter(m => m.enabled).length
 

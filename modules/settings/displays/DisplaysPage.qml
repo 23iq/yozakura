@@ -22,6 +22,8 @@ import qs.modules.components.kit
 // prompt (DisplayConfirmOverlay); keeping it saves it. Night light is live.
 FittedFrame {
     id: page
+    stackable: true
+    stackedHeight: row.y + row.height + page.pad
 
     required property var category
 
@@ -211,6 +213,7 @@ FittedFrame {
     }
 
     KitText {
+        id: hint
         objectName: "heroHint"
         x: page.margin
         y: hero.y + hero.height + Space.s
@@ -221,20 +224,20 @@ FittedFrame {
     }
 
     // ---- the row: the picked monitor's mode, scale and the night light ------
-    Row {
+    Flow {
         id: row
         objectName: "displaysRow"
         x: page.margin
-        y: page.height - page.rowH - page.pad
+        // stacked (narrow window): under the hint, one card a line
+        y: page.stacked ? hint.y + hint.height + page.gap : page.height - page.rowH - page.pad
         width: page.width - page.margin * 2
-        height: page.rowH
         spacing: page.gap
-        readonly property real cardW: (row.width - row.spacing * 3) / 4
+        readonly property real cardW: page.stacked ? row.width : (row.width - row.spacing * 3) / 4
 
         PageCard {
             objectName: "displayCard:resolution"
             width: row.cardW
-            height: row.height
+            height: page.rowH
             title: I18n.t("prefs.displays.resolution")
             value: page.selectedConfig ? DisplayFormat.formatResolution(page.selectedConfig.width, page.selectedConfig.height) : ""
             DisplayResolutionList {
@@ -254,7 +257,7 @@ FittedFrame {
             id: refreshCard
             objectName: "displayCard:refresh"
             width: row.cardW
-            height: row.height
+            height: page.rowH
             title: I18n.t("prefs.displays.refresh")
             value: page.selectedConfig ? DisplayFormat.formatHz(page.selectedConfig.refresh) : ""
             readonly property var draftOutput: page.selectedOutput && page.selectedConfig ? Object.assign({}, page.selectedOutput, page.selectedConfig) : null
@@ -289,7 +292,7 @@ FittedFrame {
         PageCard {
             objectName: "displayCard:scale"
             width: row.cardW
-            height: row.height
+            height: page.rowH
             title: I18n.t("prefs.displays.scale")
             value: page.selectedConfig ? DisplayFormat.formatScale(page.selectedConfig.scale) : ""
             DisplayScaleSteps {
@@ -307,7 +310,7 @@ FittedFrame {
         PageCard {
             objectName: "displayCard:night"
             width: row.cardW
-            height: row.height
+            height: page.rowH
             title: I18n.t("prefs.displays.night")
             value: NightLightClient.active ? NightLightClient.temp + " K" : I18n.t("prefs.displays.night_off")
             DisplayNightLight {

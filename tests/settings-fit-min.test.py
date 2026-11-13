@@ -22,15 +22,9 @@ win.resize(640, 480)
 settle(5)
 sweep = Sweep(env, win)
 sweep.language("ru")
-# The hand-written fitted pages (Displays, Keyboard, About: one screen of
-# fixed cards on a FittedFrame) are not laid out for a window this small
-# yet: their cards stay side by side. Known, listed here so the rest stays
-# guarded; they are checked at the default size by settings-fit.
-FITTED = {"displays", "keyboard", "about"}
-sweep.home("home (640x480, ru)")
-for cat in sweep.categories():
-    if cat not in FITTED:
-        sweep.tab(cat, cat + " (640x480, ru)")
+# (the one-screen pages Displays, Keyboard and About stack their cards
+# here and scroll: FittedFrame.stacked)
+sweep.all(" (640x480, ru)")
 
 if sweep.failures:
     # last, after any QML warnings, so the tail of a CI log shows them

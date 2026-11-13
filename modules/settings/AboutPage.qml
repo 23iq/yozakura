@@ -15,6 +15,8 @@ import qs.modules.globals
 // places (setup again, the config folder, the source) and the legal notes.
 FittedFrame {
     id: page
+    stackable: true
+    stackedHeight: cards.y + cards.height + page.pad
     hasHint: false
 
     required property var category
@@ -78,14 +80,15 @@ FittedFrame {
     }
 
     // the row of cards
-    Row {
+    Flow {
         id: cards
         objectName: "aboutRow"
         x: page.margin
-        y: page.height - page.rowH - page.pad
+        // stacked (narrow window): under the hint, one card a line
+        y: page.stacked ? scene.y + scene.height + page.gap : page.height - page.rowH - page.pad
         width: page.width - page.margin * 2
         spacing: page.gap
-        readonly property real cardW: (width - spacing * 2) / 3
+        readonly property real cardW: page.stacked ? width : (width - spacing * 2) / 3
 
         // the version and its updates
         Card {

@@ -42,7 +42,7 @@ Stage {
     // the dashboard's unit at this stage's scale
     readonly property real u: Space.px(26)
     // a strip as wide as the page (SettingsPage)
-    readonly property bool strip: true
+    readonly property bool pageWide: true
     readonly property real preferredHeight: Space.px(250)
 
     stageHeight: stage.preferredHeight

@@ -72,7 +72,7 @@ Stage {
         }
     ]
     // a strip as wide as the page (SettingsPage)
-    readonly property bool strip: true
+    readonly property bool pageWide: true
     readonly property real preferredHeight: Math.round(stage.dockHeight * (stage.magnify ? stage.magnifyScale : 1.2) + Space.xl * 2)
 
     stageHeight: stage.preferredHeight
