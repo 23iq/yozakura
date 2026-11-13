@@ -40,10 +40,12 @@ Item {
         width: root.width
         spacing: Space.s
         Repeater {
-            model: [{
+            model: [
+                {
                     "id": "",
                     "name": I18n.t("prefs.common.off")
-                }].concat((TerminalLookService.fetchPresets || []).map(p => ({
+                }
+            ].concat((TerminalLookService.fetchPresets || []).map(p => ({
                         "id": p.id,
                         "name": p.own ? I18n.t("term.fetch.preset.own") : p.name
                     })))

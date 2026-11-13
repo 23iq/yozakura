@@ -246,6 +246,7 @@ Item {
             }
 
             Item {
+                id: stripArea
                 width: stripCard.contentWidth
                 height: stripCard.height - stripCard.padding * 2 - heading.implicitHeight - stripCard.spacing
                 readonly property real cardH: height - Space.s * 2
@@ -265,7 +266,7 @@ Item {
                         const i = root.presets.indexOf(root.shown);
                         if (i < 0 || width <= 0)
                             return;
-                        const w = flick.parent.cardW;
+                        const w = stripArea.cardW;
                         contentX = Math.max(0, Math.min(Space.m + i * (w + Space.m) - (width - w) / 2, contentWidth - width));
                     }
                     onContentWidthChanged: Qt.callLater(flick.reveal)
@@ -287,8 +288,8 @@ Item {
                                 id: card
                                 required property var modelData
                                 objectName: "presetPick:" + modelData.name
-                                width: flick.parent.cardW
-                                previewHeight: flick.parent.cardH
+                                width: stripArea.cardW
+                                previewHeight: stripArea.cardH
                                 inset: true
                                 selected: !!modelData.active
                                 title: modelData.name

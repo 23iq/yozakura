@@ -12,7 +12,7 @@ Item {
     property var entry
     property bool seen: false
 
-    implicitHeight: loader.item ? loader.item.implicitHeight : 0
+    implicitHeight: loader.item ? (loader.item as Item).implicitHeight : 0
     onVisibleChanged: if (visible)
         root.seen = true
     Component.onCompleted: root.seen = root.visible

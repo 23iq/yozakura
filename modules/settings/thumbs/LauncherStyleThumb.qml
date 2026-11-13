@@ -44,6 +44,7 @@ MiniScreen {
             Repeater {
                 model: root.value === "cards" ? 2 : 3
                 delegate: Mark {
+                    id: line
                     required property int index
                     width: box.width - root.pad * 2
                     height: root.u * (root.value === "cards" ? 9 : 5)
@@ -55,7 +56,7 @@ MiniScreen {
                         width: root.u * (root.value === "cards" ? 6 : 3.4)
                         height: width
                         radius: root.u * 1.4
-                        color: index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
+                        color: line.index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
                     }
                     Column {
                         x: root.u * (root.value === "cards" ? 10 : 7)
@@ -87,6 +88,7 @@ MiniScreen {
             Repeater {
                 model: 8
                 delegate: Mark {
+                    id: tile
                     required property int index
                     width: (box.width - root.pad * 2 - root.u * 1.6 * 3) / 4
                     height: width * 0.72
@@ -97,7 +99,7 @@ MiniScreen {
                         width: parent.height * 0.45
                         height: width
                         radius: root.u
-                        color: index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
+                        color: tile.index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
                     }
                 }
             }

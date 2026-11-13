@@ -225,6 +225,8 @@ Item {
         TallCard {
             id: listCard
             objectName: "settingsSection:mods_list"
+            height: row.height
+            scrollable: page.confirmKind === ""
             width: Math.round((row.width - page.gap) / 2)
 
             ModsStatusBanner {
@@ -255,6 +257,8 @@ Item {
         TallCard {
             id: detailsCard
             objectName: "settingsSection:mods_details"
+            height: row.height
+            scrollable: page.confirmKind === ""
             x: listCard.width + page.gap
             width: row.width - x
 
@@ -275,14 +279,15 @@ Item {
         }
     }
 
-
     // A tall card of the row: its content scrolls inside, with a fade
     // at the bottom while more is below.
     component TallCard: Card {
         id: tall
         readonly property bool fixed: true
         default property alias body: inner.data
-        height: row.height
+        // the content scrolls only while no confirmation is open
+        property bool scrollable: true
+
         padding: Look.boxPadding + Space.s
 
         Item {
@@ -294,7 +299,7 @@ Item {
                 contentWidth: width
                 contentHeight: inner.implicitHeight
                 clip: true
-                interactive: page.confirmKind === "" && contentHeight > height + 1
+                interactive: tall.scrollable && contentHeight > height + 1
                 boundsBehavior: Flickable.StopAtBounds
                 Column {
                     id: inner
