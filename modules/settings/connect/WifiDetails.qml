@@ -21,7 +21,8 @@ Item {
     readonly property bool secure: !!root.ap && String(root.ap.security || "") !== "" && root.ap.security !== "--"
 
     objectName: "wifiDetails"
-    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3
+    // the facts, then the action under them: never over the last fact
+    implicitHeight: Math.max(root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3, root.ap ? body.height + Space.m + action.height : 0)
 
     KitText {
         visible: !root.ap
@@ -30,6 +31,7 @@ Item {
     }
 
     Column {
+        id: body
         visible: !!root.ap
         width: root.width
         spacing: Space.m
@@ -85,9 +87,10 @@ Item {
     }
 
     PillButton {
+        id: action
         objectName: "wifiAction"
         visible: !!root.ap
-        anchors.bottom: parent.bottom
+        y: Math.max(root.height - height, body.height + Space.m)
         kind: root.ap && root.ap.active ? "ghost" : "filled"
         icon: root.ap && root.ap.active ? "xCircle" : "link"
         text: I18n.t(root.ap && root.ap.active ? "prefs.net.disconnect" : "prefs.net.connect")

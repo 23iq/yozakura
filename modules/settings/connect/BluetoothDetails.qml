@@ -20,7 +20,9 @@ Item {
     readonly property bool hasBattery: !!root.device && root.device.connected && Number(root.device.battery) >= 0
 
     objectName: "bluetoothDetails"
-    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3
+    // the facts, then the actions under them: never over the last fact
+    readonly property real contentHeight: facts.y + facts.height + Space.m + actions.height
+    implicitHeight: Math.max(root.fillHeight > 0 ? root.fillHeight : Space.controlL * 3, root.device ? root.contentHeight : 0)
 
     KitText {
         visible: !root.device
@@ -29,6 +31,7 @@ Item {
     }
 
     FactRows {
+        id: facts
         visible: !!root.device
         y: ring.height + Space.m
         width: root.width
@@ -67,8 +70,9 @@ Item {
     }
 
     Row {
+        id: actions
         visible: !!root.device
-        anchors.bottom: parent.bottom
+        y: Math.max(root.height - height, facts.y + facts.height + Space.m)
         spacing: Space.s
         PillButton {
             objectName: "btAction"

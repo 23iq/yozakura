@@ -88,7 +88,9 @@ FittedFrame {
         y: page.stacked ? scene.y + scene.height + page.gap : page.height - page.rowH - page.pad
         width: page.width - page.margin * 2
         spacing: page.gap
-        readonly property real cardW: page.stacked ? width : (width - spacing * 2) / 3
+        // whole pixels: three fractional widths can add up past the row and
+        // wrap the last card out of sight
+        readonly property real cardW: page.stacked ? width : Math.floor((width - spacing * 2) / 3)
 
         // the version and its updates
         Card {

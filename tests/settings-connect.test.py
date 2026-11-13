@@ -74,6 +74,9 @@ def open_page(cat):
 open_page("network")
 check(ev('w.find("networkName").text') == "Sakura 5G", "the band names the connected network")
 check(ev('w.find("wifiAction").text') == "Disconnect", "the connected one is shown first, with Disconnect")
+# the action sits under the facts, never over the last one
+check(ev('(function(){ var a = w.find("wifiAction"), d = w.find("wifiDetails"); return a.y >= d.children[1].y + d.children[1].height; })()') is True,
+      "Disconnect sits under the facts")
 h.eval(ev('w.find("deviceRow:Café Hanami")'), "children[children.length - 1].clicked(null)")
 QTest.qWait(50)
 check(ev('w.find("wifiDetails").ap.ssid') == "Café Hanami", "a row picks the network for the details card")

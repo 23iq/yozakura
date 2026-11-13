@@ -97,7 +97,9 @@ Item {
                     id: dockBar
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: Math.round((tile.pictureHeight - height) / 2)
-                    readonly property real icon: Math.round(tile.pictureHeight * 0.5 * tile.modelData.px / DockLook.SIZES[DockLook.SIZES.length - 1].px)
+                    // to scale with the largest size, which fits the tile
+                    // both ways (a narrow card never draws past its tile)
+                    readonly property real icon: Math.round(Math.min(tile.pictureHeight * 0.5, (tile.width - Space.xs * 8) / 3) * tile.modelData.px / DockLook.SIZES[DockLook.SIZES.length - 1].px)
                     width: icon * 3 + Space.xs * 4
                     height: icon + Space.xs * 2
                     radius: Look.radius("small", height)
