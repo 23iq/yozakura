@@ -48,7 +48,7 @@ Item {
                 id: pickButton
                 objectName: "fontPickButton"
                 width: parent.need <= parent.beside ? parent.beside : parent.width
-                height: Space.controlS
+                height: Math.max(Space.controlS, familyText.implicitHeight + Space.s * 2)
                 activeFocusOnTab: true
                 Keys.onReturnPressed: picker.open()
                 Keys.onSpacePressed: picker.open()
@@ -72,10 +72,10 @@ Item {
                     font.family: root.family !== "" ? root.family : (root.monospace ? Type.monoFont : Type.bodyFont)
                     font.italic: root.family === "" && root.placeholder !== ""
                     color: root.family !== "" || root.placeholder === "" ? Type.text : Type.muted
-                    // a name a little wider than measured steps down a size
-                    fontSizeMode: Text.HorizontalFit
-                    minimumPixelSize: Math.round(Type.size("body") * 0.85)
-                    elide: Text.ElideRight
+                    // a translated placeholder wraps, whole (the button grows);
+                    // a family name (data) may elide
+                    wrapMode: root.family === "" ? Text.WordWrap : Text.NoWrap
+                    elide: root.family === "" ? Text.ElideNone : Text.ElideRight
                 }
                 Text {
                     id: caret

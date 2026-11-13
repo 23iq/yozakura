@@ -37,7 +37,7 @@ DESKTOP = {"bar", "notch", "dock", "desktop", "lockscreen", "notifications", "me
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
-env = SettingsEnv("settings-fit", devices=True, text_wider=0.08)
+env = SettingsEnv("settings-fit", devices=True, text_wider=0.2, pin_fonts=True)
 h = env.h
 failures: list[str] = []
 loops: list[str] = []

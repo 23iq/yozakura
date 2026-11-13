@@ -22,7 +22,7 @@ from waits import settle  # noqa: E402
 # a page of picture cards
 TABS = ["bar", "notifications", "network", "ai", "appearance"]
 
-env = SettingsEnv("settings-fit-looks", devices=True, text_wider=0.08)
+env = SettingsEnv("settings-fit-looks", devices=True, text_wider=0.2, pin_fonts=True)
 win = env.load(window(env))
 sweep = Sweep(env, win)
 # dark at the default size, light at the minimum (the test's time budget)

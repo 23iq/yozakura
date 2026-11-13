@@ -841,12 +841,15 @@ QtObject {
 class SettingsEnv:
     def __init__(self, name: str = "settings", *, palette: dict | None = None, user_config: bool = False,
                  overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None,
-                 devices: bool = False, text_wider: float = 0):
+                 devices: bool = False, text_wider: float = 0, pin_fonts: bool = False):
         """`devices`: believable live services (tests/lib/device_fixtures.py)
         instead of the idle stand-ins, for the device pages. `text_wider`:
         every kit text (KitText) set that much wider (0.08 = about 8 %, by
         letter spacing), so a layout test catches a fit that another
-        machine's fonts would elide."""
+        machine's fonts would elide. `pin_fonts`: the bundled UI fonts
+        (assets/fonts/ui) registered and set as the theme's body and mono
+        fonts, so a layout test measures the same glyphs on every machine
+        (the default family may be missing, and its fallback differs)."""
         self.h = Harness(name)
         self.root = self.h.root
         domains = load_defaults()
@@ -859,6 +862,10 @@ class SettingsEnv:
                         pass
         for dom, values in (overrides or {}).items():
             domains[dom] = _merge(domains[dom], values)
+        if pin_fonts:
+            import bundled_fonts
+            bundled_fonts.register()
+            domains["theme"] = _merge(domains["theme"], {"font": "Inter", "monoFont": "IBM Plex Mono"})
         self.domains = domains
         self._mirror()
         if text_wider:

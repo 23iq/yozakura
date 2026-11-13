@@ -100,7 +100,9 @@ Item {
                 color: Qt.rgba(1, 1, 1, card.selected ? 1 : 0.85)
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
-                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
             }
         }
 
@@ -156,7 +158,8 @@ Item {
         Column {
             id: titleCol
             width: parent.width - (lead.visible ? lead.width + parent.spacing : 0) - (check.visible ? check.width + parent.spacing : 0)
-            // the name, whole (two lines at most in a compact card); the
+            // the name, whole (as many lines as it needs: a translation is
+            // never cut; the pictures of a row stay aligned on top); the
             // chosen one on a tonal fill
             KitText {
                 id: titleText
@@ -166,7 +169,6 @@ Item {
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
                 wrapMode: Text.WordWrap
-                maximumLineCount: 2
                 elide: Text.ElideNone
 
                 Mark {
@@ -187,7 +189,6 @@ Item {
                 role: "caption"
                 text: card.subtitle
                 wrapMode: Text.WordWrap
-                maximumLineCount: 3
                 elide: Text.ElideNone
             }
         }

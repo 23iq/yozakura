@@ -4739,5 +4739,6 @@
   "prefs.ai.stage.answer": "Hecho: tu barra ahora flota, con un poco de espacio alrededor.",
   "prefs.ai.stage.sug_clip": "Explica el error copiado",
   "prefs.ai.stage.sug_song": "¿Qué canción es?",
-  "prefs.voice.stage.ask": "Pregunta lo que sea"
+  "prefs.voice.stage.ask": "Pregunta lo que sea",
+  "prefs.home.search_short": "Buscar"
 }

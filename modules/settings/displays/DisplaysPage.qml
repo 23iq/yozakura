@@ -275,13 +275,21 @@ FittedFrame {
                         })
                 }
                 Chip {
+                    id: upgradeChip
                     objectName: "upgradeHint"
                     readonly property real best: refreshCard.draftOutput ? DisplayModel.bestRefresh(refreshCard.draftOutput) : 0
                     visible: !!refreshCard.draftOutput && DisplayModel.canUpgradeRefresh(refreshCard.draftOutput)
                     dense: true
                     icon: Icons.lightning
                     primary: true
-                    text: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(best))
+                    // the rate itself (never a sentence cut in a narrow card); the
+                    // sentence is its accessible name and tooltip
+                    text: DisplayFormat.formatHz(best)
+                    Accessible.name: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(best))
+                    Tooltip {
+                        text: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(upgradeChip.best))
+                        shown: upgradeChip.hovered
+                    }
                     onClicked: page.edit(page.selectedName, {
                         "refresh": best
                     })

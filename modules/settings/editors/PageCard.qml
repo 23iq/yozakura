@@ -26,7 +26,9 @@ Card {
             id: titleText
             width: parent.width - (valueText.text !== "" ? valueText.implicitWidth + Space.m : 0)
             role: "title"
-            elide: Text.ElideRight
+            // a translated title wraps, whole (the card's room shrinks)
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
             text: card.title
         }
         KitText {

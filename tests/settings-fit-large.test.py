@@ -16,7 +16,7 @@ from settings_env import SettingsEnv  # noqa: E402
 from settings_probe import Sweep, window  # noqa: E402
 from waits import settle  # noqa: E402
 
-env = SettingsEnv("settings-fit-large", devices=True, text_wider=0.08)
+env = SettingsEnv("settings-fit-large", devices=True, text_wider=0.2, pin_fonts=True)
 win = env.load(window(env))
 win.resize(1600, 1000)
 settle(5)

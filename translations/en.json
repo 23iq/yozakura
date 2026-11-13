@@ -4739,5 +4739,6 @@
   "prefs.ai.stage.answer": "Done: your bar floats now, with a little room around it.",
   "prefs.ai.stage.sug_clip": "Explain the copied error",
   "prefs.ai.stage.sug_song": "What's this song?",
-  "prefs.voice.stage.ask": "Ask anything"
+  "prefs.voice.stage.ask": "Ask anything",
+  "prefs.home.search_short": "Search"
 }

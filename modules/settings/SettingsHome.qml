@@ -190,7 +190,14 @@ FocusScope {
                     width: Math.min(parent.width - brand.width - undoButton.width - home.gap * 2, Space.px(620))
                     boxed: true
                     onWindow: true
-                    placeholderText: I18n.t("prefs.home.search")
+                    // the question, or one word where the field is too narrow
+                    // for it (never a cut sentence)
+                    placeholderText: promptMetrics.advanceWidth(I18n.t("prefs.home.search")) * 1.3 + Space.px(130) < width ? I18n.t("prefs.home.search") : I18n.t("prefs.home.search_short")
+                    FontMetrics {
+                        id: promptMetrics
+                        font.family: Type.family("body")
+                        font.pixelSize: Type.size("body")
+                    }
                     hints: ["Ctrl F"]
                     clearOnEscape: true
                     focus: true
