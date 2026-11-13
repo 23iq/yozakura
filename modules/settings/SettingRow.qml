@@ -83,7 +83,7 @@ FocusScope {
     // which shows its other places (SettingsStore.pickedSurface).
     readonly property bool legend: row.dense && type === "selector" && ["launcher", "dashboard", "aiquick", "panels", "cheatsheet"].indexOf(entry.surface || "") >= 0
     readonly property bool picked: row.legend && SettingsStore.pickedSurface === entry.surface
-    readonly property bool stacked: (row.usable || row.preview) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.preview) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && !!entry.sizeKey && width < Space.px(400)) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
@@ -212,7 +212,7 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && row.type === "macro" ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font") ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
                         role: "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
@@ -260,7 +260,7 @@ FocusScope {
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? Math.min(Space.px(340), row.width * 0.48) : -1))
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.66 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : -1))
                 focus: !row.stacked
                 active: row.built && !row.stacked
                 sourceComponent: row.fixable && !row.preview ? fixComponent : row.controlComponent()

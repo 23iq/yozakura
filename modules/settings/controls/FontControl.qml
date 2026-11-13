@@ -55,10 +55,13 @@ Item {
                     anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
                     role: "body"
-                    text: root.family !== "" ? root.family : root.placeholder
-                    font.family: root.family !== "" ? root.family : Type.bodyFont
-                    font.italic: root.family === ""
-                    color: root.family !== "" ? Type.text : Type.muted
+                    // no family set: the placeholder, else the font in use
+                    readonly property string shown: root.family !== "" ? root.family : (root.placeholder !== "" ? root.placeholder : (root.monospace ? Type.monoFont : Type.bodyFont))
+                    text: shown
+                    font.family: root.family !== "" ? root.family : (root.monospace ? Type.monoFont : Type.bodyFont)
+                    font.italic: root.family === "" && root.placeholder !== ""
+                    color: root.family !== "" || root.placeholder === "" ? Type.text : Type.muted
+                    elide: Text.ElideRight
                 }
                 Text {
                     id: caret

@@ -4,8 +4,9 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
 
-// Card picture of an icon weight (theme.icons.weight): a row of shell icons
-// drawn in the icon font of weight `value`.
+// Card picture of an icon weight (theme.icons.weight): four shell icons,
+// two by two and as big as the picture allows, drawn in the icon font of
+// weight `value`.
 Item {
     id: root
 
@@ -13,9 +14,12 @@ Item {
     property var value: "bold"
     readonly property string family: Icons.families[String(root.value)] || "Phosphor-Bold"
 
-    Row {
-        anchors.centerIn: parent
-        spacing: Space.m
+    Grid {
+        // above the card's title (ChoiceCard inset)
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: Math.round((root.height * 0.72 - height) / 2)
+        columns: 2
+        spacing: Space.s
         Repeater {
             model: ["wifiHigh", "bell", "speakerHigh", "gear"]
             delegate: Icon {
@@ -23,7 +27,7 @@ Item {
                 required property int index
                 icon: Icons[modelData] ?? ""
                 font.family: root.family
-                size: Math.round(Math.min(root.height * 0.3, root.width * 0.13))
+                size: Math.round(Math.min(root.height * 0.24, root.width * 0.3))
                 tone: index === 1 ? "accent" : "text"
             }
         }
