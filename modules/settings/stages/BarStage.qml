@@ -31,7 +31,7 @@ Stage {
     // a vertical bar's top part needs
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: stage.vertical ? Space.px(240) : Math.round(mini.edgeDepth(stage.currentEdge) + mini.unit * 2)
+    readonly property real preferredHeight: stage.vertical ? Space.px(240) : Math.round(mini.edgeDepth(stage.currentEdge) + Space.m * 2)
 
     // the card a module is edited in
     function sectionOf(id) {
@@ -51,7 +51,8 @@ Stage {
             width: crop.width
             height: Math.round(crop.width * 9 / 16)
             x: 0
-            y: stage.currentEdge === "bottom" ? crop.height - height : 0
+            // the bar with even padding around it
+            y: stage.currentEdge === "bottom" ? crop.height - height - Space.m : Space.m
             showWindows: false
             showDock: false
             corners: false

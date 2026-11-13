@@ -54,10 +54,11 @@ Stage {
     ]
 
     // the island's height at this stage's scale (a real one is ~36 px)
-    readonly property real u: Math.round(Space.px(44) * (stage.shape === "pill" ? 0.86 : 1))
+    readonly property real u: Math.round(Space.px(56) * (stage.shape === "pill" ? 0.86 : 1))
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Math.round(stage.u * 2.4 + Space.controlM + Space.l * 2)
+    // as tall as the island and its room, no more
+    readonly property real preferredHeight: Math.round(stage.u * 1.6 + Space.m * 2)
 
     stageHeight: stage.preferredHeight
     calm: true
@@ -68,7 +69,7 @@ Stage {
         x: 0
         width: parent.width
         height: Math.round(stage.u * 0.9)
-        y: stage.atBottom ? chips.y - height - Space.s : 0
+        y: stage.atBottom ? stage.height - height : 0
         variant: "barbg"
         enableShadow: false
         radius: Look.radius("small", height)
@@ -83,7 +84,9 @@ Stage {
         readonly property bool attached: stage.shape === "attached"
         width: Math.round(Math.max(content.implicitWidth + stage.u * 1.2, stage.u * 5))
         height: stage.u + (attached ? r : 0)
-        x: stage.align === "start" ? Space.xl : (stage.align === "end" ? stage.width - width - Space.xl : (stage.width - width) / 2)
+        // centred in the room the chips leave (or at its start / end)
+        readonly property real room: stage.width - chips.width - Space.xl * 3
+        x: stage.align === "start" ? Space.xl : (stage.align === "end" ? room - width + Space.xl : (room - width) / 2 + Space.xl)
         y: island.attached ? (stage.atBottom ? band.y + band.height - height + r : band.y - r) : (stage.atBottom ? band.y + band.height - height - Space.s : band.y + Space.s)
         variant: "bg"
         enableShadow: true
@@ -232,9 +235,10 @@ Stage {
     Segmented {
         id: chips
         objectName: "islandStates"
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Space.m
+        // beside the island, on the right
+        anchors.right: parent.right
+        anchors.rightMargin: Space.xl
+        anchors.verticalCenter: parent.verticalCenter
         visible: stage.islandOn
         model: stage.stateList.map(s => ({
                     "name": "islandState:" + s.id,

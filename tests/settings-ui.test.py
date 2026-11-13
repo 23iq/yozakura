@@ -329,9 +329,10 @@ check(h.eval(row("notifications.position"), "shown") is False, "corner position 
 ev("SettingsStore.set('notifications.presentation', 'corner')")
 settle()
 check(h.eval(row("notifications.position"), "shown") is True, "corner position shown for corner toasts")
-# A long option set (7 corners) is an inline kit Dropdown; up to four are a Segmented
+# A long option set (7 corners) is a kit Dropdown (inline, or under its label
+# in a narrow card: never cut); up to four are a Segmented
 pos = row("notifications.position")
-check(h.eval(pos, "stacked") is False, "a long selector stays inline")
+check(h.eval(pos, "dropdown") is True, "a long selector is a dropdown")
 picked = h.eval(pos, """(function() {
     var found = null;
     (function walk(item) {

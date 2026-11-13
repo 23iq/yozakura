@@ -12,39 +12,74 @@ function columns(width, minCard) {
 }
 
 // items: [{span, height}] -> [{col, span, y}], the total height and the
-// floor (where the shortest column ends: any card placed after these lands
-// at or below it), as {places, height, floor}. `gap` between cards in both
-// directions.
-function place(items, cols, gap) {
-    var tops = [];
+// floor (where the shortest column ends), as {places, height, floor}.
+// Each card goes to the highest free place that holds it: the shortest
+// column, or a hole a wide card left under a shorter one (so no column
+// stays empty beside a long one). `gap` between cards in both directions.
+// `fixed` (optional, [{col, span}] by item): keep those columns (a card that
+// grows or shrinks after the page showed moves down or up in its own
+// column, never to another one: nothing reshuffles on a toggle).
+function place(items, cols, gap, fixed) {
+    var used = [];
     for (var c = 0; c < cols; c++)
-        tops.push(0);
+        used.push([]);
+    function free(col, y, h) {
+        var list = used[col];
+        for (var i = 0; i < list.length; i++)
+            if (y < list[i][1] && list[i][0] < y + h)
+                return false;
+        return true;
+    }
+    function lowest(c0, span, h) {
+        var ys = [0];
+        for (var k = c0; k < c0 + span; k++)
+            used[k].forEach(function (r) {
+                ys.push(r[1]);
+            });
+        ys.sort(function (a, b) {
+            return a - b;
+        });
+        for (var i = 0; i < ys.length; i++) {
+            var ok = true;
+            for (var k = c0; k < c0 + span && ok; k++)
+                ok = free(k, ys[i], Math.max(h, 1));
+            if (ok)
+                return ys[i];
+        }
+        return ys[ys.length - 1];
+    }
     var places = [];
-    items.forEach(function (it) {
+    items.forEach(function (it, n) {
         var span = Math.max(1, Math.min(cols, it.span || 1));
-        var best = 0, bestTop = Infinity;
+        var h = it.height > 0 ? it.height + gap : 0;
+        var best = 0, bestY = Infinity;
+        var keep = fixed && fixed[n] && fixed[n].col + span <= cols ? fixed[n].col : -1;
         for (var c = 0; c + span <= cols; c++) {
-            var top = 0;
-            for (var k = c; k < c + span; k++)
-                top = Math.max(top, tops[k]);
-            if (top < bestTop - 0.5) {
-                bestTop = top;
+            if (keep >= 0 && c !== keep)
+                continue;
+            var y = lowest(c, span, h);
+            if (y < bestY - 0.5) {
+                bestY = y;
                 best = c;
             }
         }
         places.push({
             "col": best,
             "span": span,
-            "y": bestTop
+            "y": bestY
         });
-        if (it.height > 0)
+        if (h > 0)
             for (var k = best; k < best + span; k++)
-                tops[k] = bestTop + it.height + gap;
+                used[k].push([bestY, bestY + h]);
     });
     var height = 0, floor = Infinity;
-    tops.forEach(function (t) {
-        height = Math.max(height, t);
-        floor = Math.min(floor, t);
+    used.forEach(function (list) {
+        var end = 0;
+        list.forEach(function (r) {
+            end = Math.max(end, r[1]);
+        });
+        height = Math.max(height, end);
+        floor = Math.min(floor, end);
     });
     return {
         "places": places,
@@ -53,22 +88,28 @@ function place(items, cols, gap) {
     };
 }
 
-// Picture editors whose compact cards wrap in a single column (like
-// `display: "cards"`): they never make their card wide.
-var COMPACT_PICTURES = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "SchemeGallery", "MotionProfileCards", "ThemeModeCards", "ClockStyleGallery", "LockStyleGallery"];
+// Editors that need two columns: many pictures a row (more than three
+// options), a long timeline or strip, groups side by side, a grid map. Any
+// other control (switches, selectors, sliders, a short list, a few
+// pictures) fits one column: cards then fill three columns evenly.
+var WIDE_EDITORS = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "SchemeGallery", "MotionProfileCards", "LockStyleGallery",
+    "BarLayoutEditor", "PanelsEditor", "PanelModulesCard", "PanelList", "LayoutBuilder", "IdleTimeline", "PromptStrip",
+    "FastfetchEditor", "TerminalLookEditor", "AppThemingEditor", "ShortcutList", "KeybindsOverview", "SpecialsEditor",
+    "AiProvidersEditor", "PomodoroEditor", "WallpaperStrip", "SurfaceEffectCards", "IndicatorCards", "NumeralCards",
+    "IslandActivitiesEditor", "ActivitiesEditor", "FolderList"];
 
 // The span a schema section asks for: `span` when it sets one, else two
-// columns when it holds a full-width control (an editor, a list), one
-// otherwise (picture cards are compact and wrap: one column).
+// columns when it holds a wide control (WIDE_EDITORS, a picture choice of
+// more than three options), one otherwise.
 function spanOf(section, inWindow) {
     if (section && section.span)
         return section.span;
     var wide = (section && section.entries || []).some(function (e) {
         if (inWindow && !inWindow(e, section))
             return false;
-        if (e.type === "custom" && COMPACT_PICTURES.indexOf(e.component) >= 0)
-            return false;
-        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role";
+        if (e.display === "cards")
+            return (e.options || []).length > 3;
+        return e.type === "custom" && WIDE_EDITORS.indexOf(e.component) >= 0;
     });
     return wide ? 2 : 1;
 }
@@ -99,7 +140,8 @@ function heaviness(section, inWindow) {
     return heavy ? 1 : 0;
 }
 
-// The page order of `sections` (indexes): the cards of plain rows, then
+// The page order of `sections` (indexes): the card of the tab's master
+// switch (`<feature>.enabled`) first, then the cards of plain rows, then
 // the ones holding a big control (pictures, an editor, a list), each with
 // the lead ids first (as listed), then in schema order. The first screen
 // shows the most rows that way, the lead ones at its top.
@@ -118,11 +160,26 @@ function order(sections, leadIds, inWindow) {
         if (lead.indexOf(i) < 0)
             rest.push(i);
     var all = lead.concat(rest);
+    // the tab's master switch (`<feature>.enabled`) heads the page
+    var master = -1;
+    for (var m = 0; m < secs.length && master < 0; m++)
+        if ((secs[m].entries || []).some(function (e) {
+            return /^[A-Za-z]+\.enabled$/.test(e.key || "") && (e.type || "toggle") === "toggle" && (!inWindow || inWindow(e, secs[m]));
+        }))
+            master = m;
+    if (master >= 0)
+        all = [master].concat(all.filter(function (i) {
+            return i !== master;
+        }));
+    var head = master >= 0 ? [master] : [];
+    all = all.filter(function (i) {
+        return i !== master;
+    });
     var light = all.filter(function (i) {
         return heaviness(secs[i], inWindow) === 0;
     });
     var heavy = all.filter(function (i) {
         return heaviness(secs[i], inWindow) !== 0;
     });
-    return light.concat(heavy);
+    return head.concat(light, heavy);
 }

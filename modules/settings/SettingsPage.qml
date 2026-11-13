@@ -239,25 +239,16 @@ Flickable {
         }
     }
 
-    // a soft pill behind the hint: it stays readable over any background
-    Mark {
-        visible: heroHint.visible && heroHint.text !== ""
-        opacity: heroHint.opacity
-        width: heroHint.contentWidth + Space.l * 2
-        height: heroHint.height + Space.xs * 2
-        x: heroHint.x + (heroHint.width - width) / 2
-        y: heroHint.y - Space.xs
-        color: Look.cardFill(false)
-    }
+    // the hint: a plain caption line under the stage, clear of it
     KitText {
         id: heroHint
         objectName: "heroHint"
         visible: heroArea.visible && !!page.hero.hint
         x: page.margin
-        y: heroArea.y + heroArea.height * heroArea.scale + Space.s
+        y: heroArea.y + heroArea.height * heroArea.scale + Space.m
         width: page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
-        role: "secondary"
+        role: "caption"
         // two lines at most in a narrow window, whole
         wrapMode: Text.WordWrap
         maximumLineCount: 2
@@ -271,7 +262,7 @@ Flickable {
         z: 1
         width: page.width - page.margin * 2
         x: page.margin
-        y: heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.s * 2 : 0) + page.gap + Space.s : Space.s
+        y: heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
         height: bento.height + (note.visible ? note.height + page.gap : 0)
 
         Item {
@@ -303,6 +294,9 @@ Flickable {
             // height or visibility changes
             property var places: []
             property bool jump: false
+            // the columns of the cards once the page is whole (see relayout)
+            property var assigned: null
+            property int assignedCols: 0
             property real floor: 0
             width: colW * cols + gap * (cols - 1)
             x: (parent.width - width) / 2
@@ -317,7 +311,17 @@ Flickable {
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
                 }
-                const r = BentoLayout.place(items, bento.cols, bento.gap);
+                // once the page is whole and shown, cards keep their columns
+                // (a toggle never reshuffles them); a new column count places
+                // them afresh
+                const keep = page.settled && page.complete && bento.assigned !== null && bento.assignedCols === bento.cols;
+                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null);
+                if (!keep) {
+                    const a = [];
+                    page.order.forEach((i, k) => a[i] = r.places[k]);
+                    bento.assigned = a;
+                    bento.assignedCols = bento.cols;
+                }
                 const out = [];
                 page.order.forEach((i, k) => {
                     const pl = r.places[k];

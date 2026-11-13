@@ -81,13 +81,16 @@ test('a page of wide cards uses two columns, not an empty third', () => {
 
 test('a section with picture cards or an editor spans two columns', () => {
     assert.equal(BentoLayout.spanOf({ entries: [{ type: 'switch' }] }), 1);
-    // compact pictures wrap in one column
-    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards' }] }), 1);
-    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarStyleCards' }] }), 1);
-    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom' }] }), 2);
+    // a picture choice of more than three options: two columns
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards', options: [1, 2, 3] }] }), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards', options: [1, 2, 3, 4] }] }), 2);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarStyleCards' }] }), 2);
+    // an editor is one column unless it needs the width
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'WindowGapsEditor' }] }), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarLayoutEditor' }] }), 2);
     assert.equal(BentoLayout.spanOf({ span: 3, entries: [] }), 3);
     // an out-of-window editor does not widen the card
-    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', advanced: true }] }, e => !e.advanced), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarLayoutEditor', advanced: true }] }, e => !e.advanced), 1);
 });
 
 test('every tile has a live status line in every language', () => {
@@ -143,4 +146,27 @@ test('the page order: plain rows, then big controls, the lead ones first in each
     ];
     assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'])], [3, 1, 2, 0]);
     assert.deepEqual([...BentoLayout.order(secs, [])], [1, 3, 0, 2]);
+});
+
+test('a narrow card fills the hole a wide one leaves; fixed columns stay', () => {
+    // a short card, then a wide one: the third column is free under the
+    // short one and a narrow card goes there, not under the wide one
+    const items = [{ span: 1, height: 50 }, { span: 2, height: 300 }, { span: 1, height: 100 }, { span: 1, height: 100 }];
+    const r = BentoLayout.place(items, 3, 10);
+    assert.deepEqual(plain(r.places[1]), { col: 1, span: 2, y: 0 });
+    assert.deepEqual(plain(r.places[2]), { col: 0, span: 1, y: 60 });
+    assert.deepEqual(plain(r.places[3]), { col: 0, span: 1, y: 170 });
+    // a card that grows keeps its column
+    const grown = items.map((it, i) => i === 0 ? { span: 1, height: 400 } : it);
+    const kept = BentoLayout.place(grown, 3, 10, r.places);
+    assert.equal(kept.places[2].col, 0);
+    assert.equal(kept.places[3].col, 0);
+});
+
+test('the master switch card heads the page', () => {
+    const secs = [
+        { id: 'a', entries: [{ type: 'toggle', key: 'x.a' }] },
+        { id: 'b', entries: [{ type: 'selector', display: 'cards', key: 'x.style' }, { type: 'toggle', key: 'notch.enabled' }] },
+    ];
+    assert.equal(BentoLayout.order(secs, [])[0], 1);
 });
