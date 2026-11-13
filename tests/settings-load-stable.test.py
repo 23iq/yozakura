@@ -138,7 +138,7 @@ h.eval(win, 'GlobalStates.settingsCategory = ""')
 frames = record(lambda: h.eval(win, "ld.active = true"), 1200)
 check(len(frames) > 5, "open: frames were rendered")
 homes = [f for f in frames if f["home"] > 0]
-check(len(homes) > 0 and len(homes[0]["tiles"]) >= 10, "open: home shows its tiles in its first frame")
+check(len(homes) > 0 and len(homes[0]["tiles"]) == 9, "open: home shows its tiles in its first frame")
 check(all(f["tiles"] == homes[0]["tiles"] for f in homes), "open: the home tiles do not move")
 check(all(f["opacity"] == 0 for f in frames), "open: no page is built behind home")
 

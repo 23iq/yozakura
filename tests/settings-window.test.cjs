@@ -64,16 +64,16 @@ test('the window stays small: about 150 rows when every page is curated', () => 
 });
 
 test('every converted page keeps its row budget', () => {
-    // window rows per tab (beside the stage, in the row and in More; `part`
+    // window rows per tab (every row of the scrolling page; `part`
     // entries not counted), a little room over what each page has now:
     // a page that grows past it is re-curated (`advanced`), not squeezed in
     const BUDGET = {
-        'layout': 8, 'icons-type': 7, 'wallpapers': 8, 'notch': 17, 'dock': 16,
+        'icons-type': 7, 'wallpapers': 8, 'notch': 17, 'dock': 16,
         'overview': 6, 'launcher': 9, 'desktop': 13, 'lockscreen': 9, 'notifications': 18,
-        'osd': 3, 'menus': 5, 'dashboard': 6, 'specials': 3, 'windows': 13,
-        'terminal': 11, 'input': 3, 'system': 5, 'voice': 16, 'timers': 19,
+        'menus': 10, 'dashboard': 6, 'specials': 3, 'windows': 13,
+        'terminal': 11, 'input': 4, 'system': 6, 'voice': 17, 'timers': 20,
         'routines': 2, 'updates': 4, 'power': 4, 'network': 3, 'bluetooth': 3,
-        'sound': 4, 'effects': 3, 'ai': 30, 'ai-providers': 4, 'ai-code': 18,
+        'sound': 4, 'effects': 3, 'ai': 31, 'ai-providers': 4, 'ai-code': 18,
         'presets': 2,
     };
     const of = id => windowItems().filter(x => x.category.id === id && !x.entry.part).length;
@@ -113,7 +113,8 @@ test('picture cards have a registered thumb; stages are registered', () => {
         if (c.stage)
             assert.ok(Registry.stage(c.stage), `${c.id}: stage ${c.stage}`);
     assert.equal(Categories.byId('bar').stage, 'BarStage');
-    assert.equal(Categories.byId('appearance').stage, 'LookStage');
+    // Look is not a desktop page: no miniature (settings-page-unique.test.cjs)
+    assert.equal(Categories.byId('appearance').stage, undefined);
 });
 
 test('window labels are short and in sentence case (Bar and Look)', () => {

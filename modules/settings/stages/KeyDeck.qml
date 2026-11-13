@@ -66,6 +66,8 @@ Item {
                             font.weight: cap.on ? Type.weight("title") : Type.weight("body")
                             color: cap.on ? Type.accentInk : Type.secondary
                             text: cap.modelData[0] === "space" ? deck.badge : cap.modelData[1]
+                            // a cap too small for its name stays blank (never a cut word)
+                            opacity: truncated ? 0 : 1
                         }
                     }
                 }

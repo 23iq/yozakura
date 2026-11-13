@@ -47,7 +47,7 @@ test('validation catches drift', () => {
     assert.match(problems, /duplicate entry id 'bar\.compact'/);
 });
 
-test('sidebar groups reference existing categories, each listed once', () => {
+test('destinations reference existing categories, each listed once', () => {
     const seen = new Set();
     for (const g of Categories.groups) {
         assert.ok(tr(g.title), g.title);
@@ -57,7 +57,7 @@ test('sidebar groups reference existing categories, each listed once', () => {
             seen.add(id);
         }
     }
-    assert.equal(Categories.ordered()[0].id, 'bar');
+    assert.equal(Categories.ordered()[0].id, 'appearance');
 });
 
 test('registry files, legacy panels and links exist', () => {

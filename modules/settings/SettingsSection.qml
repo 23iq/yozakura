@@ -177,8 +177,10 @@ Card {
                         entry: modelData
                         bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key))
                         dense: true
-                        // waits on the card's switch: shown dimmed (CardGate)
-                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0
+                        // waits on the card's switch: shown dimmed (CardGate);
+                        // a row hidden until a switch of this same page is on
+                        // stays hidden (the switch is right there)
+                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0 && (sectionRoot.offersTurnOn || SettingsStore.visible(modelData))
                         previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
                         // a single picture / editor fills the card
                         fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)

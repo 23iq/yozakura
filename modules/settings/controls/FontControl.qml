@@ -30,14 +30,24 @@ Item {
         width: parent.width
         spacing: Space.m
 
-        Row {
+        // the family and its size side by side; the size goes under the
+        // family when the name would not fit beside it (never a cut name)
+        Flow {
             width: parent.width
             spacing: Space.s
+
+            readonly property real beside: parent.width - (sizeStepper.visible ? sizeStepper.width + spacing : 0)
+            readonly property real need: familyMetrics.advanceWidth(familyText.shown) + Space.m + Space.s * 2 + caret.implicitWidth + Space.m
+
+            FontMetrics {
+                id: familyMetrics
+                font: familyText.font
+            }
 
             Item {
                 id: pickButton
                 objectName: "fontPickButton"
-                width: parent.width - (sizeStepper.visible ? sizeStepper.width + parent.spacing : 0)
+                width: parent.need <= parent.beside ? parent.beside : parent.width
                 height: Space.controlS
                 activeFocusOnTab: true
                 Keys.onReturnPressed: picker.open()
@@ -49,6 +59,7 @@ Item {
                     focused: picker.opened
                 }
                 KitText {
+                    id: familyText
                     anchors.left: parent.left
                     anchors.leftMargin: Space.m
                     anchors.right: caret.left
@@ -85,7 +96,6 @@ Item {
             NumberControl {
                 id: sizeStepper
                 visible: root.showSize
-                anchors.verticalCenter: parent.verticalCenter
                 value: root.size
                 from: 8
                 to: 32

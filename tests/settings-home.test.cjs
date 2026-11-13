@@ -73,6 +73,10 @@ test('a page of wide cards uses two columns, not an empty third', () => {
     assert.equal(BentoLayout.fit(3, [2, 2, 2]), 2);
     assert.equal(BentoLayout.fit(3, [2, 1, 2]), 3);
     assert.equal(BentoLayout.fit(1, [2]), 1);
+    // one narrow card: one column (centred), not a row of empty ones
+    assert.equal(BentoLayout.fit(3, [1]), 1);
+    assert.equal(BentoLayout.fit(3, [1, 1]), 2);
+    assert.equal(BentoLayout.fit(3, [2]), 2);
 });
 
 test('a section with picture cards or an editor spans two columns', () => {

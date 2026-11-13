@@ -10,7 +10,8 @@ import "schema/Categories.js" as Categories
 // The only chrome of a destination page: a back pill and the destination
 // title on the left, its tabs (the kit Segmented, when it has several)
 // centred, and a quiet "Reset page" on the right while a control of the
-// current tab differs from its default (one undo step).
+// current tab differs from its default (one undo step). In a narrow window
+// the tabs take a line of their own, scrolling sideways when still too wide.
 Item {
     id: header
 
@@ -18,16 +19,22 @@ Item {
     property var category: null
     readonly property var destination: header.category ? Categories.groupOf(header.category.id) : null
     readonly property var tabs: header.category ? Categories.tabsOf(header.category.id) : []
+    readonly property int currentTab: header.tabs.findIndex(c => header.category && c.id === header.category.id)
     readonly property int modifiedCount: header.category && header.category.sections ? SettingsStore.modifiedCount(header.category) : 0
 
     signal tabSelected(string id)
     signal back
 
-    implicitHeight: Space.controlL
+    // the tabs fit centred on the title line, clear of the title and of
+    // the right-hand controls; else they take a line of their own
+    readonly property real rightW: undoButton.width + (resetLabel.visible ? resetLabel.width + Space.m : 0)
+    readonly property real sideRoom: Math.max(titleRow.width, header.rightW) + Space.l
+    readonly property bool tabsOwnLine: tabsLoader.active && tabsLoader.implicitWidth > header.width - header.sideRoom * 2
+    implicitHeight: Space.controlL + (header.tabsOwnLine ? Space.s + tabsLoader.implicitHeight : 0)
 
     Row {
         id: titleRow
-        anchors.verticalCenter: parent.verticalCenter
+        y: (Space.controlL - height) / 2
         spacing: Space.m
 
         IconButton {
@@ -49,23 +56,93 @@ Item {
         }
     }
 
-    Loader {
-        id: tabsLoader
-        anchors.centerIn: parent
-        // centred, clear of the title when the window is narrow
-        anchors.horizontalCenterOffset: Math.max(0, titleRow.width + Space.l - (header.width - tabsLoader.implicitWidth) / 2)
-        active: header.tabs.length > 1
-        visible: active
-        sourceComponent: Segmented {
-            objectName: "destinationTabs"
-            focusable: true
-            model: header.tabs.map(c => ({
-                        "name": "tab:" + c.id,
-                        "icon": "",
-                        "text": I18n.t(c.title)
-                    }))
-            currentIndex: header.tabs.findIndex(c => header.category && c.id === header.category.id)
-            onActivated: i => header.tabSelected(header.tabs[i].id)
+    // the tabs: a sideways-scrolling line when wider than the window
+    Flickable {
+        id: tabsView
+        objectName: "destinationTabsView"
+        readonly property real room: header.tabsOwnLine ? header.width : header.width - header.sideRoom * 2
+        width: Math.min(room, tabsLoader.implicitWidth)
+        height: tabsLoader.implicitHeight
+        x: (header.width - width) / 2
+        y: header.tabsOwnLine ? Space.controlL + Space.s : (Space.controlL - height) / 2
+        visible: tabsLoader.active
+        contentWidth: tabsLoader.implicitWidth
+        contentHeight: height
+        interactive: contentWidth > width
+        clip: interactive
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
+
+        // the current tab scrolls into view
+        function reveal() {
+            if (!tabsLoader.item || !tabsView.interactive)
+                return;
+            const n = Math.max(1, header.tabs.length);
+            const i = Math.max(0, header.currentTab);
+            const centre = tabsView.contentWidth * (i + 0.5) / n;
+            tabsView.contentX = Math.max(0, Math.min(centre - tabsView.width / 2, tabsView.contentWidth - tabsView.width));
+        }
+        onWidthChanged: Qt.callLater(tabsView.reveal)
+        Connections {
+            target: header
+            function onCategoryChanged() {
+                Qt.callLater(tabsView.reveal);
+            }
+        }
+
+        Loader {
+            id: tabsLoader
+            active: header.tabs.length > 1
+            sourceComponent: Segmented {
+                objectName: "destinationTabs"
+                focusable: true
+                model: header.tabs.map(c => ({
+                            "name": "tab:" + c.id,
+                            "icon": "",
+                            "text": I18n.t(c.title)
+                        }))
+                currentIndex: header.currentTab
+                onActivated: i => header.tabSelected(header.tabs[i].id)
+            }
+        }
+    }
+    // edge fades while the line scrolls
+    Mark {
+        visible: tabsView.interactive && tabsView.contentX > 1
+        x: tabsView.x
+        y: tabsView.y
+        width: Space.xl
+        height: tabsView.height
+        radius: 0
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop {
+                position: 0
+                color: Colors.background
+            }
+            GradientStop {
+                position: 1
+                color: "transparent"
+            }
+        }
+    }
+    Mark {
+        visible: tabsView.interactive && tabsView.contentX < tabsView.contentWidth - tabsView.width - 1
+        x: tabsView.x + tabsView.width - width
+        y: tabsView.y
+        width: Space.xl
+        height: tabsView.height
+        radius: 0
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop {
+                position: 0
+                color: "transparent"
+            }
+            GradientStop {
+                position: 1
+                color: Colors.background
+            }
         }
     }
 
@@ -73,7 +150,7 @@ Item {
         id: undoButton
         objectName: "pageUndo"
         anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
+        y: (Space.controlL - height) / 2
         icon: Icons.arrowCounterClockwise
         size: "l"
         focusable: true
@@ -84,10 +161,11 @@ Item {
     }
 
     SectionLabel {
+        id: resetLabel
         objectName: "pageReset"
         anchors.right: undoButton.left
         anchors.rightMargin: Space.m
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: undoButton.verticalCenter
         inset: 0
         visible: header.modifiedCount > 0
         action: I18n.t("prefs.common.reset_page")

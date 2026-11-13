@@ -51,6 +51,8 @@ Flickable {
         return out;
     }
     readonly property bool listForm: page.category.form === "list"
+    // a stage that is not the desktop: no wallpaper (Stage `calm`)
+    readonly property bool plainStage: !Registry.DESKTOP_STAGES[page.category.id]
     // every key a window row of this page edits (a card offers no "Turn on"
     // for a switch that is a row of the page)
     readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inWindow(e, sec)).map(e => e.key)), [])
@@ -180,15 +182,17 @@ Flickable {
             objectName: "pageStage"
             // a third of the page at most, 16:9, never taller than a band
             // needs (a list page's band is short)
-            height: Math.round(page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300))))
-            width: Math.round(page.listForm ? heroArea.width : Math.min(heroArea.width, height * 16 / 9))
+            height: Math.round(Math.min(page.height / 3, page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            // a desktop stage is a 16:9 screen; a plain one (a band, the
+            // battery, a terminal) is a wide strip of the thing itself
+            width: Math.round(page.listForm ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl
-            // the list form's band: a plain status band, no picture
+            // a page that is not about the desktop: a plain stage, no picture
             onLoaded: {
                 if (item && "calm" in item)
-                    item.calm = Qt.binding(() => page.listForm);
+                    item.calm = Qt.binding(() => page.plainStage);
             }
 
             // a soft shadow under the stage
@@ -243,6 +247,9 @@ Flickable {
         width: page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "secondary"
+        // two lines at most in a narrow window, whole
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
         opacity: heroArea.opacity
         text: page.hero.hint ? I18n.t(page.hero.hint) : ""
     }
@@ -278,11 +285,13 @@ Flickable {
             }
             Component.onCompleted: bento.pickCols()
             readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
-            readonly property int cols: BentoLayout.fit(fullCols, bento.spans)
+            // the cards that show (a section without a window row is no card)
+            readonly property int cols: BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
             readonly property real colW: (parent.width - gap * (fullCols - 1)) / fullCols
             // card places {x, y, w} (in page order), re-run when a card's
             // height or visibility changes
             property var places: []
+            property bool jump: false
             property real floor: 0
             width: colW * cols + gap * (cols - 1)
             x: (parent.width - width) / 2
@@ -306,6 +315,12 @@ Flickable {
                         "y": pl.y,
                         "w": pl.span * bento.colW + (pl.span - 1) * bento.gap
                     };
+                });
+                // one card pushed down: every card lands at once (a glide
+                // up beside a jump down could cross for a few frames)
+                bento.jump = out.some((pl, i) => {
+                    const s = sections.itemAt(i);
+                    return s && pl && pl.y > s.y + 0.5;
                 });
                 bento.places = out;
                 bento.height = r.height;
@@ -332,20 +347,37 @@ Flickable {
                     pageKeys: page.pageKeys
                     pending: page.rank[index] >= page.builtSections
                     x: card.place.x
-                    y: card.place.y
                     width: card.place.w
                     height: implicitHeight
-                    // a card that moves (rows shown or hidden above it) glides
-                    Behavior on y {
-                        enabled: page.settled && Motion.glide.duration > 0
-                        NumberAnimation {
-                            duration: Motion.glide.duration
-                            easing.type: Motion.glide.easing
+                    // cards that move up (rows hidden above them) glide into
+                    // the room; when one is pushed down (a card above grew)
+                    // all land at once, so none sits under another, even for
+                    // a frame
+                    readonly property real placeY: card.place.y
+                    onPlaceYChanged: {
+                        if (page.settled && Motion.glide.duration > 0 && !bento.jump && card.placeY < card.y) {
+                            glideY.to = card.placeY;
+                            glideY.restart();
+                        } else {
+                            glideY.stop();
+                            card.y = card.placeY;
                         }
                     }
-                    onImplicitHeightChanged: Qt.callLater(bento.relayout)
+                    NumberAnimation {
+                        id: glideY
+                        target: card
+                        property: "y"
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                    // at once, in the same frame: a card that grows never
+                    // paints over the card under it
+                    onImplicitHeightChanged: bento.relayout()
                     onVisibleChanged: Qt.callLater(bento.relayout)
-                    Component.onCompleted: Qt.callLater(bento.relayout)
+                    Component.onCompleted: {
+                        card.y = card.placeY;
+                        Qt.callLater(bento.relayout);
+                    }
                 }
             }
         }

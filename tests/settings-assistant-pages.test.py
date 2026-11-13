@@ -1,7 +1,7 @@
-"""The Assistant destination's composed pages (Assistant, AI providers, Code
-tasks) in the settings window, offscreen: clicks on a stage change their
-key as one undo step; the rare options are out of the row; the providers
-band shows every provider in its state and never a key.
+"""The Assistant destination's pages (Chat, Models & providers, Agents &
+tasks) in the settings window, offscreen: plain pages (no desktop stage),
+the rare options out of the window, the status line's chips on the page;
+the providers band shows every provider in its state and never a key.
 """
 import json
 import sys
@@ -90,37 +90,25 @@ def row(entry):
     return ev(f'w.findItem("settingRow:{entry}") !== null')
 
 
-# ---- Assistant: the other edge moves it; a strip item shows / hides --------
+# ---- Assistant: plain rows, no desktop stage --------------------------------
 select("ai")
+check(ev('w.findItem("pageStage").active') is False, "assistant: no stage (not a desktop page)")
 check(ev("Config.ai.sidebarPosition") == "right", "assistant: on the right by default")
-n = steps()
-check(click("assistantEdgePicker", 0.02, 0.5), "assistant: the left edge of the stage is a target")
-check(ev("Config.ai.sidebarPosition") == "left", "assistant: a click on the left edge moves it there")
-check(steps() == n + 1, "assistant: one undo step")
-ev("SettingsStore.undo()")
-check(ev("Config.ai.sidebarPosition") == "right", "assistant: undo puts it back")
-QTest.qWait(500)  # the panel glides back
-n = steps()
-check(click("assistantStrip:cost"), "assistant: the strip's cost item is clickable")
-check(ev("Config.ai.strip.cost") is False, "assistant: a click hides the cost")
-check(steps() == n + 1, "assistant: one undo step")
-click("assistantStrip:cost")
-check(ev("Config.ai.strip.cost") is True, "assistant: its ghost shows it again")
-for e in ("ai.appearance.defaultSize", "ai.appearance.messageStyle", "ai.enabled", "ai.showThinking"):
+for e in ("ai.appearance.defaultSize", "ai.appearance.messageStyle", "ai.enabled", "ai.showThinking",
+          "ai.sidebarPosition", "ai.quickAsk.enabled", "layout.aiquick.host"):
     check(row(e), f"assistant: {e} is on the page")
 for e in ("ai.appearance.animations", "ai.behavior.autoScroll", "ai.picker.showRecent", "ai.usage.sparklines",
           "ai.strip.engine", "ai.providers.link"):
     check(not row(e), f"assistant: {e} is not a row of the window")
-# the strip's chips (More): one chip per item
-ev('w.findItem("pageMore").clicked()')
-QTest.qWait(100)
+# the status line's chips: one chip per item, on the page
 chip = ev('w.findItem("stripChip:limit")')
-check(chip is not None, "assistant: the strip's chips are in More")
+check(chip is not None, "assistant: the status line's chips are on the page")
 if chip is not None:
+    n = steps()
     h.eval(chip, "clicked()")
     check(ev("Config.ai.strip.limit") is False, "assistant: a chip turns its item off")
+    check(steps() == n + 1, "assistant: one undo step")
     h.eval(chip, "clicked()")
-ev('w.findItem("settingsPage").item.moreOpen = false')
 
 # ---- AI providers: a band of states, keys never shown ------------------------
 select("ai-providers")
@@ -130,24 +118,11 @@ check(ev('w.findItem("settingsConnectSheet") !== null'), "providers: the connect
 check(ev('w.findItem("defaultModelChoice") !== null'), "providers: the default model beside it")
 check(not row("ai.providers.timeout"), "providers: request plumbing is out of the window")
 
-# ---- Code tasks: - / + and the layout switch on the board --------------------
+# ---- Code tasks: plain rows ---------------------------------------------------
 select("ai-code")
-n = steps()
-check(click("tasksParallelMore"), "tasks: + is on the board")
-check(ev("Config.ai.tasks.maxParallel") == 3, "tasks: + lets one more work at once")
-check(steps() == n + 1, "tasks: one undo step")
-click("tasksParallelLess")
-click("tasksParallelLess")
-check(ev("Config.ai.tasks.maxParallel") == 1, "tasks: - lets fewer work at once")
-click("tasksParallelLess")
-check(ev("Config.ai.tasks.maxParallel") == 1, "tasks: never fewer than one")
-ev("SettingsStore.set('ai.tasks.maxParallel', 2)")
-n = steps()
-check(click("tasksLayoutFlip"), "tasks: the layout switch is on the board")
-check(ev("Config.ai.tasks.boardLayout") == "list", "tasks: a click shows a list")
-check(steps() == n + 1, "tasks: one undo step")
-ev("SettingsStore.undo()")
-check(ev("Config.ai.tasks.boardLayout") == "auto", "tasks: undo puts the layout back")
+check(ev('w.findItem("pageStage").active') is False, "tasks: no stage (not a desktop page)")
+for e in ("ai.tasks.maxParallel", "ai.tasks.boardLayout"):
+    check(row(e), f"tasks: {e} is on the page")
 
 if failures:
     print(f"settings-assistant-pages: {len(failures)} failure(s)")

@@ -1,6 +1,7 @@
-"""The System destination's composed pages (Voice, Timers, Routines, ...)
-in the settings window, offscreen: a click on a stage changes its key as
-one undo step, the custom editors write their keys, the band acts.
+"""The System and assistant-side pages (Voice, Timers, Routines, Language,
+Updates, About) in the settings window, offscreen: the plain stages act
+(an update lane follows its channel as one undo step, the routines band
+runs), the custom editors write their keys, settings sit in one place.
 """
 import json
 import sys
@@ -82,28 +83,19 @@ def steps():
     return ev("SettingsStore.undoStack.length")
 
 
-# ---- Voice: the key on the stage switches hold / tap ---------------------------
+# ---- Voice: plain rows; the panel opens where the timers do -----------------
 select("voice")
+check(ev('w.findItem("pageStage").active') is False, "voice: no stage (not a desktop page)")
 check(ev("Config.voice.activation") == "push-to-talk", "voice: hold to talk by default")
-n = steps()
-check(click("voiceActivationFlip"), "voice: the key on the stage is clickable")
-check(ev("Config.voice.activation") == "toggle", "voice: a click on the key switches to tap")
-check(steps() == n + 1, "voice: one undo step")
-ev("SettingsStore.undo()")
-check(ev("Config.voice.activation") == "push-to-talk", "voice: undo puts it back")
-ev("SettingsStore.set('voice.enabled', false)")
-QTest.qWait(50)
-check(ev('w.findItem("voiceActivationFlip").enabled') is False, "voice: off, the key does nothing")
-ev("SettingsStore.set('voice.enabled', true)")
+check(ev('w.findItem("settingRow:voice.activation") !== null'), "voice: the activation row")
+link = ev('w.findItem("settingRow:voice.opensLink")')
+check(link is not None, "voice: a link to where the panel opens")
+check(ev('w.findItem("settingRow:layout.panels.host")') is None, "voice: ...not a second copy of that setting")
 
-# ---- Timers: the island's time shows / hides seconds; the Pomodoro card -------
+# ---- Timers: where the panel opens, the island's look; the Pomodoro card ------
 select("timers")
-n = steps()
-check(click("timersSecondsFlip"), "timers: the island's time is clickable")
-check(ev("Config.system.timers.showSeconds") is False, "timers: a click hides the seconds")
-check(steps() == n + 1, "timers: one undo step")
-ev("SettingsStore.undo()")
-check(ev("Config.system.timers.showSeconds") is True, "timers: undo shows them again")
+check(ev('w.findItem("settingRow:layout.panels.host") !== null'), "timers: Opens in is on the page")
+check(ev('w.findItem("settingRow:system.timers.notchStyle") !== null'), "timers: the island's look is on the page")
 h.eval(ev('w.findItem("pomodoroWorkStep")'), "step(1)")
 check(ev("Config.system.pomodoro.workTime") == 1800, "timers: + on Focus adds five minutes (in seconds)")
 h.eval(ev('w.findItem("pomodoroRestStep")'), "step(-1)")
@@ -124,18 +116,12 @@ calls = json.loads(ev("JSON.stringify(RoutinesService.calls)"))
 check(any(c[0] == "run" for c in calls), "routines: play runs the routine now")
 check(ev('w.findItem("routineStrip") !== null'), "routines: the when -> then strip")
 
-# ---- System: the temperature on the stage switches the unit ------------------
+# ---- System: language, weather, OCR languages ------------------------------
 select("system")
-n = steps()
-check(click("systemUnitFlip"), "system: the temperature is clickable")
-check(ev("Config.weather.unit") == "F", "system: a click switches to Fahrenheit")
-check(steps() == n + 1, "system: one undo step")
-ev("SettingsStore.undo()")
-check(ev("Config.weather.unit") == "C", "system: undo switches back")
+check(ev('w.findItem("pageStage").active') is False, "system: no stage (not a desktop page)")
+check(ev('w.findItem("settingRow:system.ocr") !== null'), "system: the OCR languages are here, not on Updates")
 cards = ev('w.findItem("languageCards")')
 check(cards is not None, "system: the language as picture cards")
-check(ev('w.findItem("settingRow:system.exclusive") === null || !w.findItem("settingRow:system.exclusive").visible'),
-      "system: the only-shell card waits in More")
 
 # ---- Updates: one action; a lane follows its channel -----------------------
 select("updates")

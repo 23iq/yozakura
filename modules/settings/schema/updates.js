@@ -12,8 +12,9 @@ var category = {
     "icon": "downloadSimple",
     "title": "prefs.cat.updates",
     "description": "prefs.cat.updates.desc",
-    "keywords": "updates version release changelog ocr text recognition tesseract languages",
-    "row": ["updates", "ocr"],
+    "keywords": "updates version release changelog channel check",
+    "stage": "UpdatesStage",
+    "row": ["updates"],
     "sections": [
         {
             "id": "updates",

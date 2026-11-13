@@ -80,18 +80,37 @@ FocusScope {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < Space.px(560)
-    // about how wide an inline segmented of this selector is (stack it when
-    // it would not fit beside the label)
+    // how wide an inline segmented of this selector is, measured in the
+    // control's font (segments are equal: the longest name sets them all;
+    // stack it when it would not fit beside the label)
     // (`iconOnly`: segments of icons, the names in their accessible names)
-    readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0)) : 0
+    readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).length * ((entry.options || []).reduce((w, o) => Math.max(w, metrics.advanceWidth(I18n.t(o.label))), 0) + Space.px(40))) : 0
+    // a dropdown shows its longest option whole; a font row its family
+    readonly property real dropdownNeed: type === "selector" ? (entry.options || []).reduce((w, o) => Math.max(w, metrics.advanceWidth(I18n.t(o.label))), 0) + Space.px(100) : 0
+    readonly property real fontNeed: type === "font" ? metrics.advanceWidth(String(row.value || "")) + Space.px(72) : 0
+    FontMetrics {
+        id: metrics
+        font: metricsText.font
+    }
+    KitText {
+        id: metricsText
+        visible: false
+        role: "body"
+    }
     // picture cards: the row's own control, or (a card of the page row that
     // holds other rows too) a plain selector: a strip of pictures is a
     // card's one setting (PAGE COMPOSITION)
-    readonly property bool asCards: entry.display === "cards" && (!row.dense || row.bare)
-    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && !!entry.sizeKey && width < Space.px(400)) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    // a choice between looks is always pictures (every option visible,
+    // wrapped: CardSelector), whatever the card holds
+    readonly property bool asCards: entry.display === "cards"
+    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
+    // the selector is a dropdown (too long for segments, or more options than
+    // segments hold): as wide as its longest option, under the label when
+    // even that does not fit
+    readonly property bool dropdown: type === "selector" && !row.asCards && entry.iconOnly !== true && (row.selectorAsDropdown || (entry.options || []).length > 4)
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
@@ -215,7 +234,7 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font" || row.selectorAsDropdown) ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font" || row.dropdown) ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
                         role: "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
@@ -264,7 +283,7 @@ FocusScope {
                 id: inlineControl
                 objectName: "rowControl"
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.8 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.selectorAsDropdown ? body.width * 0.48 : -1)))
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.8 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.dropdown ? Math.max(row.selectorAsDropdown ? body.width * 0.48 : 0, Math.min(row.dropdownNeed, body.width * 0.6)) : -1)))
                 focus: !row.stacked
                 active: row.built && !row.stacked
                 sourceComponent: row.fixable && !row.dimmed ? fixComponent : row.controlComponent()

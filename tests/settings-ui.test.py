@@ -85,11 +85,6 @@ def select(cat: str) -> None:
 
 def row(entry_id: str):
     found = ev(f'w.findItem("settingRow:{entry_id}")')
-    if found is None:
-        # a fitted page builds its More sheet on first open
-        ev('(function () { var p = w.findItem("settingsPage").item; if (p && p.moreBuilt !== undefined) p.moreBuilt = true; })()')
-        QTest.qWait(50)
-        found = ev(f'w.findItem("settingRow:{entry_id}")')
     check(found is not None, f"row {entry_id} exists")
     return found
 
@@ -101,7 +96,7 @@ def check(cond: bool, what: str) -> None:
 
 
 # Every category renders without QML errors.
-order = ["appearance", "wallpapers", "bar", "notch", "dock", "overview", "desktop", "dashboard", "osd", "menus",
+order = ["appearance", "wallpapers", "bar", "notch", "dock", "overview", "desktop", "dashboard", "menus",
          "lockscreen", "notifications", "windows", "input", "terminal", "system", "voice", "updates", "about"]
 for cat in order:
     select(cat)
@@ -182,8 +177,8 @@ check(ev("Config.bar.layout.left[0]") == "clock", "drag/keyboard move lands in l
 check("clock" not in json.loads(ev("JSON.stringify(Config.bar.layout.right)")), "module removed from its old group")
 check(h.eval(layout_row, "modified") is True, "layout row modified")
 
-# Real drag & drop with the mouse in the card's compact editor (one group at
-# a time): the second "left" chip dragged before the first reorders the group.
+# Real drag & drop with the mouse in the modules editor (every group shown):
+# the second "left" chip dragged before the first reorders the group.
 ev("""(function() {
     var ed = null;
     (function find(item) {
@@ -193,8 +188,12 @@ ev("""(function() {
     })(w.findItem("settingRow:bar.layout.modules"));
     w.layoutEditor = ed;
 })()""")
-check(ev("w.layoutEditor.compact") is True, "the card's modules editor is compact")
-check(ev("w.layoutEditor.activeGroup") == "left", "it shows the first group")
+check(ev("w.layoutEditor.compact") is False, "the page shows the whole modules editor")
+check(ev("w.layoutEditor.zoneItems()[0].visible") is True and ev("w.layoutEditor.zoneItems()[1].visible") is True,
+      "every group is visible at once")
+# a window tall enough for the whole page (the page scrolls; here the
+# pointer needs the editor on screen without a scroll in between)
+win.resize(win.width(), 4200)
 settle(10)
 moving = ev("w.layoutEditor.zoneItems()[0].chipItems()[1].moduleId")
 start = ev("(function(){ var c = w.layoutEditor.zoneItems()[0].chipItems()[1]; return c.mapToItem(null, c.width / 2, c.height / 2); })()")
@@ -212,14 +211,9 @@ QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, p1)
 until(lambda: not ev("w.layoutEditor.dragging"), "drop finished")
 left = json.loads(ev("JSON.stringify(Config.bar.layout.left)"))
 check(left and left[0] == moving, f"{moving} dragged to the front of the group: {left}")
-# the other groups: picked in the card's segmented; Add opens the unused modules
-ev("w.layoutEditor.shownGroup = 'right'")
-settle(5)
-check(ev("w.layoutEditor.zoneItems()[1].visible") is True and ev("w.layoutEditor.zoneItems()[0].visible") is False, "one group at a time")
-ev("w.layoutEditor.adding = true")
-settle(5)
-check(ev("w.layoutEditor.zoneItems()[3].visible") is True, "Add shows the modules not on the bar")
-ev("w.layoutEditor.adding = false; w.layoutEditor.shownGroup = ''")
+check(ev("w.layoutEditor.zoneItems()[3].visible") is True, "the modules not on the bar are shown too")
+win.resize(win.width(), 780)
+settle(10)
 
 # Theme keys apply live
 select("appearance")
@@ -364,16 +358,13 @@ check(h.eval(row("notifications.status"), "Notifications.sent.length") == 1, "te
 
 # Terminal & Apps: per-app theming toggles + glass link
 select("terminal")
-# a side switch waiting on another: dimmed, no sentence; a press turns that one on
+# a switch waiting on another: dimmed, no sentence; a press turns that one on
 ev("SettingsStore.set('terminal.enabled', false)")
 QTest.qWait(50)
-blink = ev('w.findItem("settingRow:terminal.cursorBlink", w.findItem("heroRight", w.findItem("settingsPage").item))')
-check(blink is not None and h.eval(blink, "dimmed") is True and h.eval(blink, "caption") == "", "the waiting side switch is dimmed, no note")
+blink = ev('w.findItem("settingRow:terminal.cursorBlink")')
+check(blink is not None and h.eval(blink, "dimmed") is True and h.eval(blink, "caption") == "", "the waiting switch is dimmed, no note")
 h.eval(blink, "wake()")
 check(ev("Config.terminal.enabled") is True, "...and a press turns the prompt on first")
-# the app theming card is in the More sheet, built on first open
-ev('w.findItem("settingsPage").item.moreBuilt = true')
-QTest.qWait(100)
 tog = ev('w.findItem("appTheme:discord")')
 check(tog is not None, "app theming row for discord")
 h.eval(tog, "toggled(false)")

@@ -81,7 +81,7 @@ def select(cat):
 
 # ---- live changes + undo ----------------------------------------------------
 select("bar")
-check(ev('w.findItem("destinationTitle").text') == "Desktop layout", "the destination title")
+check(ev('w.findItem("destinationTitle").text') == "Screen", "the destination title")
 ev("BackendService.calls = []")
 ev("SettingsStore.set('bar.compact', true)")
 check(ev("Config.bar.compact") is True, "a change applies at once")
@@ -200,9 +200,6 @@ check(h.eval(mini, "depths.left") > 0 and h.eval(mini, "freeRect.x") >= h.eval(m
 h.eval(mini, "panelPicked(1)")
 check(ev("SettingsStore.selectedPanel") == 1, "a click on the rail picks it")
 QTest.qWait(100)
-# the bars editor is in the More sheet, built on first open
-ev('w.findItem("settingsPage").item.moreBuilt = true')
-QTest.qWait(50)
 editor = ev('w.findItem("settingRow:bar.panels.editor")')
 check(editor is not None and h.eval(editor, "shown") is True, "the bars editor shows while several bars are set")
 ev("SettingsStore.set('bar.panels', [])")
@@ -210,7 +207,7 @@ ev("SettingsStore.selectedPanel = 0")
 
 # ---- navigation, tabs, keep-alive ---------------------------------------------
 tabs = ev('w.findItem("destinationTabs")')
-check(tabs is not None and h.eval(tabs, "count") == 4, "Desktop layout has four tabs")
+check(tabs is not None and h.eval(tabs, "count") == 5, "Screen has five tabs")
 bar_page = ev('w.findItem("settingsPage").item')
 h.eval(tabs, "activated(1)")
 check(env.wait_page(win) and sev("currentCategory") == "notch", "a tab opens its page")
@@ -253,16 +250,17 @@ check(sec is None or h.eval(sec, "visible") is False, "a section with no row to 
 select("notch")
 ev("SettingsStore.set('notch.disableHoverExpansion', true)")
 QTest.qWait(50)
-# (in a card of the row: the rows show dimmed, the card offers the switch once)
+# (the switch is a row of this same page: the card offers no second "Turn
+# on"; its rows show dimmed and a press on one turns the switch on)
 # (searched on this page: kept-alive pages have media cards of their own)
 SEC = 'w.findItem("settingsSection:media", w.findItem("settingsPage").item)'
 fix = ev(f'w.findItem("sectionTurnOn", {SEC})')
-check(fix is not None and h.eval(fix, "visible") is True, "a card waiting on one switch offers it once")
+check(fix is None or h.eval(fix, "visible") is False, "a card whose switch is on the same page offers no Turn on")
 check(ev(f'w.findItem("disabledFix", {SEC})') is None, "...not a note per row")
 row = ev(f'w.findItem("settingRow:notch.visualizer", {SEC})')
 check(row is not None and h.eval(row, "preview") is True and h.eval(row, "visible") is True, "...its rows show, dimmed")
-h.eval(fix, "clicked()")
-check(ev("Config.notch.disableHoverExpansion") is False, "...which turns it on")
+h.eval(row, "wake()")
+check(ev("Config.notch.disableHoverExpansion") is False, "...and a press on one turns the switch on")
 QTest.qWait(50)
 check(h.eval(row, "preview") is False, "...and the rows come alive")
 
@@ -288,7 +286,7 @@ check(ev('w.findItem("settingsHome").results.length') == 0, "search finds no out
 h.eval(field, 'text = "clock face"')
 QTest.qWait(50)
 check(ev('w.findItem("settingsHome").results[0].entryId') == "bar.moduleOptions.clock.face", "search finds the row")
-check("Desktop layout" in ev('w.findItem("settingsHome").results[0].context'), "results name the destination")
+check(ev('w.findItem("settingsHome").results[0].context').startswith("Screen › Bar"), "results name the destination and the tab")
 ev('w.findItem("settingsHome").activateResult(0)')
 check(wait_until(lambda: ev("SettingsStore.highlightedEntry") == "bar.moduleOptions.clock.face"), "the jump flashes the row")
 check(ev('w.findItem("settingRow:bar.moduleOptions.clock.face").activeFocus') is True, "...and gives it focus")

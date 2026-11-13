@@ -11,6 +11,7 @@ var category = {
     "title": "prefs.cat.terminal",
     "description": "prefs.cat.terminal.desc",
     "keywords": "terminal prompt starship oh-my-posh fish fastfetch greeting cursor padding kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
+    "stage": "TerminalStage",
     "row": [{ "id": "look", "weight": 1.25 }, { "id": "greeting", "weight": 1.15 }, { "id": "cursor", "weight": 0.9 }],
     "sections": [
         {

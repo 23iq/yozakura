@@ -67,12 +67,16 @@ function spanOf(section, inWindow) {
     return wide ? 2 : 1;
 }
 
-// Columns a page uses out of `cols`: when every card is wide (spans >= 2)
-// a third column would stay empty, so it takes two (and the page centres
-// the narrower bento).
+// Columns a page uses out of `cols`: never more than its cards fill (one
+// narrow card takes one column, centred, never a row of empty ones), and
+// when every card is wide (spans >= 2) two at most.
 function fit(cols, spans) {
-    var narrow = (spans || []).some(function (s) {
+    var list = spans || [];
+    var narrow = list.some(function (s) {
         return s < 2;
     });
-    return narrow ? cols : Math.min(cols, 2);
+    var total = list.reduce(function (a, s) {
+        return a + s;
+    }, 0);
+    return Math.max(1, Math.min(narrow ? cols : Math.min(cols, 2), total || cols));
 }

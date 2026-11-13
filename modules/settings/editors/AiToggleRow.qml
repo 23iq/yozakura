@@ -20,6 +20,9 @@ RowLayout {
         role: "secondary"
         visible: root.label.length > 0
         Layout.fillWidth: true
+        // a long name wraps onto a second line, whole (never cut)
+        Layout.minimumHeight: implicitHeight
+        elide: Text.ElideNone
         text: root.label
         wrapMode: Text.Wrap
         color: Colors.overBackground

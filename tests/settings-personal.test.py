@@ -6,14 +6,10 @@ COMPOSITION).
   click sets the wallpaper; the Fit cards switch to panorama in one undo
   step and the stage shows the panorama strip; the palette chip opens
   Look's palette.
-* Launcher: provider chips take results off the stage's launcher (one
-  step, undo brings them back), order arrows reorder them, the Grid card
-  draws a grid, a click on the launcher opens Where things open.
-* Dashboard: a tab of the stage's rail shows it, hiding / moving a tab
-  changes the rail, the home cards switch the view.
+* Launcher, Dashboard, Overview: plain pages (no desktop stage), Opens in
+  on the page, provider chips and tab switches one undo step each.
 * Widgets: a widget chip puts one on the stage's desktop (one step), icons
-  and the depth clock's "move here" side; the overview's + / - change the
-  grid, the strip style is one row.
+  and the depth clock's "move here" side.
 * Terminal: the kitty window, a picture per prompt, the "off" chip turns
   the prompt on, a greeting look turns the greeting on in one step.
 * Presets: the active preset on the stage and ringed in the strip, a click
@@ -113,47 +109,33 @@ check(wait_until(lambda: h.eval(shell, "currentCategory") == "appearance"), "wal
 
 # ---- Launcher -----------------------------------------------------------------
 select("launcher")
-mini = item("launcherMini")
-check(mini is not None, "launcher: the stage draws the launcher")
-rows = lambda: h.eval(item("launcherStage"), "results.map(r => r.id).join(',')")  # noqa: E731
-check("calculator" in rows(), "launcher: the calculator answers on the stage")
+check(ev('findItem("pageStage").active') is False, "launcher: no desktop stage")
+check(item("settingRow:layout.launcher.host") is not None, "launcher: Opens in is on the page")
 n = steps()
 h.eval(item("launcherSearch:calculator"), "clicked()")
 check("calculator" in ev("JSON.stringify(Config.prefix.launcher.disabled)") and steps() == n + 1,
       "launcher: a chip turns a provider off in one undo step")
-check("calculator" not in rows(), "launcher: ...and its result leaves the stage")
 ev("SettingsStore.undo()")
-check("calculator" in rows(), "launcher: undo brings it back")
-first = rows().split(",")[0]
-h.eval(item(f"launcherMove:{first}:down"), "clicked()")
-check(rows().split(",")[1] == first, "launcher: moving a provider down reorders the stage's results")
+check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)"), "launcher: undo brings it back")
+check(wait_until(lambda: item("card:grid") is not None), "launcher: a picture per result style")
+if item("card:grid") is not None:
+    h.eval(item("card:grid"), "clicked()")
+check(ev("Config.layout.launcher.resultStyle") == "grid", "launcher: the Grid card picks the grid")
 ev("SettingsStore.undo()")
-h.eval(item("card:grid"), "clicked()")
-check(ev("Config.layout.launcher.resultStyle") == "grid" and h.eval(item("launcherStage"), "grid") is True,
-      "launcher: the Grid card draws a grid on the stage")
-ev("SettingsStore.undo()")
-h.eval(item("launcherMiniArea"), "clicked(null)")
-check(wait_until(lambda: h.eval(shell, "currentCategory") == "layout"), "launcher: a click on it opens Where things open")
 
 # ---- Dashboard ----------------------------------------------------------------
 select("dashboard")
-dstage = item("dashboardStage")
-check(item("dashboardMini") is not None and item("dashboardHero") is not None,
-      "dashboard: the stage draws the dashboard on its home view")
-h.eval(item("dashboardTab:metrics"), "clicked()")
-check(h.eval(dstage, "current") == "metrics", "dashboard: a click on a tab of the stage shows it")
+check(ev('findItem("pageStage").active') is False, "dashboard: no desktop stage")
+check(item("settingRow:layout.dashboard.host") is not None, "dashboard: Opens in is on the page")
 n = steps()
+check(wait_until(lambda: item("dashboardTabSwitch:metrics") is not None), "dashboardTabSwitch:metrics" + " exists")
 h.eval(item("dashboardTabSwitch:metrics"), "toggled(false)")
-check(steps() == n + 1 and item("dashboardTab:metrics") is None, "dashboard: hiding a tab is one step and leaves the rail")
-check(h.eval(dstage, "current") == "widgets", "dashboard: ...and the stage falls back to the first tab")
+check(steps() == n + 1, "dashboard: hiding a tab is one step")
 ev("SettingsStore.undo()")
-h.eval(item("dashboardTabMove:widgets:down"), "clicked()")
-check(h.eval(dstage, "tabs.map(t => t.id).join(',')").startswith("wallpapers,widgets"),
-      "dashboard: moving a tab reorders the stage's rail")
-ev("SettingsStore.undo()")
+check(wait_until(lambda: item("card:bento") is not None), "card:bento" + " exists")
 h.eval(item("card:bento"), "clicked()")
 check(ev("Config.layout.dashboard.home") == "bento", "dashboard: the Widget grid card switches the home view")
-check(item("settingsSection:home") is not None, "dashboard: the home card is in the row")
+check(item("settingsSection:home") is not None, "dashboard: the home card is on the page")
 ev("SettingsStore.undo()")
 
 # ---- Widgets: desktop ---------------------------------------------------------
@@ -184,15 +166,12 @@ ev("SettingsStore.set('desktop.enabled', false)")
 
 # ---- Widgets: overview --------------------------------------------------------
 select("overview")
-check(wait_until(lambda: item("overviewWorkspace:10") is not None), "overview: 2 x 5 workspaces by default")
-h.eval(item("overviewMore:columns"), "clicked()")
-check(ev("Config.overview.columns") == 6 and item("overviewWorkspace:12") is not None, "overview: + adds a column on the stage")
-h.eval(item("overviewLess:rows"), "clicked()")
-check(ev("Config.overview.rows") == 1 and item("overviewWorkspace:7") is None, "overview: - removes a row")
-ev("SettingsStore.undo()")
-ev("SettingsStore.undo()")
+check(ev('findItem("pageStage").active') is False, "overview: no desktop stage")
+for e in ("overview.rows", "overview.columns", "overview.style"):
+    check(item(f"settingRow:{e}") is not None, f"overview: {e} is a row")
+check(wait_until(lambda: item("card:strip") is not None), "card:strip" + " exists")
 h.eval(item("card:strip"), "clicked()")
-check(ev("Config.overview.style") == "strip" and h.eval(item("overviewStage"), "rows") == 1, "overview: the strip is one row")
+check(ev("Config.overview.style") == "strip", "overview: the strip card picks the strip")
 ev("SettingsStore.undo()")
 
 # ---- Terminal -----------------------------------------------------------------

@@ -78,9 +78,11 @@ test('settings live on the page of the element they control', () => {
     const expect = {
         'layout.dashboard.tabs': 'dashboard',
         'performance.dashboardPersistTabs': 'dashboard',
-        'layout.osd.style': 'osd',
+        'layout.osd.style': 'menus',
         'theme.popup.entry': 'menus',
-        'system.timers.notchStyle': 'notch',
+        'system.timers.notchStyle': 'timers',
+        'notifications.notchStyle': 'notifications',
+        'system.ocr.eng': 'system',
         'compositor.motionProfile': 'appearance',
         'compositor.motionDurationScale': 'appearance',
         'theme.animDuration': 'appearance',

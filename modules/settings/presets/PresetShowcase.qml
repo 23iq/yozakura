@@ -204,6 +204,10 @@ FittedFrame {
         width: root.width - root.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "secondary"
+        // one line on a fitted page: a long translation shrinks a little
+        // in a narrow window rather than losing its end
+        fontSizeMode: Text.HorizontalFit
+        minimumPixelSize: Math.round(Type.size("caption") * 0.85)
         text: I18n.t("prefs.presets.hero_hint")
     }
 

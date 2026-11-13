@@ -19,7 +19,8 @@ Stage {
     readonly property bool sample: band.saved.length === 0
     readonly property var routine: band.sample ? RoutineModel.fromTemplate("night", k => I18n.t(k)) : band.saved[0]
     readonly property var steps: (band.routine && band.routine.steps) || []
-    readonly property int shown: Math.min(band.steps.length, 4)
+    // as many steps as fit at a readable width (the rest: "+ N")
+    readonly property int shown: Math.min(band.steps.length, 4, Math.max(1, Math.floor(steps.room / Space.px(140))))
     readonly property real u: Math.max(Space.px(10), Math.min(band.height * 0.1, band.width * 0.016))
     property bool busy: false
 
