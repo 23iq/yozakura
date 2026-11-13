@@ -35,8 +35,8 @@ Item {
                 readonly property bool auto: modelData.value === "auto"
                 readonly property color fill: auto ? Colors.primaryFixed : (Colors[modelData.value] ?? Colors.outline)
                 objectName: "swatch:" + modelData.value
-                width: 64
-                height: 66
+                width: Space.px(76)
+                height: ring.height + Space.s + nameText.height
                 activeFocusOnTab: true
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: I18n.t(modelData.label)
@@ -83,12 +83,16 @@ Item {
                 }
 
                 KitText {
+                    id: nameText
                     role: "caption"
                     anchors.top: ring.bottom
                     anchors.topMargin: Space.s
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
+                    // a long name on two lines, whole
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideNone
                     text: I18n.t(swatch.modelData.label)
                     font.weight: swatch.selected ? Font.DemiBold : Font.Normal
                     color: swatch.selected ? Colors.overBackground : Colors.overSurfaceVariant

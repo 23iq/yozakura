@@ -7,6 +7,7 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Dark / OLED / Light, each previewed with the palette the current
@@ -27,7 +28,7 @@ Item {
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: 3
     readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
-    readonly property int columns: root.strip ? root.stripCount : width < 520 ? 1 : 3
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, Space.m, root.stripCount, Space.px(96))
 
     // beside the stage (a narrow place): a compact icon segmented
     readonly property bool compact: !root.strip && root.width > 0 && root.width < Space.px(300)
@@ -158,7 +159,7 @@ Item {
                 delegate: ChoiceCard {
                     id: card
                     required property var modelData
-                    width: root.strip ? root.stripWidth : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                    width: root.strip ? root.stripWidth : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(150))
                     previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.55)
                     inset: root.strip
                     selected: root.mode === modelData.id

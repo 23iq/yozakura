@@ -6,6 +6,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../../desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Depth clock style picker: every registered style (ClockStyleRegistry.js)
@@ -21,8 +22,8 @@ Item {
     readonly property string current: ClockStyles.get(SettingsStore.get("desktop.depthClockStyle")).id
     readonly property string ink: SettingsStore.get("desktop.depthClockInk") ?? "auto"
     readonly property int count: ClockStyles.styles.length
-    readonly property int columns: root.strip ? root.count : (width < 520 ? 1 : 2)
-    readonly property real cardWidth: root.strip ? Math.max(Space.px(120), Math.min(root.fillHeight * 16 / 9, (root.width - Space.m * (root.count + 1)) / Math.max(1, root.count))) : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+    readonly property int columns: root.strip ? root.count : PictureGrid.columns(width, Space.m, root.count, Space.px(132))
+    readonly property real cardWidth: root.strip ? Math.max(Space.px(120), Math.min(root.fillHeight * 16 / 9, (root.width - Space.m * (root.count + 1)) / Math.max(1, root.count))) : PictureGrid.cardWidth(grid.width, grid.spacing, root.columns, Space.px(190))
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 

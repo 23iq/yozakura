@@ -134,13 +134,13 @@ test('every home tile scene is registered by its full path (the audit sees it) a
     assert.deepEqual(files.sort(), listed.sort());
 });
 
-test('the page order: lead cards, then plain rows, then big controls', () => {
+test('the page order: plain rows, then big controls, the lead ones first in each', () => {
     const secs = [
         { id: 'a', entries: [{ type: 'custom' }] },
         { id: 'b', entries: [{ type: 'toggle' }] },
         { id: 'c', entries: [{ type: 'selector', display: 'cards' }] },
         { id: 'd', entries: [{ type: 'slider' }] },
     ];
-    assert.deepEqual([...BentoLayout.order(secs, ['c'])], [2, 1, 3, 0]);
+    assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'])], [3, 1, 2, 0]);
     assert.deepEqual([...BentoLayout.order(secs, [])], [1, 3, 0, 2]);
 });

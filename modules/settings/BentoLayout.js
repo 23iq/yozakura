@@ -55,7 +55,7 @@ function place(items, cols, gap) {
 
 // Picture editors whose compact cards wrap in a single column (like
 // `display: "cards"`): they never make their card wide.
-var COMPACT_PICTURES = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "SchemeGallery", "MotionProfileCards", "ThemeModeCards"];
+var COMPACT_PICTURES = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "SchemeGallery", "MotionProfileCards", "ThemeModeCards", "ClockStyleGallery", "LockStyleGallery"];
 
 // The span a schema section asks for: `span` when it sets one, else two
 // columns when it holds a full-width control (an editor, a list), one
@@ -94,14 +94,15 @@ function heaviness(section, inWindow) {
     var heavy = (section && section.entries || []).some(function (e) {
         if (inWindow && !inWindow(e, section))
             return false;
-        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.display === "cards";
+        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.type === "color-role" || e.display === "cards";
     });
     return heavy ? 1 : 0;
 }
 
-// The page order of `sections` (indexes): the lead ids first (as listed),
-// then cards of plain rows, then the ones holding a big control, each in
-// schema order. The first screen shows the most rows that way.
+// The page order of `sections` (indexes): the cards of plain rows, then
+// the ones holding a big control (pictures, an editor, a list), each with
+// the lead ids first (as listed), then in schema order. The first screen
+// shows the most rows that way, the lead ones at its top.
 function order(sections, leadIds, inWindow) {
     var secs = sections || [];
     var lead = (leadIds || []).map(function (id) {
@@ -116,11 +117,12 @@ function order(sections, leadIds, inWindow) {
     for (var i = 0; i < secs.length; i++)
         if (lead.indexOf(i) < 0)
             rest.push(i);
-    var light = rest.filter(function (i) {
+    var all = lead.concat(rest);
+    var light = all.filter(function (i) {
         return heaviness(secs[i], inWindow) === 0;
     });
-    var heavy = rest.filter(function (i) {
+    var heavy = all.filter(function (i) {
         return heaviness(secs[i], inWindow) !== 0;
     });
-    return lead.concat(light, heavy);
+    return light.concat(heavy);
 }

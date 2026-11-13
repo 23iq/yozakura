@@ -41,6 +41,8 @@ Card {
     // A row card whose rows all wait (the thing is turned off): it stays and
     // says so instead of vanishing from the row.
     readonly property bool waiting: false
+    // some row of the card shows by itself (not only dimmed)
+    readonly property bool anyVisible: sectionRoot.entries.some(e => SettingsStore.visible(e))
     // one setting: its value beside the heading, no label of its own
     readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e) || (sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(e.id || e.key) >= 0))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
@@ -195,8 +197,10 @@ Card {
                         dense: true
                         // waits on the card's switch: shown dimmed (CardGate);
                         // a row hidden until a switch of this same page is on
-                        // stays hidden (the switch is right there)
-                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0 && (sectionRoot.offersTurnOn || SettingsStore.visible(modelData))
+                        // stays hidden (the switch is right there), unless
+                        // the whole card waits: then its rows show dimmed
+                        // (a press on one turns the switch on)
+                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0 && (sectionRoot.offersTurnOn || SettingsStore.visible(modelData) || !sectionRoot.anyVisible)
                         previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
                         // a single picture / editor fills the card
                         fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
