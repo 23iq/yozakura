@@ -130,11 +130,12 @@ ev("SettingsStore.set('bar.compact', false)")
 
 # ---- the stage ---------------------------------------------------------------
 check(ev('w.findItem("pageStage", w.findItem("settingsPage").item).item') is not None, "the Bar page has its stage")
-styleRow = ev('w.findItem("settingRow:bar.layout.style")')
+# a row on the first screen (the edge pictures lead the page)
+styleRow = ev('w.findItem("settingRow:bar.position")')
 p = h.eval(styleRow, "mapToItem(null, 40, 20)")
 QTest.mouseMove(win, QPoint(int(p.x()), int(p.y())))
 QTest.qWait(80)
-check(ev("SettingsStore.focusKeys.indexOf('bar.layout.style') >= 0"), "hovering a row tells the stage its keys")
+check(ev("SettingsStore.focusKeys.indexOf('bar.position') >= 0"), "hovering a row tells the stage its keys")
 lit = ev("""(function() {
     var n = 0;
     (function walk(it) { if (it.lit === true) n++; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("pageStage", w.findItem("settingsPage").item));

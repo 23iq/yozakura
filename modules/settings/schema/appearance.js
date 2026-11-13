@@ -20,6 +20,8 @@ var category = {
         {
             "id": "mode",
             "title": "prefs.appearance.section.mode",
+            // one column beside Feel: each choice one line of small pictures
+            "span": 1,
             "entries": [
                 {
                     "id": "theme.mode",

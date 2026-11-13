@@ -30,7 +30,7 @@ var category = {
         "hint": "prefs.bar.hero_hint"
     },
     // One row of cards under the stage.
-    "row": ["shape", "style", "layout"],
+    "row": ["style", "shape", "layout"],
     "sections": [
         {
             "id": "panels",

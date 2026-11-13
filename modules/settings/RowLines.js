@@ -16,6 +16,15 @@ function pictures(entry) {
     return n >= 2 ? n : 0;
 }
 
+// The pictures a row shows, folding or not (rows beside them stay beside:
+// the line keeps its place while the pictures fold away).
+function shown(entry) {
+    if (!entry || entry.advanced)
+        return 0;
+    var n = entry.display === "cards" ? (entry.options || []).length : entry.type === "custom" ? (entry.pictures || 0) : 0;
+    return n >= 2 ? n : 0;
+}
+
 // [[index, ...], ...] over `entries`: consecutive picture rows grouped while
 // their pictures fit `width` at `min` px with `gap` between them.
 function lines(entries, width, gap, min) {
@@ -95,7 +104,7 @@ function layout(entries, width, gap, min, max, sideMin, pairMin) {
         out.push(item);
         if (line.length !== 1)
             continue;
-        var n = pictures(entries[line[0]]);
+        var n = shown(entries[line[0]]);
         if (n === 0 || width - (n * max + (n - 1) * gap) - gap * 2 < sideMin)
             continue;
         while (item.side.length < 3 && i + 1 < base.length && base[i + 1].length === 1 && small(entries[base[i + 1][0]])) {
@@ -132,6 +141,6 @@ function pairable(entries, item) {
 function picturesWidth(entries, item, width, gap, max) {
     if (!item.side || item.side.length === 0)
         return width;
-    var n = pictures(entries[item.rows[0]]);
+    var n = shown(entries[item.rows[0]]);
     return Math.min(width, n * max + (n - 1) * gap);
 }

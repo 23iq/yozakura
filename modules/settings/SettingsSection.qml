@@ -61,10 +61,12 @@ Card {
     readonly property real pictureMax: Space.px(190)
     property var lines: sectionRoot.groupLines()
     function groupLines() {
-        return sectionRoot.fixed ? sectionRoot.entries.map((e, i) => ({
+        // (no section yet while the card is being created)
+        const entries = sectionRoot.entries || [];
+        return sectionRoot.fixed ? entries.map((e, i) => ({
                     "rows": [i],
                     "side": []
-                })) : RowLines.layout(sectionRoot.entries, sectionRoot.contentWidth, Space.m, Space.px(96), sectionRoot.pictureMax, Space.px(280), Space.px(720));
+                })) : RowLines.layout(entries, sectionRoot.contentWidth, Space.m, Space.px(96), sectionRoot.pictureMax, Space.px(260), Space.px(680));
     }
     function regroup() {
         const next = sectionRoot.groupLines();
@@ -245,7 +247,9 @@ Card {
                         Column {
                             id: sideColumn
                             visible: lineRow.side.length > 0
-                            width: Math.max(0, rowsColumn.width - lineRow.picturesW - lineRow.spacing)
+                            // the pictures folded away: the whole line
+                            readonly property bool beside: lineRepeater.count > 0 && !!lineRepeater.itemAt(0) && lineRepeater.itemAt(0).visible
+                            width: Math.max(0, rowsColumn.width - (sideColumn.beside ? lineRow.picturesW + lineRow.spacing : 0))
                             function rowWidth(i) {
                                 return sideColumn.width;
                             }

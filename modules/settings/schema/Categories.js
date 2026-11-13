@@ -237,8 +237,9 @@ function withSections(cat, extra) {
 }
 
 var categories = [
-    // the theme: light or dark beside the visual style, one line of pictures
-    mergeInto(mergeInto(Appearance.category, "palette", ["accents"]), "mode", ["language"]),
+    // the theme (light or dark, the visual style) in one card beside the five
+    // feel sliders in one card
+    mergeInto(mergeInto(mergeInto(Appearance.category, "palette", ["accents"]), "mode", ["language"]), "tune", ["tune-surface"]),
     IconsType.category,
     mergeInto(Wallpapers.category, "panorama", ["transition"]),
     mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]),

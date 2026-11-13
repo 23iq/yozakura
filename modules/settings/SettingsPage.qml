@@ -331,6 +331,11 @@ Flickable {
                 }
             }
             property int assignedCols: 0
+            // cards that took the free columns beside them keep that span
+            // while the column count holds: a widened card is shorter, and
+            // placing it narrow again would widen it again (no relayout loop)
+            property var grown: ({})
+            property int grownCols: 0
             property real floor: 0
             width: colW * cols + gap * (cols - 1)
             x: (parent.width - width) / 2
@@ -341,7 +346,7 @@ Flickable {
                 for (const i of page.order) {
                     const s = sections.itemAt(i);
                     items.push({
-                        "span": bento.spans[i] || 1,
+                        "span": Math.max(bento.spans[i] || 1, bento.grownCols === bento.cols ? (bento.grown[i] || 1) : 1),
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
                 }
@@ -361,6 +366,16 @@ Flickable {
                     const a = [];
                     page.order.forEach((i, k) => a[i] = r.places[k]);
                     bento.assigned = a;
+                    // (recorded once every card is built: a neighbour still
+                    // to come is no free column)
+                    const g = bento.grownCols === bento.cols ? Object.assign({}, bento.grown) : {};
+                    if (page.complete)
+                        page.order.forEach((i, k) => {
+                            if (r.places[k].span > (bento.spans[i] || 1))
+                                g[i] = Math.max(g[i] || 1, r.places[k].span);
+                        });
+                    bento.grown = g;
+                    bento.grownCols = bento.cols;
                     bento.assignedCols = bento.cols;
                 }
                 const out = [];
