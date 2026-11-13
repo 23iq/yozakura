@@ -29,11 +29,11 @@ var category = {
         "right": ["dock.enabled", "dock.hoverToReveal", "dock.pinnedOnStartup"],
         "hint": "prefs.dock.hero_hint"
     },
-    "row": ["dock", "size", "content"],
+    "row": [{ "id": "dock", "weight": 1.3 }, { "id": "size", "weight": 1.25 }, { "id": "content", "weight": 0.8 }],
     "sections": [
         {
             "id": "dock",
-            "title": "prefs.dock.section.dock",
+            "title": "prefs.dock.section.style",
             "entries": [
                 {
                     "key": "dock.enabled",
@@ -45,6 +45,8 @@ var category = {
                 {
                     "key": "dock.theme",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "DockStyleThumb",
                     "visibleWhen": ON,
                     "options": [
                         {
@@ -63,7 +65,15 @@ var category = {
                     "label": "prefs.dock.theme",
                     "description": "prefs.dock.theme.desc",
                     "keywords": "dock style theme floating integrated bar inside"
-                },
+                }
+            ]
+        },
+        {
+            // where it sits: the edge is picked on the stage (this row is
+            // its keyboard path), the monitors are rare
+            "id": "place",
+            "title": "prefs.dock.section.place",
+            "entries": [
                 {
                     "key": "dock.position",
                     "type": "selector",
@@ -103,10 +113,21 @@ var category = {
         },
         {
             "id": "size",
-            "title": "prefs.dock.section.size",
+            "title": "prefs.dock.section.look",
             "entries": [
                 {
+                    "id": "dock.look",
+                    "type": "custom",
+                    "component": "DockLookEditor",
+                    "keys": ["dock.iconSize", "dock.showRunningIndicators", "dock.indicator"],
+                    "visibleWhen": STANDALONE,
+                    "label": "prefs.dock.look",
+                    "description": "prefs.dock.look.desc",
+                    "keywords": "dock icon size apps big small running indicators dots open apps indicator dot line glow brush style"
+                },
+                {
                     "key": "dock.iconSize",
+                    "advanced": true,
                     "type": "slider",
                     "min": 12,
                     "max": 96,
@@ -220,6 +241,7 @@ var category = {
             "entries": [
                 {
                     "key": "dock.showRunningIndicators",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": ON,
                     "label": "prefs.dock.running",
@@ -228,6 +250,7 @@ var category = {
                 },
                 {
                     "key": "dock.indicator",
+                    "advanced": true,
                     "type": "selector",
                     "visibleWhen": {
                         "all": [ON, {
