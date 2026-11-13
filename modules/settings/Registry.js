@@ -105,6 +105,7 @@ var THUMBS = {
     "DockStyleThumb": "thumbs/DockStyleThumb.qml",
     "IslandShapeThumb": "thumbs/IslandShapeThumb.qml",
     "OsdStyleThumb": "thumbs/OsdStyleThumb.qml",
+    "PopupAnimThumb": "thumbs/PopupAnimThumb.qml",
     "PresentationThumb": "thumbs/PresentationThumb.qml",
     "BarEdgeThumb": "thumbs/BarEdgeThumb.qml",
     "ClockFaceThumb": "thumbs/ClockFaceThumb.qml",

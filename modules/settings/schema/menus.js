@@ -20,6 +20,7 @@ var category = {
             {
                 "key": "layout.powermenu.style",
                 "type": "selector",
+                "iconOnly": true,
                 "surface": "powermenu",
                 "options": [
                     {
@@ -71,6 +72,13 @@ var category = {
                 "label": "prefs.menus.tools_style",
                 "description": "prefs.menus.tools_style.desc",
                 "keywords": "tools menu screenshot record color picker ocr style radial notch cursor"
+            },
+            {
+                "key": "theme.popup.tail",
+                "type": "toggle",
+                "label": "prefs.appearance.popup_tail",
+                "description": "prefs.appearance.popup_tail.desc",
+                "keywords": "popup tail arrow pointer callout"
             }
         ]
     },
@@ -81,6 +89,8 @@ var category = {
             {
                 "key": "theme.popup.entry",
                 "type": "selector",
+                "display": "cards",
+                "thumb": "PopupAnimThumb",
                 "label": "prefs.appearance.popup_entry",
                 "description": "prefs.appearance.popup_entry.desc",
                 "keywords": "popup menu animation entry open fade scale slide morph unfold",
@@ -90,13 +100,6 @@ var category = {
                     { "value": "morph-from-bar", "label": "prefs.appearance.popup_entry.morph" },
                     { "value": "unfold", "label": "prefs.appearance.popup_entry.unfold" }
                 ]
-            },
-            {
-                "key": "theme.popup.tail",
-                "type": "toggle",
-                "label": "prefs.appearance.popup_tail",
-                "description": "prefs.appearance.popup_tail.desc",
-                "keywords": "popup tail arrow pointer callout"
             },
             {
                 "key": "theme.popup.gap",

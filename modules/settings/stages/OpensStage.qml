@@ -80,8 +80,17 @@ Stage {
         })
     // The surface in focus: the hovered row's, else the last one changed.
     property string active: "launcher"
-    // The surface picked to move ("" none): its drop zones show.
+    // The surface picked to move ("" none): its drop zones show. Shared
+    // with the rows of the cards (SettingsStore.pickedSurface).
     property string picked: ""
+    onPickedChanged: SettingsStore.pickedSurface = stage.picked
+    Connections {
+        target: SettingsStore
+        function onPickedSurfaceChanged() {
+            stage.picked = SettingsStore.pickedSurface;
+        }
+    }
+    Component.onCompleted: SettingsStore.pickedSurface = ""
     readonly property var movable: ["launcher", "dashboard", "aiquick", "panels", "cheatsheet"]
     // The other places the picked surface can open in: [{value, label, rect}]
     readonly property var zones: {

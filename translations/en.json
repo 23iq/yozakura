@@ -4782,5 +4782,6 @@
   "prefs.osd.hero_hint": "Click an edge to move the display there",
   "prefs.undo.osd_moved": "On-screen display moved",
   "prefs.notif.section.quiet_hours": "Quiet hours",
-  "prefs.notif.section.history": "History"
+  "prefs.notif.section.history": "History",
+  "prefs.layout.pick_place": "Click a place on the screen"
 }

@@ -79,7 +79,7 @@ var category = {
     "description": "prefs.cat.layout.desc",
     "stage": "OpensStage",
     "hero": { "hint": "prefs.layout.hero_hint" },
-    "row": ["hosts", "hosts2", "hosts3"],
+    "row": ["hosts", "hosts2"],
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
         {
@@ -123,6 +123,21 @@ var category = {
                     "label": "prefs.layout.dashboard_host",
                     "description": "prefs.layout.dashboard_host.desc",
                     "keywords": "dashboard host spotlight sheet notch side panel"
+                },
+                {
+                    "key": "layout.cheatsheet.host",
+                    "type": "selector",
+                    "surface": "cheatsheet",
+                    "options": [
+                        {
+                            "value": "fullscreen",
+                            "label": "prefs.layout.host.fullscreen",
+                            "icon": "arrowsOut"
+                        }
+                    ].concat(HOSTS.slice(2)),
+                    "label": "prefs.layout.cheatsheet_host",
+                    "description": "prefs.layout.cheatsheet_host.desc",
+                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
                 }
             ]
         },
@@ -157,10 +172,12 @@ var category = {
                 {
                     "key": "layout.sheet.side",
                     "type": "selector",
+                    "iconOnly": true,
                     "options": [
                         {
                             "value": "auto",
-                            "label": "common.auto"
+                            "label": "common.auto",
+                            "icon": "sparkle"
                         },
                         {
                             "value": "left",
@@ -185,21 +202,6 @@ var category = {
                     "label": "prefs.layout.backdrop",
                     "description": "prefs.layout.backdrop.desc",
                     "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
-                },
-                {
-                    "key": "layout.cheatsheet.host",
-                    "type": "selector",
-                    "surface": "cheatsheet",
-                    "options": [
-                        {
-                            "value": "fullscreen",
-                            "label": "prefs.layout.host.fullscreen",
-                            "icon": "arrowsOut"
-                        }
-                    ].concat(HOSTS.slice(2)),
-                    "label": "prefs.layout.cheatsheet_host",
-                    "description": "prefs.layout.cheatsheet_host.desc",
-                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
                 }
             ]
         }

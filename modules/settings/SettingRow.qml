@@ -78,6 +78,11 @@ FocusScope {
     // holds other rows too) a plain selector: a strip of pictures is a
     // card's one setting (PAGE COMPOSITION)
     readonly property bool asCards: entry.display === "cards" && (!row.dense || row.bare)
+    // A surface that opens somewhere (Where things open), in a card of the
+    // page row: a chip of where it opens now; a click picks it on the stage,
+    // which shows its other places (SettingsStore.pickedSurface).
+    readonly property bool legend: row.dense && type === "selector" && ["launcher", "dashboard", "aiquick", "panels", "cheatsheet"].indexOf(entry.surface || "") >= 0
+    readonly property bool picked: row.legend && SettingsStore.pickedSurface === entry.surface
     readonly property bool stacked: (row.usable || row.preview) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
@@ -102,6 +107,8 @@ FocusScope {
     readonly property string caption: {
         if (row.fixable && !row.preview)
             return row.noteRepeats ? "" : row.note.text;
+        if (row.picked)
+            return I18n.t("prefs.layout.pick_place");
         if (row.shownAs !== "")
             return I18n.t("prefs.layout.island_off").arg(row.shownAs);
         return entry.hint ? I18n.t(entry.hint) : "";
@@ -304,7 +311,7 @@ FocusScope {
         case "number":
             return numberComponent;
         case "selector":
-            return row.asCards ? cardsComponent : selectorComponent;
+            return row.asCards ? cardsComponent : (row.legend ? legendComponent : selectorComponent);
         case "text":
             return textComponent;
         case "font":
@@ -369,6 +376,19 @@ FocusScope {
             unit: row.entry.unit ?? ""
             specialValues: row.entry.specialValues ?? []
             onChanged: v => SettingsStore.set(row.entry.key, v)
+        }
+    }
+
+    Component {
+        id: legendComponent
+        Chip {
+            objectName: "surfaceChip:" + (row.entry.surface || "")
+            readonly property var option: (row.entry.options || []).find(o => o.value === row.value) || null
+            active: row.picked
+            icon: option && option.icon ? (Icons[option.icon] ?? "") : ""
+            text: option ? I18n.t(option.label) : String(row.value ?? "")
+            trailingIcon: row.picked ? Icons.cancel : Icons.caretRight
+            onClicked: SettingsStore.pickedSurface = row.picked ? "" : row.entry.surface
         }
     }
 
