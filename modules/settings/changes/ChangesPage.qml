@@ -57,6 +57,7 @@ FittedFrame {
     // the band: how many, where, since what, and the one action
     Stage {
         id: band
+        calm: true
         readonly property bool fittedHero: true
         objectName: "changesBand"
         x: page.margin
@@ -64,11 +65,6 @@ FittedFrame {
         width: page.width - page.margin * 2
         height: page.bandH
 
-        Mark {
-            anchors.fill: parent
-            radius: band.radius
-            color: Qt.alpha(Colors.shadow, 0.5)
-        }
         Row {
             id: count
             x: Space.xl

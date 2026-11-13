@@ -41,6 +41,7 @@ FittedFrame {
 
         Stage {
             id: band
+            calm: true
             objectName: "pageStage"
             anchors.fill: parent
             stageHeight: page.bandH
@@ -52,12 +53,6 @@ FittedFrame {
                 offset: Qt.vector2d(0, Space.m)
                 blur: Space.xxl
                 color: Qt.alpha(Colors.shadow, 0.45)
-            }
-
-            Mark {
-                anchors.fill: parent
-                radius: 0
-                color: Qt.alpha(Colors.background, 0.55)
             }
 
             // how much of the catalog is on this machine

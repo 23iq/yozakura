@@ -105,6 +105,7 @@ FittedFrame {
 
         Stage {
             id: band
+            calm: true
             objectName: "pageStage"
             anchors.fill: parent
             stageHeight: page.bandH
@@ -117,12 +118,6 @@ FittedFrame {
                 blur: Space.xxl
                 color: Qt.alpha(Colors.shadow, 0.45)
             }
-            Mark {
-                anchors.fill: parent
-                radius: 0
-                color: Qt.alpha(Colors.background, 0.55)
-            }
-
             Row {
                 x: Space.xl
                 anchors.verticalCenter: parent.verticalCenter
