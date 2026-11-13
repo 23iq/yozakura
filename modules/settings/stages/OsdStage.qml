@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "OsdPlace.js" as OsdPlace
+import "../Ui.js" as Ui
 import "../../shell/osd/OsdStyles.js" as OsdStyles
 
 // Stage of On-screen display: your screen with the real OSD (its style
@@ -71,6 +72,7 @@ Stage {
                 scale: Math.min(osd.width / Math.max(1, stage.size.w), osd.height / Math.max(1, stage.size.h))
                 source: "../../shell/osd/" + OsdStyles.fileFor(stage.style)
                 onLoaded: {
+                    Ui.setIfPresent(item, "vertical", Qt.binding(() => stage.vertical));
                     item.kind = "volume";
                     item.value = 0.62;
                     item.shown = true;
@@ -87,7 +89,8 @@ Stage {
             anchors.fill: parent
             visible: stage.style !== "bar-inline"
             current: stage.pref === "auto" ? "" : stage.edge
-            ghostThickness: Math.round(stage.size.h * stage.k * 1.6)
+            // as thick as the OSD across its edge
+            ghostThickness: Math.round(OsdStyles.sizeFor(stage.style, false, Metrics.osdW).h * stage.k * 1.6)
             ghostSpan: 0.3
             onPicked: e => SettingsStore.transaction("prefs.undo.osd_moved", () => SettingsStore.set("layout.osd.position", OsdPlace.positionFor(e)))
         }
