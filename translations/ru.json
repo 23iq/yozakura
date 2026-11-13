@@ -4810,7 +4810,6 @@
   "prefs.dock.size.large": "Крупный",
   "prefs.dock.size.huge": "Огромный",
   "prefs.dock.indicator.none": "Нет",
-  "prefs.notch.section.behaviour": "Место и раскрытие",
   "prefs.notch.section.place": "Край",
   "prefs.notch.section.activity_details": "Подробности активностей",
   "prefs.notch.section.idle": "Когда ничего не играет",
@@ -4819,5 +4818,6 @@
   "prefs.undo.osd_moved": "Экранный индикатор перемещён",
   "prefs.notif.section.quiet_hours": "Тихие часы",
   "prefs.notif.section.history": "История",
-  "prefs.layout.pick_place": "Нажмите на место на экране"
+  "prefs.layout.pick_place": "Нажмите на место на экране",
+  "prefs.notch.section.opening": "Раскрытие"
 }

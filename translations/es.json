@@ -4774,7 +4774,6 @@
   "prefs.dock.size.large": "Grande",
   "prefs.dock.size.huge": "Enorme",
   "prefs.dock.indicator.none": "Ninguno",
-  "prefs.notch.section.behaviour": "Posición y apertura",
   "prefs.notch.section.place": "Borde",
   "prefs.notch.section.activity_details": "Detalles de actividades",
   "prefs.notch.section.idle": "Cuando no suena nada",
@@ -4783,5 +4782,6 @@
   "prefs.undo.osd_moved": "Indicador en pantalla movido",
   "prefs.notif.section.quiet_hours": "Horas de silencio",
   "prefs.notif.section.history": "Historial",
-  "prefs.layout.pick_place": "Haz clic en un lugar de la pantalla"
+  "prefs.layout.pick_place": "Haz clic en un lugar de la pantalla",
+  "prefs.notch.section.opening": "Apertura"
 }

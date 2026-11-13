@@ -39,8 +39,18 @@ Card {
     // one setting: its value beside the heading, no label of its own
     readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e) || (sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(e.id || e.key) >= 0))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
+    // A card of the page row with one picture choice among a few compact
+    // rows (Island: the shape over its alignment): the pictures keep their
+    // strip, in the height the other rows leave, without a label.
+    readonly property var strip: {
+        if (!sectionRoot.fixed || sectionRoot.single !== null)
+            return null;
+        const pics = sectionRoot.visibleEntries.filter(e => e.display === "cards");
+        return pics.length === 1 && sectionRoot.visibleEntries.length <= 3 ? pics[0] : null;
+    }
+    readonly property real stripHeight: sectionRoot.strip ? Math.max(0, rowsBox.room - (sectionRoot.visibleEntries.length - 1) * (Space.rowHeight + Space.xs) - Space.s * 2) : 0
     readonly property string value: {
-        const e = sectionRoot.single;
+        const e = sectionRoot.single || sectionRoot.strip;
         if (!e || !e.key || e.type === "toggle")
             return "";
         const v = SettingsStore.get(e.key);
@@ -160,13 +170,13 @@ Card {
                         required property int index
                         width: rowsColumn.width
                         entry: modelData
-                        bare: sectionRoot.single !== null
+                        bare: sectionRoot.single !== null || (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key))
                         dense: sectionRoot.fixed
                         // waits on the card's switch: shown dimmed (CardGate)
                         preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0
                         previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
                         // a single picture / editor fills the card
-                        fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : 0
+                        fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && (modelData.id || modelData.key) === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
                         previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null
                     }
                 }

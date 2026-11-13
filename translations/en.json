@@ -4774,7 +4774,6 @@
   "prefs.dock.size.large": "Large",
   "prefs.dock.size.huge": "Huge",
   "prefs.dock.indicator.none": "None",
-  "prefs.notch.section.behaviour": "Place and opening",
   "prefs.notch.section.place": "Edge",
   "prefs.notch.section.activity_details": "Activity details",
   "prefs.notch.section.idle": "When nothing plays",
@@ -4783,5 +4782,6 @@
   "prefs.undo.osd_moved": "On-screen display moved",
   "prefs.notif.section.quiet_hours": "Quiet hours",
   "prefs.notif.section.history": "History",
-  "prefs.layout.pick_place": "Click a place on the screen"
+  "prefs.layout.pick_place": "Click a place on the screen",
+  "prefs.notch.section.opening": "Opening"
 }

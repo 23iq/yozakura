@@ -14,7 +14,7 @@ var category = {
         "right": ["notch.enabled", "notch.keepHidden", "notch.disableHoverExpansion"],
         "hint": "prefs.notch.hero_hint"
     },
-    "row": [{ "id": "notch", "weight": 1.05 }, { "id": "behaviour", "weight": 0.8 }, { "id": "media", "weight": 0.9 }, { "id": "activities", "weight": 1.3 }],
+    "row": [{ "id": "notch", "weight": 1.2 }, { "id": "media", "weight": 1 }, { "id": "activities", "weight": 1.3 }],
     "sections": [
         {
             // the island itself on / off (beside the stage, hero.right): the
@@ -59,31 +59,6 @@ var category = {
                     "keywords": "notch style island attached floating pill dot minimal"
                 },
                 {
-                    "key": "notch.keepHidden",
-                    "type": "toggle",
-                    "label": "prefs.notch.hide_until_hovered",
-                    "description": "prefs.notch.keep_hidden.desc",
-                    "keywords": "hide notch autohide"
-                },
-                {
-                    "key": "notch.hoverRegionHeight",
-                    "advanced": true,
-                    "type": "slider",
-                    "min": 8,
-                    "max": 40,
-                    "step": 1,
-                    "unit": "px",
-                    "label": "prefs.notch.hover_region",
-                    "description": "prefs.notch.hover_region.desc",
-                    "keywords": "hover region trigger area reveal"
-                }
-            ]
-        },
-        {
-            "id": "behaviour",
-            "title": "prefs.notch.section.behaviour",
-            "entries": [
-                {
                     "key": "notch.align",
                     "type": "selector",
                     "iconOnly": true,
@@ -108,6 +83,31 @@ var category = {
                     "description": "prefs.notch.align.desc",
                     "keywords": "notch align alignment left right corner start center end"
                 },
+                {
+                    "key": "notch.keepHidden",
+                    "type": "toggle",
+                    "label": "prefs.notch.hide_until_hovered",
+                    "description": "prefs.notch.keep_hidden.desc",
+                    "keywords": "hide notch autohide"
+                },
+                {
+                    "key": "notch.hoverRegionHeight",
+                    "advanced": true,
+                    "type": "slider",
+                    "min": 8,
+                    "max": 40,
+                    "step": 1,
+                    "unit": "px",
+                    "label": "prefs.notch.hover_region",
+                    "description": "prefs.notch.hover_region.desc",
+                    "keywords": "hover region trigger area reveal"
+                }
+            ]
+        },
+        {
+            "id": "behaviour",
+            "title": "prefs.notch.section.opening",
+            "entries": [
                 {
                     "key": "notch.expandOn",
                     "type": "selector",
