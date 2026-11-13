@@ -1827,7 +1827,7 @@
   "desktop.widgets.edit": "Расставить виджеты",
   "desktop.widgets.monitor": "Монитор",
   "desktop.widgets.empty": "Виджетов пока нет. Добавьте виджет выше и расставьте его на рабочем столе.",
-  "prefs.desktop.section.clock": "Стиль часов",
+  "prefs.desktop.section.clock": "Часы",
   "prefs.desktop.section.widgets": "Виджеты",
   "prefs.desktop.section.icons": "Значки",
   "prefs.desktop.depth_clock": "Часы с глубиной",

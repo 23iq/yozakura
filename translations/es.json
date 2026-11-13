@@ -1827,7 +1827,7 @@
   "desktop.widgets.edit": "Organizar widgets",
   "desktop.widgets.monitor": "Monitor",
   "desktop.widgets.empty": "Aún no hay widgets. Añade uno arriba y colócalo en el escritorio.",
-  "prefs.desktop.section.clock": "Estilo del reloj",
+  "prefs.desktop.section.clock": "Reloj",
   "prefs.desktop.section.widgets": "Widgets",
   "prefs.desktop.section.icons": "Iconos",
   "prefs.desktop.depth_clock": "Reloj de profundidad",

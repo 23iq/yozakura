@@ -1827,7 +1827,7 @@
   "desktop.widgets.edit": "Arrange widgets",
   "desktop.widgets.monitor": "Monitor",
   "desktop.widgets.empty": "No widgets yet. Add one above, then arrange it on the desktop.",
-  "prefs.desktop.section.clock": "Clock style",
+  "prefs.desktop.section.clock": "Clock",
   "prefs.desktop.section.widgets": "Widgets",
   "prefs.desktop.section.icons": "Icons",
   "prefs.desktop.depth_clock": "Depth clock",

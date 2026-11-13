@@ -209,7 +209,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -223,7 +223,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -237,7 +237,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -251,7 +251,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -265,7 +265,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -279,7 +279,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -293,7 +293,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."
@@ -307,7 +307,7 @@
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
-            "entryTitle": "OCR Languages",
+            "entryTitle": "OCR languages",
             "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
           },
           "description": "Enable this OCR (tesseract) language."

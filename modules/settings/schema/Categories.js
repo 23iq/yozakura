@@ -173,6 +173,42 @@ function mergeInto(cat, intoId, fromIds) {
     return out;
 }
 
+// A copy of `cat` with the entry `key` moved to the head of the section
+// `toId` (a feature's switch at the top of its own card).
+function moveEntry(cat, key, toId) {
+    var entry = null;
+    var secs = cat.sections.map(function (x) {
+        var found = x.entries.filter(function (e) {
+            return e.key === key;
+        })[0];
+        if (!found)
+            return x;
+        entry = found;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = x.entries.filter(function (e) {
+            return e !== found;
+        });
+        return c;
+    });
+    if (!entry)
+        throw new Error("moveEntry: no entry " + key + " in " + cat.id);
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = secs.map(function (x) {
+        if (x.id !== toId)
+            return x;
+        var c = {};
+        for (var f in x)
+            c[f] = x[f];
+        c.entries = [entry].concat(x.entries);
+        return c;
+    });
+    return out;
+}
+
 // A copy of `cat` without its sections `ids`.
 function withoutSections(cat, ids) {
     var out = {};
@@ -209,7 +245,8 @@ var categories = [
     Dock.category,
     mergeInto(Overview.category, "grid", ["size", "wallpaper"]),
     withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),
-    mergeInto(Desktop.category, "widgets", ["icons", "icondetails"]),
+    // the clock: its switch, style and details in one card
+    mergeInto(moveEntry(mergeInto(Desktop.category, "widgets", ["icons", "icondetails"]), "desktop.depthClock", "clock"), "clock", ["clockmore"]),
     mergeInto(Lockscreen.category, "style", ["tone"]),
     mergeInto(Notifications.category, "behaviour", ["sound", "history"]),
     withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),

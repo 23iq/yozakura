@@ -5256,7 +5256,7 @@
           "description": "A big clock drawn behind the subject of your wallpaper.",
           "x-settings": {
             "category": "desktop",
-            "section": "arrange",
+            "section": "clock",
             "label": "prefs.desktop.depth_clock",
             "control": "toggle",
             "keywords": "clock time wallpaper depth subject behind big widget"
@@ -5292,7 +5292,7 @@
           "description": "Auto picks the side where the subject leaves the time readable.",
           "x-settings": {
             "category": "desktop",
-            "section": "clockmore",
+            "section": "clock",
             "label": "prefs.label.clock_position",
             "control": "selector",
             "keywords": "clock side left right auto placement",
@@ -5319,7 +5319,7 @@
           "description": "Builds a matte so the clock goes behind the moving subject too.",
           "x-settings": {
             "category": "desktop",
-            "section": "clockmore",
+            "section": "clock",
             "label": "prefs.desktop.depth_clock_video",
             "control": "toggle",
             "preview": "DepthMatteStatus",
@@ -5337,7 +5337,7 @@
           "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
           "x-settings": {
             "category": "desktop",
-            "section": "clockmore",
+            "section": "clock",
             "label": "prefs.label.clock_colour",
             "control": "custom",
             "component": "ColorRoleSwatches",
@@ -7287,7 +7287,7 @@
           }
         },
         "noMediaDisplay": {
-          "title": "No Media Display",
+          "title": "No media display",
           "type": "string",
           "default": "userHost",
           "description": "What the island shows when nothing is playing.",
@@ -7310,7 +7310,7 @@
           }
         },
         "customText": {
-          "title": "Custom Text",
+          "title": "Custom text",
           "type": "string",
           "default": "Yozakura",
           "description": "Text shown in the idle notch.",
@@ -7363,7 +7363,7 @@
           "x-unit": "ms"
         },
         "expandOn": {
-          "title": "Open Panels On",
+          "title": "Open panels on",
           "type": "string",
           "default": "hover",
           "description": "Open media, activities and download panels on hover or only on click.",
@@ -8652,7 +8652,7 @@
           }
         },
         "dashboardPersistTabs": {
-          "title": "Persist Dashboard Tabs",
+          "title": "Keep dashboard tabs loaded",
           "type": "boolean",
           "default": false,
           "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
@@ -9646,7 +9646,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9660,7 +9660,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9674,7 +9674,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9688,7 +9688,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9702,7 +9702,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9716,7 +9716,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9730,7 +9730,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."
@@ -9744,7 +9744,7 @@
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
-                "entryTitle": "OCR Languages",
+                "entryTitle": "OCR languages",
                 "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
               },
               "description": "Enable this OCR (tesseract) language."

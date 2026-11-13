@@ -114,7 +114,7 @@
       }
     },
     "noMediaDisplay": {
-      "title": "No Media Display",
+      "title": "No media display",
       "type": "string",
       "default": "userHost",
       "description": "What the island shows when nothing is playing.",
@@ -137,7 +137,7 @@
       }
     },
     "customText": {
-      "title": "Custom Text",
+      "title": "Custom text",
       "type": "string",
       "default": "Yozakura",
       "description": "Text shown in the idle notch.",
@@ -190,7 +190,7 @@
       "x-unit": "ms"
     },
     "expandOn": {
-      "title": "Open Panels On",
+      "title": "Open panels on",
       "type": "string",
       "default": "hover",
       "description": "Open media, activities and download panels on hover or only on click.",

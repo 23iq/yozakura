@@ -134,7 +134,7 @@
       }
     },
     "dashboardPersistTabs": {
-      "title": "Persist Dashboard Tabs",
+      "title": "Keep dashboard tabs loaded",
       "type": "boolean",
       "default": false,
       "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
