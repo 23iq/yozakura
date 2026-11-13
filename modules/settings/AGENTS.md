@@ -56,6 +56,7 @@ modules/settings/
 ├── DestinationHeader.qml   back pill, title, centred tabs (kit Segmented), Reset page
 ├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
 ├── SettingsPage.qml        a schema category: hero stage (by URL, recedes on scroll) + card bento
+├── FittedFrame.qml        the fitted template's measures (SettingsPage + hand-written fitted pages)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor (same test)
 ├── SettingsSection.qml     one section as a kit Card of SettingRows (window entries only)
 ├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
@@ -70,17 +71,24 @@ modules/settings/
 ├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES
 ├── stages/                 Stage.qml (frame), ScreenMini.qml (the whole screen, in layers),
 │                           StageSpot.qml (highlight), EdgePicker.qml (move a part by its edge),
-│                           <Page>Stage.qml (Bar, Island, Dock, Opens, Notif, Lock, Look, Type)
+│                           <Page>Stage.qml (Bar, Island, Dock, Opens, Notif, Lock, Look, Type,
+│                           Wallpaper, Launcher, Dashboard, Desktop, Overview, Terminal, Windows,
+│                           Power, System, Updates, Voice, Timers, Tasks, Assistant), list-form
+│                           bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys, Providers,
+│                           Routines); KeyDeck (keycaps), pure helpers WindowTiles / DesktopPlace /
+│                           SurfacePlace / KeyDeck.js (node-tested)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
-├── editors/                rich `custom` editors (one file each, `property var entry`)
+├── editors/                rich `custom` editors (one file each, `property var entry`); PageCard +
+│                           CardScroll: a hand-written fitted page's row card and its scrolling body
 ├── previews/               old under-row previews (`preview`), for pages not converted yet
 ├── schema/Categories.js    information architecture: destinations, tabs, HOME tiles, PILLS, resolve()
 ├── schema/<category>.js    one file per category (a tab of a destination)
 ├── store/SettingsStore.qml get / set (live + undo) / stageSet (wizard) / reset / focusKeys / navigate
 ├── store/PresetStudio.qml  preset studio data + actions (`<app> preset ...`)
-├── presets/, displays/, keyboard/, extras/, connect/, mods/, changes/, system/  hand-written pages
+├── presets/, displays/, keyboard/, extras/, mods/, changes/, system/  hand-written pages
+├── connect/                live device lists of the Network, Bluetooth and Sound tabs (ConnectModel.js)
 └── Macros.js, Synonyms.js  pure: macro sliders' key mapping; search synonyms (en + ru)
 ```
 
@@ -149,6 +157,13 @@ Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/w
 (`home` with `--search Q` shows results, `--hover ENTRY` lights a stage part,
 `--undo` shows the pill, `--eval barEdgePicker:preview='left'` a hovered
 edge, `--eval opensStage:picked='dashboard'` Where things open mid-move).
+`--devices`: believable live services for the device pages
+(`tests/lib/device_fixtures.py`: a laptop battery and profiles, two monitors,
+two keyboard layouts, Wi-Fi networks, Bluetooth devices, speakers and a
+microphone with apps playing, fish prompts with previews, the extras
+catalog) and, after `make build`, the presets the built app lists;
+`SettingsEnv(..., devices=True)` gives tests the same world. With
+`--wallpaper`, the library gets small thumbnails like the manager's cache.
 Colours come from the wallpaper (matugen, or `tools/render/wallpaper_palette.py`
 with the `materialyoucolor` package) unless `--palette default` (the rose
 palette, which belongs with wallpaper-01). Motion: `tools/render/settings_motion.py [tile-hover tile-open
@@ -339,6 +354,9 @@ Schema fields (category):
   bar"). With one side column the stage and the column are centred as one
   group. `hero.hint`: one line under the stage saying what a click on it
   does (i18n key).
+- `hero.foot`: entries in a strip along the stage's foot, as wide as the
+  stage (a film strip of pictures: Wallpaper's library). The editor gets
+  the strip's height as `fillHeight`.
 - `row`: two to four section ids (or `{ "id", "weight" }` for a card
   wider or narrower than the others, weight 1 by default), the cards of the row, one
   fixed height (`Look.cardRowHeight`, 216 px). Sections not in `row` open in
@@ -361,12 +379,33 @@ Schema fields (category):
   "hero": { "right": ["network.wifiEnabled"], "hint": "prefs.net.hint" },
   "row": ["networks", "details"],
   ```
-  Without a `stage` the row takes the whole page.
+  Without a `stage` the row takes the whole page; its `hero` entries then
+  stand in a side column beside the row (Special workspaces: the switch
+  beside the list). `bandShare` (default 0.24): the share of the page the
+  band takes, for a band that is the page's main control (Sound 0.5: two
+  big sliders; Effects 0.4), so the cards under it hold their content.
+  The band is calm (Stage `calm`, set by the page): the wallpaper blurred
+  and darkened, never a sharp picture under text and controls.
+- `fitted: true` on a hand-written page's category (Displays, Keyboard,
+  About, Changes): composed like a converted page on a `FittedFrame` root
+  (its measures: `margin`, `gap`, `pad`, `sideW`, `rowH`, `rowY`, `heroH`,
+  `bandH`, `listForm`, `hasHint`); its hero says `fittedHero: true` and
+  its row cards `fittedCard: true` (PageCard does), so settings-fit checks
+  it like the schema pages. Never copy the measures into a page.
+- "More · N" counts the sections that open as a card now (window rows, the
+  compositor gate, visibleWhen); the sheet's cards are built on its first
+  open (or when a search lands in it), not with the page. On a fitted page
+  the compositor gate's note is a chip at the start of the hint line.
 - entry `part: true`: an editor of one part of a composite value that
-  another row also edits (exempt from the one-control check).
+  another row also edits (exempt from the one-control check), or the
+  window's control of a key another page owns (Windows' Corners card:
+  Look's `compositor.rounding`): it declares the keys it writes in `keys`,
+  so Reset page and search cover them; the owner stays the other entry
+  (tests/settings-pages.test.cjs).
 
 What a row card may hold (SettingsSection `fixed`):
-- ONE picture choice: a strip. CardSelector (`display: "cards"`) and the
+- ONE picture choice (the card's one setting; in a card that holds other
+  rows too it is a plain selector): a strip. CardSelector (`display: "cards"`) and the
   picture editors (BarStyleCards, ThemeModeCards, LockStyleGallery,
   PanelStyleCards, SchemeGallery) become one horizontal strip of equal
   pictures when SettingRow gives them `fillHeight`, the title inside the
@@ -495,6 +534,9 @@ Reference pages: Desktop layout (`schema/bar.js`, `notch.js`, `dock.js`,
 12. `make schema`, `make check`.
 
 ## STAGE COMPONENTS (frame-independent)
+- Shortcuts: a KeyRecorder shares the keys it has while it records
+  (`KeybindsStore.recordingDraft`); the Keys band lights them as they are
+  pressed.
 - `Stage` (stages/Stage.qml): `stageHeight`, default children = the
   miniature, `wallpaper` (URL), `barOpacity`, `radius`, `backdrop`,
   `imageScale`, `imageShift` (parallax). Only needs SettingsStore and the
@@ -553,7 +595,12 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
   link, no card moves once a page shows, home reflow),
   `tests/settings-regressions.test.py` (narrow window search),
   `tests/preset-status-footer.test.py`, `tests/config-file-autosave.test.py`
-  (coalesced writes).
+  (coalesced writes); the pages: `tests/settings-fit.test.py` (every fitted
+  page, schema and hand-written, with the device fixtures),
+  `tests/settings-window.test.cjs` (row budgets), `settings-personal`,
+  `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
+  `settings-connect`, `settings-keys`, `settings-power`, `settings-windows-stage`,
+  `settings-displays-flow` (`.test.py`), `settings-bar-shape.test.cjs`.
 - Separate process: `tests/separate-windows.test.py`, `tests/preview-staging.test.py`
   (the wizard's relay), `tests/window-entries.test.py`, `tests/onboarding-*.test.py`.
 - Tests that open the whole shell end with `h.exit(...)`: kept-alive pages
