@@ -59,6 +59,10 @@ Singleton {
     // the one expanded row.
     property string editorQuery: ""
     property string expandedUid: ""
+    // The keys a recorder (KeyRecorder) has so far while it records
+    // ({modifiers, key}; null while none records): the Shortcuts band lights
+    // them as they are pressed, before the combo is saved.
+    property var recordingDraft: null
     // Only conflicting rows (the toolbar's conflict chip).
     property bool conflictFilter: false
     // Rows the editor shows: search (over every group at once, so a key

@@ -11,7 +11,7 @@ import "../../keybinds/KeyNames.js" as KeyNames
 // The Shortcuts tab's band (list form): a keyboard drawn from keycaps with
 // the keys of the shortcut you opened in the list lit (the cheatsheet's
 // while none is open), and what it does beside it. Recording new keys for
-// it lights them as soon as they are saved.
+// it lights them as they are pressed (KeybindsStore.recordingDraft).
 Stage {
     id: band
     objectName: "keysBand"
@@ -21,7 +21,10 @@ Stage {
         const open = KeybindsStore.expandedUid !== "" ? KeybindsStore.row(KeybindsStore.expandedUid) : null;
         return open || KeybindsStore.row("core:system.keybinds");
     }
-    readonly property var combo: band.bind && band.bind.keys && band.bind.keys.length > 0 ? band.bind.keys[0] : null
+    // while a recorder records: the keys pressed so far, lit at once
+    readonly property var draft: KeybindsStore.recordingDraft
+    readonly property bool drafting: band.draft !== null && ((band.draft.modifiers || []).length > 0 || (band.draft.key || "") !== "")
+    readonly property var combo: band.drafting ? band.draft : (band.bind && band.bind.keys && band.bind.keys.length > 0 ? band.bind.keys[0] : null)
 
     stageHeight: Space.px(150)
 
@@ -48,7 +51,7 @@ Stage {
             role: "title"
             color: Type.accent
             elide: Text.ElideRight
-            text: band.combo ? KeyNames.comboText(band.combo.modifiers, band.combo.key, "Super") : ""
+            text: band.combo ? KeyNames.comboText(band.combo.modifiers, band.combo.key, "Super") + (band.drafting && !band.combo.key ? " + …" : "") : ""
         }
         KitText {
             objectName: "keysAction"

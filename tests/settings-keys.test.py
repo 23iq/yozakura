@@ -7,6 +7,7 @@ device fixtures (tests/lib/device_fixtures.py).
 * Shortcuts: opening a shortcut in the list lights its keys on the band
   and names what it does.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -62,7 +63,6 @@ def ev(expr):
 
 
 def lit():
-    import json
     return sorted(set(json.loads(h.eval(ev('w.find("keyboardDeck")'), "JSON.stringify(lit)"))))
 
 
@@ -90,8 +90,18 @@ QTest.qWait(50)
 deck = ev('w.find("keysDeck")')
 row = ev("JSON.stringify(KeybindsStore.row('core:launcher').keys[0])")
 shown = h.eval(deck, "JSON.stringify(lit)")
+opened = shown
 check(shown not in ("[]", ""), f"opening a shortcut lights its keys ({shown} for {row})")
 check(ev('w.find("keysAction").text') != "", "...and the band says what it does")
+# a recorder's keys light while they are pressed, before the combo is saved
+ev('KeybindsStore.recordingDraft = {"modifiers": ["SUPER", "SHIFT"], "key": ""}')
+QTest.qWait(50)
+shown = sorted(json.loads(h.eval(deck, "JSON.stringify(lit)")))
+check(shown == ["SHIFT", "SUPER"], f"held modifiers light while recording ({shown})")
+check(ev('w.find("keysCombo").text').endswith("…"), "...the combo so far waits for its key")
+ev("KeybindsStore.recordingDraft = null")
+QTest.qWait(50)
+check(h.eval(deck, "JSON.stringify(lit)") == opened, "...and the opened shortcut's keys come back after")
 
 if failures:
     print(f"settings-keys: {len(failures)} failure(s)")
