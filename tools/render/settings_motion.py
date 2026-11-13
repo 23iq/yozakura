@@ -6,10 +6,16 @@ Xvfb, never the live desktop).
                                     [--wallpaper PATH] [SCENE ...]
 
 Scenes:
-  tile-hover   the pointer moves onto the Desktop layout tile: it lifts, the
+  tile-hover   the pointer moves onto the Screen tile: it lifts, the
                wallpaper swells and follows the pointer, windows slide in
   tile-open    a click on the Look tile: the tile grows into its page
-  edge-click   on Desktop layout > Bar, the left edge of the miniature is
+  gate-toggle  on Screen > Bar, the frame switch goes on and off: its rows
+               appear and go, the cards under them land without crossing
+  resize       the window narrows to its minimum and widens back: home's
+               and the page's columns switch once each way
+  scroll       on Screen > Bar, the page scrolls down and back: the stage
+               recedes, the header and tabs stay
+  edge-click   on Screen > Bar, the left edge of the miniature is
                hovered (a ghost bar, "Move here") and clicked: the bar moves
   windows-gap  on Windows, the gap grip between the windows is dragged: the
                gaps widen live, the readout follows, one undo step
@@ -37,9 +43,9 @@ from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-SCENES = ("tile-hover", "tile-open", "edge-click", "windows-gap", "power-idle")
+SCENES = ("tile-hover", "tile-open", "gate-toggle", "resize", "scroll", "edge-click", "windows-gap", "power-idle")
 # the page a scene starts on ("" = home)
-PAGES = {"edge-click": "bar", "windows-gap": "windows", "power-idle": "power"}
+PAGES = {"edge-click": "bar", "windows-gap": "windows", "power-idle": "power", "gate-toggle": "bar", "scroll": "bar"}
 
 
 class Recorder:
@@ -137,6 +143,30 @@ Window {{
         rec.grab(900)
         env.h.eval(shell, "goHome()")
         rec.grab(700)
+    elif name == "gate-toggle":
+        rec.grab(300)
+        env.h.eval(shell, "SettingsStore.set('bar.frameEnabled', true)")
+        rec.grab(900)
+        env.h.eval(shell, "SettingsStore.set('bar.frameEnabled', false)")
+        rec.grab(900)
+    elif name == "resize":
+        rec.grab(300)
+        for wd in list(range(w, 639, -30)) + list(range(640, w + 1, 30)):
+            win.resize(wd, h)
+            rec.grab(40)
+        env.h.eval(shell, 'select("timers")')
+        rec.grab(600)
+        for wd in list(range(w, 639, -30)) + list(range(640, w + 1, 30)):
+            win.resize(wd, h)
+            rec.grab(40)
+        rec.grab(300)
+    elif name == "scroll":
+        page = env.h.eval(shell, 'page.item')
+        rec.grab(300)
+        for y in list(range(0, 901, 45)) + list(range(900, -1, -45)):
+            env.h.eval(page, f"contentY = Math.min({y}, contentHeight - height)")
+            rec.grab(30)
+        rec.grab(300)
     elif name == "edge-click":
         mini = sr.find_visual(root, "barStageScreen")
         left = mini.mapToScene(mini.boundingRect().topLeft())
