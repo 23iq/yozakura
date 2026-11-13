@@ -8,18 +8,17 @@ the shell's showpiece and is schema driven: settings are *declared* in
 once and can be undone; there is no Apply step.
 
 The frame is a **showcase** over an **ambient** background (kit Ambient:
-the wallpaper blurred, darkened and vignetted, so the window carries the
-desktop's colour). It opens on a home screen (the brand, one big search
-"What do you want to change?", undo, a bento of tiles that are each a small
-live scene of what they open, a row of wide status tiles) and a tile grows
-into its destination. A destination page is one composed screen: a round
-back button, its title, centred tabs and undo; the **hero** in the middle
-(the stage: a live miniature of what the tab controls, large, with a deep
-shadow, which you click to change things) with the controls that act on
-space beside it; then **one row of equal-height cards** that fills the
-width; then any other card in a bento. Search,
-modified / reset state, the CLI / MCP catalog and the audits are all
-generated from the same declarations.
+the wallpaper blurred, darkened and vignetted; at full strength only at
+home and on desktop pages, toned down on the others). It opens on a home
+screen (the brand, one big search "What do you want to change?", undo and
+nine equal destination tiles in a 3x3 grid, each a small live scene, its
+name and one plain status line) and a tile grows into its destination. A
+destination page is one scrolling column of cards: a round back button,
+the title, the tabs and undo stay on top; under them a compact **stage**
+(a third of the page at most) only where the desktop is the subject, a
+one-line hint, then every card of the tab (no "More" sheet; the stage
+recedes as the page scrolls). Search, modified / reset state, the CLI /
+MCP catalog and the audits are all generated from the same declarations.
 
 Design rules (owner's brief, binding for every page; in this order: clear,
 then beautiful, then interactive):
@@ -46,17 +45,16 @@ modules/settings/
 ├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
 ├── SettingsShell.qml       the frame: home <-> destination (shared-element growth), shortcuts,
 │                           UndoPill, preset overlays; select / openDestination / goHome / navigate
-├── SettingsHome.qml        brand, search (window rows, value shown), undo, tile bento, status tiles, preset footer
+├── SettingsHome.qml        brand, search (window rows, value shown), undo, the 3x3 tile grid, preset footer
 ├── HomeTile.qml            one destination tile (kit Card): its scene (home/<X>Scene.qml, by URL), name, status
-├── HomeStatusTile.qml      a wide status tile (network, sound level, power profile, widgets, apps, system)
-├── home/                   tile scenes: Layout (ScreenMini), Wallpaper, Lock, Look, Notif, Presets,
-│                           Launcher, Dashboard, Assistant, Keys, Displays, Windows; NameScrim
+├── home/                   tile scenes: Layout (ScreenMini; the only one on the wallpaper), Look, Windows,
+│                           Launcher, Notif, Assistant, Keys, Displays (plain monitors), System; NameScrim
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
 ├── HomeLayout.js           pure: home columns, tile packing, arrow-key neighbours (same test)
 ├── DestinationHeader.qml   back pill, title, centred tabs (kit Segmented), Reset page
 ├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
-├── SettingsPage.qml        a schema category: hero stage (by URL, recedes on scroll) + card bento
-├── FittedFrame.qml        the fitted template's measures (SettingsPage + hand-written fitted pages)
+├── SettingsPage.qml        a schema category: compact stage (by URL, recedes on scroll), hint, card bento
+├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor (same test)
 ├── SettingsSection.qml     one section as a kit Card of SettingRows (window entries only)
 ├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
@@ -68,22 +66,22 @@ modules/settings/
 ├── SchemaUtil.js           pure: keys, conditions, inWindow, validation, search index (node-tested)
 ├── ResetModel.js           pure: which entries Reset page and the counters touch
 ├── DisabledReason.js       pure: the failing condition -> reason text / the one switch that fixes it
-├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES
-├── stages/                 Stage.qml (frame), ScreenMini.qml (the whole screen, in layers),
-│                           StageSpot.qml (highlight), EdgePicker.qml (move a part by its edge),
-│                           <Page>Stage.qml (Bar, Island, Dock, Opens, Notif, Lock, Look, Type,
-│                           Wallpaper, Launcher, Dashboard, Desktop, Overview, Terminal, Windows,
-│                           Power, System, Updates, Voice, Timers, Tasks, Assistant), list-form
-│                           bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys, Providers,
-│                           Routines); KeyDeck (keycaps), pure helpers WindowTiles / DesktopPlace /
-│                           SurfacePlace / KeyDeck.js (node-tested)
+├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES; DESKTOP_STAGES (the
+│                           tabs whose subject is the desktop), PLAIN_STAGES (stages on a plain ground)
+├── stages/                 Stage.qml (frame; `calm` = plain card fill, no wallpaper), ScreenMini.qml,
+│                           StageSpot.qml, EdgePicker.qml; desktop stages Bar, Island, Dock, Desktop,
+│                           Lock, Notif, Osd, Windows, Wallpaper; plain stages Power, Updates, Terminal
+│                           and the list bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys,
+│                           Providers, Routines); pure helpers WindowTiles / DesktopPlace / OsdPlace /
+│                           KeyDeck.js (node-tested)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
 ├── editors/                rich `custom` editors (one file each, `property var entry`); PageCard +
-│                           CardScroll: a hand-written fitted page's row card and its scrolling body
+│                           CardScroll: a hand-written one-screen page's card and its scrolling body
 ├── previews/               old under-row previews (`preview`), for pages not converted yet
-├── schema/Categories.js    information architecture: destinations, tabs, HOME tiles, PILLS, resolve()
+├── schema/Categories.js    information architecture: destinations, tabs, HOME tiles, MOVED, resolve();
+│                           withSections / withEntries / withoutSections / sectionsOf compose tabs
 ├── schema/<category>.js    one file per category (a tab of a destination)
 ├── store/SettingsStore.qml get / set (live + undo) / stageSet (wizard) / reset / focusKeys / navigate
 ├── store/PresetStudio.qml  preset studio data + actions (`<app> preset ...`)
@@ -107,20 +105,17 @@ branches on the language name (`Look`).
   (VisualLanguage `card`: translucent with a hairline in ink and glass,
   solid in tiles / device / classic, a soft RectangularShadow); `accented`
   rings and glows the card the screen is about.
-- Home: header (brand, a boxed `SearchField`, undo), the bento
-  (`HomeLayout.js`: a 12-column grid of half-row units, 6 columns when
-  narrow, Categories.HOME gives `w` x `h`, first-fit in reading order, the
-  rows stretched by `rowUnit` so header + bento + status tiles fill the
-  window), the status tiles (`HomeStatusTile`, Categories.PILLS) and the
-  preset footer. Each tile is a kit `Card` (`interactive`: lifts and its
-  shadow deepens on hover, springs on press, FocusRing) with a scene from
-  real state (home/*.qml, `required property Card tile`): the screen
-  miniature (the accented hero), palette + "Aa", the wallpaper (swells and
-  follows the pointer: `Card.pointer` -> `Stage.imageShift`), a toast stack
-  in the resolved corner, the lock clock, preset cards, a launcher, widgets,
-  a chat, keycaps, the monitor arrangement (DisplaysService), tiled windows
-  with the configured gap / border. Name = `title` role, status one size
-  down (`secondary`). A scene must not declare a property named like an
+- Home: header (brand, a boxed `SearchField`, undo), then the nine
+  destination tiles in a 3x3 grid (`HomeLayout.columns`: 3, or 2 in a
+  narrow window with a 15 % hysteresis; equal tiles, `Look.screenGap`
+  between them and around), then the preset footer. Each tile is a kit
+  `Card` (`interactive`: lifts on hover, springs on press, FocusRing) with a
+  scene from real state (home/*.qml, `required property Card tile`). Only
+  the Screen tile draws the wallpaper (it is about the desktop); the others
+  are plain: palette + "Aa", a toast stack, a launcher, a chat, keycaps,
+  the monitor arrangement as plain shapes, tiled windows, the version and
+  language. Name = `title` role, status one size down (`secondary`), plain
+  words (HomeStatus.js). A scene must not declare a property named like an
   Item anchor line (`top`, `bottom`, `left`, `right`, ...): it hangs the
   type loader.
 - Opening: a box grows from the tile to the window (Motion.glide) while
@@ -131,17 +126,25 @@ branches on the language name (`Look`).
   the tabs centred (`Segmented`, `focusable`, Left / Right), Reset page on
   the right; a tab to the right slides the page in from the right
   (`SettingsPageHost.direction`).
-- Page body (SettingsPage): the hero = the stage as large as the window
-  allows (16:9, at most half the page height) with a deep shadow, the
-  category's `hero.left` / `hero.right` entries beside it (side columns:
-  a custom editor bare, toggles each in a small card) and `hero.hint` under
-  it; it scales down and fades as the cards scroll over it. Then the
-  category's `row` sections in one row of equal widths and heights, then the
-  other sections in a bento (`BentoLayout.js`, 1 to 3 columns; a card with
-  picture cards, an editor, a list or `"span": 2` takes two). A card
-  (SettingsSection) has a heading (`title` role) with the current value on
-  the right when it holds one setting; such a card's picture / editor row
-  drops its own label (`SettingRow.bare`).
+- Page body (SettingsPage): the stage (a `Registry.DESKTOP_STAGES` tab:
+  16:9, at most a third of the page; a `PLAIN_STAGES` one: a wide strip on
+  the card fill; a list page's band: a fifth of the page), one hint line
+  (two at most in a narrow window), then every card of the tab in a bento
+  (`BentoLayout.js`, 1 to 3 columns with hysteresis, never more columns
+  than the cards fill). Cards size to their content; the page scrolls.
+  The lead sections (`row`) come first. A card (SettingsSection) has a
+  heading (`title` role) with the current value on the right when it holds
+  one setting; such a card's picture / editor row drops its own label
+  (`SettingRow.bare`).
+- Rhythm (one set of kit tokens, everywhere): page side margin `Space.xl`;
+  the gap between cards, between stage / hint / cards and between home
+  tiles `Look.screenGap`; inside a card the kit Card padding, the heading
+  then the rows at the same distance in every card; rows are dense
+  (`Space.xs` above and below), label left and control right on one line,
+  the control as wide as its content (measured: a segmented, dropdown or
+  font name is never cut, it goes under its label instead); the header is
+  one centred line (its tabs take a line of their own, scrolling sideways,
+  when they would run under the title or undo).
 - Rows: label `body`, control flush right (inline) or full width under the
   label (cards, editors, lists, and sliders / selectors / text fields in a
   narrow card); hover / focus = the language's hover box; a search jump =
@@ -156,7 +159,7 @@ Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/w
 --languages ink,glass,tiles,classic,device [--mode light] [--size 1180x2400] home|PAGE...`
 (`home` with `--search Q` shows results, `--hover ENTRY` lights a stage part,
 `--undo` shows the pill, `--eval barEdgePicker:preview='left'` a hovered
-edge, `--eval opensStage:picked='dashboard'` Where things open mid-move).
+edge).
 `--devices`: believable live services for the device pages
 (`tests/lib/device_fixtures.py`: a laptop battery and profiles, two monitors,
 two keyboard layouts, Wi-Fi networks, Bluetooth devices, speakers and a
@@ -170,21 +173,34 @@ palette, which belongs with wallpaper-01). Motion: `tools/render/settings_motion
 edge-click]` writes animated WebP + GIF at real speed.
 
 ## NAVIGATION
-`schema/Categories.js`: `groups` are the destinations, each `{id, icon,
-title: prefs.dest.<id>, categories: [tab ids]}`. `HOME` lists the bento
-tiles in reading order with a size (`w` columns x `h` half-row units of a
-12-column grid, `hero`): Desktop layout (Bar, Island, Dock, Where things
-open; the hero), Look, Wallpaper, Notifications (+ On-screen display,
-Menus), Lock screen, Presets, Launcher, Dashboard, Assistant, Keys
-(Keyboard, Shortcuts), Displays, Windows; `PILLS` the wide status tiles
-under it: Network, Sound, Power, Widgets (desktop widgets, overview), Apps,
-System. `home()` / `pills()` are the models. A category is one
-tab: its `title` is the tab label (one to three words). One tab = no tab
-strip. `resolve(id)` accepts a category id, a `MOVED` id (merged pages,
-former sidebar groups such as `popups`, `island`) or a destination id (its
-first tab), so `<app> run settings <id>`, `GlobalStates.settingsCategory`
-and old deep links keep working. `tabsOf(categoryId)`, `groupOf(categoryId)`,
+`schema/Categories.js`: `groups` are the nine destinations, each `{id,
+icon, title: prefs.dest.<id>, categories: [tab ids]}`:
+Look (Theme & colours, Wallpaper, Fonts & icons, Presets, Changes) |
+Screen (Bar, Island, Dock, Widgets & clock, Lock screen) | Windows (Layout
+& gaps, Overview, Special workspaces) | Panels (Launcher, Dashboard, Menus
+& OSD) | Notifications & focus (Notifications, Timers & focus) | Assistant
+(Chat, Models & providers, Agents & tasks, Voice) | Keyboard (Layouts,
+Shortcuts) | Devices (Displays, Network, Bluetooth, Sound, Effects, Power) |
+System (Language & weather, Updates, Terminal, Apps, Mods, Routines,
+About). `HOME` = the groups in that order (nine equal tiles); `home()` the
+model. A category is one tab: its `title` is the tab label. Tabs are
+composed from schema files: `withSections` (Menus & OSD gets the OSD
+sections, Bar the bar builder of layout.js, Chat the sidebar sections),
+`withEntries` (each "Opens in" row of layout.js placed first on the page of
+what opens: launcher, dashboard, the shortcut sheet on Shortcuts, quick ask
+on Chat, the voice / timers panel on Timers & focus, sheet side and
+backdrop on Menus & OSD), `withoutSections` / `sectionsOf` (OCR languages
+from updates.js on Language & weather). "Where things open" no longer
+exists. `resolve(id)` accepts a category id, a `MOVED` id (merged pages,
+former destinations: `layout` -> bar, `osd` -> menus, `wallpaper`,
+`apps`, `fonts`, `island`, `popups`, ...) or a destination id (its first
+tab), so `<app> run settings <id>`, `GlobalStates.settingsCategory` and old
+deep links keep working. `tabsOf(categoryId)`, `groupOf(categoryId)`,
 `ordered()` (Ctrl+Tab order).
+One setting is one row in one place: a neighbouring page that wants it gets
+a PageLink row (`type: "custom"`, `component: "PageLink"`, `target`,
+`targetSection`, `linkText`): Island links to the notification and timer
+looks, Voice to where its panel opens.
 A category is either schema driven (`sections`, rendered by SettingsPage) or
 a hand-written page (`page`: a `Registry.PAGES` name, loaded by URL).
 Shell API (SettingsShell): `select(id)` (any id `resolve` takes),
@@ -265,8 +281,8 @@ costs nothing until opened and gives all its memory back when closed.
   What the first frame does not need waits for it (`SettingsHome.warm`, set
   on the window's first `frameSwapped`): the tile scenes (home/*.qml, by
   URL, asynchronous, one more per frame: Stage and ScreenMini compile only
-  then), the tile status lines, the status tiles' services (network, audio,
-  power profile, updates), the preset footer (PresetStatusService) and the
+  then), the tile status lines and their services (network, audio,
+  updates), the preset footer (PresetStatusService) and the
   preset overlays of the shell (edit banner, trial pill, toast, changes sheet,
   name dialog: Loaders by URL, asynchronous, compiled off the first frame). The search
   index is built on the first query (or when the changes sheet opens).
@@ -341,129 +357,68 @@ Control mapping (applied everywhere): on / off -> `toggle` (Switch);
 (kit Dropdown); continuous -> `slider` in human units; a small count ->
 `number` (stepper); a font -> `font` (the picker; `sizeKey` adds the size).
 
-## PAGE COMPOSITION (the template; the rules for every converted page)
-A converted page is FITTED: at the default window (1180x780) it is exactly
-the header (DestinationHeader), the stage with its side columns, one hint
-line and ONE row of cards at the bottom, inside the page padding. No page
-scroll, nothing under the fold. `tests/settings-fit.test.py` checks every
-converted tab (and Bar with several bars); add your category to its
-`CONVERTED` list when you give it a `row` (the test fails otherwise).
+## PAGE COMPOSITION (the template; the rules for every page)
+A page is one scrolling column: header (DestinationHeader, outside the
+scroll: always visible, undo included), then the stage, the hint and every
+card of the tab. Nothing hides in a sheet; the page scrolls.
 
-Schema fields (category):
-- `stage`: a `Registry.STAGES` name (a `Stage` root, see STAGE COMPONENTS).
-  The stage takes the height the row leaves (16:9, up to 560 px).
-- `hero.right` / `hero.left`: entry keys / ids shown beside the stage
-  instead of in a card: right = the two or three behaviour switches (each in
-  a small card), left = a list that acts on space (the bars and "Add a
-  bar"). With one side column the stage and the column are centred as one
-  group. `hero.hint`: one line under the stage saying what a click on it
-  does (i18n key).
-- `hero.foot`: entries in a strip along the stage's foot, as wide as the
-  stage (a film strip of pictures: Wallpaper's library). The editor gets
-  the strip's height as `fillHeight`.
-- `row`: two to four section ids (or `{ "id", "weight" }` for a card
-  wider or narrower than the others, weight 1 by default), the cards of the row, one
-  fixed height (`Look.cardRowHeight`, 216 px). Sections not in `row` open in
-  the "More · N" sheet (end of the hint line), never under the fold; search
-  results inside it open the sheet and scroll to the row.
-- `form: "list"` (optional; default the stage form): for a page whose
-  substance is a list (Wi-Fi networks, Bluetooth devices, shortcuts, AI
-  providers, the extras catalog). The hero becomes a short band (about a
-  quarter of the page, as wide as the room beside the side columns) and
-  the row's cards are tall, taking the rest of the height; the list
-  scrolls inside its card with a fade, the other cards of the row hold
-  compact rows. The band is a compact status scene, a `Stage` like any
-  other but drawn for a wide, short box: the connected network and its
-  signal, the paired devices as small chips, the active provider and its
-  usage; never a whole-screen miniature. Its switches go in `hero.right`.
-  Example:
-  ```js
-  "form": "list",
-  "stage": "NetworkBand",
-  "hero": { "right": ["network.wifiEnabled"], "hint": "prefs.net.hint" },
-  "row": ["networks", "details"],
-  ```
-  Without a `stage` the row takes the whole page; its `hero` entries then
-  stand in a side column beside the row. `bandShare` (default 0.24): the share of the page the
-  band takes, for a band that is the page's main control. Prefer filling
-  the cards (device rows with their own volume, app icons) to a tall band.
-  The band is calm (Stage `calm`, set by the page): the wallpaper blurred
-  and darkened, never a sharp picture under text and controls.
-- `fitted: true` on a hand-written page's category (Displays, Keyboard,
-  About, Changes): composed like a converted page on a `FittedFrame` root
-  (its measures: `margin`, `gap`, `pad`, `sideW`, `rowH`, `rowY`, `heroH`,
-  `bandH`, `listForm`, `hasHint`); its hero says `fittedHero: true` and
-  its row cards `fittedCard: true` (PageCard does), so settings-fit checks
-  it like the schema pages. Never copy the measures into a page.
-- "More · N" counts the sections that open as a card now (window rows, the
-  compositor gate, visibleWhen); the sheet's cards are built on its first
-  open (or when a search lands in it), not with the page. On a fitted page
-  the compositor gate's note is a chip at the start of the hint line.
+- `stage` (category): only a tab whose subject is the desktop has a
+  desktop stage (a `Registry.DESKTOP_STAGES` entry: Bar, Island, Dock,
+  Widgets & clock, Lock screen, Notifications, Menus & OSD, Windows,
+  Wallpaper; tests/settings-page-unique.test.cjs keeps the list). Another
+  tab gets a stage only when it shows the thing itself and holds a control
+  found nowhere else (Power: battery and profiles; Updates: state and Check
+  now; Terminal: the terminal window) or a list page's band; these are
+  `PLAIN_STAGES`, drawn on the card fill (`Stage.calm`), never on the
+  wallpaper. A tab where a miniature explains nothing has no stage.
+- `hero.hint`: one line under the stage saying what a click on it does.
+  `hero.foot`: a strip along the stage's foot (Wallpaper's library).
+- `row`: the lead section ids: those cards come first (the 3 to 5 most
+  changed settings). Every other section follows in the bento.
+- `form: "list"`: the stage is a short band (a fifth of the page) over the
+  list's cards.
+- Cards: grouped by meaning, labels unique within a page (tested in every
+  language), no setting twice on a page. A card waiting on one switch
+  (CardGate) shows its rows dimmed and offers "Turn on" only when that
+  switch is not a row of the same page (`SettingsSection.offersTurnOn`); a
+  row hidden until a switch of the same page is on stays hidden.
+- Picture choices (`display: "cards"`) are always pictures, wrapped so
+  every option is visible (CardSelector); only a strip of more than eight
+  scrolls sideways (fades, the chosen one scrolled into view).
+- Motion: a card that moves up glides into the room; when one is pushed
+  down every card lands at once (no frame where a card sits under
+  another); relayout is synchronous with a card's height change.
 - entry `part: true`: an editor of one part of a composite value that
-  another row also edits (exempt from the one-control check), or the
-  window's control of a key another page owns (Windows' Corners card:
-  Look's `compositor.rounding`): it declares the keys it writes in `keys`,
-  so Reset page and search cover them; the owner stays the other entry
-  (tests/settings-pages.test.cjs).
+  another row also edits, or the window's control of a key another page
+  owns (Windows' Corners card: Look's `compositor.rounding`); it declares
+  the keys it writes in `keys` (tests/settings-pages.test.cjs).
 
-What a row card may hold (SettingsSection `fixed`):
-- ONE picture choice (the card's one setting; in a card that holds other
-  rows too it is a plain selector): a strip. CardSelector (`display: "cards"`) and the
-  picture editors (BarStyleCards, ThemeModeCards, LockStyleGallery,
-  PanelStyleCards, SchemeGallery) become one horizontal strip of equal
-  pictures when SettingRow gives them `fillHeight`, the title inside the
-  picture on a gradient (ChoiceCard `inset`), the chosen one ringed;
-  more than fit scroll sideways with an edge fade (controls/StripFade).
-  The bar Shape strips (BarStyleCards, PanelStyleCards) are landscape
-  instead: 16:10 pictures with the title under them, three whole and a
-  peek (controls/Strip.js), each a close crop of the bar's edge drawn as a
-  silhouette (thumbs/BarShapeThumb.qml + BarShape.js: the bar across the
-  picture, a third of its height, a few plain marks); the chosen one
-  scrolls into view (`Strip.revealX`).
-  The card shows its title + the current value on the right, no row label.
-  A new picture editor: add `property real fillHeight` and the same strip
-  (see CardSelector: Flickable around the Grid, `strip`, `stripWidth`).
-- A size: bars that grow (BarSizeCards), bottom-aligned, filling the card.
-- A modules editor: ModuleGroupsEditor `compact` (one group at a time from
-  a small segmented, "Add" chip for the unused ones).
-- Two or three compact rows (toggles, short selectors inline, sliders with
-  the track under the label). More rows scroll inside the card with a fade
-  at the bottom: allowed only for a list that is the card's substance.
-- Never: a vertical grid of pictures, a second row of cards, a card that
-  repeats its title as a row label.
+Hand-written one-screen pages (Displays, Keyboard, About; `fitted: true`)
+keep their FittedFrame layout; they are checked at the default size, not
+yet at the minimum (tests/settings-fit-min.test.py lists them).
 
-Making a stage: `stages/<Name>Stage.qml` with a `Stage` root
-(`stageHeight` is only the default), registered in `Registry.STAGES`.
-For anything placed on the screen use `ScreenMini` (bars, island, dock,
-frame, reserved space from the live config) and draw your part in its
-overlay with its geometry (`freeRect`, `islandRect`, `edgeDepth`, `unit`);
-`windowsOpacity` fades the faux windows back when your part sits over
-them. Direct manipulation: EdgePicker (edges), dashed zones (kit
-`DashedFrame`) with a label for places, `partsClickable` for the island /
-dock; write through `SettingsStore.transaction("prefs.undo.<x>_moved")`.
-A custom scene (Lock screen) is plain kit drawing on the `Stage`.
+Making a stage: `stages/<Name>Stage.qml` with a `Stage` root, registered
+in `Registry.STAGES` (and in `DESKTOP_STAGES` or `PLAIN_STAGES`). For
+anything placed on the screen use `ScreenMini` and draw your part in its
+overlay with its geometry (`freeRect`, `islandRect`, `edgeDepth`, `unit`).
+Direct manipulation: EdgePicker (edges), dashed zones (kit `DashedFrame`)
+for places, `partsClickable` for the island / dock; write through
+`SettingsStore.transaction("prefs.undo.<x>_moved")`; keep the row too (it
+is the keyboard path).
 
-Check one page offscreen (writes a PNG; look at it next to
-concepts/page2.png):
+Check one page offscreen:
 `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-01.png
---palette default --languages ink --mode dark <category>` (`--set
-key=json` for a state, `--eval opensStage:picked='dashboard'` mid-move);
-then `python3 tests/settings-fit.test.py`.
-Measure open time: time from `select()` to the host's `pageReady` and to
-`item.complete` in a `tests/lib/settings_env.py` harness (see PERFORMANCE);
-home: window load to the first `frameSwapped`, compared with an empty
-window in the same harness.
+--palette default --languages ink --mode dark <category>`; then
+`python3 tests/settings-fit.test.py`.
 
 ## CONVERTING A PAGE (checklist for the remaining destinations)
-Every schema page already renders in the new frame (hero + card bento);
-converting means curating it and giving it a stage worth looking at.
-Reference pages: Desktop layout (`schema/bar.js`, `notch.js`, `dock.js`,
-`layout.js`; `stages/BarStage.qml`, `IslandStage.qml`, `DockStage.qml`,
-`OpensStage.qml`), Notifications (`stages/NotifStage.qml`) and Look
-(`schema/appearance.js`, `icons-type.js`, `stages/LookStage.qml`,
-`stages/TypeStage.qml`).
-1. Budget: the page fits in about two window heights (1180x780) and has
-   about 8 to 15 rows (the window ~150 in all). Count with
+Every schema page already renders in the template (stage where allowed +
+card bento); converting means curating it.
+Reference pages: Screen (`schema/bar.js`, `notch.js`, `dock.js`;
+`stages/BarStage.qml`, `IslandStage.qml`, `DockStage.qml`),
+Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
+`icons-type.js`: no stage, picture cards).
+1. Budget: about 8 to 15 rows a tab (the window ~280 in all). Count with
    `tests/settings-window.test.cjs` (add the page to its budget test).
 2. Curate: for every entry ask "would most people change this here?". If
    not, `"advanced": true` (or the whole section). Plumbing never stays:
@@ -492,10 +447,9 @@ Reference pages: Desktop layout (`schema/bar.js`, `notch.js`, `dock.js`,
    `unit`); turn layers off that only distract (`showWindows`, `showDock`,
    `showIsland`). `selectable` + `selectedPanel` / `panelPicked(i)` make
    the panels clickable (BarStage: SettingsStore.selectedPanel is shared
-   with the bars editor). OpensStage shows the pattern for surfaces: ghost
-   outlines with an icon for every place, the hovered / just-changed one
-   solid and named, places that coincide share one ghost (no label is ever
-   drawn over another). The stage file is `stages/<Page>Stage.qml` with a
+   with the bars editor). Ghost targets show the places of a part: the
+   hovered / just-changed one solid and named (no label is ever drawn over
+   another). The stage file is `stages/<Page>Stage.qml` with a
    `Stage` root
    (`stageHeight`), registered in `Registry.STAGES`, named by the category's
    `"stage"`. Draw the real thing: the theme's own surfaces (`StyledRect`
@@ -514,14 +468,9 @@ Reference pages: Desktop layout (`schema/bar.js`, `notch.js`, `dock.js`,
    `SettingsStore.transaction("prefs.undo.<thing>_moved", ...)`: a
    `prefs.undo.*` label names itself in the undo pill ("Bar moved"). Keep
    the row (cards / segmented) too: it is the keyboard path.
-6c. Composition (the page2 standard): hero in the middle, spatial controls
-   on and beside it (`hero.left`: lists such as the bars with "Add a bar";
-   `hero.right`: the two or three behaviour switches; `hero.hint`: one line
-   saying what a click on the stage does), then ONE row of equal-height
-   cards (`row`, two to four sections) that fills the width, then the rest.
-   Sections are the cards: a short title (two words), one concept each;
-   `"span": 2` when the content needs the width. Aim for no scrolling at
-   1180x780 on the main tab of a destination.
+6c. Composition: the stage (desktop tabs only), its hint, the lead cards
+   (`row`), then the rest. Sections are the cards: a short title (two
+   words), one concept each; `"span": 2` when the content needs the width.
 7. Wire row highlights: give each part a `StageSpot { keys: [...] }` with
    the keys (prefixes) of the rows that change it. A spot must not sit
    inside a `StyledRect` (it clips its children): put it beside the part
@@ -587,20 +536,27 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
 ## VERIFY
 - `make check`: the `settings-schema` audit (keys / defaults, translations,
   options / ranges, conditions, registry), node tests
-  `tests/settings-{window,undo,tree,home,schema,pages,changes,core,synonyms,macros}.test.cjs`,
+  `tests/settings-{window,undo,tree,home,schema,pages,page-unique,changes,core,synonyms,macros}.test.cjs`
+  (page-unique: no key or label twice on a page in en / es / ru, Opens-in
+  rows on the page of what opens, the desktop-stage list),
   `tests/write-throttle.test.cjs`, `tests/settings-undo-steps.test.cjs`,
   `tests/settings-save-path.test.cjs`, `tests/settings-changes-all.test.cjs`,
   `tests/settings-undo-store.test.py`, `tests/config-file-restore.test.py`,
   `tests/preset-studio-restore.test.py`, QML tests `tests/settings-shell.test.py`
-  (undo, tabs, home / back, keep-alive, stage spots, edge / island / corner
-  clicks, dead ends, search), `tests/settings-ui.test.py` (typed rows on
-  every page), `tests/settings-load-stable.test.py` (home first frame, deep
-  link, no card moves once a page shows, home reflow),
-  `tests/settings-regressions.test.py` (narrow window search),
-  `tests/preset-status-footer.test.py`, `tests/config-file-autosave.test.py`
-  (coalesced writes); the pages: `tests/settings-fit.test.py` (every fitted
-  page, schema and hand-written, with the device fixtures),
-  `tests/settings-window.test.cjs` (row budgets), `settings-personal`,
+  (undo, tabs, home / back, keep-alive, stage spots, dead ends, search),
+  `tests/settings-ui.test.py` (typed rows on every page),
+  `tests/settings-load-stable.test.py` (home first frame, deep link, no card
+  moves once a page shows, home reflow), `tests/settings-regressions.test.py`,
+  `tests/preset-status-footer.test.py`, `tests/config-file-autosave.test.py`.
+- Layout: `tests/lib/settings_probe.py` (overlap of cards, rows, header
+  parts, stage / hint / cards, home tiles; elided or overflowing text;
+  picture options out of reach; stage size) drives
+  `settings-fit` (1180x780, every tab, after gates / selectors / long
+  values, no binding or polish loop), `settings-fit-min` (640x480, ru),
+  `settings-fit-large` (1600x1000, es), `settings-fit-looks` (every visual
+  language, dark and light); `settings-stability` (nothing moves 0 / 200 ms
+  / 1 s / 2 s after a page shows, nor on hover) and `settings-resize`
+  (columns switch once each way). Page tests: `settings-personal`,
   `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
   `settings-connect`, `settings-keys`, `settings-power`, `settings-windows-stage`,
   `settings-displays-flow` (`.test.py`), `settings-bar-shape.test.cjs`.

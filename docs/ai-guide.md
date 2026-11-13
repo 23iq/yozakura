@@ -702,9 +702,10 @@ ink,glass,tiles --mode dark|light`), and view the PNGs.
 **Add an activity source.** See `modules/services/activities/AGENTS.md`.
 
 **Add a settings category.** `modules/settings/schema/<id>.js` + import in
-`Categories.js`, as a tab of a destination (`groups`; a new destination also
-gets a home tile in `HOME` or a pill in `PILLS`); its stage and picture
-cards follow "CONVERTING A PAGE" in `modules/settings/AGENTS.md`.
+`Categories.js`, as a tab of one of the nine destinations (`groups`; home
+shows them 3x3, so prefer a tab to a new destination); a stage only if the
+tab is about the desktop (`Registry.DESKTOP_STAGES`), picture cards per
+"CONVERTING A PAGE" in `modules/settings/AGENTS.md`.
 
 **Add an MCP tool.** `define(...)` in a `backend/pkg/mcp/yozakura/*_tools.go`
 file, register its group in `Tools()` (`tools.go`), add read-only tools to
