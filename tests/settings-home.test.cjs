@@ -133,3 +133,14 @@ test('every home tile scene is registered by its full path (the audit sees it) a
     const listed = Object.values(Registry.SCENES).map(f => f.replace('home/', ''));
     assert.deepEqual(files.sort(), listed.sort());
 });
+
+test('the page order: lead cards, then plain rows, then big controls', () => {
+    const secs = [
+        { id: 'a', entries: [{ type: 'custom' }] },
+        { id: 'b', entries: [{ type: 'toggle' }] },
+        { id: 'c', entries: [{ type: 'selector', display: 'cards' }] },
+        { id: 'd', entries: [{ type: 'slider' }] },
+    ];
+    assert.deepEqual([...BentoLayout.order(secs, ['c'])], [2, 1, 3, 0]);
+    assert.deepEqual([...BentoLayout.order(secs, [])], [1, 3, 0, 2]);
+});

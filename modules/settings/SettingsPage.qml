@@ -37,13 +37,9 @@ Flickable {
     readonly property real footH: page.heroIds.length > 0 && page.stageUrl !== "" ? Space.px(76) : 0
     // `row`: the sections that lead the page, in this order
     readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
-    // the sections in page order: the lead ones first, then the rest
-    readonly property var order: {
-        const secs = page.category.sections || [];
-        const idx = secs.map((s, i) => i);
-        const lead = page.leadIds.map(id => secs.findIndex(s => s.id === id)).filter(i => i >= 0);
-        return lead.concat(idx.filter(i => lead.indexOf(i) < 0));
-    }
+    // the sections in page order: the lead ones first, then cards of plain
+    // rows, then cards of big controls (BentoLayout.order)
+    readonly property var order: BentoLayout.order(page.category.sections || [], page.leadIds, SchemaUtil.inWindow)
     // rank of a section in the page order (built in this order too)
     readonly property var rank: {
         const out = [];

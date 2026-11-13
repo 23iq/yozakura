@@ -86,3 +86,41 @@ function fit(cols, spans) {
     }, 0);
     return Math.max(1, Math.min(narrow ? cols : Math.min(cols, 2), total || cols));
 }
+
+// How much room a card's rows take per row: 0 for plain rows (switches,
+// short selectors, sliders), 1 for one big control (pictures, an editor, a
+// list). Used to order the cards after the lead ones.
+function heaviness(section, inWindow) {
+    var heavy = (section && section.entries || []).some(function (e) {
+        if (inWindow && !inWindow(e, section))
+            return false;
+        return e.type === "custom" || e.type === "list" || e.type === "multiselect" || e.type === "screens" || e.display === "cards";
+    });
+    return heavy ? 1 : 0;
+}
+
+// The page order of `sections` (indexes): the lead ids first (as listed),
+// then cards of plain rows, then the ones holding a big control, each in
+// schema order. The first screen shows the most rows that way.
+function order(sections, leadIds, inWindow) {
+    var secs = sections || [];
+    var lead = (leadIds || []).map(function (id) {
+        for (var i = 0; i < secs.length; i++)
+            if (secs[i].id === id)
+                return i;
+        return -1;
+    }).filter(function (i) {
+        return i >= 0;
+    });
+    var rest = [];
+    for (var i = 0; i < secs.length; i++)
+        if (lead.indexOf(i) < 0)
+            rest.push(i);
+    var light = rest.filter(function (i) {
+        return heaviness(secs[i], inWindow) === 0;
+    });
+    var heavy = rest.filter(function (i) {
+        return heaviness(secs[i], inWindow) !== 0;
+    });
+    return lead.concat(light, heavy);
+}
