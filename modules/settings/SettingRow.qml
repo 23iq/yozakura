@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
@@ -213,9 +214,16 @@ FocusScope {
 
     // Row content sits at the kit's row inset, on the line of the section
     // label above it (SectionLabel.inset).
+    // A waiting (disabled) row reads as off, not as a faded copy of an
+    // enabled one: its colours drained to grey, a little faded, so a chosen
+    // segment or switch never looks merely unselected
     Column {
         id: body
-        opacity: row.dimmed ? 0.45 : 1
+        opacity: row.dimmed ? 0.6 : 1
+        layer.enabled: row.dimmed
+        layer.effect: MultiEffect {
+            saturation: -1
+        }
         x: row.labelHidden ? 0 : Look.rowInset
         width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
         topPadding: row.dense ? Space.xs : Space.s
