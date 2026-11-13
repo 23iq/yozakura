@@ -364,6 +364,13 @@ check(h.eval(row("notifications.status"), "Notifications.sent.length") == 1, "te
 
 # Terminal & Apps: per-app theming toggles + glass link
 select("terminal")
+# a side switch waiting on another: dimmed, no sentence; a press turns that one on
+ev("SettingsStore.set('terminal.enabled', false)")
+QTest.qWait(50)
+blink = ev('w.findItem("settingRow:terminal.cursorBlink", w.findItem("heroRight", w.findItem("settingsPage").item))')
+check(blink is not None and h.eval(blink, "dimmed") is True and h.eval(blink, "caption") == "", "the waiting side switch is dimmed, no note")
+h.eval(blink, "wake()")
+check(ev("Config.terminal.enabled") is True, "...and a press turns the prompt on first")
 # the app theming card is in the More sheet, built on first open
 ev('w.findItem("settingsPage").item.moreBuilt = true')
 QTest.qWait(100)

@@ -320,6 +320,8 @@ Flickable {
                         id: sideRow
                         width: side.contentWidth
                         entry: side.modelData
+                        // waiting on one switch: dimmed, a press turns it on
+                        selfGate: true
                     }
                 }
             }
