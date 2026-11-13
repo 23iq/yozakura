@@ -112,7 +112,8 @@ Item {
             font.pixelSize: Type.size(root.boxed ? "body" : "title")
             font.weight: Font.Normal
             color: Type.text
-            placeholderTextColor: Type.muted
+            // on the toolbar box the muted ink is too faint (light mode)
+            placeholderTextColor: root.boxed ? Type.secondary : Type.muted
             selectionColor: Qt.alpha(Type.accent, 0.3)
             selectedTextColor: Type.text
             cursorDelegate: caret
