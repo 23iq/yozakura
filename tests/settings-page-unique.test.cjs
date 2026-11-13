@@ -144,3 +144,19 @@ test('no card holds a single plain row, no plain row repeats its card title', ()
             }
         }
 });
+
+// Labels and card titles are in sentence case (names of things excepted).
+const PROPER = new Set(['Do', 'Not', 'Disturb', 'Wi-Fi', 'Bluetooth', 'OSD', 'AI', 'MCP', 'Hyprland', 'Pomodoro', 'Spotify', 'Kitty', 'OCR', 'CLI', 'Super', 'Ctrl', 'Alt', 'Shift', 'Tab', 'Esc', 'Enter', 'Git', 'GPU', 'VRR', 'Hz', 'DPI', 'Claude', 'Codex', 'Starship', 'Fish', 'MangoWC', 'Niri', 'URL', 'API', 'SDDM', 'PAM', 'Yozakura', 'OpenAI', 'Ollama', 'Linux', 'Firefox', 'Nerd', 'Font', 'XDG', 'GTK', 'Qt', 'KDE', 'VS', 'Code', 'Discord', 'Telegram', 'Steam', 'Zed', 'Obsidian', 'Fastfetch', 'Windows', 'X11', 'Wayland', 'Spotlight', 'Lucide', 'Phosphor', 'Inter', 'Material', 'You', 'CRT', 'LED', 'HDR', 'RGB', 'UI', 'ID', 'PDF', 'GIF', 'MP4', 'JSON', 'CSS', 'HTML', 'SVG', 'OK', 'SSH', 'IP', 'DNS', 'VPN', 'USB', 'HDMI', 'TV', 'N', 'Grok', 'Gemini', 'Mistral', 'DeepSeek', 'OpenRouter', 'Anthropic', 'Groq', 'Copilot', 'Hyprlock', 'Matugen', 'Nix', 'NixOS', 'Arch', 'Flatpak', 'AUR', 'Brave', 'Chrome', 'Chromium', 'Vivaldi', 'Zen', 'Thunderbird', 'Kitty', 'Alacritty', 'Foot', 'WezTerm', 'Ghostty']);
+
+test('row labels and card titles are in sentence case', () => {
+    const en = LANGS[0][1];
+    for (const cat of Categories.categories)
+        for (const s of cat.sections || []) {
+            const keys = (s.title ? [s.title] : []).concat((s.entries || []).filter(e => SchemaUtil.inWindow(e, s) && e.label).map(e => e.label));
+            for (const k of keys) {
+                const words = String(en[k] || '').split(/\s+/).slice(1).map(w => w.replace(/^[«(“"]+|[»)”",.:]+$/g, ''));
+                const bad = words.filter(w => /^\p{Lu}\p{Ll}/u.test(w) && !PROPER.has(w));
+                assert.deepEqual(bad, [], `${cat.id}: "${en[k]}" (${k}) is not in sentence case`);
+            }
+        }
+});
