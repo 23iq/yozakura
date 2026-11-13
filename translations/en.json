@@ -451,7 +451,6 @@
   "mods.status_rolled_back": "Previous generation restored.",
   "mods.status_setting_saved": "Setting saved.",
   "mods.status_updated": "Mod updated.",
-  "mods.toggle_description": "Run the base shell directly, ignoring every mod and generation. Mods keep their install and enabled state. Applies after a restart.",
   "mods.toggle_title": "Enable mods",
   "mods.trust_warning": "Packages run with your user permissions. Install code only from sources you trust.",
   "mods.unknown": "Unknown",
@@ -4578,5 +4577,9 @@
   "prefs.presets.gallery": "Presets",
   "prefs.presets.custom": "Custom",
   "prefs.presets.browse": "All presets and parts",
-  "prefs.presets.hero_hint": "Click a preset below to see it on your screen · Apply makes it yours"
+  "prefs.presets.hero_hint": "Click a preset below to see it on your screen · Apply makes it yours",
+  "prefs.extras.installed_of": "%1 of %2 installed",
+  "prefs.extras.installing": "Installing %1",
+  "mods.band_count": "%1 of %2 on",
+  "mods.none_selected": "Pick a mod in the list to see it here"
 }

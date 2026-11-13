@@ -157,7 +157,10 @@ var categories = [
     withSections(Ai.category, Sidebar.sections),
     AiProviders.category,
     AiCode.category,
-    page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"),
+    Object.assign(page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"), {
+        "form": "list",
+        "row": ["mods_list", "mods_details"]
+    }),
     page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom"),
     {
         "id": "presets",
@@ -191,7 +194,9 @@ var categories = [
         "title": "prefs.cat.extras",
         "description": "prefs.cat.extras.desc",
         "keywords": "apps extras install software packages catalog browsers chat games steam discord spotify media ai agents claude codex ollama cuda voice flatpak aur terminal fish starship",
-        "page": "Extras"
+        "page": "Extras",
+        "form": "list",
+        "row": ["catalog"]
     },
     {
         "id": "about",

@@ -6,6 +6,19 @@ COMPOSITION).
   click sets the wallpaper; the Fit cards switch to panorama in one undo
   step and the stage shows the panorama strip; the palette chip opens
   Look's palette.
+* Launcher: provider chips take results off the stage's launcher (one
+  step, undo brings them back), order arrows reorder them, the Grid card
+  draws a grid, a click on the launcher opens Where things open.
+* Dashboard: a tab of the stage's rail shows it, hiding / moving a tab
+  changes the rail, the home cards switch the view.
+* Widgets: a widget chip puts one on the stage's desktop (one step), icons
+  and the depth clock's "move here" side; the overview's + / - change the
+  grid, the strip style is one row.
+* Terminal: the kitty window, a picture per prompt, the "off" chip turns
+  the prompt on, a greeting look turns the greeting on in one step.
+* Presets: the active preset on the stage and ringed in the strip, a click
+  shows another, Browse opens every preset and part.
+* Extras / Mods: the list form (a band over tall cards).
 """
 import sys
 from pathlib import Path
@@ -219,6 +232,21 @@ check(h.eval(item("presetApply"), "enabled") is True, "presets: ...and offers to
 check(item("settingsSection:presets_saving") is not None, "presets: the studio's settings are a card of the row")
 h.eval(item("presetBrowse"), "clicked()")
 check(h.eval(ev('findItem("settingsPage").item'), "view") == "browse", "presets: Browse opens every preset and part")
+
+# ---- Extras / Mods: the list form ---------------------------------------------
+ev("ExtrasService.catalog = {categories: [], entries: [{id: 'a', name: 'A', category: 'x', icon: 'globe'},"
+   " {id: 'b', name: 'B', category: 'x', icon: 'globe'}, {id: 'c', name: 'C', category: 'x', icon: 'globe'}]}")
+ev("ExtrasService.status = {a: {id: 'a', state: 'installed'}, b: {id: 'b', state: 'missing'}}")
+select("extras")
+page = ev('findItem("settingsPage").item')
+check(h.eval(page, "listForm") is True and item("pageStage") is not None, "extras: a band over the catalog card")
+check(h.eval(item("extrasRing"), "Math.round(value * 3)") == 1, "extras: the band's ring shows how much is installed")
+check(item("catalogGrid") is not None, "extras: the catalog lives in the tall card")
+ev("ModsService.mods = [{id: 'm1', name: 'M1', enabled: true, valid: true, compatible: true},"
+   " {id: 'm2', name: 'M2', enabled: false, valid: true, compatible: true}]")
+select("mods")
+check(h.eval(ev('findItem("settingsPage").item'), "onCount") == 1, "mods: the band counts the mods that are on")
+check(item("modsList") is not None and item("modsDetails") is not None, "mods: the list and the selected mod side by side")
 
 if failures:
     print(f"{len(failures)} failure(s)", file=sys.stderr)

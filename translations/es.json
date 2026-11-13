@@ -451,7 +451,6 @@
   "mods.status_rolled_back": "Generación anterior restaurada.",
   "mods.status_setting_saved": "Ajuste guardado.",
   "mods.status_updated": "Mod actualizado.",
-  "mods.toggle_description": "Ejecuta el shell base directamente, ignorando todos los mods y generaciones. Los mods conservan su instalación y estado. Se aplica tras reiniciar.",
   "mods.toggle_title": "Activar mods",
   "mods.trust_warning": "Los paquetes se ejecutan con tus permisos de usuario. Instala código solo de fuentes de confianza.",
   "mods.unknown": "Desconocido",
@@ -4578,5 +4577,9 @@
   "prefs.presets.gallery": "Presets",
   "prefs.presets.custom": "Personalizado",
   "prefs.presets.browse": "Todos los presets y partes",
-  "prefs.presets.hero_hint": "Haz clic en un preset para verlo en tu pantalla · Aplicar lo hace tuyo"
+  "prefs.presets.hero_hint": "Haz clic en un preset para verlo en tu pantalla · Aplicar lo hace tuyo",
+  "prefs.extras.installed_of": "%1 de %2 instaladas",
+  "prefs.extras.installing": "Instalando %1",
+  "mods.band_count": "%1 de %2 activos",
+  "mods.none_selected": "Elige un mod de la lista para verlo aquí"
 }
