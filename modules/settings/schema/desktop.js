@@ -79,7 +79,8 @@ var category = {
         "right": ["desktop.widgetsEnabled", "desktop.depthClock", "desktop.enabled"],
         "hint": "prefs.desktop.hero_hint"
     },
-    "row": ["widgets", { "id": "clock", "weight": 1.3 }, { "id": "icons", "weight": 0.75 }],
+    // icon size is a rare knob: in More, with the arrangement
+    "row": ["widgets", { "id": "clock", "weight": 1.6 }],
     "sections": [
         {
             "id": "widgets",
