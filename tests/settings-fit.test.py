@@ -72,13 +72,27 @@ Window {
         walk(w.contentItem, x => { if (!host && x.objectName === "settingsPage") host = x; });
         var page = host ? host.item : null;
         if (!page) return null;
-        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true, "share": (page.category && page.category.bandShare) || 0.24 };
+        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true, "cut": [], "share": (page.category && page.category.bandShare) || 0.24 };
         walk(page, x => {
             var n = String(x.objectName);
             if (((n.indexOf("settingsSection:") === 0 && x.fixed) || x.fittedCard === true) && x.visible) {
                 var p = x.mapToItem(page, 0, 0);
                 out.cards.push([n, Math.round(p.y + x.height)]);
                 out.rowTop = Math.min(out.rowTop, Math.round(p.y));
+                // a card of several rows: every row ends inside the card's
+                // content box (only a last row that is a list may scroll on)
+                var rows = [];
+                walk(x, r => { if (String(r.objectName).indexOf("settingRow:") === 0 && r.visible && r.height > 0) rows.push(r); });
+                if (rows.length > 1) {
+                    var foot = Math.round(p.y + x.height - (x.padding || 0));
+                    rows.forEach((r, i) => {
+                        var b = Math.round(r.mapToItem(page, 0, r.height).y);
+                        // the last row may be a list that scrolls on in the card
+                        var list = i === rows.length - 1 && (r.type === "custom" || r.type === "list")
+                            && Math.round(r.mapToItem(page, 0, 0).y) < foot;
+                        if (b > foot + 1 && !list) out.cut.push([n + " / " + r.objectName, b, foot]);
+                    });
+                }
             }
             if ((n === "pageStage" || x.fittedHero === true) && x.visible) {
                 out.stage = Math.max(out.stage, Math.round(x.mapToItem(page, 0, x.height).y));
@@ -105,6 +119,8 @@ def fits(label: str) -> None:
         return
     check(m["contentH"] <= m["h"] + 1, f"{label}: the page does not scroll ({m['contentH']} > {m['h']})")
     check(len(m["cards"]) > 0, f"{label}: a row of cards")
+    for name, bottom, foot in m["cut"]:
+        check(False, f"{label}: {name} is cut by its card ({bottom} > {foot})")
     for name, bottom in m["cards"]:
         check(bottom <= m["h"] + 1, f"{label}: {name} ends inside the page ({bottom} > {m['h']})")
     if m["stage"] >= 0:
@@ -130,7 +146,7 @@ fits("bar (several bars)")
 h.eval(win, "SettingsStore.set('bar.panels', [])")
 
 # the island turned off (a preset, the CLI): its switch is beside the
-# stage, the waiting cards stay in the row and say so
+# stage, the waiting cards stay in the row, dimmed, with one Turn on
 h.eval(win, "SettingsStore.set('notch.enabled', false)")
 h.eval(shell, 'select("notch")')
 check(env.wait_page(win), "island off: page built")
@@ -139,12 +155,12 @@ on = json.loads(h.eval(win, """JSON.stringify((function() {
     var sw = null, waiting = 0;
     walk(w.contentItem, x => {
         if (String(x.objectName) === "settingRow:notch.enabled" && x.visible) sw = x;
-        if (String(x.objectName) === "sectionWaiting" && x.visible) waiting++;
+        if ((String(x.objectName) === "sectionWaiting" || String(x.objectName) === "sectionTurnOn") && x.visible) waiting++;
     });
     return { "switch": sw !== null, "waiting": waiting };
 })())"""))
 check(on["switch"], "island off: the Show the island switch is on the page")
-check(on["waiting"] > 0, "island off: the waiting cards say so instead of vanishing")
+check(on["waiting"] > 0, "island off: the waiting cards stay (dimmed, with one Turn on) instead of vanishing")
 h.eval(win, "SettingsStore.set('notch.enabled', true)")
 fits("notch (island off and on again)")
 

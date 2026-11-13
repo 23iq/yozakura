@@ -1,12 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
 import "ChangesModel.js" as ChangesModel
+import "CardGate.js" as CardGate
 
 // One schema section as a bento card (kit Card): a heading (the section
 // title) with the current value on the right when the card holds one
@@ -24,12 +26,15 @@ Card {
     property var exclude: []
     readonly property string sectionId: section.id
     readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0)
-    readonly property bool shown: sectionRoot.entries.length > 0 && SettingsStore.sectionShown(section)
+    // A card of the page row whose rows wait on one switch: they show
+    // dimmed, with one "Turn on" for the card (CardGate.js).
+    readonly property var gate: sectionRoot.fixed ? CardGate.gate(sectionRoot.entries, SettingsStore.get, k => SettingsStore.entryByKey[k] || null) : null
+    readonly property bool shown: sectionRoot.entries.length > 0 && (SettingsStore.sectionShown(section) || sectionRoot.gate !== null)
     // A row card whose rows all wait (the thing is turned off): it stays and
     // says so instead of vanishing from the row.
     readonly property bool waiting: sectionRoot.fixed && sectionRoot.entries.length > 0 && !sectionRoot.shown
     // one setting: its value beside the heading, no label of its own
-    readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e))
+    readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e) || (sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(e.id || e.key) >= 0))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
     readonly property string value: {
         const e = sectionRoot.single;
@@ -70,7 +75,7 @@ Card {
         KitText {
             id: heading
             objectName: "sectionHeading"
-            width: parent.width - (valueText.visible ? valueText.implicitWidth + Space.m : 0)
+            width: parent.width - (valueText.visible ? valueText.implicitWidth + Space.m : 0) - (gateChip.visible ? gateChip.width + Space.m : 0)
             role: "title"
             text: sectionRoot.section.title ? I18n.t(sectionRoot.section.title) : ""
             elide: Text.ElideRight
@@ -80,15 +85,30 @@ Card {
             objectName: "sectionValue"
             anchors.right: parent.right
             anchors.verticalCenter: heading.verticalCenter
-            visible: sectionRoot.value !== ""
+            visible: sectionRoot.value !== "" && !gateChip.visible
             role: "secondary"
             text: sectionRoot.value
+        }
+        // the card's rows wait on one switch: turn it on from here
+        Chip {
+            id: gateChip
+            objectName: "sectionTurnOn"
+            visible: sectionRoot.gate !== null
+            anchors.right: parent.right
+            anchors.verticalCenter: heading.verticalCenter
+            dense: true
+            primary: true
+            icon: Icons.power
+            text: sectionRoot.gate ? I18n.t(sectionRoot.gate.fix.on ? "prefs.disabled.turn_on" : "prefs.disabled.turn_off") : ""
+            Accessible.name: sectionRoot.gate ? I18n.t(sectionRoot.gate.fix.entry.label) : ""
+            onClicked: if (sectionRoot.gate)
+                SettingsStore.set(sectionRoot.gate.fix.key, sectionRoot.gate.fix.value)
         }
     }
 
     KitText {
         objectName: "sectionWaiting"
-        visible: sectionRoot.waiting
+        visible: sectionRoot.waiting && sectionRoot.gate === null
         width: sectionRoot.contentWidth
         role: "secondary"
         wrapMode: Text.WordWrap
@@ -127,6 +147,9 @@ Card {
                         entry: modelData
                         bare: sectionRoot.single !== null
                         dense: sectionRoot.fixed
+                        // waits on the card's switch: shown dimmed (CardGate)
+                        preview: sectionRoot.gate !== null && sectionRoot.gate.ids.indexOf(modelData.id || modelData.key) >= 0
+                        previewFix: sectionRoot.gate ? sectionRoot.gate.fix : null
                         // a single picture / editor fills the card
                         fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : 0
                         previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null

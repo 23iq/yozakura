@@ -253,10 +253,18 @@ check(sec is None or h.eval(sec, "visible") is False, "a section with no row to 
 select("notch")
 ev("SettingsStore.set('notch.disableHoverExpansion', true)")
 QTest.qWait(50)
-fix = ev('w.findItem("disabledFix")')
-check(fix is not None and h.eval(fix, "visible") is True, "a waiting row offers its one switch")
+# (in a card of the row: the rows show dimmed, the card offers the switch once)
+# (searched on this page: kept-alive pages have media cards of their own)
+SEC = 'w.findItem("settingsSection:media", w.findItem("settingsPage").item)'
+fix = ev(f'w.findItem("sectionTurnOn", {SEC})')
+check(fix is not None and h.eval(fix, "visible") is True, "a card waiting on one switch offers it once")
+check(ev(f'w.findItem("disabledFix", {SEC})') is None, "...not a note per row")
+row = ev(f'w.findItem("settingRow:notch.visualizer", {SEC})')
+check(row is not None and h.eval(row, "preview") is True and h.eval(row, "visible") is True, "...its rows show, dimmed")
 h.eval(fix, "clicked()")
 check(ev("Config.notch.disableHoverExpansion") is False, "...which turns it on")
+QTest.qWait(50)
+check(h.eval(row, "preview") is False, "...and the rows come alive")
 
 # ---- a multi-key editor is one undo step --------------------------------------
 select("appearance")

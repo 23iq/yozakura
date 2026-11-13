@@ -43,7 +43,12 @@ FocusScope {
     readonly property bool usable: SettingsStore.enabled(entry)
     readonly property var note: row.usable ? null : SettingsStore.disabledNote(entry)
     readonly property bool fixable: !!(row.note && row.note.fix)
-    readonly property bool shown: SettingsStore.visible(entry) && (row.usable || row.fixable)
+    // Waits on its card's switch (SettingsSection / CardGate.js): shown as
+    // it would be, dimmed, no note of its own; a press turns the switch on
+    // and reaches the control.
+    property bool preview: false
+    property var previewFix: null
+    readonly property bool shown: (SettingsStore.visible(entry) && (row.usable || row.fixable)) || row.preview
     // The row above in the section: a run of rows waiting for the same
     // switch names it once, on its first row.
     property var previousEntry: null
@@ -67,15 +72,16 @@ FocusScope {
     readonly property bool narrow: width < Space.px(560)
     // about how wide an inline segmented of this selector is (stack it when
     // it would not fit beside the label)
-    readonly property real selectorWidth: type === "selector" ? (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0) : 0
+    // (`iconOnly`: segments of icons, the names in their accessible names)
+    readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0)) : 0
     // picture cards: the row's own control, or (a card of the page row that
     // holds other rows too) a plain selector: a strip of pictures is a
     // card's one setting (PAGE COMPOSITION)
     readonly property bool asCards: entry.display === "cards" && (!row.dense || row.bare)
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.preview) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
-    readonly property bool selectorAsDropdown: row.dense && type === "selector" && row.selectorWidth > width - Space.px(170)
+    readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
@@ -94,7 +100,7 @@ FocusScope {
     // The caption under the label: what a waiting row needs, where the
     // choice shows instead, or the entry's own short hint.
     readonly property string caption: {
-        if (row.fixable)
+        if (row.fixable && !row.preview)
             return row.noteRepeats ? "" : row.note.text;
         if (row.shownAs !== "")
             return I18n.t("prefs.layout.island_off").arg(row.shownAs);
@@ -170,6 +176,7 @@ FocusScope {
     // label above it (SectionLabel.inset).
     Column {
         id: body
+        opacity: row.preview ? 0.45 : 1
         x: row.labelHidden ? 0 : Look.rowInset
         width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
         topPadding: row.dense ? Space.xs : Space.s
@@ -249,7 +256,7 @@ FocusScope {
                 Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? Math.min(Space.px(340), row.width * 0.48) : -1))
                 focus: !row.stacked
                 active: row.built && !row.stacked
-                sourceComponent: row.fixable ? fixComponent : row.controlComponent()
+                sourceComponent: row.fixable && !row.preview ? fixComponent : row.controlComponent()
             }
         }
 
@@ -270,6 +277,21 @@ FocusScope {
             visible: active
             source: active ? Qt.resolvedUrl(Registry.preview(row.entry.preview)) : ""
             onLoaded: Ui.setIfPresent(item, "entry", row.entry)
+        }
+    }
+
+    // a press on a waiting row turns its card's switch on, then reaches the
+    // control under it (picking a clock style turns the clock on)
+    MouseArea {
+        objectName: "rowPreviewPress"
+        anchors.fill: parent
+        z: 10
+        enabled: row.preview && row.previewFix !== null
+        visible: enabled
+        cursorShape: Qt.PointingHandCursor
+        onPressed: mouse => {
+            SettingsStore.set(row.previewFix.key, row.previewFix.value);
+            mouse.accepted = false;
         }
     }
 
@@ -353,7 +375,8 @@ FocusScope {
     Component {
         id: selectorComponent
         SelectorControl {
-            segmentLimit: row.selectorAsDropdown ? 0 : 4
+            segmentLimit: row.selectorAsDropdown ? 0 : (row.entry.iconOnly === true ? 6 : 4)
+            iconOnly: row.entry.iconOnly === true
             options: row.entry.options
             value: row.value
             onSelected: v => SettingsStore.set(row.entry.key, v)
