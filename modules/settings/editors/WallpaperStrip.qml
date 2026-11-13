@@ -8,28 +8,23 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings.controls
 
-// The wallpaper library beside the stage: a film strip of real thumbnails
-// of every folder (the one on screen ringed, scrolled into view), a click
-// sets it live. Ends with a "Folders" tile that opens the folder list.
-// Fills the height of the page hero (the stage beside it).
+// The wallpaper library along the stage's foot (category `hero.foot`): a
+// film strip of real thumbnails of every folder, the one on screen ringed
+// and scrolled into view, many at once; a click sets it live. Ends with a
+// "Folders" chip that opens the folder list. Its height is the strip's
+// (`fillHeight`); without one (a card elsewhere) it is a few thumbnails tall.
 Item {
     id: root
 
     property var entry
+    property real fillHeight: 0
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string current: root.manager ? (root.manager.currentWallpaper || "") : ""
     readonly property var paths: root.manager ? (root.manager.wallpaperPaths || []) : []
-    readonly property real thumbH: Math.round(root.width * 9 / 16)
-    // the hero (page) this column stands in: as tall as the stage
-    readonly property Item hero: {
-        let p = root.parent;
-        while (p && p.objectName !== "pageHero")
-            p = p.parent;
-        return p;
-    }
-    readonly property real room: root.hero ? root.hero.height - Space.l : root.thumbH * 3 + Space.s * 2
+    readonly property real thumbH: root.fillHeight > 0 ? root.fillHeight : Space.px(72)
+    readonly property real thumbW: Math.round(root.thumbH * 16 / 9)
 
-    implicitHeight: Math.max(root.thumbH * 2, root.room)
+    implicitHeight: root.thumbH
 
     function source(path) {
         if (!path || !root.manager)
@@ -46,60 +41,74 @@ Item {
             root.manager.setWallpaper(path);
     }
 
-    ListView {
-        id: list
-        objectName: "wallpaperStrip"
-        width: root.width
-        height: root.implicitHeight
+    // clips the strip a ring's width outside it: the chosen picture's ring
+    // and a hovered one's lift stay whole at the ends
+    Item {
+        x: -Space.xs
+        y: -Space.xs
+        width: root.width + Space.xs * 2
+        height: root.thumbH + Space.xs * 2
         clip: true
-        spacing: Space.s
-        model: root.paths
-        boundsBehavior: Flickable.StopAtBounds
-        cacheBuffer: root.thumbH * 2
-        currentIndex: root.paths.indexOf(root.current)
-        highlightFollowsCurrentItem: false
-        // the one on screen in view (centred when it can be)
-        onCurrentIndexChanged: if (currentIndex >= 0)
-            Qt.callLater(() => list.positionViewAtIndex(list.currentIndex, ListView.Contain))
 
-        delegate: ChoiceCard {
-            id: card
-            required property string modelData
-            objectName: "wallpaper:" + root.fileName(card.modelData)
-            width: list.width
-            previewHeight: root.thumbH
-            inset: true
-            selected: card.modelData === root.current
-            title: card.hovered || card.selected ? root.fileName(card.modelData) : ""
-            onClicked: root.pick(card.modelData)
+        ListView {
+            id: list
+            objectName: "wallpaperStrip"
+            x: Space.xs
+            y: Space.xs
+            width: root.width
+            height: root.thumbH
+            orientation: ListView.Horizontal
+            spacing: Space.s
+            model: root.paths
+            boundsBehavior: Flickable.StopAtBounds
+            cacheBuffer: root.thumbW * 4
+            currentIndex: root.paths.indexOf(root.current)
+            highlightFollowsCurrentItem: false
+            // the one on screen in view
+            onCurrentIndexChanged: if (currentIndex >= 0)
+                Qt.callLater(() => list.positionViewAtIndex(list.currentIndex, ListView.Contain))
+            Component.onCompleted: if (currentIndex >= 0)
+                Qt.callLater(() => list.positionViewAtIndex(list.currentIndex, ListView.Contain))
 
-            Art {
-                anchors.fill: parent
-                radius: 0
-                source: root.source(card.modelData)
+            delegate: ChoiceCard {
+                id: card
+                required property string modelData
+                objectName: "wallpaper:" + root.fileName(card.modelData)
+                width: root.thumbW
+                previewHeight: root.thumbH
+                inset: true
+                selected: card.modelData === root.current
+                title: card.hovered ? root.fileName(card.modelData) : ""
+                onClicked: root.pick(card.modelData)
+
+                Art {
+                    anchors.fill: parent
+                    radius: 0
+                    source: root.source(card.modelData)
+                }
+                Icon {
+                    visible: root.manager && root.manager.getFileType && root.manager.getFileType(card.modelData) !== "image"
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    anchors.margins: Space.xs
+                    icon: Icons.play
+                    role: "caption"
+                    tone: "text"
+                }
             }
-            Icon {
-                visible: root.manager && root.manager.getFileType && root.manager.getFileType(card.modelData) !== "image"
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: Space.s
-                icon: Icons.play
-                role: "secondary"
-                tone: "text"
-            }
-        }
 
-        footer: Item {
-            width: list.width
-            height: folders.height + Space.s
-            Chip {
-                id: folders
-                objectName: "wallpaperFolders"
-                y: Space.s
-                width: list.width
-                icon: Icons.folder
-                text: I18n.t("prefs.wall.section.folders")
-                onClicked: SettingsStore.navigate("wallpapers", "folders", "desktop.wallpaperFolders")
+            footer: Item {
+                width: folders.width + Space.s
+                height: list.height
+                Chip {
+                    id: folders
+                    objectName: "wallpaperFolders"
+                    x: Space.s
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: Icons.folder
+                    text: I18n.t("prefs.wall.section.folders")
+                    onClicked: SettingsStore.navigate("wallpapers", "folders", "desktop.wallpaperFolders")
+                }
             }
         }
     }
@@ -107,7 +116,7 @@ Item {
     KitText {
         visible: root.paths.length === 0
         width: root.width
-        y: Space.l
+        anchors.verticalCenter: parent.verticalCenter
         role: "secondary"
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap

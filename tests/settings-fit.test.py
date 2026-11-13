@@ -72,7 +72,7 @@ Window {
         walk(w.contentItem, x => { if (!host && x.objectName === "settingsPage") host = x; });
         var page = host ? host.item : null;
         if (!page) return null;
-        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true };
+        var out = { "h": page.height, "contentH": page.contentHeight === undefined ? page.height : page.contentHeight, "cards": [], "stage": -1, "sides": 0, "rowTop": 1e9, "list": page.listForm === true, "stageH": 0, "beside": page.sideOnly === true, "share": (page.category && page.category.bandShare) || 0.24 };
         walk(page, x => {
             var n = String(x.objectName);
             if (((n.indexOf("settingsSection:") === 0 && x.fixed) || x.fittedCard === true) && x.visible) {
@@ -113,8 +113,8 @@ def fits(label: str) -> None:
         check(m["sides"] <= m["rowTop"], f"{label}: the side columns end above the row ({m['sides']} > {m['rowTop']})")
     if m["list"]:
         # the list form: a short band, the cards take the rest
-        check(m["stageH"] <= m["h"] * 0.3, f"{label}: the list form's band is short ({m['stageH']})")
-        check(m["rowTop"] <= m["h"] * 0.45, f"{label}: the list form's cards take the rest ({m['rowTop']})")
+        check(m["stageH"] <= m["h"] * (m["share"] + 0.06), f"{label}: the list form's band keeps its share ({m['stageH']})")
+        check(m["rowTop"] <= m["h"] * (m["share"] + 0.21), f"{label}: the list form's cards take the rest ({m['rowTop']})")
 
 
 for cat in CONVERTED:

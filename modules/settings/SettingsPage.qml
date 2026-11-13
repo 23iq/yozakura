@@ -35,7 +35,10 @@ Flickable {
     readonly property string stageUrl: page.category.stage ? Qt.resolvedUrl(Registry.stage(page.category.stage)) : ""
     readonly property var hero: page.category.hero || ({})
     // entries shown beside the stage (by key or id), not in their card
-    readonly property var heroIds: (page.hero.left || []).concat(page.hero.right || [])
+    readonly property var heroIds: (page.hero.left || []).concat(page.hero.right || []).concat(page.hero.foot || [])
+    // `hero.foot`: entries in a strip along the stage's foot (a film strip
+    // of pictures: the wallpaper library), as wide as the stage
+    readonly property real footH: (page.hero.foot || []).length > 0 ? Space.px(76) : 0
     // `row`: section ids, or {id, weight} for a card wider or narrower than
     // the others (weight 1 by default)
     readonly property var rowIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
@@ -97,6 +100,7 @@ Flickable {
         hasHint: !!page.hero.hint
         band: page.stageUrl !== ""
         bandMin: Math.max(heroLeftCol.height, heroRightCol.height) + Space.l
+        bandShare: page.category.bandShare || 0.24
     }
     function heroEntries(ids) {
         const out = [];
@@ -239,7 +243,7 @@ Flickable {
         x: page.margin
         y: Space.s + (page.fitted ? 0 : page.contentY * 0.35)
         width: page.width - page.margin * 2
-        height: stageLoader.active ? stageLoader.height : 0
+        height: stageLoader.active ? stageLoader.height + (page.footH > 0 ? Space.s + page.footH : 0) : 0
         visible: stageLoader.active || page.sideOnly
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7
@@ -252,7 +256,7 @@ Flickable {
             readonly property int sideCount: (page.hero.left || []).length > 0 ? ((page.hero.right || []).length > 0 ? 2 : 1) : ((page.hero.right || []).length > 0 ? 1 : 0)
             readonly property real room: heroArea.width - (page.sideW + page.gap) * sideCount
             // fitted: the height the header, hint and row leave
-            readonly property real fitHeight: frame.heroH
+            readonly property real fitHeight: frame.heroH - (page.footH > 0 ? Space.s + page.footH : 0)
             height: Math.round(page.listForm ? page.bandH : (page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460)))))
             // the list form's band spans the room beside the side columns
             width: Math.round(page.listForm ? room : Math.min(room, height * 16 / 9))
@@ -317,6 +321,27 @@ Flickable {
                         width: side.contentWidth
                         entry: side.modelData
                     }
+                }
+            }
+        }
+
+        // `hero.foot`: a strip along the stage's foot, as wide as the stage
+        Column {
+            id: heroFoot
+            objectName: "heroFoot"
+            visible: page.footH > 0
+            x: stageLoader.x
+            y: stageLoader.height + Space.s
+            width: stageLoader.width
+            Repeater {
+                model: page.heroEntries(page.hero.foot)
+                delegate: SettingRow {
+                    required property var modelData
+                    width: heroFoot.width
+                    height: page.footH
+                    entry: modelData
+                    bare: true
+                    fillHeight: page.footH - Space.s * 2
                 }
             }
         }

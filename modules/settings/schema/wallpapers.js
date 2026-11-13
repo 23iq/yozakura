@@ -37,7 +37,7 @@ var category = {
     "keywords": "wallpaper background picture image folder video",
     "stage": "WallpaperStage",
     "hero": {
-        "left": ["wallpaper.browser"],
+        "foot": ["wallpaper.browser"],
         "hint": "prefs.wall.hero_hint"
     },
     "row": [{ "id": "panorama", "weight": 0.9 }, { "id": "transition", "weight": 1.35 }, { "id": "colours", "weight": 0.75 }],

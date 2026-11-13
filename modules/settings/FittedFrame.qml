@@ -26,7 +26,10 @@ Item {
     // the side columns beside the hero
     readonly property real sideW: Math.min(Space.px(220), frame.width * 0.19)
     readonly property real hintH: frame.hasHint ? Space.xl : 0
-    readonly property real bandH: frame.listForm && frame.band ? Math.round(Math.max(Space.px(120), frame.height * 0.24, frame.bandMin)) : 0
+    // the share of the page the band takes (a category's `bandShare`: a band
+    // that is the page's main control, such as Sound's two big sliders)
+    property real bandShare: 0.24
+    readonly property real bandH: frame.listForm && frame.band ? Math.round(Math.max(Space.px(120), frame.height * frame.bandShare, frame.bandMin)) : 0
     // the row of cards: one card height, or (list form) the rest of the page
     readonly property real rowH: frame.listForm ? Math.max(Look.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Look.cardRowHeight
     readonly property real rowY: frame.height - frame.rowH - frame.pad

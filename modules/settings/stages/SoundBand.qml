@@ -76,15 +76,15 @@ Stage {
                 text: ch.title
             }
             KitText {
-                role: "body"
-                font.weight: Type.weight("title")
+                role: "title"
                 text: ch.device
             }
         }
         LevelSlider {
             objectName: ch.objectName + "Slider"
             width: ch.width
-            height: Space.controlL
+            // as big as the band allows: it is the page's main control
+            height: Math.max(Space.controlL, Math.round(band.height * 0.38))
             enabled: ch.node !== null
             from: 0
             to: 1.5

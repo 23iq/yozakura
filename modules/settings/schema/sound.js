@@ -33,6 +33,9 @@ var category = {
     "keywords": "sound audio volume mixer output input microphone speaker headphones apps",
     "form": "list",
     "stage": "SoundBand",
+    // the band is the main control here: two big sliders, the cards under
+    // it as tall as three or four devices
+    "bandShare": 0.5,
     "hero": {
         "hint": "prefs.sound.hint"
     },
