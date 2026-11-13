@@ -79,12 +79,16 @@ Item {
         shown: root.front === 1
     }
 
-    // darken toward the theme background, more at the edges (a vignette)
+    // On a light theme the wash is stronger: a dark wallpaper under a
+    // light window otherwise turns the whole window mid grey, and the
+    // theme's dark-on-light text loses its contrast.
+    readonly property bool lightTheme: Colors.background.hslLightness > 0.5
+    // wash toward the theme background, more at the edges (a vignette)
     Mark {
         anchors.fill: parent
         radius: 0
         visible: !root.plain
-        color: Qt.alpha(Colors.background, 0.5 - 0.28 * root.strength)
+        color: Qt.alpha(Colors.background, root.lightTheme ? 0.74 - 0.2 * root.strength : 0.5 - 0.28 * root.strength)
     }
     Mark {
         anchors.fill: parent
