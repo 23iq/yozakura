@@ -25,7 +25,10 @@ Card {
     // entry keys / ids shown elsewhere (beside the stage)
     property var exclude: []
     readonly property string sectionId: section.id
-    readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0)
+    // `toggle`: the key of a switch of this section drawn in the card's
+    // heading (the card is the thing it turns on: Special workspaces)
+    readonly property var headerToggle: section.toggle ? (section.entries || []).find(e => e.key === section.toggle) || null : null
+    readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0 && !(section.toggle && e.key === section.toggle))
     // A card of the page row whose rows wait on one switch: they show
     // dimmed, with one "Turn on" for the card (CardGate.js).
     readonly property var gate: sectionRoot.fixed ? CardGate.gate(sectionRoot.entries, SettingsStore.get, k => SettingsStore.entryByKey[k] || null) : null
@@ -53,6 +56,8 @@ Card {
     property bool fixed: false
 
     function rowFor(entryId) {
+        if (sectionRoot.headerToggle && entryId === sectionRoot.headerToggle.key)
+            return headSwitch;
         for (let i = 0; i < rows.count; i++) {
             const r = rows.itemAt(i);
             if (Ui.prop(r, "entryId") === entryId)
@@ -75,7 +80,7 @@ Card {
         KitText {
             id: heading
             objectName: "sectionHeading"
-            width: parent.width - (valueText.visible ? valueText.implicitWidth + Space.m : 0) - (gateChip.visible ? gateChip.width + Space.m : 0)
+            width: parent.width - (valueText.visible ? valueText.implicitWidth + Space.m : 0) - (gateChip.visible ? gateChip.width + Space.m : 0) - (headSwitch.visible ? headSwitch.width + Space.m : 0)
             role: "title"
             text: sectionRoot.section.title ? I18n.t(sectionRoot.section.title) : ""
             elide: Text.ElideRight
@@ -85,9 +90,19 @@ Card {
             objectName: "sectionValue"
             anchors.right: parent.right
             anchors.verticalCenter: heading.verticalCenter
-            visible: sectionRoot.value !== "" && !gateChip.visible
+            visible: sectionRoot.value !== "" && !gateChip.visible && !headSwitch.visible
             role: "secondary"
             text: sectionRoot.value
+        }
+        Switch {
+            id: headSwitch
+            objectName: sectionRoot.headerToggle ? "settingRow:" + sectionRoot.headerToggle.key : ""
+            visible: sectionRoot.headerToggle !== null
+            anchors.right: parent.right
+            anchors.verticalCenter: heading.verticalCenter
+            checked: sectionRoot.headerToggle ? SettingsStore.get(sectionRoot.headerToggle.key) === true : false
+            Accessible.name: sectionRoot.headerToggle ? I18n.t(sectionRoot.headerToggle.label) : ""
+            onToggled: v => SettingsStore.set(sectionRoot.headerToggle.key, v)
         }
         // the card's rows wait on one switch: turn it on from here
         Chip {

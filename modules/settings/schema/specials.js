@@ -3,7 +3,7 @@
 // Special workspaces (Hyprland scratchpads): the list editor (templates,
 // name, icon, accent, toggle + send binds, apps, preload) and the runtime
 // options, as a list page (form "list", no band: the list is the page,
-// the switch beside it).
+// its switch in the card's heading).
 // Global like the keybinds: presets never carry them. Logic:
 // modules/specials/. Entry format: see modules/settings/AGENTS.md.
 
@@ -14,16 +14,21 @@ var category = {
     "description": "prefs.cat.specials.desc",
     "keywords": "special workspaces scratchpad scratchpads hidden workspace telegram discord chat music dev notes toggle send window apps preload",
     "form": "list",
-    // no band: the switch stands in a side column beside the list
-    "hero": {
-        "right": ["specials.enabled"]
-    },
     "row": ["list"],
     "sections": [
         {
             "id": "list",
             "title": "prefs.specials.section.list",
+            // the switch in the card's heading: the card is what it turns on
+            "toggle": "specials.enabled",
             "entries": [
+                {
+                    "key": "specials.enabled",
+                    "type": "toggle",
+                    "label": "prefs.label.use_specials",
+                    "description": "prefs.specials.enabled.desc",
+                    "keywords": "on off disable binds rules launch"
+                },
                 {
                     "key": "specials.workspaces",
                     "type": "custom",
@@ -38,13 +43,6 @@ var category = {
             "id": "behaviour",
             "title": "prefs.specials.section.behaviour",
             "entries": [
-                {
-                    "key": "specials.enabled",
-                    "type": "toggle",
-                    "label": "prefs.label.use_specials",
-                    "description": "prefs.specials.enabled.desc",
-                    "keywords": "on off disable binds rules launch"
-                },
                 {
                     "key": "specials.launchTimeout",
                     "advanced": true,

@@ -13,7 +13,7 @@
       "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
       "x-settings": {
         "category": "specials",
-        "section": "behaviour",
+        "section": "list",
         "label": "prefs.label.use_specials",
         "control": "toggle",
         "keywords": "on off disable binds rules launch"

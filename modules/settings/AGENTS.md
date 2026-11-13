@@ -325,7 +325,9 @@ built on the frame after the page shows, asynchronously; the card height is
 fixed, so nothing moves). `part: true` (an editor of one part of a composite value that another entry
 also edits, e.g. the bars list beside the stage and the selected bar's
 fields; exempt from the one-control check).
-Section fields: `id`, `title`, `entries`, `advanced: true` (the whole section
+Section fields: `id`, `title`, `entries`, `toggle` (the key of a switch of
+the section drawn in the card's heading, for a card that is the thing it
+turns on: Special workspaces), `advanced: true` (the whole section
 is out of the window), `compositor`, `span`. A section shows only while one
 of its rows does. Category fields: `id`, `icon`, `title` (the tab label),
 `description`, `keywords`, `sections`, `stage` (Registry.STAGES name) or
@@ -382,8 +384,7 @@ Schema fields (category):
   "row": ["networks", "details"],
   ```
   Without a `stage` the row takes the whole page; its `hero` entries then
-  stand in a side column beside the row (Special workspaces: the switch
-  beside the list). `bandShare` (default 0.24): the share of the page the
+  stand in a side column beside the row. `bandShare` (default 0.24): the share of the page the
   band takes, for a band that is the page's main control. Prefer filling
   the cards (device rows with their own volume, app icons) to a tall band.
   The band is calm (Stage `calm`, set by the page): the wallpaper blurred

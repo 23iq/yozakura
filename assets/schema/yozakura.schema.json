@@ -6897,7 +6897,7 @@
               "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
               "x-settings": {
                 "category": "layout",
-                "section": "hosts3",
+                "section": "hosts",
                 "label": "prefs.layout.cheatsheet_host",
                 "control": "selector",
                 "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
@@ -9192,7 +9192,7 @@
           "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
           "x-settings": {
             "category": "specials",
-            "section": "behaviour",
+            "section": "list",
             "label": "prefs.label.use_specials",
             "control": "toggle",
             "keywords": "on off disable binds rules launch"
@@ -10837,7 +10837,7 @@
               "description": "Point popups at the item that opened them.",
               "x-settings": {
                 "category": "menus",
-                "section": "popups",
+                "section": "menus",
                 "label": "prefs.appearance.popup_tail",
                 "control": "toggle",
                 "keywords": "popup tail arrow pointer callout"

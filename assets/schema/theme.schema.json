@@ -454,7 +454,7 @@
           "description": "Point popups at the item that opened them.",
           "x-settings": {
             "category": "menus",
-            "section": "popups",
+            "section": "menus",
             "label": "prefs.appearance.popup_tail",
             "control": "toggle",
             "keywords": "popup tail arrow pointer callout"
