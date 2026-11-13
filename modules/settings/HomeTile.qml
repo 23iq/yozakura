@@ -114,7 +114,10 @@ Card {
                 role: "secondary"
                 text: tile.status
                 color: tile.picture ? Qt.rgba(1, 1, 1, 0.8) : Type.secondary
-                elide: Text.ElideRight
+                // a long status wraps onto a second line, whole
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideNone
             }
         }
     }

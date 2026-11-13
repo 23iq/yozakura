@@ -16,7 +16,7 @@ from settings_env import SettingsEnv  # noqa: E402
 from settings_probe import Sweep, window  # noqa: E402
 from waits import settle  # noqa: E402
 
-env = SettingsEnv("settings-fit-min", devices=True)
+env = SettingsEnv("settings-fit-min", devices=True, text_wider=0.08)
 win = env.load(window(env))
 win.resize(640, 480)
 settle(5)
@@ -33,6 +33,8 @@ for cat in sweep.categories():
         sweep.tab(cat, cat + " (640x480, ru)")
 
 if sweep.failures:
+    # last, after any QML warnings, so the tail of a CI log shows them
+    print("\n".join("FAIL: " + f for f in sweep.failures))
     print(f"settings-fit-min: {len(sweep.failures)} failure(s)")
     env.h.exit(1)
 print("settings-fit-min: ok")

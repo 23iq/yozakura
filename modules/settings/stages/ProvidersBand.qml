@@ -72,10 +72,10 @@ Stage {
             KitText {
                 width: parent.width
                 role: "title"
-                // a long name steps down a size before it would be cut
-                fontSizeMode: Text.HorizontalFit
-                minimumPixelSize: Type.size("caption")
-                elide: Text.ElideRight
+                // a long name wraps onto a second line, whole
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideNone
                 text: band.modelId ? band.modelId.slice(band.modelId.indexOf(":") + 1) : I18n.t("prefs.ai.default_engine.last")
             }
             KitText {

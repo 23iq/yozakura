@@ -128,6 +128,14 @@ Item {
         }
     }
 
+    // a narrow card (the compact picture grids): the description is the
+    // tooltip, not a line under the name
+    readonly property bool compactCaption: card.width < Space.px(180)
+    Tooltip {
+        text: card.subtitle
+        shown: card.compactCaption && card.subtitle !== "" && card.hovered
+    }
+
     Row {
         id: caption
         visible: !card.inset
@@ -148,22 +156,39 @@ Item {
         Column {
             id: titleCol
             width: parent.width - (lead.visible ? lead.width + parent.spacing : 0) - (check.visible ? check.width + parent.spacing : 0)
+            // the name, whole (two lines at most in a compact card); the
+            // chosen one on a tonal fill
             KitText {
+                id: titleText
                 width: parent.width
                 role: "secondary"
                 color: card.selected ? Type.text : Type.secondary
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideNone
+
+                Mark {
+                    z: -1
+                    visible: card.selected
+                    x: -Space.xs
+                    y: -Space.hairline
+                    width: Math.min(titleText.contentWidth, titleText.width) + Space.xs * 2
+                    height: titleText.contentHeight + Space.hairline * 2
+                    radius: Look.radius("small", height)
+                    color: Qt.alpha(Type.accent, 0.16)
+                }
             }
+            // a compact card keeps its description for the tooltip
             KitText {
                 width: parent.width
-                visible: card.subtitle !== ""
+                visible: card.subtitle !== "" && !card.compactCaption
                 role: "caption"
                 text: card.subtitle
                 wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
+                maximumLineCount: 3
+                elide: Text.ElideNone
             }
         }
         Icon {

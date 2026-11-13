@@ -37,7 +37,7 @@ DESKTOP = {"bar", "notch", "dock", "desktop", "lockscreen", "notifications", "me
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
-env = SettingsEnv("settings-fit", devices=True)
+env = SettingsEnv("settings-fit", devices=True, text_wider=0.08)
 h = env.h
 failures: list[str] = []
 loops: list[str] = []
@@ -121,6 +121,8 @@ for cat, label, do, undo in STATES:
 check(not loops, f"no binding or polish loop ({len(loops)}: {loops[:3]})")
 print("rows on screen per tab (density):", json.dumps(density))
 if failures:
+    # last, after any QML warnings, so the tail of a CI log shows them
+    print("\n".join("FAIL: " + f for f in failures))
     print(f"settings-fit: {len(failures)} failure(s)")
     h.exit(1)
 print("settings-fit: ok")

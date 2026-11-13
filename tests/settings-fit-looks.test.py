@@ -22,7 +22,7 @@ from waits import settle  # noqa: E402
 # a page of picture cards
 TABS = ["bar", "notifications", "network", "ai", "appearance"]
 
-env = SettingsEnv("settings-fit-looks", devices=True)
+env = SettingsEnv("settings-fit-looks", devices=True, text_wider=0.08)
 win = env.load(window(env))
 sweep = Sweep(env, win)
 # dark at the default size, light at the minimum (the test's time budget)
@@ -37,6 +37,8 @@ for lang in LANGUAGES:
             sweep.tab(cat, cat + tag)
 
 if sweep.failures:
+    # last, after any QML warnings, so the tail of a CI log shows them
+    print("\n".join("FAIL: " + f for f in sweep.failures))
     print(f"settings-fit-looks: {len(sweep.failures)} failure(s)")
     env.h.exit(1)
 print("settings-fit-looks: ok")

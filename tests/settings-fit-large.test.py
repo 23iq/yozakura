@@ -16,7 +16,7 @@ from settings_env import SettingsEnv  # noqa: E402
 from settings_probe import Sweep, window  # noqa: E402
 from waits import settle  # noqa: E402
 
-env = SettingsEnv("settings-fit-large", devices=True)
+env = SettingsEnv("settings-fit-large", devices=True, text_wider=0.08)
 win = env.load(window(env))
 win.resize(1600, 1000)
 settle(5)
@@ -25,6 +25,8 @@ sweep.language("es")
 sweep.all(" (1600x1000, es)")
 
 if sweep.failures:
+    # last, after any QML warnings, so the tail of a CI log shows them
+    print("\n".join("FAIL: " + f for f in sweep.failures))
     print(f"settings-fit-large: {len(sweep.failures)} failure(s)")
     env.h.exit(1)
 print("settings-fit-large: ok")

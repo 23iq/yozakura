@@ -84,10 +84,20 @@ FocusScope {
     // control's font (segments are equal: the longest name sets them all;
     // stack it when it would not fit beside the label)
     // (`iconOnly`: segments of icons, the names in their accessible names)
-    readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).length * ((entry.options || []).reduce((w, o) => Math.max(w, metrics.advanceWidth(I18n.t(o.label))), 0) + Space.px(40))) : 0
+    readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).length * ((entry.options || []).reduce((w, o) => Math.max(w, row.textWidth(I18n.t(o.label))), 0) + Space.px(40))) : 0
     // a dropdown shows its longest option whole; a font row its family
-    readonly property real dropdownNeed: type === "selector" ? (entry.options || []).reduce((w, o) => Math.max(w, metrics.advanceWidth(I18n.t(o.label))), 0) + Space.px(100) : 0
-    readonly property real fontNeed: type === "font" ? metrics.advanceWidth(String(row.value || "")) + Space.px(72) : 0
+    readonly property real dropdownNeed: type === "selector" ? (entry.options || []).reduce((w, o) => Math.max(w, row.textWidth(I18n.t(o.label))), 0) + Space.px(100) : 0
+    readonly property real fontNeed: type === "font" ? row.textWidth(String(row.value || (entry.placeholder ? I18n.t(entry.placeholder) : "") || Type.bodyFont)) + Space.px(72) : 0
+    // the longest word of the label (a label wraps between words, never
+    // inside one) and the room the inline dropdown / font control takes:
+    // when both do not fit on one line the control goes under the label
+    readonly property real labelWordNeed: String(I18n.t(entry.label || "")).split(" ").reduce((w, word) => Math.max(w, row.textWidth(word)), 0)
+    readonly property real inlineNeed: row.dropdown ? Math.max(row.selectorAsDropdown ? width * 0.48 : 0, Math.min(row.dropdownNeed, width * 0.6)) : (type === "selector" && !row.asCards ? row.selectorWidth : (type === "font" ? width * (entry.sizeKey ? 0.8 : 0.6) : 0))
+    // a measured text width with a 10 % margin: the fonts of another machine
+    // can run a few percent wider, and a name must still fit whole
+    function textWidth(text: string): real {
+        return metrics.advanceWidth(text) * 1.1;
+    }
     FontMetrics {
         id: metrics
         font: metricsText.font
@@ -103,7 +113,7 @@ FocusScope {
     // a choice between looks is always pictures (every option visible,
     // wrapped: CardSelector), whatever the card holds
     readonly property bool asCards: entry.display === "cards"
-    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || ((row.dropdown || (type === "selector" && !row.asCards) || (type === "font" && row.dense)) && row.labelWordNeed + row.inlineNeed + Space.l * 4 + Space.xl > width) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)

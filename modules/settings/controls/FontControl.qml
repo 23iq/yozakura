@@ -37,7 +37,7 @@ Item {
             spacing: Space.s
 
             readonly property real beside: parent.width - (sizeStepper.visible ? sizeStepper.width + spacing : 0)
-            readonly property real need: familyMetrics.advanceWidth(familyText.shown) + Space.m + Space.s * 2 + caret.implicitWidth + Space.m
+            readonly property real need: familyMetrics.advanceWidth(familyText.shown) * 1.1 + Space.m + Space.s * 2 + caret.implicitWidth + Space.m
 
             FontMetrics {
                 id: familyMetrics
@@ -72,6 +72,9 @@ Item {
                     font.family: root.family !== "" ? root.family : (root.monospace ? Type.monoFont : Type.bodyFont)
                     font.italic: root.family === "" && root.placeholder !== ""
                     color: root.family !== "" || root.placeholder === "" ? Type.text : Type.muted
+                    // a name a little wider than measured steps down a size
+                    fontSizeMode: Text.HorizontalFit
+                    minimumPixelSize: Math.round(Type.size("body") * 0.85)
                     elide: Text.ElideRight
                 }
                 Text {

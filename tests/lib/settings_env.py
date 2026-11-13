@@ -840,9 +840,12 @@ QtObject {
 class SettingsEnv:
     def __init__(self, name: str = "settings", *, palette: dict | None = None, user_config: bool = False,
                  overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None,
-                 devices: bool = False):
+                 devices: bool = False, text_wider: float = 0):
         """`devices`: believable live services (tests/lib/device_fixtures.py)
-        instead of the idle stand-ins, for the device pages."""
+        instead of the idle stand-ins, for the device pages. `text_wider`:
+        every kit text (KitText) set that much wider (0.08 = about 8 %, by
+        letter spacing), so a layout test catches a fit that another
+        machine's fonts would elide."""
         self.h = Harness(name)
         self.root = self.h.root
         domains = load_defaults()
@@ -857,6 +860,13 @@ class SettingsEnv:
             domains[dom] = _merge(domains[dom], values)
         self.domains = domains
         self._mirror()
+        if text_wider:
+            kit_text = self.root / "qs/modules/components/kit/KitText.qml"
+            src = kit_text.read_text()
+            line = "    font.letterSpacing: Type.letterSpacing(root.role)\n"
+            assert line in src, "KitText letter spacing line"
+            # an average glyph is about half an em wide
+            kit_text.write_text(src.replace(line, f"    font.letterSpacing: Type.letterSpacing(root.role) + Type.size(root.role) * {text_wider / 2}\n"))
         qs = self.root / "qs"
         if binds is None:
             binds = default_binds()
