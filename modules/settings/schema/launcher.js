@@ -11,6 +11,7 @@ var category = {
     "title": "prefs.cat.launcher",
     "description": "prefs.cat.launcher.desc",
     "keywords": "launcher search apps run calculator converter currency units files commands ai prefixes",
+    "stage": "LauncherStage",
     "row": [{ "id": "searches", "weight": 1.3 }, { "id": "appearance", "weight": 0.85 }, "providers"],
     "sections": [
         {

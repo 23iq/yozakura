@@ -109,14 +109,16 @@ check(wait_until(lambda: h.eval(shell, "currentCategory") == "appearance"), "wal
 
 # ---- Launcher -----------------------------------------------------------------
 select("launcher")
-check(ev('findItem("pageStage").active') is False, "launcher: no desktop stage")
+check(wait_until(lambda: item("launcherMini") is not None), "launcher: the stage draws the launcher itself")
+rows = lambda: h.eval(item("launcherStage"), "results.map(r => r.id).join(',')")  # noqa: E731
 check(item("settingRow:layout.launcher.host") is not None, "launcher: Opens in is on the page")
 n = steps()
 h.eval(item("launcherSearch:calculator"), "clicked()")
 check("calculator" in ev("JSON.stringify(Config.prefix.launcher.disabled)") and steps() == n + 1,
       "launcher: a chip turns a provider off in one undo step")
 ev("SettingsStore.undo()")
-check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)"), "launcher: undo brings it back")
+check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)") and "calculator" in rows(),
+      "launcher: undo brings it back, on the stage too")
 check(wait_until(lambda: item("card:grid") is not None), "launcher: a picture per result style")
 if item("card:grid") is not None:
     h.eval(item("card:grid"), "clicked()")
@@ -125,7 +127,7 @@ ev("SettingsStore.undo()")
 
 # ---- Dashboard ----------------------------------------------------------------
 select("dashboard")
-check(ev('findItem("pageStage").active') is False, "dashboard: no desktop stage")
+check(wait_until(lambda: item("dashboardMini") is not None), "dashboard: the stage draws the dashboard itself")
 check(item("settingRow:layout.dashboard.host") is not None, "dashboard: Opens in is on the page")
 n = steps()
 check(wait_until(lambda: item("dashboardTabSwitch:metrics") is not None), "dashboardTabSwitch:metrics" + " exists")
@@ -166,7 +168,7 @@ ev("SettingsStore.set('desktop.enabled', false)")
 
 # ---- Widgets: overview --------------------------------------------------------
 select("overview")
-check(ev('findItem("pageStage").active') is False, "overview: no desktop stage")
+check(item("pageStage") is None or h.eval(item("pageStage"), "active") is False, "overview: no stage")
 for e in ("overview.rows", "overview.columns", "overview.style"):
     check(item(f"settingRow:{e}") is not None, f"overview: {e} is a row")
 check(wait_until(lambda: item("card:strip") is not None), "card:strip" + " exists")

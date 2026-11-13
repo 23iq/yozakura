@@ -143,8 +143,9 @@ var DESKTOP_STAGES = {
 };
 // Plain stages of the pages that are not about the desktop: the thing itself
 // on the card fill, never the wallpaper (Stage `calm`): the status bands of
-// list pages, the battery and power profiles, the update state, a terminal.
-var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage"];
+// list pages, the battery and power profiles, the update state, a terminal,
+// the launcher and the dashboard.
+var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage", "LauncherStage", "DashboardStage"];
 
 var STAGES = {
     "BarStage": "stages/BarStage.qml",
@@ -159,6 +160,8 @@ var STAGES = {
     "ProvidersBand": "stages/ProvidersBand.qml",
     "WindowsStage": "stages/WindowsStage.qml",
     "PowerStage": "stages/PowerStage.qml",
+    "LauncherStage": "stages/LauncherStage.qml",
+    "DashboardStage": "stages/DashboardStage.qml",
     "UpdatesStage": "stages/UpdatesStage.qml",
     "TerminalStage": "stages/TerminalStage.qml",
     "NetworkBand": "stages/NetworkBand.qml",

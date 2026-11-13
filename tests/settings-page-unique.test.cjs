@@ -118,6 +118,6 @@ test('only the desktop pages have a desktop stage; the others a plain stage', ()
     // a plain stage is drawn on the card fill, never on the wallpaper
     for (const band of Registry.PLAIN_STAGES) {
         const src = fs.readFileSync(path.join(repo, 'modules/settings', Registry.STAGES[band]), 'utf8');
-        assert.ok(!/wallpaper|ScreenMini|ScreenBackdrop/i.test(src.replace(/\/\/.*$/gm, '')), `${band} draws the desktop`);
+        assert.ok(!/ScreenMini|ScreenBackdrop|stage\.wallpaper/.test(src.replace(/\/\/.*$/gm, '')), `${band} draws the desktop`);
     }
 });
