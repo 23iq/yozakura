@@ -87,12 +87,21 @@ def page(cat: str, label: str | None = None) -> dict | None:
     return m
 
 
+# Tabs whose first screen is still short of the goal (big pictures or
+# editors among their first cards): a ratchet, they may only go up.
+SHORT = {"appearance": 8, "wallpapers": 2, "bar": 7, "launcher": 5, "desktop": 3, "lockscreen": 6, "menus": 6,
+         "dashboard": 3, "power": 2, "system": 4, "terminal": 5, "voice": 12, "windows": 5}
+
+
 def dense(cat: str, m: dict | None) -> None:
     """The first screen at 1180x780 shows the stage and at least 8 whole rows
     on a page with a stage, 14 on a plain page (or every row it has)."""
     if m is None or m["home"] or not m["schema"] or m["list"]:
         return
     want = min(8 if m["stage"] is not None else 14, m["rowsTotal"])
+    if cat in SHORT and SHORT[cat] < want:
+        check(m["rows"] >= SHORT[cat], f"{cat}: {m['rows']} whole rows on the first screen, fewer than before ({SHORT[cat]})")
+        return
     check(m["rows"] >= want, f"{cat}: {m['rows']} whole rows on the first screen (want {want} of {m['rowsTotal']})")
 
 
@@ -105,7 +114,7 @@ for cat in json.loads(h.eval(win, "JSON.stringify(categoryIds())")):
     m = page(cat)
     if m is not None:
         density[cat] = m["rows"]
-        # dense(cat, m)  (on once every tab meets it)
+        dense(cat, m)
 
 # interactions: every state shows other rows, cards and values
 STATES = [
