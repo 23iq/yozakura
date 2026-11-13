@@ -101,6 +101,20 @@ var category = {
                     "label": "voice.settings.activation",
                     "description": "prefs.voice.activation.desc",
                     "keywords": "push to talk hold toggle tap hands free activation"
+                },
+                {
+                    // The voice panel opens where the timers do (one setting,
+                    // layout.panels.host, on Timers & focus)
+                    "id": "voice.opensLink",
+                    "type": "custom",
+                    "component": "PageLink",
+                    "target": "timers",
+                    "targetSection": "notch",
+                    "linkText": "prefs.notch.timer_link.open",
+                    "resettable": false,
+                    "label": "prefs.voice.opens_link",
+                    "description": "prefs.voice.opens_link.desc",
+                    "keywords": "voice panel opens in island card floating"
                 }
             ]
         },

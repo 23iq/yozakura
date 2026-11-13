@@ -12,8 +12,8 @@
       "default": "card",
       "description": "A full card, or one compact line that unfolds on hover.",
       "x-settings": {
-        "category": "notch",
-        "section": "activity_details",
+        "category": "notifications",
+        "section": "presentation",
         "label": "prefs.notifications.notch_style",
         "control": "selector",
         "keywords": "notification notch compact card one line",

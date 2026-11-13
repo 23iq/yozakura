@@ -124,6 +124,24 @@ function withEntries(cat, sectionId, entries, after) {
     return out;
 }
 
+// A copy of `cat` without its sections `ids`.
+function withoutSections(cat, ids) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = cat.sections.filter(function (sec) {
+        return ids.indexOf(sec.id) < 0;
+    });
+    return out;
+}
+
+// The sections `ids` of `cat`.
+function sectionsOf(cat, ids) {
+    return cat.sections.filter(function (sec) {
+        return ids.indexOf(sec.id) >= 0;
+    });
+}
+
 // A copy of `cat` with `extra` sections appended.
 function withSections(cat, extra) {
     var out = {};
@@ -151,11 +169,12 @@ var categories = [
     Windows.category,
     Terminal.category,
     withEntries(Input.category, "", [Layout.placed("layout.cheatsheet.host", "prefs.layout.sheet_opens_in")]),
-    System.category,
+    // OCR languages are a language setting: Language & weather, not Updates
+    withSections(System.category, sectionsOf(Updates.category, ["ocr"])),
     Voice.category,
     withEntries(Timers.category, "notch", [Layout.placed("layout.panels.host", "prefs.layout.opens_in")]),
     Routines.category,
-    Updates.category,
+    withoutSections(Updates.category, ["ocr"]),
     Power.category,
     Network.category,
     Bluetooth.category,

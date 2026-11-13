@@ -189,10 +189,10 @@
       }
     },
     "hoverRegionHeight": {
-      "title": "Bar reveal strip",
+      "title": "Edge that reveals the bar",
       "type": "number",
       "default": 8,
-      "description": "Size of the invisible edge strip that reveals the hidden bar.",
+      "description": "How wide the invisible edge is that brings the hidden bar back.",
       "x-settings": {
         "category": "bar",
         "section": "expert",

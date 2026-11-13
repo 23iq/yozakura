@@ -10,7 +10,7 @@ import qs.config
 import qs.modules.globals
 
 // About, composed like the other pages: the identity scene on the stage
-// (your wallpaper, the mark glowing, the name, the version, one line about
+// (a plain card fill, no wallpaper: About is not a desktop page; the mark glowing, the name, the version, one line about
 // it), then one row of cards: the version and its updates, the useful
 // places (setup again, the config folder, the source) and the legal notes.
 FittedFrame {
@@ -24,17 +24,13 @@ FittedFrame {
         id: scene
         readonly property bool fittedHero: true
         objectName: "aboutScene"
+        calm: true
         readonly property real room: page.height - Space.s - page.gap - page.rowH - page.pad
         x: Math.round((page.width - width) / 2)
         y: Space.s
         height: Math.round(Math.max(Space.px(160), Math.min(scene.room, (page.width - page.margin * 2) * 9 / 16, Space.px(560))))
         width: Math.round(Math.min(page.width - page.margin * 2, height * 16 / 9))
 
-        Mark {
-            anchors.fill: parent
-            radius: scene.radius
-            color: Qt.alpha(Colors.shadow, 0.45)
-        }
         Column {
             anchors.centerIn: parent
             width: parent.width * 0.8

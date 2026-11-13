@@ -137,7 +137,7 @@
       }
     },
     "showStatus": {
-      "title": "Status strip",
+      "title": "Status line",
       "type": "boolean",
       "default": true,
       "description": "Your name, network and battery along the edge.",

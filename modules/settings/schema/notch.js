@@ -16,9 +16,7 @@ var category = {
     "row": [{ "id": "notch", "weight": 1.2 }, { "id": "media", "weight": 1 }, { "id": "activities", "weight": 1.3 }],
     "sections": [
         {
-            // the island itself on / off (beside the stage, hero.right): the
-            // other island rows wait for it
-            "id": "island",
+            "id": "notch",
             "title": "prefs.notch.section.notch",
             "entries": [
                 {
@@ -27,13 +25,7 @@ var category = {
                     "label": "prefs.notch.enabled",
                     "description": "prefs.notch.enabled.desc",
                     "keywords": "island notch show hide on off enable disable"
-                }
-            ]
-        },
-        {
-            "id": "notch",
-            "title": "prefs.notch.section.notch",
-            "entries": [
+                },
                 {
                     "key": "notch.style",
                     "type": "selector",
@@ -163,70 +155,6 @@ var category = {
             ]
         },
         {
-            "id": "activity_details",
-            "title": "prefs.notch.section.activity_details",
-            "entries": [
-                {
-                    "key": "notifications.notchStyle",
-                    "type": "selector",
-                    // only toasts grown from the island use it
-                    "visibleWhen": {
-                        "not": {
-                            "key": "notifications.presentation",
-                            "in": ["corner", "strips"]
-                        }
-                    },
-                    "enabledWhen": {
-                        "key": "notch.enabled",
-                        "equals": true
-                    },
-                    "reason": "prefs.disabled.needs_notch",
-                    "options": [
-                        {
-                            "value": "card",
-                            "label": "prefs.notifications.notch_style.card"
-                        },
-                        {
-                            "value": "compact",
-                            "label": "prefs.notifications.notch_style.compact"
-                        }
-                    ],
-                    "label": "prefs.notifications.notch_style",
-                    "description": "prefs.notifications.notch_style.desc",
-                    "keywords": "notification notch compact card one line"
-                },
-                {
-                    "key": "notch.activitiesIn",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "auto",
-                            "label": "prefs.notch.activities_in.auto"
-                        },
-                        {
-                            "value": "notch",
-                            "label": "prefs.notch.activities_in.notch"
-                        },
-                        {
-                            "value": "bar",
-                            "label": "prefs.notch.activities_in.bar"
-                        }
-                    ],
-                    "label": "prefs.notch.activities_in",
-                    "description": "prefs.notch.activities_in.desc",
-                    "keywords": "live activities chips bar notch downloads timer recording grow place"
-                },
-                {
-                    "key": "notch.liveActivities",
-                    "type": "custom",
-                    "component": "ActivitiesEditor",
-                    "label": "shell.activities",
-                    "description": "prefs.notch.activities.desc",
-                    "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
-                }
-            ]
-        },
-        {
             "id": "media",
             "title": "prefs.notch.section.media",
             "entries": [
@@ -318,49 +246,79 @@ var category = {
             "title": "prefs.notch.section.activities",
             "entries": [
                 {
+                    "key": "notch.activitiesIn",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "auto",
+                            "label": "prefs.notch.activities_in.auto"
+                        },
+                        {
+                            "value": "notch",
+                            "label": "prefs.notch.activities_in.notch"
+                        },
+                        {
+                            "value": "bar",
+                            "label": "prefs.notch.activities_in.bar"
+                        }
+                    ],
+                    "label": "prefs.notch.activities_where",
+                    "description": "prefs.notch.activities_in.desc",
+                    "keywords": "live activities chips bar notch downloads timer recording grow place"
+                },
+                {
                     "key": "notch.activities",
                     "type": "custom",
                     "component": "IslandActivitiesEditor",
                     "label": "prefs.notch.island_activities",
                     "description": "prefs.notch.island_activities.desc",
                     "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
-                }
-            ]
-        },
-        {
-            "id": "timers",
-            "title": "prefs.notch.section.timers",
-            "entries": [
+                },
                 {
-                    "key": "system.timers.notchStyle",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "ring",
-                            "label": "prefs.timers.style.ring",
-                            "icon": "circleNotch"
-                        },
-                        {
-                            "value": "text",
-                            "label": "prefs.timers.style.text",
-                            "icon": "textT"
-                        }
-                    ],
-                    "label": "prefs.timers.style",
-                    "description": "prefs.timers.style.desc",
-                    "keywords": "notch ring progress text countdown display"
+                    "key": "notch.liveActivities",
+                    "type": "custom",
+                    "component": "ActivitiesEditor",
+                    "label": "prefs.notch.activity_kinds",
+                    "description": "prefs.notch.activities.desc",
+                    "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+                },
+                {
+                    "id": "notch.notifLink",
+                    "type": "custom",
+                    "component": "PageLink",
+                    "target": "notifications",
+                    "targetSection": "presentation",
+                    "linkText": "prefs.notch.notif_link.open",
+                    "resettable": false,
+                    "label": "prefs.notch.notif_link",
+                    "description": "prefs.notch.notif_link.desc",
+                    "keywords": "notification notch compact card island"
+                },
+                {
+                    "id": "notch.timerLink",
+                    "type": "custom",
+                    "component": "PageLink",
+                    "target": "timers",
+                    "targetSection": "notch",
+                    "linkText": "prefs.notch.timer_link.open",
+                    "resettable": false,
+                    "label": "prefs.notch.timer_link",
+                    "description": "prefs.notch.timer_link.desc",
+                    "keywords": "timer ring text countdown island"
                 }
             ]
         }
     ]
 };
 
-// The notch and media sections only matter while the notch is on (the switch
-// beside the Island stage); activities and timers also work in the bar.
+// The notch and media rows only matter while the island is on (its switch
+// heads the Island card); activities also work in the bar.
 category.sections.forEach(function (section) {
     if (section.id !== "notch" && section.id !== "media")
         return;
     section.entries.forEach(function (entry) {
+        if (entry.key === "notch.enabled")
+            return;
         var on = {
             "key": "notch.enabled",
             "equals": true

@@ -83,7 +83,7 @@ FocusScope {
 
     onQueryChanged: resultIndex = 0
 
-    // "Bar › Clock": the destination, the tab when it is not the first one,
+    // "Screen › Bar › Clock": the destination, its tab (when it has several),
     // then the section (the schema context is "page › section").
     function contextOf(it) {
         const g = Categories.groupOf(it.categoryId);
@@ -91,7 +91,7 @@ FocusScope {
             return it.context;
         const parts = [I18n.t(g.title)];
         const cat = Categories.byId(it.categoryId);
-        if (cat && g.categories.indexOf(cat.id) > 0)
+        if (cat && g.categories.length > 1)
             parts.push(I18n.t(cat.title));
         return parts.concat(String(it.context || "").split(" › ").slice(1)).join(" › ");
     }

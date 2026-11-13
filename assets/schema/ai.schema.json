@@ -2162,10 +2162,10 @@
           "maximum": 100
         },
         "limitWindow": {
-          "title": "Limit shown in the strip",
+          "title": "Limit in the status line",
           "type": "string",
           "default": "auto",
-          "description": "Which subscription window the strip shows for Claude Code and Codex. Automatic picks the fullest one.",
+          "description": "Which subscription window the status line shows for Claude Code and Codex. Automatic picks the fullest one.",
           "x-settings": {
             "category": "ai",
             "section": "usage_limits",
@@ -2193,7 +2193,7 @@
           "title": "Tokens next to the cost",
           "type": "boolean",
           "default": true,
-          "description": "The strip shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
+          "description": "The status line shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
           "x-settings": {
             "category": "ai",
             "section": "usage_limits",

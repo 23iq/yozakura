@@ -2239,10 +2239,10 @@
               "maximum": 100
             },
             "limitWindow": {
-              "title": "Limit shown in the strip",
+              "title": "Limit in the status line",
               "type": "string",
               "default": "auto",
-              "description": "Which subscription window the strip shows for Claude Code and Codex. Automatic picks the fullest one.",
+              "description": "Which subscription window the status line shows for Claude Code and Codex. Automatic picks the fullest one.",
               "x-settings": {
                 "category": "ai",
                 "section": "usage_limits",
@@ -2270,7 +2270,7 @@
               "title": "Tokens next to the cost",
               "type": "boolean",
               "default": true,
-              "description": "The strip shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
+              "description": "The status line shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
               "x-settings": {
                 "category": "ai",
                 "section": "usage_limits",
@@ -2814,10 +2814,10 @@
           }
         },
         "hoverRegionHeight": {
-          "title": "Bar reveal strip",
+          "title": "Edge that reveals the bar",
           "type": "number",
           "default": 8,
-          "description": "Size of the invisible edge strip that reveals the hidden bar.",
+          "description": "How wide the invisible edge is that brings the hidden bar back.",
           "x-settings": {
             "category": "bar",
             "section": "expert",
@@ -5800,10 +5800,10 @@
           "x-unit": "px"
         },
         "hoverRegionHeight": {
-          "title": "Dock reveal strip",
+          "title": "Edge that reveals the dock",
           "type": "number",
           "default": 16,
-          "description": "Size of the invisible edge strip that reveals the hidden dock.",
+          "description": "How wide the invisible edge is that brings the hidden dock back.",
           "x-settings": {
             "category": "dock",
             "section": "autohide",
@@ -6351,14 +6351,14 @@
           "description": "Launcher placement and look.",
           "properties": {
             "host": {
-              "title": "Launcher",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+              "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.launcher_host",
+                "category": "launcher",
+                "section": "appearance",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
                 "keywords": "launcher host spotlight sheet notch centered search"
               },
@@ -6446,14 +6446,14 @@
           "description": "Dashboard placement, tabs and widget grid.",
           "properties": {
             "host": {
-              "title": "Dashboard",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+              "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.dashboard_host",
+                "category": "dashboard",
+                "section": "home",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
                 "keywords": "dashboard host spotlight sheet notch side panel"
               },
@@ -6494,7 +6494,7 @@
               }
             },
             "showMetrics": {
-              "title": "Metrics strip",
+              "title": "Metrics row",
               "type": "boolean",
               "default": true,
               "description": "A thin line with CPU, RAM, GPU and network at the bottom; click it to open the metrics tab.",
@@ -6632,8 +6632,8 @@
               "default": "auto",
               "description": "Auto uses the right edge, or the left one when the bar is on the right.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts3",
+                "category": "menus",
+                "section": "menus",
                 "label": "prefs.layout.sheet_side",
                 "control": "selector",
                 "keywords": "sheet side left right edge vertical bar",
@@ -6695,8 +6695,8 @@
           "default": false,
           "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts3",
+            "category": "menus",
+            "section": "menus",
             "label": "prefs.layout.backdrop",
             "control": "toggle",
             "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
@@ -6827,14 +6827,14 @@
           "description": "AI quick ask placement.",
           "properties": {
             "host": {
-              "title": "Quick ask",
+              "title": "Quick ask opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
+              "description": "Island: inside the island. Card: a small floating card beside the bar. Spotlight: centred over the screen.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts2",
-                "label": "prefs.layout.aiquick_host",
+                "category": "ai",
+                "section": "quickask",
+                "label": "prefs.layout.quickask_opens_in",
                 "control": "selector",
                 "keywords": "ai quick ask host card floating spotlight notch island"
               },
@@ -6860,14 +6860,14 @@
           "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
           "properties": {
             "host": {
-              "title": "Voice and timers",
+              "title": "Opens in",
               "type": "string",
               "default": "auto",
-              "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
+              "description": "Island: the island grows to show them. Card: a small floating card beside the bar.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts2",
-                "label": "prefs.layout.panels_host",
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.layout.opens_in",
                 "control": "selector",
                 "keywords": "voice dictation timer hub alarm panels host card floating notch island"
               },
@@ -6891,14 +6891,14 @@
           "description": "Keybind cheatsheet placement.",
           "properties": {
             "host": {
-              "title": "Shortcut sheet",
+              "title": "Shortcut sheet opens in",
               "type": "string",
               "default": "fullscreen",
               "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
               "x-settings": {
-                "category": "layout",
-                "section": "hosts",
-                "label": "prefs.layout.cheatsheet_host",
+                "category": "input",
+                "section": "shortcuts",
+                "label": "prefs.layout.sheet_opens_in",
                 "control": "selector",
                 "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
               },
@@ -6927,7 +6927,7 @@
               "default": "auto",
               "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
               "x-settings": {
-                "category": "osd",
+                "category": "menus",
                 "section": "place",
                 "label": "prefs.osd.position",
                 "control": "selector",
@@ -6958,7 +6958,7 @@
               "default": "pill",
               "description": "How the volume and brightness indicator looks and where it lives.",
               "x-settings": {
-                "category": "osd",
+                "category": "menus",
                 "section": "osd",
                 "label": "prefs.label.osd_style",
                 "control": "selector",
@@ -6985,7 +6985,7 @@
               "default": 2500,
               "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
               "x-settings": {
-                "category": "osd",
+                "category": "menus",
                 "section": "place",
                 "label": "prefs.osd.timeout",
                 "control": "slider",
@@ -7142,7 +7142,7 @@
           }
         },
         "showStatus": {
-          "title": "Status strip",
+          "title": "Status line",
           "type": "boolean",
           "default": true,
           "description": "Your name, network and battery along the edge.",
@@ -7187,7 +7187,7 @@
           "description": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
           "x-settings": {
             "category": "notch",
-            "section": "island",
+            "section": "notch",
             "label": "prefs.notch.enabled",
             "control": "toggle",
             "keywords": "island notch show hide on off enable disable"
@@ -7542,14 +7542,14 @@
           }
         },
         "activitiesIn": {
-          "title": "Live Activities In",
+          "title": "Activities show in",
           "type": "string",
           "default": "auto",
           "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
           "x-settings": {
             "category": "notch",
-            "section": "activity_details",
-            "label": "prefs.notch.activities_in",
+            "section": "activities",
+            "label": "prefs.notch.activities_where",
             "control": "selector",
             "keywords": "live activities chips bar notch downloads timer recording grow place"
           },
@@ -7565,13 +7565,13 @@
           }
         },
         "liveActivities": {
-          "title": "Live Activities",
+          "title": "What counts as an activity",
           "type": "object",
           "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
           "x-settings": {
             "category": "notch",
-            "section": "activity_details",
-            "label": "shell.activities",
+            "section": "activities",
+            "label": "prefs.notch.activity_kinds",
             "control": "custom",
             "component": "ActivitiesEditor",
             "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
@@ -7818,8 +7818,8 @@
           "default": "card",
           "description": "A full card, or one compact line that unfolds on hover.",
           "x-settings": {
-            "category": "notch",
-            "section": "activity_details",
+            "category": "notifications",
+            "section": "presentation",
             "label": "prefs.notifications.notch_style",
             "control": "selector",
             "keywords": "notification notch compact card one line",
@@ -9643,7 +9643,7 @@
               "type": "boolean",
               "default": true,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9657,7 +9657,7 @@
               "type": "boolean",
               "default": true,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9671,7 +9671,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9685,7 +9685,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9699,7 +9699,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9713,7 +9713,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9727,7 +9727,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9741,7 +9741,7 @@
               "type": "boolean",
               "default": false,
               "x-settings": {
-                "category": "updates",
+                "category": "system",
                 "section": "ocr",
                 "label": "shell.system.ocr_languages",
                 "entry": "system.ocr",
@@ -9839,8 +9839,8 @@
               "default": "ring",
               "description": "A ring that empties as time runs out, or just the time",
               "x-settings": {
-                "category": "notch",
-                "section": "timers",
+                "category": "timers",
+                "section": "notch",
                 "label": "prefs.timers.style",
                 "control": "selector",
                 "keywords": "notch ring progress text countdown display"
@@ -18050,18 +18050,13 @@
   },
   "x-categories": [
     {
-      "id": "layout",
-      "title": "Where things open",
-      "description": "Where the bar, island and dock sit on the screen."
-    },
-    {
       "id": "appearance",
-      "title": "Theme",
+      "title": "Theme & colours",
       "description": "Theme mode, colors, fonts, shape and motion."
     },
     {
       "id": "icons-type",
-      "title": "Icons & type",
+      "title": "Fonts & icons",
       "description": "Icon weight, fonts and heading style."
     },
     {
@@ -18096,7 +18091,7 @@
     },
     {
       "id": "desktop",
-      "title": "Desktop",
+      "title": "Widgets & clock",
       "description": "Depth clock, desktop widgets and icons."
     },
     {
@@ -18110,13 +18105,8 @@
       "description": "Popups, history and do not disturb."
     },
     {
-      "id": "osd",
-      "title": "On-screen display",
-      "description": "Volume and brightness indicator: style, edge and timing."
-    },
-    {
       "id": "menus",
-      "title": "Menus",
+      "title": "Menus & OSD",
       "description": "How the bar's popups and menus open."
     },
     {
@@ -18131,7 +18121,7 @@
     },
     {
       "id": "windows",
-      "title": "Windows",
+      "title": "Layout & gaps",
       "description": "Gaps, borders, blur, shadows and motion of your windows."
     },
     {
@@ -18146,12 +18136,12 @@
     },
     {
       "id": "system",
-      "title": "System",
+      "title": "Language & weather",
       "description": "Idle and power, performance, language, weather."
     },
     {
       "id": "voice",
-      "title": "Voice input",
+      "title": "Voice",
       "description": "Local speech recognition, dictation and push-to-talk."
     },
     {
@@ -18196,17 +18186,17 @@
     },
     {
       "id": "ai",
-      "title": "Assistant",
+      "title": "Chat",
       "description": "Chat, coding agents, desktop control, MCP servers, prompts and automations."
     },
     {
       "id": "ai-providers",
-      "title": "AI providers",
+      "title": "Models & providers",
       "description": "Connect cloud and local models: API keys, servers, the default model and request settings."
     },
     {
       "id": "ai-code",
-      "title": "Code tasks",
+      "title": "Agents & tasks",
       "description": "Hand coding tasks to agents: defaults, queue, review and the task board"
     },
     {
@@ -18231,12 +18221,12 @@
     },
     {
       "id": "keyboard",
-      "title": "Keyboard",
+      "title": "Layouts",
       "description": "Layouts, switching, key repeat and the bar indicator."
     },
     {
       "id": "extras",
-      "title": "Extras",
+      "title": "Apps",
       "description": "Browsers, chat, games, AI agents and tools, installed in one click."
     },
     {
@@ -18247,52 +18237,51 @@
   ],
   "x-groups": [
     {
-      "id": "layout",
-      "title": "Desktop layout",
-      "categories": [
-        "bar",
-        "notch",
-        "dock",
-        "layout"
-      ]
-    },
-    {
       "id": "look",
       "title": "Look",
       "categories": [
         "appearance",
-        "icons-type"
-      ]
-    },
-    {
-      "id": "wallpaper",
-      "title": "Wallpaper",
-      "categories": [
-        "wallpapers"
-      ]
-    },
-    {
-      "id": "presets",
-      "title": "Presets",
-      "categories": [
+        "wallpapers",
+        "icons-type",
         "presets",
         "changes"
       ]
     },
     {
-      "id": "notifications",
-      "title": "Notifications",
+      "id": "screen",
+      "title": "Screen",
       "categories": [
-        "notifications",
-        "osd",
+        "bar",
+        "notch",
+        "dock",
+        "desktop",
+        "lockscreen"
+      ]
+    },
+    {
+      "id": "windows",
+      "title": "Windows",
+      "categories": [
+        "windows",
+        "overview",
+        "specials"
+      ]
+    },
+    {
+      "id": "panels",
+      "title": "Panels",
+      "categories": [
+        "launcher",
+        "dashboard",
         "menus"
       ]
     },
     {
-      "id": "lockscreen",
-      "title": "Lock screen",
+      "id": "notifications",
+      "title": "Notifications & focus",
       "categories": [
-        "lockscreen"
+        "notifications",
+        "timers"
       ]
     },
     {
@@ -18301,52 +18290,28 @@
       "categories": [
         "ai",
         "ai-providers",
-        "ai-code"
-      ]
-    },
-    {
-      "id": "launcher",
-      "title": "Launcher",
-      "categories": [
-        "launcher"
-      ]
-    },
-    {
-      "id": "dashboard",
-      "title": "Dashboard",
-      "categories": [
-        "dashboard"
-      ]
-    },
-    {
-      "id": "desktop",
-      "title": "Widgets",
-      "categories": [
-        "desktop",
-        "overview"
+        "ai-code",
+        "voice"
       ]
     },
     {
       "id": "keys",
-      "title": "Keys",
+      "title": "Keyboard",
       "categories": [
         "keyboard",
         "input"
       ]
     },
     {
-      "id": "displays",
-      "title": "Displays",
+      "id": "devices",
+      "title": "Devices",
       "categories": [
-        "displays"
-      ]
-    },
-    {
-      "id": "windows",
-      "title": "Windows",
-      "categories": [
-        "windows",
-        "specials"
+        "displays",
+        "network",
+        "bluetooth",
+        "sound",
+        "effects",
+        "power"
       ]
     },
     {
@@ -18355,42 +18320,11 @@
       "categories": [
         "system",
         "updates",
-        "voice",
-        "timers",
-        "routines",
-        "about"
-      ]
-    },
-    {
-      "id": "network",
-      "title": "Network",
-      "categories": [
-        "network",
-        "bluetooth"
-      ]
-    },
-    {
-      "id": "sound",
-      "title": "Sound",
-      "categories": [
-        "sound",
-        "effects"
-      ]
-    },
-    {
-      "id": "power",
-      "title": "Power",
-      "categories": [
-        "power"
-      ]
-    },
-    {
-      "id": "apps",
-      "title": "Apps",
-      "categories": [
         "terminal",
         "extras",
-        "mods"
+        "mods",
+        "routines",
+        "about"
       ]
     }
   ]

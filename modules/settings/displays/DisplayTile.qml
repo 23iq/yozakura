@@ -2,15 +2,14 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.modules.globals
 import qs.config
 import "../Ui.js" as Ui
 import "../../services/DisplayModel.js" as DisplayModel
 import "DisplayFormat.js" as DisplayFormat
 import qs.modules.components.kit
 
-// One monitor on the arrangement canvas: a rounded pane with a dimmed
-// wallpaper thumbnail, number badge, model and connector. Dragging moves it
+// One monitor on the arrangement canvas: a rounded pane (no wallpaper: Displays
+// is not a desktop page) with a number badge, model and connector. Dragging moves it
 // (the canvas arranges on release and the tile glides to the snapped spot).
 StyledRect {
     id: tile
@@ -27,11 +26,6 @@ StyledRect {
     readonly property var logical: DisplayModel.logicalSize(config)
     readonly property real baseX: originX + config.x * pxScale
     readonly property real baseY: originY + config.y * pxScale
-    readonly property string wallpaper: {
-        const m = GlobalStates.wallpaperManager;
-        const f = m ? (m.currentWallpaper || "") : "";
-        return f && m.getDisplaySource ? m.getDisplaySource(f) : f;
-    }
     property bool dragging: false
     // Offset from the layout position: the drag distance, then the glide back to 0
     property real gx: 0
@@ -113,17 +107,6 @@ StyledRect {
         }
     }
 
-    Image {
-        anchors.fill: parent
-        source: tile.wallpaper !== "" ? (tile.wallpaper.startsWith("/") ? "file://" + tile.wallpaper : tile.wallpaper) : ""
-        fillMode: Image.PreserveAspectCrop
-        sourceSize.width: 320
-        sourceSize.height: 320
-        asynchronous: true
-        cache: true
-        opacity: 0.35
-    }
-
     // Number badge
     Rectangle {
         id: badge
@@ -143,7 +126,7 @@ StyledRect {
         }
     }
 
-    // the labels on a card fill: readable over any wallpaper, light or dark
+    // the labels on a card fill, readable on the pane in light and dark
     Mark {
         anchors.centerIn: labels
         width: Math.min(tile.width - Space.s * 2, Math.max(l1.implicitWidth, l2.visible ? l2.implicitWidth : 0, l3.visible ? l3.implicitWidth : 0) + Space.l * 2)

@@ -205,7 +205,7 @@
           "type": "boolean",
           "default": true,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -219,7 +219,7 @@
           "type": "boolean",
           "default": true,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -233,7 +233,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -247,7 +247,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -261,7 +261,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -275,7 +275,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -289,7 +289,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -303,7 +303,7 @@
           "type": "boolean",
           "default": false,
           "x-settings": {
-            "category": "updates",
+            "category": "system",
             "section": "ocr",
             "label": "shell.system.ocr_languages",
             "entry": "system.ocr",
@@ -401,8 +401,8 @@
           "default": "ring",
           "description": "A ring that empties as time runs out, or just the time",
           "x-settings": {
-            "category": "notch",
-            "section": "timers",
+            "category": "timers",
+            "section": "notch",
             "label": "prefs.timers.style",
             "control": "selector",
             "keywords": "notch ring progress text countdown display"

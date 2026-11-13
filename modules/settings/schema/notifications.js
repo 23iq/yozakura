@@ -134,6 +134,35 @@ var category = {
                     "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
                 },
                 {
+                    "key": "notifications.notchStyle",
+                    "type": "selector",
+                    // only toasts grown from the island use it
+                    "visibleWhen": {
+                        "not": {
+                            "key": "notifications.presentation",
+                            "in": ["corner", "strips"]
+                        }
+                    },
+                    "enabledWhen": {
+                        "key": "notch.enabled",
+                        "equals": true
+                    },
+                    "reason": "prefs.disabled.needs_notch",
+                    "options": [
+                        {
+                            "value": "card",
+                            "label": "prefs.notifications.notch_style.card"
+                        },
+                        {
+                            "value": "compact",
+                            "label": "prefs.notifications.notch_style.compact"
+                        }
+                    ],
+                    "label": "prefs.notifications.notch_style",
+                    "description": "prefs.notifications.notch_style.desc",
+                    "keywords": "notification notch compact card one line"
+                },
+                {
                     "key": "notifications.strips.edge",
                     "advanced": true,
                     "type": "selector",

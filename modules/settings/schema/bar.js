@@ -60,7 +60,7 @@ var category = {
                         "key": "bar.panels",
                         "empty": false
                     },
-                    "label": "prefs.bar.panels",
+                    "label": "prefs.bar.panels.selected",
                     "description": "prefs.bar.panels.desc",
                     "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
                 }

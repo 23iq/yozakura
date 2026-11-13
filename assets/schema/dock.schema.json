@@ -206,10 +206,10 @@
       "x-unit": "px"
     },
     "hoverRegionHeight": {
-      "title": "Dock reveal strip",
+      "title": "Edge that reveals the dock",
       "type": "number",
       "default": 16,
-      "description": "Size of the invisible edge strip that reveals the hidden dock.",
+      "description": "How wide the invisible edge is that brings the hidden dock back.",
       "x-settings": {
         "category": "dock",
         "section": "autohide",

@@ -13,7 +13,7 @@
       "description": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
       "x-settings": {
         "category": "notch",
-        "section": "island",
+        "section": "notch",
         "label": "prefs.notch.enabled",
         "control": "toggle",
         "keywords": "island notch show hide on off enable disable"
@@ -368,14 +368,14 @@
       }
     },
     "activitiesIn": {
-      "title": "Live Activities In",
+      "title": "Activities show in",
       "type": "string",
       "default": "auto",
       "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
       "x-settings": {
         "category": "notch",
-        "section": "activity_details",
-        "label": "prefs.notch.activities_in",
+        "section": "activities",
+        "label": "prefs.notch.activities_where",
         "control": "selector",
         "keywords": "live activities chips bar notch downloads timer recording grow place"
       },
@@ -391,13 +391,13 @@
       }
     },
     "liveActivities": {
-      "title": "Live Activities",
+      "title": "What counts as an activity",
       "type": "object",
       "description": "Recording, privacy, timers and download progress shown as small islands next to the island.",
       "x-settings": {
         "category": "notch",
-        "section": "activity_details",
-        "label": "shell.activities",
+        "section": "activities",
+        "label": "prefs.notch.activity_kinds",
         "control": "custom",
         "component": "ActivitiesEditor",
         "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
