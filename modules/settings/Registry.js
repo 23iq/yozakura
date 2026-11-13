@@ -15,6 +15,7 @@ var EDITORS = {
     "PanelShapeCards": "editors/PanelShapeCards.qml",
     "PanelModulesCard": "editors/PanelModulesCard.qml",
     "BarSizeCards": "editors/BarSizeCards.qml",
+    "DockLookEditor": "editors/DockLookEditor.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorCards": "editors/IndicatorCards.qml",
     "BranchBlossomChips": "editors/BranchBlossomChips.qml",
@@ -91,7 +92,6 @@ var PREVIEWS = {
     "SentencePreview": "previews/SentencePreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
-    "OsdPreview": "previews/OsdPreview.qml",
     "StripsPreview": "previews/StripsPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
 };
@@ -102,6 +102,9 @@ var THUMBS = {
     "LanguageThumb": "thumbs/LanguageThumb.qml",
     "CornerThumb": "thumbs/CornerThumb.qml",
     "EdgeThumb": "thumbs/EdgeThumb.qml",
+    "DockStyleThumb": "thumbs/DockStyleThumb.qml",
+    "IslandShapeThumb": "thumbs/IslandShapeThumb.qml",
+    "OsdStyleThumb": "thumbs/OsdStyleThumb.qml",
     "PresentationThumb": "thumbs/PresentationThumb.qml",
     "BarEdgeThumb": "thumbs/BarEdgeThumb.qml",
     "ClockFaceThumb": "thumbs/ClockFaceThumb.qml",
@@ -131,6 +134,7 @@ var STAGES = {
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
+    "OsdStage": "stages/OsdStage.qml",
     "LockStage": "stages/LockStage.qml",
     "WallpaperStage": "stages/WallpaperStage.qml",
     "LauncherStage": "stages/LauncherStage.qml",
