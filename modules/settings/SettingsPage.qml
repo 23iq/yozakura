@@ -198,10 +198,11 @@ Flickable {
             x: (heroArea.width - width) / 2
             active: page.stageUrl !== ""
             source: page.stageUrl
-            // a page that is not about the desktop: a plain stage, no picture
+            // a page that is not about the desktop, or a strip of the thing itself
+            // (the bar, the island): a plain stage, no picture
             onLoaded: {
                 if (item && "calm" in item)
-                    item.calm = Qt.binding(() => page.plainStage);
+                    item.calm = Qt.binding(() => page.plainStage || stageLoader.asked > 0);
             }
 
             // a soft shadow under the stage

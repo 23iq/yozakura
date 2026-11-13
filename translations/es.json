@@ -4567,7 +4567,7 @@
   "prefs.bar.add_bar": "Añadir una barra",
   "prefs.bar.hero_hint": "Pulsa una parte de la barra para editarla · el borde se elige en Borde y marco",
   "prefs.undo.bar_added": "Barra añadida",
-  "prefs.notch.hero_hint": "Haz clic en el borde superior o inferior para mover la isla · clic en la barra o el dock para editarlos",
+  "prefs.notch.hero_hint": "Elige un estado para verlo · pulsa la isla para editar lo que muestra",
   "prefs.dock.hero_hint": "Haz clic en un borde para mover el dock · clic en la isla para editarla",
   "prefs.layout.hero_hint": "Elige una ficha en la pantalla y haz clic donde debe abrirse",
   "prefs.lockscreen.hero_hint": "Haz clic en la mitad superior o inferior para mover el campo de contraseña",
@@ -4724,5 +4724,10 @@
   "prefs.notch.timer_link.desc": "Cómo se muestra un temporizador en la isla se ajusta con los temporizadores.",
   "prefs.bar.panels.selected": "Barra elegida",
   "prefs.voice.opens_link": "El panel de voz se abre en",
-  "prefs.voice.opens_link.desc": "El panel de voz se abre en el mismo sitio que los temporizadores; elígelo allí."
+  "prefs.voice.opens_link.desc": "El panel de voz se abre en el mismo sitio que los temporizadores; elígelo allí.",
+  "prefs.notch.state.rest": "En reposo",
+  "prefs.notch.state.media": "Música",
+  "prefs.notch.state.notification": "Notificación",
+  "prefs.notch.state.timer": "Temporizador",
+  "prefs.notch.off_stage": "La isla está desactivada"
 }

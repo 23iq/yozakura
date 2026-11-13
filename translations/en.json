@@ -4567,7 +4567,7 @@
   "prefs.bar.add_bar": "Add a bar",
   "prefs.bar.hero_hint": "Click a part of the bar to edit it · the edge is set under Edge and frame",
   "prefs.undo.bar_added": "Bar added",
-  "prefs.notch.hero_hint": "Click the top or bottom edge to move the island · click the bar or the dock to edit them",
+  "prefs.notch.hero_hint": "Pick a state to see it · click the island to edit what it shows",
   "prefs.dock.hero_hint": "Click an edge to move the dock · click the island to edit it",
   "prefs.layout.hero_hint": "Pick a chip on the screen, then click where it should open",
   "prefs.lockscreen.hero_hint": "Click the top or bottom half to move the password field",
@@ -4724,5 +4724,10 @@
   "prefs.notch.timer_link.desc": "How a running timer shows in the island is set with the timers.",
   "prefs.bar.panels.selected": "Selected bar",
   "prefs.voice.opens_link": "Voice panel opens in",
-  "prefs.voice.opens_link.desc": "The voice panel opens in the same place as the timers; choose it there."
+  "prefs.voice.opens_link.desc": "The voice panel opens in the same place as the timers; choose it there.",
+  "prefs.notch.state.rest": "At rest",
+  "prefs.notch.state.media": "Music",
+  "prefs.notch.state.notification": "Notification",
+  "prefs.notch.state.timer": "Timer",
+  "prefs.notch.off_stage": "The island is off"
 }
