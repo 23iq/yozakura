@@ -125,7 +125,7 @@ Window {{
     rec = Recorder(win, out / f"frames-{name}")
     rest = QPoint(w - 4, h - 4)
     if name == "tile-hover":
-        tile = sr.find_visual(root, "homeTile:layout")
+        tile = sr.find_visual(root, "homeTile:screen")
         rec.grab(200)
         target = centre(tile)
         glide(win, rest, QPoint(target.x() - tile.width() // 4, target.y()), rec)
@@ -161,7 +161,7 @@ Window {{
             rec.grab(40)
         rec.grab(300)
     elif name == "scroll":
-        page = env.h.eval(shell, 'page.item')
+        page = sr.find_visual(root, "settingsPage").property("item")
         rec.grab(300)
         for y in list(range(0, 901, 45)) + list(range(900, -1, -45)):
             env.h.eval(page, f"contentY = Math.min({y}, contentHeight - height)")
