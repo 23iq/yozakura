@@ -105,11 +105,12 @@ FittedFrame {
                 spacing: Space.xs
                 Repeater {
                     model: root.shown ? (root.shown.tags || []).slice(0, 4) : []
+                    // the preset's tags: read-only labels at full ink (a
+                    // disabled chip was nearly invisible)
                     delegate: Chip {
                         required property string modelData
                         dense: true
-                        quiet: true
-                        enabled: false
+                        Accessible.role: Accessible.StaticText
                         text: I18n.t(PresetModel.tagLabel(modelData))
                     }
                 }
