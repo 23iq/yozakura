@@ -106,7 +106,7 @@
  },
  "modules/settings/editors": {
   "font-size": 2,
-  "rectangle": 29,
+  "rectangle": 28,
   "text": 3
  },
  "modules/settings/editors/desktopwidgets": {
@@ -134,7 +134,7 @@
   "text": 1
  },
  "modules/settings/previews": {
-  "rectangle": 35
+  "rectangle": 34
  },
  "modules/settings/system": {
   "text": 1
