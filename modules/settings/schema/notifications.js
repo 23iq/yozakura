@@ -272,22 +272,6 @@ var category = {
                     "label": "prefs.notif.group",
                     "description": "prefs.notif.group.desc",
                     "keywords": "group grouping stack app same application"
-                },
-                {
-                    "key": "notifications.historySize",
-                    "type": "number",
-                    "min": 0,
-                    "max": 500,
-                    "step": 10,
-                    "specialValues": [
-                        {
-                            "value": 0,
-                            "label": "prefs.notif.history.none"
-                        }
-                    ],
-                    "label": "prefs.notif.history",
-                    "description": "prefs.notif.history.desc",
-                    "keywords": "history size keep remember stored count dashboard"
                 }
             ]
         },
@@ -360,30 +344,11 @@ var category = {
             ]
         },
         {
-            "id": "dnd",
-            "title": "prefs.notif.section.dnd",
+            // quiet hours: the times and days of the Do Not Disturb schedule
+            // (its switch is in the Do Not Disturb card)
+            "id": "dnd_schedule",
+            "title": "prefs.notif.section.quiet_hours",
             "entries": [
-                {
-                    "key": "notifications.dnd.enabled",
-                    "type": "toggle",
-                    "label": "prefs.notif.dnd",
-                    "description": "prefs.notif.dnd.desc",
-                    "keywords": "do not disturb dnd silence quiet focus mute all"
-                },
-                {
-                    "key": "notifications.dnd.allowCritical",
-                    "type": "toggle",
-                    "label": "prefs.notif.dnd_critical",
-                    "description": "prefs.notif.dnd_critical.desc",
-                    "keywords": "critical urgent battery alarm bypass dnd"
-                },
-                {
-                    "key": "notifications.dnd.schedule.enabled",
-                    "type": "toggle",
-                    "label": "prefs.notif.schedule",
-                    "description": "prefs.notif.schedule.desc",
-                    "keywords": "schedule night quiet hours automatic dnd time"
-                },
                 {
                     "key": "notifications.dnd.schedule.from",
                     "type": "text",
@@ -419,6 +384,56 @@ var category = {
                     "label": "prefs.notif.schedule_days",
                     "description": "prefs.notif.schedule_days.desc",
                     "keywords": "days week weekdays weekend monday sunday"
+                }
+            ]
+        },
+        {
+            // how many past notifications are kept (rare)
+            "id": "history",
+            "title": "prefs.notif.section.history",
+            "entries": [
+                {
+                    "key": "notifications.historySize",
+                    "type": "number",
+                    "min": 0,
+                    "max": 500,
+                    "step": 10,
+                    "specialValues": [
+                        {
+                            "value": 0,
+                            "label": "prefs.notif.history.none"
+                        }
+                    ],
+                    "label": "prefs.notif.history",
+                    "description": "prefs.notif.history.desc",
+                    "keywords": "history size keep remember stored count dashboard"
+                }
+            ]
+        },
+        {
+            "id": "dnd",
+            "title": "prefs.notif.section.dnd",
+            "entries": [
+                {
+                    "key": "notifications.dnd.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notif.dnd",
+                    "description": "prefs.notif.dnd.desc",
+                    "keywords": "do not disturb dnd silence quiet focus mute all"
+                },
+                {
+                    "key": "notifications.dnd.allowCritical",
+                    "type": "toggle",
+                    "label": "prefs.notif.dnd_critical",
+                    "description": "prefs.notif.dnd_critical.desc",
+                    "keywords": "critical urgent battery alarm bypass dnd"
+                },
+                {
+                    "key": "notifications.dnd.schedule.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notif.schedule",
+                    "description": "prefs.notif.schedule.desc",
+                    "keywords": "schedule night quiet hours automatic dnd time"
                 }
             ]
         }
