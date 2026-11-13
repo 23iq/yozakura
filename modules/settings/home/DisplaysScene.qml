@@ -5,10 +5,9 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
-import qs.modules.settings.stages
 
-// Home tile scene of Displays: the monitor arrangement (DisplaysService),
-// each screen showing the wallpaper; one screen when none is known.
+// Home tile scene of Devices: the monitor arrangement (DisplaysService) as
+// plain screens with their resolution; one screen when none is known.
 Item {
     id: scene
 
@@ -43,14 +42,25 @@ Item {
 
     Repeater {
         model: scene.monitors
-        delegate: Stage {
+        delegate: Mark {
             required property var modelData
             x: scene.width - scene.box.w * scene.k + ((modelData.x || 0) - scene.box.x) * scene.k
             y: (scene.height - scene.box.h * scene.k) / 2 + ((modelData.y || 0) - scene.box.y) * scene.k
             width: modelData.width * scene.k - Space.xs
             height: modelData.height * scene.k - Space.xs
-            stageHeight: height
             radius: Look.radius("small", height)
+            color: Look.raisedFill(false)
+            border.width: Space.hairline
+            border.color: Type.hairline
+            KitText {
+                anchors.centerIn: parent
+                width: parent.width - Space.s * 2
+                horizontalAlignment: Text.AlignHCenter
+                role: "caption"
+                color: Type.secondary
+                elide: Text.ElideRight
+                text: parent.modelData.width + "×" + parent.modelData.height
+            }
         }
     }
 }

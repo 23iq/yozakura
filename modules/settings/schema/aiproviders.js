@@ -10,7 +10,7 @@
 var category = {
     "id": "ai-providers",
     "icon": "plugsConnected",
-    "title": "ai.providers",
+    "title": "prefs.cat.ai_providers",
     "description": "prefs.ai.providers.desc",
     "keywords": "ai api key provider connect openai anthropic gemini mistral groq minimax deepseek openrouter lm studio ollama custom endpoint local",
     "form": "list",

@@ -1,10 +1,9 @@
 .pragma library
 
-// The home bento (SettingsHome): how many columns a width takes and where
+// The home grid (SettingsHome): how many columns a width takes and where
 // each tile sits. Pure, node-tested (tests/settings-home.test.cjs).
-// Tiles are `w` columns by `h` row units (Categories.HOME: a 12-column grid
-// of half-row units); a tile never gets wider than the grid. The rows
-// stretch so the bento fills the window (rowUnit).
+// Every tile is one cell (Categories.HOME: nine equal tiles, three by
+// three); the rows stretch so the grid fills the window (rowUnit).
 
 var SPANS = {
     "big": [6, 8],
@@ -12,10 +11,14 @@ var SPANS = {
     "small": [2, 4]
 };
 
-// Columns for a content width: 12 (the whole bento side by side), else 6
-// (the hero full width, the rest in halves and thirds).
-function columns(width, minColumn) {
-    return width >= Math.max(1, minColumn) * 12 ? 12 : 6;
+// Columns for a content width: 3 when three tiles of `minTile` fit, else
+// 2. `current` (the count shown now) gives hysteresis: three stay until the
+// width is a margin under the switch point, so a resize near it never makes
+// the grid flip back and forth.
+function columns(width, minTile, current) {
+    var edge = Math.max(1, minTile) * 3;
+    var margin = current === 3 ? Math.max(1, minTile) * 0.15 : 0;
+    return width >= edge - margin ? 3 : 2;
 }
 
 // The height of one row unit so `rows` units (and their gaps) fill
@@ -47,7 +50,7 @@ function pack(tiles, cols) {
     var cells = [];
     var rows = 0;
     tiles.forEach(function (t) {
-        var span = t.w ? [t.w, t.h || 1] : (SPANS[t.size] || SPANS.small);
+        var span = t.w ? [t.w, t.h || 1] : (SPANS[t.size] || [1, 1]);
         var w = Math.min(span[0], cols), h = span[1];
         for (var r = 0; ; r++) {
             var placed = false;

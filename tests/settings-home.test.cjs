@@ -15,48 +15,39 @@ const Categories = loadLibrary(path.join(dir, 'schema/Categories.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 const tr = lang => require(`../translations/${lang}.json`);
 
-test('home columns reflow 12 / 6 with the width; rows stretch to fill', () => {
-    assert.equal(HomeLayout.columns(1100, 72), 12);
-    assert.equal(HomeLayout.columns(700, 72), 6);
-    assert.equal(HomeLayout.columns(0, 72), 6);
-    // 14 units and 13 gaps of 12 fill 556 px
-    assert.equal(Math.round(HomeLayout.rowUnit(556, 14, 12, 20) * 14 + 13 * 12), 556);
-    // never under the minimum (the bento scrolls then)
-    assert.equal(HomeLayout.rowUnit(100, 14, 12, 20), 20);
+test('home is three columns, two when narrow, with hysteresis; rows stretch to fill', () => {
+    assert.equal(HomeLayout.columns(900, 240, 2), 3);
+    assert.equal(HomeLayout.columns(600, 240, 2), 2);
+    // near the switch point a grid of three stays three (no flip-flop)
+    assert.equal(HomeLayout.columns(700, 240, 3), 3);
+    assert.equal(HomeLayout.columns(700, 240, 2), 2);
+    assert.equal(HomeLayout.columns(0, 240, 3), 2);
+    // 3 rows and 2 gaps of 12 fill 556 px
+    assert.equal(Math.round(HomeLayout.rowUnit(556, 3, 12, 20) * 3 + 2 * 12), 556);
+    // never under the minimum (home scrolls then)
+    assert.equal(HomeLayout.rowUnit(100, 3, 12, 150), 150);
 });
 
-test('home tiles pack without overlap, in reading order, at every column count', () => {
+test('home tiles are equal cells, three by three, in reading order', () => {
     const tiles = Categories.home();
-    for (const cols of [6, 12]) {
+    for (const cols of [2, 3]) {
         const { cells, rows } = HomeLayout.pack(tiles, cols);
-        assert.equal(cells.length, tiles.length);
-        const taken = new Set();
-        for (const c of cells) {
-            assert.ok(c.col + c.w <= cols, `${c.id} fits ${cols}`);
-            for (let y = c.row; y < c.row + c.h; y++)
-                for (let x = c.col; x < c.col + c.w; x++) {
-                    const k = `${x},${y}`;
-                    assert.ok(!taken.has(k), `${c.id} overlaps at ${k} (${cols} cols)`);
-                    taken.add(k);
-                }
-            assert.ok(c.row + c.h <= rows);
-        }
-        // the hero comes first, top left
-        assert.deepEqual(plain(cells[0]), { id: 'layout', col: 0, row: 0, w: 6, h: 8 });
-        // no hole: every cell of the rows the tiles span is taken
-        assert.equal(taken.size, cols * rows, `${cols} cols: ${taken.size} of ${cols * rows} cells`);
+        assert.equal(cells.length, 9);
+        assert.equal(rows, Math.ceil(9 / cols));
+        cells.forEach((c, i) => {
+            assert.deepEqual([c.w, c.h], [1, 1], c.id);
+            assert.deepEqual([c.col, c.row], [i % cols, Math.floor(i / cols)], c.id);
+        });
     }
 });
 
-test('arrow keys move to the nearest tile that way', () => {
-    const { cells } = HomeLayout.pack(Categories.home(), 12);
+test('arrow keys move to the next tile that way', () => {
+    const { cells } = HomeLayout.pack(Categories.home(), 3);
     const at = id => cells.findIndex(c => c.id === id);
-    // look sits right of the big layout tile
-    assert.equal(cells[HomeLayout.neighbour(cells, at('layout'), 'right')].id, 'look');
-    assert.equal(HomeLayout.neighbour(cells, at('layout'), 'left'), at('layout'));
-    assert.equal(HomeLayout.neighbour(cells, at('layout'), 'up'), at('layout'));
-    const down = cells[HomeLayout.neighbour(cells, at('look'), 'down')];
-    assert.ok(down.row > cells[at('look')].row);
+    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'right')].id, 'screen');
+    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'down')].id, 'panels');
+    assert.equal(HomeLayout.neighbour(cells, at('look'), 'left'), at('look'));
+    assert.equal(HomeLayout.neighbour(cells, at('look'), 'up'), at('look'));
 });
 
 test('page cards: 1 to 3 columns, masonry without overlap', () => {
@@ -109,15 +100,19 @@ test('every tile has a live status line in every language', () => {
     }
     const en = tr('en');
     const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
-    assert.equal(HomeStatus.line('layout', ctx), 'Top bar · island · dock');
-    assert.equal(HomeStatus.line('wallpaper', ctx), '12 in your library');
+    assert.equal(HomeStatus.line('screen', ctx), 'Top bar · island · dock');
     assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 · edge 2');
     // an "auto" corner is named as the shell resolves it
     assert.equal(HomeStatus.line('notifications', ctx), 'Top right');
-    assert.equal(HomeStatus.line('displays', { ...ctx, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), '2560×1440 · 144 Hz');
+    // the former status tiles' live values, in plain words
+    assert.equal(HomeStatus.line('devices', { ...ctx, network: 'Sakura 5G', volume: 0.62, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), 'Sakura 5G · Volume 62 % · 2560×1440 · 144 Hz');
+    assert.equal(HomeStatus.line('system', { ...ctx, language: 'English', update: false }), 'English · up to date');
+    assert.equal(HomeStatus.line('panels', ctx), 'Launcher: Auto');
+    values['notifications.dnd.enabled'] = true;
+    assert.equal(HomeStatus.line('notifications', ctx), 'Do Not Disturb is on');
     values['bar.panels'] = [{}, {}];
     values['dock.enabled'] = false;
-    assert.equal(HomeStatus.line('layout', ctx), '2 bars · island');
+    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island');
 });
 
 test('every home tile scene is registered by its full path (the audit sees it) and exists', () => {

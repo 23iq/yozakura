@@ -14,9 +14,10 @@ import "Registry.js" as Registry
 // screen miniature, the palette and the UI font, the wallpaper, a toast in
 // its corner, the lock clock, preset cards, a launcher, widgets, a chat,
 // keycaps, the monitors, tiled windows), its name as a heading and one live
-// status line (HomeStatus.js). Desktop layout, Wallpaper and Lock screen are
-// pictures, full bleed under a scrim; the others draw their scene above
-// the name (beside it in a short wide tile). Scenes are loaded by URL and
+// status line (HomeStatus.js). Only Screen, whose subject is the desktop,
+// is a picture (the screen miniature with your wallpaper, full bleed under
+// a scrim); the others draw a plain scene of their own subject above the
+// name. Scenes are loaded by URL and
 // asynchronously once home has shown its first frame (`live`), so home
 // compiles none of them before it is visible. Hover lifts the tile (the
 // wallpaper swells and follows the pointer); a click / Enter opens it.
@@ -28,22 +29,26 @@ Card {
     // false until home has shown its first frame
     property bool live: true
     readonly property string kind: destination.id
-    readonly property bool picture: ["layout", "wallpaper", "lockscreen"].indexOf(tile.kind) >= 0
+    readonly property bool picture: tile.kind === "screen"
     // a short wide tile: the scene beside the name, not above it
-    readonly property bool side: (destination.h || 4) <= 3
+    readonly property bool side: false
     readonly property string sceneFile: Registry.scene(tile.kind)
     readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
         "wallpapers": GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.wallpaperPaths ? GlobalStates.wallpaperManager.wallpaperPaths.length : 0,
-        "preset": tile.destination.id === "presets" ? (PresetStatusService.active || "") : "",
-        "outputs": tile.destination.id === "displays" ? DisplaysService.outputs : []
+        "preset": tile.destination.id === "look" ? (PresetStatusService.active || "") : "",
+        "outputs": tile.destination.id === "devices" ? DisplaysService.outputs : [],
+        "network": tile.destination.id === "devices" ? (NetworkService.networkName || (NetworkService.ethernet ? "Ethernet" : "")) : "",
+        "volume": tile.destination.id === "devices" && Audio.sink ? Number(Audio.sink?.audio?.volume ?? -1) : -1,
+        "language": tile.destination.id === "system" ? ((I18n.availableLanguages || {})[I18n.resolvedLanguage] || "") : "",
+        "update": tile.destination.id === "system" ? UpdateService.updateAvailable === true : false
     }) : ""
 
     objectName: "homeTile:" + destination.id
     interactive: true
     fill: !tile.picture
-    accented: tile.destination.hero === true
+    accented: false
     Accessible.name: I18n.t(destination.title)
 
     // A scene, by URL, asynchronously, fading in once it is there.

@@ -15,11 +15,10 @@ import "HomeLayout.js" as HomeLayout
 import "Ui.js" as Ui
 
 // The home screen of the settings window: the sakura brand, one large
-// search field and undo, then a bento of live tiles (HomeTile, each a
-// small scene of what it opens; packed by HomeLayout.js on a 12-column grid,
-// 6 in a narrow window, its rows stretched so home fills the window) and a
-// row of wide status tiles for the plain system destinations
-// (HomeStatusTile). Typing anywhere searches; the results
+// search field and undo, then nine equal tiles three by three (HomeTile,
+// each a small scene of what it opens, its name and one live status line;
+// two columns in a narrow window, the rows stretched so home fills the
+// window). Typing anywhere searches; the results
 // (window rows only, with their current value) replace the bento; Enter
 // opens the first, Esc clears. Arrows move between tiles, Enter opens one.
 // Cheap by design: no page is created here, the tiles read config only.
@@ -72,9 +71,10 @@ FocusScope {
             Qt.callLater(() => home.warm = true);
     }
     readonly property var tiles: Categories.home()
-    readonly property int columns: HomeLayout.columns(grid.width, Space.px(72))
+    // three columns, two in a narrow window (with hysteresis)
+    property int columns: 3
     readonly property real margin: Space.xl
-    readonly property real gap: Space.m
+    readonly property real gap: Look.screenGap
     readonly property var packing: HomeLayout.pack(home.tiles, home.columns)
 
     signal destinationOpened(string id, var tile)
@@ -267,12 +267,14 @@ FocusScope {
             Item {
                 id: grid
                 objectName: "homeGrid"
+                // three columns, two in a narrow window (with hysteresis)
+                onWidthChanged: home.columns = HomeLayout.columns(grid.width, Space.px(240), home.columns)
                 width: parent.width
                 visible: home.query.length === 0
                 readonly property real gap: home.gap
                 readonly property real colW: (width - gap * (home.columns - 1)) / home.columns
-                readonly property real avail: flick.height - home.margin * 2 - header.height - statusRow.height - home.gap * 2
-                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(20))
+                readonly property real avail: flick.height - home.margin * 2 - header.height - home.gap
+                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(150))
                 height: home.packing.rows * rowH + Math.max(0, home.packing.rows - 1) * gap
 
                 Repeater {
@@ -302,41 +304,9 @@ FocusScope {
                         }
                         Keys.onDownPressed: {
                             const n = HomeLayout.neighbour(home.packing.cells, tile.index, "down");
-                            if (n === tile.index)
-                                (statusRepeater.itemAt(0) as Item).forceActiveFocus();
-                            else
+                            if (n !== tile.index)
                                 home.focusTile(n);
                         }
-                    }
-                }
-            }
-
-            // Wide status tiles: the plain system destinations, live
-            Grid {
-                id: statusRow
-                width: parent.width
-                visible: home.query.length === 0
-                readonly property int count: Categories.pills().length
-                columns: home.columns >= 12 ? statusRow.count : 3
-                spacing: home.gap
-                readonly property real tileW: (width - spacing * (columns - 1)) / columns
-
-                Repeater {
-                    id: statusRepeater
-                    model: Categories.pills()
-                    delegate: HomeStatusTile {
-                        id: pill
-                        required property var modelData
-                        required property int index
-                        destination: modelData
-                        shadow: home.warm
-                        live: home.warm
-                        width: statusRow.tileW
-                        height: Space.controlL + Space.m
-                        onClicked: home.destinationOpened(modelData.id, pill)
-                        Keys.onUpPressed: home.focusTile(0)
-                        Keys.onLeftPressed: (statusRepeater.itemAt(Math.max(0, index - 1)) as Item).forceActiveFocus()
-                        Keys.onRightPressed: (statusRepeater.itemAt(Math.min(statusRow.count - 1, index + 1)) as Item).forceActiveFocus()
                     }
                 }
             }

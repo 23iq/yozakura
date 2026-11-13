@@ -10,18 +10,9 @@
 var category = {
     "id": "ai-code",
     "icon": "kanban",
-    "title": "prefs.ai.tasks",
+    "title": "prefs.cat.ai_code",
     "description": "prefs.ai.tasks.desc",
     "keywords": "ai code tasks agents board worktree review accept merge squash best of plan queue parallel claude codex opencode",
-    "stage": "TasksStage",
-    "hero": {
-        "right": [
-            "ai.tasks.planFirst",
-            "ai.tasks.inPlace",
-            "ai.tasks.notifications"
-        ],
-        "hint": "prefs.ai.tasks.hero_hint"
-    },
     "row": [
         {
             "id": "new_tasks",

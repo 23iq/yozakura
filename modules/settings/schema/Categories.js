@@ -21,9 +21,9 @@
 .import "specials.js" as Specials
 .import "timers.js" as Timers
 .import "routines.js" as Routines
-.import "layout.js" as Layout
 .import "dashboard.js" as Dashboard
 .import "osd.js" as Osd
+.import "layout.js" as Layout
 .import "menus.js" as Menus
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
@@ -37,9 +37,8 @@
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The window opens on a home screen (SettingsHome): a bento of tiles, one
-// per destination in HOME (big / wide / small), and a row of pills for the
-// plain system destinations (PILLS). A destination (`groups`) holds one or
+// The window opens on a home screen (SettingsHome): a 3x3 grid of equal
+// tiles, one per destination (HOME). A destination (`groups`) holds one or
 // more categories, shown as tabs at the top of its page (`categories`,
 // first = default tab). A category is one of:
 //   * schema-driven: has `sections` (see bar.js) - rendered by
@@ -54,48 +53,25 @@
 // keep working.
 
 var groups = [
-    { "id": "layout", "icon": "frameCorners", "title": "prefs.dest.layout", "categories": ["bar", "notch", "dock", "layout"] },
-    { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "icons-type"] },
-    { "id": "wallpaper", "icon": "image", "title": "prefs.dest.wallpaper", "categories": ["wallpapers"] },
-    { "id": "presets", "icon": "magicWand", "title": "prefs.dest.presets", "categories": ["presets", "changes"] },
-    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications", "categories": ["notifications", "osd", "menus"] },
-    { "id": "lockscreen", "icon": "lock", "title": "prefs.dest.lockscreen", "categories": ["lockscreen"] },
-    { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code"] },
-    { "id": "launcher", "icon": "magnifyingGlass", "title": "prefs.dest.launcher", "categories": ["launcher"] },
-    { "id": "dashboard", "icon": "widgets", "title": "prefs.dest.dashboard", "categories": ["dashboard"] },
-    { "id": "desktop", "icon": "monitor", "title": "prefs.dest.desktop", "categories": ["desktop", "overview"] },
-    { "id": "keys", "icon": "keyboard", "title": "prefs.dest.keys", "categories": ["keyboard", "input"] },
-    { "id": "displays", "icon": "screencast", "title": "prefs.dest.displays", "categories": ["displays"] },
-    { "id": "windows", "icon": "appWindow", "title": "prefs.dest.windows", "categories": ["windows", "specials"] },
-    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "voice", "timers", "routines", "about"] },
-    { "id": "network", "icon": "wifiHigh", "title": "prefs.dest.network", "categories": ["network", "bluetooth"] },
-    { "id": "sound", "icon": "speakerHigh", "title": "prefs.dest.sound", "categories": ["sound", "effects"] },
-    { "id": "power", "icon": "batteryHigh", "title": "prefs.dest.power", "categories": ["power"] },
-    { "id": "apps", "icon": "packageBox", "title": "prefs.dest.apps", "categories": ["terminal", "extras", "mods"] }
+    { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "wallpapers", "icons-type", "presets", "changes"] },
+    { "id": "screen", "icon": "frameCorners", "title": "prefs.dest.screen", "categories": ["bar", "notch", "dock", "desktop", "lockscreen"] },
+    { "id": "windows", "icon": "appWindow", "title": "prefs.dest.windows", "categories": ["windows", "overview", "specials"] },
+    { "id": "panels", "icon": "magnifyingGlass", "title": "prefs.dest.panels", "categories": ["launcher", "dashboard", "menus"] },
+    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications_focus", "categories": ["notifications", "timers"] },
+    { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code", "voice"] },
+    { "id": "keys", "icon": "keyboard", "title": "prefs.dest.keyboard", "categories": ["keyboard", "input"] },
+    { "id": "devices", "icon": "monitor", "title": "prefs.dest.devices", "categories": ["displays", "network", "bluetooth", "sound", "effects", "power"] },
+    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "terminal", "extras", "mods", "routines", "about"] }
 ];
 
-// The home bento, in reading order, on a 12-column grid whose rows are
-// half-row units: `w` columns by `h` units (HomeLayout.js packs them and
-// stretches the rows so the bento fills the window). Desktop layout is
-// the hero (`hero`: the accent ring).
-var HOME = [
-    { "id": "layout", "w": 6, "h": 8, "hero": true },
-    { "id": "look", "w": 3, "h": 4 },
-    { "id": "wallpaper", "w": 3, "h": 4 },
-    { "id": "notifications", "w": 2, "h": 4 },
-    { "id": "lockscreen", "w": 2, "h": 4 },
-    { "id": "presets", "w": 2, "h": 4 },
-    { "id": "launcher", "w": 2, "h": 6 },
-    { "id": "dashboard", "w": 2, "h": 6 },
-    { "id": "assistant", "w": 2, "h": 6 },
-    { "id": "keys", "w": 3, "h": 6 },
-    { "id": "displays", "w": 3, "h": 3 },
-    { "id": "windows", "w": 3, "h": 3 }
-];
-
-// The wide status tiles under the bento: plain system destinations, each
-// with a live value (Widgets: desktop widgets and the overview).
-var PILLS = ["network", "sound", "power", "desktop", "apps", "system"];
+// The home grid: one equal tile per destination, three by three, in
+// reading order (HomeLayout.js). Tile size means nothing; every tile is a
+// scene of what it opens, its name and one live status line.
+var HOME = groups.map(function (g) {
+    return {
+        "id": g.id
+    };
+});
 
 // A hand-written page (Registry.PAGES[name]); `fitted`: composed like a
 // converted page on a FittedFrame (tests/settings-fit.test.py checks it).
@@ -118,8 +94,35 @@ var MOVED = {
     "bar-classic": "bar",
     "sidebar": "ai",
     "popups": "notifications",
-    "island": "notch"
+    "island": "notch",
+    // the former destinations and tabs of the 18-tile home
+    "layout": "bar",
+    "osd": "menus",
+    "wallpaper": "wallpapers",
+    "apps": "terminal",
+    "fonts": "icons-type"
 };
+
+// A copy of `cat` with `entries` put into its section `sectionId` ("" = the
+// first section): after the entry with key `after`, else at the start.
+function withEntries(cat, sectionId, entries, after) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = cat.sections.map(function (sec, i) {
+        if (sectionId ? sec.id !== sectionId : i !== 0)
+            return sec;
+        var copy = {};
+        for (var k2 in sec)
+            copy[k2] = sec[k2];
+        var at = after ? sec.entries.findIndex(function (e) {
+            return e.key === after;
+        }) + 1 : 0;
+        copy.entries = sec.entries.slice(0, at).concat(entries, sec.entries.slice(at));
+        return copy;
+    });
+    return out;
+}
 
 // A copy of `cat` with `extra` sections appended.
 function withSections(cat, extra) {
@@ -131,28 +134,26 @@ function withSections(cat, extra) {
 }
 
 var categories = [
-    Layout.category,
     Appearance.category,
     IconsType.category,
     Wallpapers.category,
-    Bar.category,
+    withSections(Bar.category, [Layout.builderSection]),
     Notch.category,
     Dock.category,
     Overview.category,
-    Launcher.category,
+    withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),
     Desktop.category,
     Lockscreen.category,
     Notifications.category,
-    Osd.category,
-    Menus.category,
-    Dashboard.category,
+    withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),
+    withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]),
     Specials.category,
     Windows.category,
     Terminal.category,
-    Input.category,
+    withEntries(Input.category, "", [Layout.placed("layout.cheatsheet.host", "prefs.layout.sheet_opens_in")]),
     System.category,
     Voice.category,
-    Timers.category,
+    withEntries(Timers.category, "notch", [Layout.placed("layout.panels.host", "prefs.layout.opens_in")]),
     Routines.category,
     Updates.category,
     Power.category,
@@ -160,7 +161,7 @@ var categories = [
     Bluetooth.category,
     Sound.category,
     Effects.category,
-    withSections(Ai.category, Sidebar.sections),
+    withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"),
     AiProviders.category,
     AiCode.category,
     Object.assign(page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"), {
@@ -261,15 +262,11 @@ function tabsOf(categoryId) {
     }) : [];
 }
 
-// Home model: the bento tiles and the pills as destinations.
+// Home model: the tiles as destinations.
 function home() {
     return HOME.map(function (t) {
-        return Object.assign({ "w": t.w, "h": t.h, "hero": !!t.hero }, groupById(t.id));
+        return groupById(t.id);
     });
-}
-
-function pills() {
-    return PILLS.map(groupById);
 }
 
 // Categories in destination order (Ctrl+Tab steps through them).

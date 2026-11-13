@@ -127,32 +127,36 @@ var THUMBS = {
 
 // The live miniature at the top of a schema page (category `stage`): a
 // stages/<Name>.qml whose root is a Stage (see stages/Stage.qml).
+// Tabs about something on the desktop: the only ones whose stage is a
+// desktop miniature over the wallpaper (tests/settings-pages.test.cjs keeps
+// it so). Every other tab has no stage, or (a list page) a plain status
+// band with no picture.
+var DESKTOP_STAGES = {
+    "bar": "BarStage",
+    "notch": "IslandStage",
+    "dock": "DockStage",
+    "desktop": "DesktopStage",
+    "lockscreen": "LockStage",
+    "notifications": "NotifStage",
+    "menus": "OsdStage",
+    "windows": "WindowsStage",
+    "wallpapers": "WallpaperStage"
+};
+// Plain status bands of list pages (no picture behind them).
+var BANDS = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand"];
+
 var STAGES = {
     "BarStage": "stages/BarStage.qml",
     "IslandStage": "stages/IslandStage.qml",
     "DockStage": "stages/DockStage.qml",
-    "OpensStage": "stages/OpensStage.qml",
-    "LookStage": "stages/LookStage.qml",
-    "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
     "OsdStage": "stages/OsdStage.qml",
     "LockStage": "stages/LockStage.qml",
     "WallpaperStage": "stages/WallpaperStage.qml",
-    "LauncherStage": "stages/LauncherStage.qml",
-    "DashboardStage": "stages/DashboardStage.qml",
     "DesktopStage": "stages/DesktopStage.qml",
-    "OverviewStage": "stages/OverviewStage.qml",
-    "TerminalStage": "stages/TerminalStage.qml",
-    "VoiceStage": "stages/VoiceStage.qml",
-    "TimersStage": "stages/TimersStage.qml",
     "RoutinesBand": "stages/RoutinesBand.qml",
-    "AssistantStage": "stages/AssistantStage.qml",
     "ProvidersBand": "stages/ProvidersBand.qml",
-    "TasksStage": "stages/TasksStage.qml",
-    "SystemStage": "stages/SystemStage.qml",
-    "UpdatesStage": "stages/UpdatesStage.qml",
     "WindowsStage": "stages/WindowsStage.qml",
-    "PowerStage": "stages/PowerStage.qml",
     "NetworkBand": "stages/NetworkBand.qml",
     "BluetoothBand": "stages/BluetoothBand.qml",
     "SoundBand": "stages/SoundBand.qml",
@@ -176,18 +180,15 @@ var PAGES = {
 // Home tile scenes (HomeTile, loaded by URL once home has shown), by
 // destination id.
 var SCENES = {
-    "layout": "home/LayoutScene.qml",
-    "wallpaper": "home/WallpaperScene.qml",
-    "lockscreen": "home/LockScene.qml",
     "look": "home/LookScene.qml",
+    "screen": "home/LayoutScene.qml",
+    "windows": "home/WindowsScene.qml",
+    "panels": "home/LauncherScene.qml",
     "notifications": "home/NotifScene.qml",
-    "presets": "home/PresetsScene.qml",
-    "launcher": "home/LauncherScene.qml",
-    "dashboard": "home/DashboardScene.qml",
     "assistant": "home/AssistantScene.qml",
     "keys": "home/KeysScene.qml",
-    "displays": "home/DisplaysScene.qml",
-    "windows": "home/WindowsScene.qml"
+    "devices": "home/DisplaysScene.qml",
+    "system": "home/SystemScene.qml"
 };
 
 function scene(id) {

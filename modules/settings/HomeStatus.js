@@ -7,10 +7,12 @@
 // "Top bar · island · dock", "Glass", "12 in your library"). Pure,
 // node-tested (tests/settings-home.test.cjs).
 // ctx = {get(key), tr(i18nKey), wallpapers: number, preset: string,
-//        outputs: [{width, height, refresh, enabled}] (optional)}
+//        outputs: [{width, height, refresh, enabled}], network: string,
+//        volume: 0..1.5 (-1 none), language: string, update: bool}
+//        (all optional)
 
 // Destinations with a fixed line of what they hold (prefs.home.sub.<id>).
-var SUBTITLED = ["launcher", "dashboard", "desktop", "keys", "displays", "assistant", "system"];
+var SUBTITLED = ["panels", "keys", "devices", "assistant", "system"];
 
 // Fallback: what the destination holds, else its first tabs.
 function tabsLine(dest, tr) {
@@ -44,18 +46,31 @@ function look(ctx) {
     return [ctx.tr("prefs.appearance.mode." + mode), ctx.tr("prefs.appearance.language." + lang), ctx.tr("wallpapers." + scheme)].join(" · ");
 }
 
+function displays(ctx) {
+    var on = (ctx.outputs || []).filter(function (o) {
+        return o && o.enabled !== false && o.width > 0;
+    });
+    if (on.length === 0)
+        return "";
+    var o = on[0];
+    return o.width + "×" + o.height + (o.refresh > 0 ? " · " + Math.round(o.refresh) + " Hz" : "") + (on.length > 1 ? " · +" + (on.length - 1) : "");
+}
+
 function line(dest, ctx) {
     switch (dest) {
-    case "layout":
+    case "screen":
         return layout(ctx);
     case "look":
-        return look(ctx);
-    case "wallpaper":
-        return ctx.wallpapers > 0 ? ctx.tr("prefs.home.library").replace("%1", ctx.wallpapers) : ctx.tr("prefs.home.sub.wallpaper");
-    case "presets":
-        return ctx.preset ? ctx.preset : ctx.tr("prefs.home.custom");
+        return look(ctx) + (ctx.preset ? " · " + ctx.preset : "");
+    case "panels":
+        {
+            var host = ctx.get("layout.launcher.host") || "auto";
+            return ctx.tr("prefs.home.launcher_in").replace("%1", ctx.tr(host === "auto" ? "common.auto" : "prefs.layout.host." + host));
+        }
     case "notifications":
         {
+            if (ctx.get("notifications.dnd.enabled") === true)
+                return ctx.tr("prefs.home.dnd_on");
             var pres = ctx.get("notifications.presentation") || "auto";
             if (pres === "notch")
                 return ctx.tr("prefs.home.in_island");
@@ -64,11 +79,6 @@ function line(dest, ctx) {
                 "barPosition": ctx.get("bar.position") || "top"
             });
             return ctx.tr("prefs.notif.position." + pos);
-        }
-    case "lockscreen":
-        {
-            var st = LockStyles.get(ctx.get("lockscreen.style") || LockStyles.DEFAULT_ID);
-            return st ? ctx.tr(st.labelKey) : "";
         }
     case "windows":
         return ctx.tr("prefs.home.gaps_border").replace("%1", ctx.get("compositor.gapsIn") ?? 0).replace("%2", ctx.get("compositor.borderSize") ?? 0);
@@ -81,15 +91,25 @@ function line(dest, ctx) {
             });
             return layouts.length > 0 ? ctx.tr("prefs.home.sub.keys") + " · " + layouts.join(", ") : tabsLine(dest, ctx.tr);
         }
-    case "displays":
+    case "devices":
         {
-            var on = (ctx.outputs || []).filter(function (o) {
-                return o && o.enabled !== false && o.width > 0;
-            });
-            if (on.length === 0)
-                return tabsLine(dest, ctx.tr);
-            var o = on[0];
-            return o.width + "×" + o.height + (o.refresh > 0 ? " · " + Math.round(o.refresh) + " Hz" : "") + (on.length > 1 ? " · +" + (on.length - 1) : "");
+            var parts = [];
+            if (ctx.network)
+                parts.push(ctx.network);
+            if (typeof ctx.volume === "number" && ctx.volume >= 0)
+                parts.push(ctx.tr("prefs.home.volume").replace("%1", Math.round(ctx.volume * 100)));
+            var d = displays(ctx);
+            if (d)
+                parts.push(d);
+            return parts.length > 0 ? parts.join(" · ") : tabsLine(dest, ctx.tr);
+        }
+    case "system":
+        {
+            var sys = [];
+            if (ctx.language)
+                sys.push(ctx.language);
+            sys.push(ctx.tr(ctx.update ? "prefs.home.update" : "prefs.home.uptodate"));
+            return sys.join(" · ");
         }
     default:
         return tabsLine(dest, ctx.tr);

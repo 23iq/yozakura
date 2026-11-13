@@ -77,7 +77,6 @@ var category = {
     "icon": "layout",
     "title": "prefs.cat.layout",
     "description": "prefs.cat.layout.desc",
-    "stage": "OpensStage",
     "hero": { "hint": "prefs.layout.hero_hint" },
     "row": ["hosts", "hosts2"],
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
@@ -172,7 +171,6 @@ var category = {
                 {
                     "key": "layout.sheet.side",
                     "type": "selector",
-                    "iconOnly": true,
                     "options": [
                         {
                             "value": "auto",
@@ -207,3 +205,31 @@ var category = {
         }
     ]
 };
+
+// "Where things open" is no tab of its own: each host row opens the page of
+// the thing it places (Categories.js splices them there, "Opens in"), the
+// sheet's side and backdrop go to Menus & OSD, the parts builder stays an
+// expert block of the Bar page.
+function entryOf(key) {
+    for (var i = 0; i < category.sections.length; i++) {
+        var hit = category.sections[i].entries.filter(function (e) {
+            return e.key === key;
+        })[0];
+        if (hit)
+            return hit;
+    }
+    return null;
+}
+
+// `entryOf(key)` labelled for the page it lands on (`label`: i18n key)
+function placed(key, label) {
+    var e = entryOf(key);
+    var out = {};
+    for (var k in e)
+        out[k] = e[k];
+    out.label = label;
+    delete out.iconOnly;
+    return out;
+}
+
+var builderSection = category.sections[0];

@@ -1,6 +1,7 @@
 .pragma library
 
-// Popups > On-screen display: style, edge and timing of the volume /
+// Panels > Menus & OSD (spliced into menus.js by Categories.js): style,
+// edge and timing of the volume /
 // brightness OSD (modules/shell/osd).
 // Entry format: see modules/settings/AGENTS.md.
 
@@ -50,7 +51,6 @@ var sections = [
             {
                 "key": "layout.osd.position",
                 "type": "selector",
-                "iconOnly": true,
                 "options": [
                     {
                         "value": "auto",
@@ -101,16 +101,3 @@ var sections = [
     }
 ];
 
-var category = {
-    "id": "osd",
-    "icon": "speakerHigh",
-    "title": "prefs.cat.osd",
-    "description": "prefs.cat.osd.desc",
-    "keywords": "osd on-screen display volume brightness level indicator popup island",
-    "stage": "OsdStage",
-    "hero": {
-        "hint": "prefs.osd.hero_hint"
-    },
-    "row": [{ "id": "osd", "weight": 1.7 }, "place"],
-    "sections": sections
-};
