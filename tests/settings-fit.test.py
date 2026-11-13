@@ -81,8 +81,8 @@ def page(cat: str, label: str | None = None) -> dict | None:
         st = m["stage"]
         if st is not None:
             check(cat in DESKTOP or not st["desktop"], f"{cat}: a desktop stage on a page that is not about the desktop")
-            # the strips of the bar, the island and the dock read at a glance
-            if cat in ("bar", "notch", "dock"):
+            # the strips of the bar, island, dock, toasts and OSD read at a glance
+            if cat in ("bar", "notch", "dock", "notifications", "menus"):
                 check(st["glyph"] >= 10, f"{cat}: the smallest glyph on the stage is {st['glyph']} px (want 10)")
     return m
 

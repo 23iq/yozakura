@@ -3,96 +3,185 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "OsdPlace.js" as OsdPlace
 import "../Ui.js" as Ui
 import "../../shell/osd/OsdStyles.js" as OsdStyles
 
-// Stage of On-screen display: your screen with the real OSD (its style
-// component, loaded by URL) where it shows now (OsdPlace.js, the shell's
-// rules), ringed in the accent. Hovering an edge shows a ghost and "Move
-// here"; a click puts it on that edge (layout.osd.position). The bar-inline
-// style lives in the bar: the bar is ringed instead.
+// Stage of Menus & OSD: the things themselves on a plain ground. The real
+// on-screen display (its style component, by URL) at its real size, showing
+// the volume; beside it a small screen with the edge it shows on (the
+// shell's rules, OsdPlace.js), every other edge a target: a click puts it
+// there (layout.osd.position). On the right a bar menu as the popup style
+// draws it, with its tail toward the bar when that is on.
 Stage {
     id: stage
+    objectName: "osdStage"
 
     readonly property string style: OsdStyles.normalize(SettingsStore.get("layout.osd.style"))
     readonly property string pref: String(SettingsStore.get("layout.osd.position") || "auto")
     readonly property string edge: OsdPlace.edge(stage.style, stage.pref, {
-        "notchPosition": mini.islandEdge,
-        "notchEnabled": mini.island,
-        "barEdge": mini.panels.length > 0 ? mini.panels[0].edge : "",
-        "occupied": ["top", "bottom", "left", "right"].filter(e => mini.edgeDepth(e) > 0)
+        "notchPosition": SettingsStore.get("notch.position") === "bottom" ? "bottom" : "top",
+        "notchEnabled": SettingsStore.get("notch.enabled") !== false,
+        "barEdge": String(SettingsStore.get("bar.position") || "top"),
+        "occupied": [String(SettingsStore.get("bar.position") || "top")]
     })
     readonly property bool vertical: stage.edge === "left" || stage.edge === "right"
-    // the shell's OSD size (OsdStyles.sizeFor) at the miniature's scale
     readonly property var size: OsdStyles.sizeFor(stage.style, stage.vertical, Metrics.osdW)
-    readonly property real k: mini.width / 1920
+    readonly property bool tail: SettingsStore.get("theme.popup.tail") === true
 
-    stageHeight: Space.px(270)
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool pageWide: true
+    readonly property real preferredHeight: Space.px(188)
 
-    ScreenMini {
-        id: mini
-        anchors.fill: parent
-        barOpacity: stage.barOpacity
-        cornerRadius: stage.radius
-        windowsOpacity: 0.45
+    stageHeight: stage.preferredHeight
 
-        Item {
-            id: osd
-            objectName: "osdOnStage"
-            visible: stage.edge !== ""
-            readonly property real m: Math.round(mini.unit * 0.6)
-            width: Math.round(stage.size.w * stage.k * 1.6)
-            height: Math.round(stage.size.h * stage.k * 1.6)
-            x: stage.vertical ? (stage.edge === "left" ? mini.freeRect.x + m : mini.freeRect.x + mini.freeRect.w - width - m) : mini.freeRect.x + (mini.freeRect.w - width) / 2
-            y: stage.vertical ? mini.freeRect.y + (mini.freeRect.h - height) / 2 : (stage.edge === "top" ? mini.freeRect.y + m : mini.freeRect.y + mini.freeRect.h - height - m)
-            Behavior on x {
-                enabled: Motion.glide.duration > 0
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
+    // ---- where it shows: a small screen, its edges targets ------------------
+    Mark {
+        id: screen
+        objectName: "osdScreen"
+        anchors.verticalCenter: parent.verticalCenter
+        x: Space.xl
+        width: Space.px(176)
+        height: Math.round(width * 9 / 16)
+        radius: Look.radius("box", height)
+        color: Look.raisedFill(false)
+        border.width: Space.hairline
+        border.color: Type.hairline
+        visible: stage.style !== "bar-inline"
+
+        Repeater {
+            model: ["top", "bottom", "left", "right"]
+            delegate: Mark {
+                id: edgeMark
+                required property string modelData
+                readonly property bool side: modelData === "left" || modelData === "right"
+                readonly property bool current: modelData === stage.edge
+                objectName: "osdEdge:" + modelData
+                width: side ? Space.px(8) : Space.px(56)
+                height: side ? Space.px(40) : Space.px(8)
+                x: modelData === "left" ? Space.s : (modelData === "right" ? screen.width - width - Space.s : (screen.width - width) / 2)
+                y: modelData === "top" ? Space.s : (modelData === "bottom" ? screen.height - height - Space.s : (screen.height - height) / 2)
+                color: edgeMark.current ? Type.accent : (edgeArea.containsMouse ? Qt.alpha(Type.accent, 0.4) : Qt.alpha(Type.text, 0.16))
+                MouseArea {
+                    id: edgeArea
+                    anchors.fill: parent
+                    anchors.margins: -Space.s
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: SettingsStore.transaction("prefs.undo.osd_moved", () => SettingsStore.set("layout.osd.position", OsdPlace.positionFor(edgeMark.modelData)))
                 }
             }
-            Behavior on y {
-                enabled: Motion.glide.duration > 0
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
+        }
+    }
 
-            // the real style, drawn at the shell's size and scaled in
-            Loader {
-                id: real
-                anchors.centerIn: parent
-                width: stage.size.w
-                height: stage.size.h
-                scale: Math.min(osd.width / Math.max(1, stage.size.w), osd.height / Math.max(1, stage.size.h))
-                source: "../../shell/osd/" + OsdStyles.fileFor(stage.style)
-                onLoaded: {
-                    Ui.setIfPresent(item, "vertical", Qt.binding(() => stage.vertical));
-                    item.kind = "volume";
-                    item.value = 0.62;
-                    item.shown = true;
+    // ---- the OSD itself, at its real size -----------------------------------
+    Item {
+        id: osd
+        objectName: "osdOnStage"
+        anchors.verticalCenter: parent.verticalCenter
+        x: screen.x + screen.width + Space.xl * 2
+        width: real.width * real.scale
+        height: real.height * real.scale
+        Loader {
+            id: real
+            anchors.centerIn: parent
+            width: stage.size.w
+            height: stage.size.h
+            // the real size, or as large as the band allows
+            scale: Math.min(1, (stage.height - Space.m * 2) / Math.max(1, stage.size.h))
+            source: "../../shell/osd/" + OsdStyles.fileFor(stage.style)
+            onLoaded: {
+                Ui.setIfPresent(item, "vertical", Qt.binding(() => stage.vertical));
+                item.kind = "volume";
+                item.value = 0.62;
+                item.shown = true;
+            }
+        }
+        StageSpot {
+            keys: ["layout.osd"]
+            cornerRadius: Look.radius("chip", osd.height)
+        }
+    }
+
+    // ---- a bar menu in the popup style ---------------------------------------
+    Item {
+        id: menu
+        objectName: "menuOnStage"
+        anchors.right: parent.right
+        anchors.rightMargin: Space.xl
+        anchors.verticalCenter: parent.verticalCenter
+        width: Space.px(220)
+        height: anchorChip.height + Space.s + popup.height
+
+        // the bar item it opens from
+        Chip {
+            id: anchorChip
+            anchors.horizontalCenter: parent.horizontalCenter
+            dense: true
+            icon: Icons.wifiHigh ?? ""
+            text: "Sakura 5G"
+            active: true
+        }
+        // its tail, toward the item
+        Mark {
+            visible: stage.tail
+            width: Space.px(14)
+            height: width
+            rotation: 45
+            radius: 0
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: popup.y - height / 2 + Space.hairline
+            color: Colors.surfaceContainer
+        }
+        StyledRect {
+            id: popup
+            y: anchorChip.height + Space.s
+            width: parent.width
+            height: rows.implicitHeight + Space.s * 2
+            variant: "popup"
+            enableShadow: true
+            radius: Look.radius("box", height)
+            Column {
+                id: rows
+                x: Space.s
+                y: Space.s
+                width: popup.width - Space.s * 2
+                Repeater {
+                    model: [["wifiHigh", "Sakura 5G", true], ["wifiMedium", "Neighbour", false], ["gear", "Network settings", false]]
+                    delegate: Mark {
+                        id: rowMark
+                        required property var modelData
+                        width: rows.width
+                        height: Space.px(30)
+                        radius: Look.radius("small", height)
+                        color: rowMark.modelData[2] ? Qt.alpha(Type.accent, 0.16) : "transparent"
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Space.s
+                            spacing: Space.s
+                            Icon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: Icons[rowMark.modelData[0]] ?? ""
+                                role: "secondary"
+                                tone: rowMark.modelData[2] ? "accent" : "secondary"
+                            }
+                            KitText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                role: "secondary"
+                                color: Type.text
+                                text: rowMark.modelData[1]
+                            }
+                        }
+                    }
                 }
             }
             StageSpot {
-                keys: ["layout.osd"]
-                cornerRadius: Look.radius("chip", osd.height)
+                keys: ["theme.popup", "layout.powermenu", "layout.tools"]
+                cornerRadius: popup.radius
             }
-        }
-
-        EdgePicker {
-            objectName: "osdEdgePicker"
-            anchors.fill: parent
-            visible: stage.style !== "bar-inline"
-            current: stage.pref === "auto" ? "" : stage.edge
-            // as thick as the OSD across its edge
-            ghostThickness: Math.round(OsdStyles.sizeFor(stage.style, false, Metrics.osdW).h * stage.k * 1.6)
-            ghostSpan: 0.3
-            onPicked: e => SettingsStore.transaction("prefs.undo.osd_moved", () => SettingsStore.set("layout.osd.position", OsdPlace.positionFor(e)))
         }
     }
 }

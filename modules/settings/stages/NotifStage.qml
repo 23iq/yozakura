@@ -3,188 +3,243 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
+import "../PanelsModel.js" as PanelsModel
+import "../SchemaUtil.js" as SchemaUtil
 import "../../notifications/NotificationPolicy.js" as Policy
 
-// Stage of the Notifications page: your whole screen (ScreenMini) with a
-// notification where it appears now (NotificationPolicy, the same rules as
-// the shell): grown from the island, or a toast in its corner, ringed in
-// the accent. With corner toasts the windows fade back and every other
-// place is a dashed "move here" zone with an arrow; a click moves
-// notifications there (notifications.position).
+// Stage of the Notifications page: a notification itself, at its real
+// size, as it shows now (NotificationPolicy, the shell's rules): a toast
+// with its app icon, title, body, time and actions, stacked behind two
+// more from the same app when "group by app" is on; grown from the island
+// (card or compact) when the island shows them; a strip on its thread for
+// the strips style. With corner toasts a small screen beside it shows the
+// corner, and every other corner is a target: a click moves them there.
 Stage {
     id: stage
+    objectName: "notifStage"
 
+    readonly property var panels: PanelsModel.panelsOf({
+        "position": SchemaUtil.plain(SettingsStore.get("bar.position")) || "top",
+        "layout": SchemaUtil.plain(SettingsStore.get("bar.layout")) || {},
+        "panels": SchemaUtil.plain(SettingsStore.get("bar.panels")) || []
+    })
     readonly property var ctx: ({
-            "barStyle": mini.panels.length > 0 ? mini.panels[0].style : "",
-            "barPosition": mini.panels.length > 0 ? mini.panels[0].edge : "top",
-            "notchPosition": mini.islandEdge,
-            "notchEnabled": mini.island
+            "barStyle": stage.panels.length > 0 ? stage.panels[0].style : "",
+            "barPosition": stage.panels.length > 0 ? stage.panels[0].edge : "top",
+            "notchPosition": SettingsStore.get("notch.position") === "bottom" ? "bottom" : "top",
+            "notchEnabled": SettingsStore.get("notch.enabled") !== false
         })
     readonly property string presentation: Policy.resolvePresentation(String(SettingsStore.get("notifications.presentation") || "auto"), stage.ctx)
     readonly property string position: Policy.resolvePosition(String(SettingsStore.get("notifications.position") || "auto"), stage.ctx)
     readonly property bool corners: stage.presentation === "corner"
+    readonly property bool grouped: SettingsStore.get("notifications.groupByApp") === true
+    readonly property bool compactIsland: SettingsStore.get("notifications.notchStyle") === "compact"
     readonly property var places: Policy.POSITIONS.filter(p => p !== "auto")
-    property string hovered: ""
 
-    stageHeight: Space.px(270)
+    // a strip as wide as the page (SettingsPage)
+    readonly property bool pageWide: true
+    readonly property real preferredHeight: Space.px(176)
 
-    ScreenMini {
-        id: mini
-        anchors.fill: parent
-        barOpacity: stage.barOpacity
-        cornerRadius: stage.radius
-        showDock: true
-        emphasis: stage.presentation === "notch" ? "island" : ""
-        windowsOpacity: stage.corners ? 0.3 : 1
+    stageHeight: stage.preferredHeight
 
-        // Where a toast sits for a position, in the space the bars leave.
-        function placeOf(pos, w, h) {
-            const a = Policy.anchorsOf(pos);
-            const r = mini.freeRect;
-            const m = Math.round(mini.unit * 0.5);
-            return {
-                "x": a.horizontal === "left" ? r.x + m : a.horizontal === "right" ? r.x + r.w - w - m : r.x + (r.w - w) / 2,
-                "y": a.vertical === "top" ? r.y + m : r.y + r.h - h - m
-            };
+    // ---- the notification itself --------------------------------------------
+    Item {
+        id: shown
+        objectName: "notifShown"
+        anchors.centerIn: parent
+        anchors.horizontalCenterOffset: stage.corners ? Space.px(90) : 0
+        width: toast.width
+        height: toast.height
+
+        // the same app's other notifications, stacked behind
+        Repeater {
+            model: stage.grouped && stage.presentation !== "notch" ? 2 : 0
+            delegate: StyledRect {
+                required property int index
+                x: Space.s * (index + 1)
+                y: Space.s * (index + 1)
+                z: -1 - index
+                width: toast.width - Space.s * 2 * (index + 1)
+                height: toast.height
+                variant: "popup"
+                enableShadow: false
+                opacity: 0.6 - index * 0.2
+                radius: toast.radius
+            }
         }
 
-        // The other places (corner toasts only): faint targets.
-        Repeater {
-            model: stage.corners ? stage.places : []
-            delegate: Toast {
-                id: target
-                required property string modelData
-                readonly property var at: mini.placeOf(modelData, width, height)
-                objectName: "notifPlace:" + modelData
-                visible: modelData !== stage.position
-                solid: false
-                ghost: false
-                border.width: 0
-                x: at.x
-                y: at.y
+        StyledRect {
+            id: toast
+            objectName: "notifToast"
+            readonly property bool island: stage.presentation === "notch"
+            readonly property bool strip: stage.presentation === "strips"
+            width: toast.island && stage.compactIsland ? Space.px(300) : (toast.strip ? Space.px(120) : Space.px(380))
+            height: toast.strip ? stage.height - Space.m * 2 : (toast.island && stage.compactIsland ? Space.px(44) : body.implicitHeight + Space.m * 2)
+            variant: toast.island ? "bg" : "popup"
+            enableShadow: true
+            radius: toast.island ? (stage.compactIsland ? height / 2 : Look.radius("surface", height)) : Look.radius("box", height)
 
-                DashedFrame {
-                    anchors.fill: parent
-                    radius: target.radius
-                    fill: Qt.alpha(Type.accent, stage.hovered === target.modelData ? 0.28 : 0.08)
+            // compact island: icon, title, a line
+            Row {
+                visible: toast.island && stage.compactIsland
+                anchors.centerIn: parent
+                spacing: Space.s
+                AppIcon {}
+                KitText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "secondary"
+                    color: Type.text
+                    font.weight: Font.DemiBold
+                    text: "Yuki · Dinner at eight?"
                 }
+            }
+
+            // a strip: vertical text on its thread
+            Column {
+                visible: toast.strip
+                anchors.centerIn: parent
+                spacing: Space.s
+                AppIcon {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                KitText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    role: "secondary"
+                    color: Type.text
+                    font.weight: Font.DemiBold
+                    text: "Yuki"
+                }
+                KitText {
+                    width: toast.width - Space.m * 2
+                    horizontalAlignment: Text.AlignHCenter
+                    role: "caption"
+                    wrapMode: Text.WordWrap
+                    text: "Dinner at eight?"
+                }
+            }
+
+            // the card: icon, app and time, title, body, actions
+            Column {
+                id: body
+                visible: !toast.strip && !(toast.island && stage.compactIsland)
+                x: Space.m
+                y: Space.m
+                width: toast.width - Space.m * 2
+                spacing: Space.xs
                 Row {
-                    anchors.centerIn: parent
-                    spacing: Space.xs
-                    Icon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon: target.at.y > mini.height / 2 ? Icons.arrowDown : Icons.arrowUp
-                        role: "caption"
-                        tone: "accent"
-                    }
+                    spacing: Space.s
+                    AppIcon {}
                     KitText {
                         anchors.verticalCenter: parent.verticalCenter
-                        visible: target.width > Space.px(90)
                         role: "caption"
-                        color: Type.text
-                        text: I18n.t("prefs.home.move_here")
+                        text: "Messages · now"
                     }
                 }
-
-                MouseArea {
-                    objectName: "notifPlaceArea:" + target.modelData
-                    anchors.fill: parent
-                    anchors.margins: -Space.xs
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onContainsMouseChanged: {
-                        if (containsMouse)
-                            stage.hovered = target.modelData;
-                        else if (stage.hovered === target.modelData)
-                            stage.hovered = "";
+                KitText {
+                    role: "body"
+                    font.weight: Font.DemiBold
+                    text: "Yuki"
+                }
+                KitText {
+                    width: parent.width
+                    role: "secondary"
+                    wrapMode: Text.WordWrap
+                    text: "Dinner at eight? I booked the place by the river."
+                }
+                Row {
+                    spacing: Space.s
+                    topPadding: Space.xs
+                    Chip {
+                        dense: true
+                        text: "Reply"
                     }
-                    onClicked: {
-                        stage.hovered = "";
-                        SettingsStore.transaction("prefs.undo.notif_moved", () => SettingsStore.set("notifications.position", target.modelData));
+                    Chip {
+                        dense: true
+                        quiet: true
+                        text: "Mark as read"
                     }
                 }
             }
-        }
-
-        // The notification where it shows now; it glides to a new place.
-        Toast {
-            id: now
-            objectName: "notifNow"
-            readonly property var at: stage.corners ? mini.placeOf(stage.position, width, height) : {
-                "x": mini.islandRect.x + (mini.islandRect.w - width) / 2,
-                "y": mini.islandEdge === "bottom" ? mini.islandRect.y - height - Space.xs : mini.islandRect.y + mini.islandRect.h + Space.xs
-            }
-            visible: stage.presentation !== "strips"
-            x: now.at.x
-            y: now.at.y
-            Behavior on x {
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
-            Behavior on y {
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
-            Mark {
-                anchors.fill: parent
-                anchors.margins: -Space.xs
-                visible: stage.corners
-                radius: now.radius + Space.xs
-                color: "transparent"
-                border.width: Space.stroke - 1
-                border.color: Type.accent
+            // grouped: how many from the app
+            Chip {
+                visible: stage.grouped && !toast.strip && !(toast.island && stage.compactIsland)
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Space.s
+                dense: true
+                text: "3"
             }
             StageSpot {
-                keys: ["notifications.presentation", "notifications.position"]
-                cornerRadius: now.radius
+                keys: ["notifications"]
+                cornerRadius: toast.radius
             }
         }
     }
 
-    // One toast: an icon and two lines.
-    component Toast: Mark {
-        id: toast
-        property bool solid: true
-        property bool ghost: false
-        width: Math.round(mini.width * 0.2)
-        height: Math.round(mini.unit * 1.9)
+    // ---- with corner toasts: the corner, on a small screen ------------------
+    Mark {
+        id: screen
+        objectName: "notifScreen"
+        visible: stage.corners
+        anchors.verticalCenter: parent.verticalCenter
+        x: Space.xl
+        width: Space.px(176)
+        height: Math.round(width * 9 / 16)
         radius: Look.radius("box", height)
-        color: toast.solid ? Look.raisedFill(false) : Qt.alpha(Type.accent, toast.ghost ? 0.22 : 0)
+        color: Look.raisedFill(false)
         border.width: Space.hairline
-        border.color: toast.solid ? Qt.alpha(Colors.outlineVariant, 0.8) : Qt.alpha(Type.accent, toast.ghost ? 1 : 0.4)
+        border.color: Type.hairline
 
-        Row {
-            visible: toast.solid || toast.ghost
-            anchors.verticalCenter: parent.verticalCenter
-            x: Math.round(mini.unit * 0.45)
-            spacing: Math.round(mini.unit * 0.35)
-            opacity: toast.solid ? 1 : 0.7
-            Icon {
-                anchors.verticalCenter: parent.verticalCenter
-                icon: Icons.bell
-                size: Math.round(mini.unit * 0.8)
-                tone: "accent"
-            }
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Math.round(mini.unit * 0.22)
-                Mark {
-                    width: toast.width * 0.42
-                    height: Math.max(2, Math.round(mini.unit * 0.2))
-                    color: Qt.alpha(Type.text, 0.7)
-                }
-                Mark {
-                    width: toast.width * 0.6
-                    height: Math.max(2, Math.round(mini.unit * 0.16))
-                    color: Qt.alpha(Type.text, 0.3)
+        Repeater {
+            model: stage.corners ? stage.places : []
+            delegate: Mark {
+                id: place
+                required property string modelData
+                readonly property var a: Policy.anchorsOf(modelData)
+                readonly property bool current: modelData === stage.position
+                objectName: "notifPlace:" + modelData
+                width: Space.px(40)
+                height: Space.px(14)
+                radius: Look.radius("small", height)
+                x: a.horizontal === "left" ? Space.s : (a.horizontal === "right" ? screen.width - width - Space.s : (screen.width - width) / 2)
+                y: a.vertical === "top" ? Space.s : screen.height - height - Space.s
+                color: place.current ? Type.accent : (placeArea.containsMouse ? Qt.alpha(Type.accent, 0.4) : Qt.alpha(Type.text, 0.16))
+                MouseArea {
+                    id: placeArea
+                    objectName: "notifPlaceArea:" + place.modelData
+                    anchors.fill: parent
+                    anchors.margins: -Space.xs
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: SettingsStore.transaction("prefs.undo.notif_moved", () => SettingsStore.set("notifications.position", place.modelData))
                 }
             }
+        }
+    }
+    KitText {
+        visible: stage.corners
+        anchors.top: screen.bottom
+        anchors.topMargin: Space.xs
+        anchors.horizontalCenter: screen.horizontalCenter
+        role: "caption"
+        text: I18n.t("prefs.notif.position." + stage.position)
+    }
+
+    // the app's icon (a letter on the accent)
+    component AppIcon: Mark {
+        width: Space.px(24)
+        height: width
+        radius: Look.radius("small", height)
+        color: Qt.alpha(Type.accent, 0.3)
+        KitText {
+            anchors.centerIn: parent
+            role: "caption"
+            font.weight: Font.DemiBold
+            color: Type.text
+            text: "M"
         }
     }
 }
