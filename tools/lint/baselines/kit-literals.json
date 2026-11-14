@@ -98,7 +98,7 @@
  "modules/settings/controls": {
   "spacing": 5,
   "font-size": 1,
-  "rectangle": 6,
+  "rectangle": 4,
   "text": 6
  },
  "modules/settings/displays": {
@@ -120,7 +120,7 @@
   "rectangle": 7
  },
  "modules/settings/keyboard": {
-  "rectangle": 7,
+  "rectangle": 5,
   "text": 1
  },
  "modules/settings/layout": {
