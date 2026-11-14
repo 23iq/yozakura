@@ -7,16 +7,6 @@
 // modules/notifications/NotificationPolicy.js. Entry format: see
 // modules/settings/AGENTS.md.
 
-var POSITION_ICONS = {
-    "auto": "magicWand",
-    "top-left": "arrowUp",
-    "top": "arrowUp",
-    "top-right": "arrowUp",
-    "bottom-left": "arrowDown",
-    "bottom": "arrowDown",
-    "bottom-right": "arrowDown"
-};
-
 var RULE_LABELS = {
     "mute": "prefs.notif.rule.mute",
     "priority": "prefs.notif.rule.priority",
@@ -92,9 +82,6 @@ var category = {
     "description": "prefs.cat.notifications.desc",
     "keywords": "notifications popups toasts do not disturb dnd alerts rules mute history sound",
     "stage": "NotifStage",
-    "hero": {
-        "hint": "prefs.notif.hero_hint"
-    },
     "row": ["presentation", "behaviour", "dnd"],
     "sections": [
         {
@@ -243,11 +230,14 @@ var category = {
                 {
                     "key": "notifications.position",
                     "type": "selector",
+                    // a small screen per place, the toasts drawn there:
+                    // read at a glance, no hint needed
+                    "display": "cards",
+                    "thumb": "NotifPositionThumb",
                     "options": Policy.POSITIONS.map(function (p) {
                         return {
                             "value": p,
-                            "label": "prefs.notif.position." + p,
-                            "icon": POSITION_ICONS[p]
+                            "label": "prefs.notif.position." + p
                         };
                     }),
                     "visibleWhen": CORNER_TOASTS,

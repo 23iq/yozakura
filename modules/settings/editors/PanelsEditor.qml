@@ -35,9 +35,9 @@ Item {
         commit(PanelsModel.setField(panels, current, field, value));
     }
 
-    // The picked bar's placement and behaviour, one setting a line (label
-    // left, control right, every control on the same right edge as the
-    // rows of the other cards). Its shape and modules are the Shape and On
+    // The picked bar: shown or not, then its placement and behaviour, one
+    // setting a line (label left, control right, every control on the same
+    // right edge as the rows of the other cards). Its shape and modules are the Shape and On
     // the bar cards (PanelShapeCards, PanelModulesCard).
     Column {
         id: column
@@ -45,6 +45,14 @@ Item {
         spacing: 0
         visible: root.panel !== null
 
+        // the master switch first, then where it sits, how it hides, details
+        Line {
+            label: I18n.t("prefs.bar.panels.shown")
+            ToggleControl {
+                checked: root.panel ? root.panel.enabled : true
+                onToggled: v => root.setField("enabled", v)
+            }
+        }
         Line {
             label: I18n.t("prefs.bar.panels.edge")
             SelectorControl {
@@ -104,13 +112,6 @@ Item {
                     }
                 ]
                 onSelected: v => root.setField("autohide", v)
-            }
-        }
-        Line {
-            label: I18n.t("prefs.bar.panels.shown")
-            ToggleControl {
-                checked: root.panel ? root.panel.enabled : true
-                onToggled: v => root.setField("enabled", v)
             }
         }
         Line {

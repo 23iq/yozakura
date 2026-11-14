@@ -88,29 +88,9 @@ var category = {
                     "min": 1,
                     "max": 10,
                     "step": 1,
-                    // the strip is one row (the tape of the scrolling layout uses rows x columns)
-                    "visibleWhen": {
-                        "not": {
-                            "all": [
-                                {
-                                    "any": [
-                                        {
-                                            "key": "overview.style",
-                                            "equals": "strip"
-                                        },
-                                        {
-                                            "key": "overview.style",
-                                            "equals": "scroll"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "key": "compositor.layout",
-                                    "notEquals": "scrolling"
-                                }
-                            ]
-                        }
-                    },
+                    // the strip is one row (the tape of the scrolling layout
+                    // uses rows x columns): shown dimmed with its reason
+                    // then, so the grid's own knob is still found here
                     "label": "prefs.overview.rows",
                     "description": "prefs.overview.rows.desc",
                     "keywords": "overview rows grid vertical workspaces count"
@@ -137,6 +117,8 @@ var category = {
                     "min": 0.05,
                     "max": 0.5,
                     "step": 0.01,
+                    // a share of the screen: shown as a percentage
+                    "unit": "fraction",
                     "label": "prefs.overview.scale",
                     "description": "prefs.overview.scale.desc",
                     "keywords": "overview scale zoom size preview thumbnails"

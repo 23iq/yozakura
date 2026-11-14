@@ -22,6 +22,15 @@ Item {
     readonly property string preset: SettingsStore.get("wallpaper.activeColorPreset") || ""
     readonly property string mode: Config.theme.lightMode ? "light" : "dark"
     readonly property var presets: GlobalStates.wallpaperManager ? (GlobalStates.wallpaperManager.colorPresets || []) : []
+    // The roles a swatch draws, from the live palette (the selected card).
+    readonly property var livePalette: ({
+            "surfaceContainer": Colors.surfaceContainer,
+            "primary": Colors.primary,
+            "overPrimary": Colors.overPrimary,
+            "secondaryContainer": Colors.secondaryContainer,
+            "tertiary": Colors.tertiary,
+            "surfaceContainerHighest": Colors.surfaceContainerHighest
+        })
     // a strip of swatch cards in a card of the page row (its height)
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
@@ -73,7 +82,8 @@ Item {
                     delegate: ChoiceCard {
                         id: card
                         required property string modelData
-                        readonly property var pal: SchemePreviews.palette(modelData, root.mode)
+                        // the scheme in use shows the live palette: what you have
+                        readonly property var pal: card.selected ? root.livePalette : SchemePreviews.palette(modelData, root.mode)
                         width: root.cardWidth
                         previewHeight: root.strip ? Math.max(Space.controlM, root.fillHeight - Space.xl - Space.m * 2) : Space.controlL + Space.s
                         selected: !root.preset && root.current === modelData

@@ -337,9 +337,14 @@ check(h.eval(row("notifications.position"), "shown") is False, "corner position 
 ev("SettingsStore.set('notifications.presentation', 'corner')")
 settle()
 check(h.eval(row("notifications.position"), "shown") is True, "corner position shown for corner toasts")
-# A long option set (7 corners) is a kit Dropdown (inline, or under its label
-# in a narrow card: never cut); up to four are a Segmented
-pos = row("notifications.position")
+# The corner is picked on pictures (a small screen per place)
+check(h.eval(row("notifications.position"), "asCards") is True, "the corner is a choice of pictures")
+# A long option set (5 widget surfaces) is a kit Dropdown (inline, or under
+# its label in a narrow card: never cut); up to four are a Segmented
+select("desktop")
+ev("SettingsStore.set('desktop.widgetsEnabled', true)")
+settle()
+pos = row("desktop.widgetVariant")
 check(h.eval(pos, "dropdown") is True, "a long selector is a dropdown")
 picked = h.eval(pos, """(function() {
     var found = null;
@@ -350,6 +355,9 @@ picked = h.eval(pos, """(function() {
     return found.dropdown;
 }).call(this)""")
 check(picked is True, "…drawn as a Dropdown")
+ev("SettingsStore.set('desktop.widgetsEnabled', false)")
+select("notifications")
+settle()
 ev("SettingsStore.set('notifications.dnd.schedule.enabled', true)")
 settle()
 days = row("notifications.dnd.schedule.days")

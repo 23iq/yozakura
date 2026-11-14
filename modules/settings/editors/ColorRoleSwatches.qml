@@ -18,12 +18,23 @@ Item {
     readonly property var current: SettingsStore.get(entry ? entry.key : "")
     readonly property var options: entry ? (entry.options || []) : []
 
+    // balanced rows (9 -> 5 + 4, never 8 + an orphan), each swatch and its
+    // name flush left in its cell: the first ring on the row inset, the
+    // line of the label above it
+    readonly property real cellMin: Space.px(76)
+    readonly property int maxCols: Math.max(1, Math.floor((root.width + Space.m) / (root.cellMin + Space.m)))
+    readonly property int rows: Math.max(1, Math.ceil(root.options.length / root.maxCols))
+    readonly property int cols: Math.max(1, Math.ceil(root.options.length / root.rows))
+    readonly property real cellW: Math.max(root.cellMin, (root.width - Space.m * (root.cols - 1)) / root.cols)
+
     implicitHeight: flow.implicitHeight
 
-    Flow {
+    Grid {
         id: flow
         width: parent.width
-        spacing: Space.m
+        columns: root.cols
+        columnSpacing: Space.m
+        rowSpacing: Space.m
 
         Repeater {
             model: root.options
@@ -35,7 +46,7 @@ Item {
                 readonly property bool auto: modelData.value === "auto"
                 readonly property color fill: auto ? Colors.primaryFixed : (Colors[modelData.value] ?? Colors.outline)
                 objectName: "swatch:" + modelData.value
-                width: Space.px(76)
+                width: root.cellW
                 height: ring.height + Space.s + nameText.height
                 activeFocusOnTab: true
                 Accessible.role: Accessible.RadioButton
@@ -45,7 +56,6 @@ Item {
 
                 Rectangle {
                     id: ring
-                    anchors.horizontalCenter: parent.horizontalCenter
                     width: 40
                     height: 40
                     radius: 20
@@ -88,7 +98,6 @@ Item {
                     anchors.top: ring.bottom
                     anchors.topMargin: Space.s
                     width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
                     // a long name on two lines, whole
                     wrapMode: Text.WordWrap
                     maximumLineCount: 2

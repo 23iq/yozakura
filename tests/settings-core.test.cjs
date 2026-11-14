@@ -36,6 +36,18 @@ test('snap rounds float noise to the decimals of the step', () => {
     assert.equal(Ui.snap(0.35, 0.1, 1, 0.05), 0.35);
 });
 
+test('a long duration reads in one unit; a short one in ms below a second', () => {
+    // "Show for" (0 .. 30 s): seconds all along, never "500 ms" next to "1.5 s"
+    assert.equal(Ui.formatValue(500, 'ms', [], null, 30000), '0.5 s');
+    assert.equal(Ui.formatValue(5000, 'ms', [], null, 30000), '5 s');
+    assert.equal(Ui.formatValue(0, 'ms', [{ value: 0, label: 'never' }], null, 30000), 'never');
+    // a short range keeps ms under a second
+    assert.equal(Ui.formatValue(250, 'ms', [], null, 1500), '250 ms');
+    assert.equal(Ui.formatValue(1200, 'ms', [], null, 1500), '1.2 s');
+    assert.equal(Ui.formatValue(250, 'ms'), '250 ms');
+    assert.equal(Ui.formatValue(12, 'px'), '12 px');
+});
+
 test('special values below min are reachable by stepping', () => {
     const sp = [{ value: -1, label: 'auto' }];
     assert.equal(Ui.stepValue(5, -1, 5, 100, 1, sp), -1);

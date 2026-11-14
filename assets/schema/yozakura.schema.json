@@ -7193,13 +7193,13 @@
           }
         },
         "position": {
-          "title": "Island edge",
+          "title": "Screen edge",
           "type": "string",
           "default": "top",
           "description": "The screen edge the island sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "place",
             "label": "prefs.label.island_edge",
             "control": "selector",
             "keywords": "notch position top bottom left right side vertical edge"
@@ -7559,7 +7559,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "bar": "Bar"
           }
         },
@@ -8407,28 +8407,6 @@
             "control": "number",
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
-            "visibleWhen": {
-              "not": {
-                "all": [
-                  {
-                    "any": [
-                      {
-                        "key": "overview.style",
-                        "equals": "strip"
-                      },
-                      {
-                        "key": "overview.style",
-                        "equals": "scroll"
-                      }
-                    ]
-                  },
-                  {
-                    "key": "compositor.layout",
-                    "notEquals": "scrolling"
-                  }
-                ]
-              }
-            },
             "enabledWhen": {
               "not": {
                 "all": [
@@ -8486,6 +8464,7 @@
             "label": "prefs.overview.scale",
             "control": "slider",
             "step": 0.01,
+            "unit": "fraction",
             "keywords": "overview scale zoom size preview thumbnails",
             "min": 0.05,
             "max": 0.5

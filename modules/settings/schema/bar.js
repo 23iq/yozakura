@@ -25,10 +25,6 @@ var category = {
     "description": "prefs.cat.bar.desc",
     "keywords": "bar panel taskbar islands top modules widgets",
     "stage": "BarStage",
-    // Beside the stage: the bars (left), when the bar shows (right).
-    "hero": {
-        "hint": "prefs.bar.hero_hint"
-    },
     // One row of cards under the stage.
     // the bar being edited (the list beside the canvas), where it sits,
     // its shape, then its modules

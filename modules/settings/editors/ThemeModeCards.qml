@@ -10,8 +10,12 @@ import qs.modules.settings.store
 import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
-// Dark / OLED / Light, each previewed with the palette the current
-// wallpaper + scheme produce in that mode (SchemePreviews).
+// Dark / OLED / Light. The cards of the mode family you are in are drawn
+// with the live palette (Colors: your accent, a colour preset included), so
+// the chosen card looks like what you have; the other family with the
+// palette the current wallpaper + scheme give in that mode (SchemePreviews)
+// when those previews describe the live palette, else a role swap of the
+// live one (same accent, other mode).
 Item {
     id: root
     objectName: "themeModeCards"
@@ -21,6 +25,13 @@ Item {
     readonly property bool oled: !light && !!SettingsStore.get("theme.oledMode")
     readonly property string mode: light ? "light" : (oled ? "oled" : "dark")
     readonly property string scheme: SettingsStore.get("wallpaper.matugenScheme") || "scheme-tonal-spot"
+    readonly property string preset: SettingsStore.get("wallpaper.activeColorPreset") || ""
+    // The scheme previews are the live palette's (no preset, same accent):
+    // their other-mode palette is then the one you would get.
+    readonly property bool previewsLive: {
+        const p = SchemePreviews.palette(root.scheme, root.light ? "light" : "dark");
+        return !!p && !root.preset && !!p.primary && Qt.colorEqual(p.primary, Colors.primary);
+    }
     // A strip (in a card of the page row, SettingRow.fillHeight): one
     // horizontal row of equal pictures with the title inside, scrolling
     // sideways with an edge fade when they do not fit.
@@ -110,15 +121,19 @@ Item {
         });
     }
 
-    // Palette for a mode; null = the live Colors (already that mode).
+    // Palette for a mode ({role: color}; a missing role = the live Colors).
     function paletteFor(id) {
         const m = id === "light" ? "light" : "dark";
-        const p = SchemePreviews.palette(scheme, m);
+        // the family you are in: the live palette (in OLED the Dark card
+        // keeps its dark grey ground, Colors.background is black then)
+        if ((m === "light") === root.light)
+            return root.oled && id === "dark" ? {
+                "background": Colors.surfaceDim
+            } : {};
+        const p = root.previewsLive ? SchemePreviews.palette(root.scheme, m) : null;
         if (p)
             return p;
-        if ((m === "light") === light)
-            return null;
-        // Unknown other-mode palette: a role swap of the live one.
+        // The other mode of the live palette: a role swap (same accent).
         return {
             "background": Colors.overBackground,
             "surfaceContainer": Colors.overSurfaceVariant,

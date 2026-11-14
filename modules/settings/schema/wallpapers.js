@@ -35,12 +35,13 @@ var category = {
     "title": "prefs.cat.wallpapers",
     "description": "prefs.cat.wallpapers.desc",
     "keywords": "wallpaper background picture image folder video",
+    // the wallpaper on screen, big; the arrows on its sides step through
+    // the library (no hint: they say it)
     "stage": "WallpaperStage",
-    "hero": {
-        "foot": ["wallpaper.browser"],
-        "hint": "prefs.wall.hero_hint"
-    },
-    "row": [{ "id": "panorama", "weight": 0.9 }, { "id": "transition", "weight": 1.35 }, { "id": "colours", "weight": 0.75 }],
+    // the library leads: the pictures are what this tab is about; fit and
+    // transition follow. The colours are Theme & colours' (the library
+    // card links there).
+    "row": [{ "id": "library", "weight": 1.4 }, { "id": "panorama", "weight": 0.9 }, { "id": "transition", "weight": 1.35 }],
     "sections": [
         {
             "id": "library",
@@ -152,21 +153,6 @@ var category = {
                     "label": "prefs.wall.transition_duration",
                     "description": "prefs.wall.transition_duration.desc",
                     "keywords": "transition duration speed time"
-                }
-            ]
-        },
-        {
-            "id": "colours",
-            "title": "prefs.wall.section.colours",
-            "entries": [
-                {
-                    "id": "wallpaper.colours",
-                    "type": "custom",
-                    "component": "WallpaperColours",
-                    "resettable": false,
-                    "label": "prefs.wall.colours",
-                    "description": "prefs.wall.colours.desc",
-                    "keywords": "colours colors palette from wallpaper matugen scheme accent"
                 }
             ]
         },

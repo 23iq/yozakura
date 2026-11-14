@@ -75,7 +75,7 @@ Item {
         showValue: true
         valueWidth: root.valueWidth
         highlighted: root.activeFocus
-        valueText: root.valueLabel !== "" ? root.valueLabel : Ui.formatValue(root.value, root.unit, root.specialValues, I18n.t)
+        valueText: root.valueLabel !== "" ? root.valueLabel : Ui.formatValue(root.value, root.unit, root.specialValues, I18n.t, root.to)
         onMoved: v => {
             root.forceActiveFocus();
             root.emitValue(v);

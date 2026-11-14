@@ -12,6 +12,8 @@ var category = {
     "description": "prefs.cat.icons_type.desc",
     "row": [{ "id": "icons", "weight": 0.9 }, { "id": "typography", "weight": 1.5 }, { "id": "headings", "weight": 0.95 }],
     "keywords": "icons weight phosphor regular bold fill fonts typography heading title case uppercase typeface",
+    // the type specimen: heading, text, code and prose in your fonts, live
+    "stage": "TypeStage",
     "sections": [
         {
             "id": "icons",
