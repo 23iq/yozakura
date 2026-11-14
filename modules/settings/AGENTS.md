@@ -470,7 +470,7 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   also used by the picture editors and PickTile): compact (about 96 to
   150 px), the rows balanced (5 on one line, 6 -> 3 + 3, 7 -> 4 + 3, never
   an orphan; a short last row centred), every row filled to the card's
-  edge (a very short row stops at 1.5x the cap), every card of a grid as
+  edge (a very short row stops at 1.4x the cap), every card of a grid as
   tall as the tallest; a single choice between named things (a key combo,
   a resolution) is a Segmented or a Dropdown, never chips. The object
   drawn on a plain ground (thumbs/MiniScreen `desktop: false`,

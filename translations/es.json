@@ -4447,7 +4447,7 @@
   "prefs.weatherfx.cond.leaves": "Otoño",
   "prefs.macro.section": "Sensación",
   "prefs.macro.section_surface": "Profundidad y cristal",
-  "prefs.macro.near": "≈ %1",
+  "prefs.macro.near": "Cerca de %1: algunos de sus ajustes se cambiaron a mano",
   "prefs.macro.custom": "Personalizado",
   "prefs.macro.motion": "Movimiento",
   "prefs.macro.motion.desc": "Cuánto se animan el shell y las ventanas.",

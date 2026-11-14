@@ -39,7 +39,9 @@ Item {
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: 3
     readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
-    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, Space.m, root.stripCount, Space.px(96))
+    // the columns the card's picture grids share (one cell size per card)
+    property int sharedColumns: 0
+    readonly property int columns: root.strip ? root.stripCount : root.sharedColumns > 0 ? root.sharedColumns : PictureGrid.columns(width, Space.m, root.stripCount, Space.px(96))
 
     // beside the stage (a narrow place): a compact icon segmented
     readonly property bool compact: !root.strip && root.width > 0 && root.width < Space.px(300)
@@ -166,7 +168,8 @@ Item {
             x: root.strip ? Space.m : 0
             y: root.strip ? Space.m : 0
             columns: root.columns
-            spacing: Space.l
+            // the gap of every picture grid (ChoiceGrid)
+            spacing: Space.m
 
             Repeater {
                 model: root.compact ? [] : root.modes

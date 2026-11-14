@@ -46,7 +46,7 @@ ColumnLayout {
         id: widest
         font.family: Type.family("secondary")
         font.pixelSize: Type.size("secondary")
-        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t("prefs.macro.near", I18n.t(p.label)))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
+        text: Macros.MACROS.reduce((all, m) => all.concat(m.points.map(p => I18n.t(p.label))), [I18n.t("prefs.macro.custom")]).reduce((a, b) => b.length > a.length ? b : a, "")
     }
 
     SliderControl {
@@ -56,9 +56,18 @@ ColumnLayout {
         to: root.macro ? root.macro.points.length - 1 : 1
         stepSize: 1
         value: root.position
-        // off every point: the one it is closest to, marked as near ("≈
-        // Smooth"), which says more than a bare "Custom"
-        valueLabel: root.level >= 0 ? root.names[root.level] : I18n.t("prefs.macro.near", root.names[root.position] || "")
+        // off every point: the name of the one it is closest to (plain
+        // words, which say more than a bare "Custom"); that it is only
+        // close is the tooltip
+        valueLabel: root.names[root.level >= 0 ? root.level : root.position] || ""
+
+        HoverHandler {
+            id: nearHover
+        }
+        Tooltip {
+            text: I18n.t("prefs.macro.near", root.names[root.position] || "")
+            shown: root.level < 0 && nearHover.hovered
+        }
         valueWidth: Math.ceil(widest.advanceWidth) + Space.xs
         onMoved: v => root.moveTo(Math.round(v))
     }

@@ -23,15 +23,58 @@ function columns(width, gap, count, min) {
 
 // The width of a card: the row filled edge to edge. `max` (callers pass
 // about 190) only stops a very short row (two options in a wide card) from
-// growing into posters: up to one and a half times it.
+// growing into posters: up to 1.4 times it.
 function cardWidth(width, gap, cols, max) {
     var c = Math.max(1, cols);
     var fill = (width - gap * (c - 1)) / c;
-    return Math.floor(Math.min(fill, (max || 150) * 1.5));
+    return Math.floor(Math.min(fill, (max || 150) * 1.4));
+}
+
+// One cell size per card: the columns every picture grid of a card shares
+// (`counts`: their option counts) - the fewest any of them takes, but three
+// at least where one of them would take three or more (Theme: the three
+// modes and the five styles both in three columns, 3 and 3 + 2, one cell
+// size; not three big pictures over five tiny ones). 0 for a single grid.
+function shared(counts, width, gap, min) {
+    if (!counts || counts.length < 2)
+        return 0;
+    var lo = 1e9;
+    var hi = 0;
+    counts.forEach(function (n) {
+        var c = columns(width, gap, n, min);
+        lo = Math.min(lo, c);
+        hi = Math.max(hi, c);
+    });
+    return Math.max(lo, Math.min(3, hi));
+}
+
+// The columns of a library of `count` pictures that fit `fit` a row (it
+// shows `maxRows` rows and scrolls past them): `fit`, one less or up to two
+// more, the nearest that divides the library evenly, else whose last row is
+// more than half full (never 3 + 3 + 3 + 1), else `fit`.
+function libraryColumns(count, fit, maxRows) {
+    var f = Math.max(2, fit);
+    if (!(count > 0) || count > f * maxRows)
+        return f;
+    var order = [f, f + 1, f - 1, f + 2];
+    var ok = function (c, full) {
+        if (c < 2 || Math.ceil(count / c) > maxRows)
+            return false;
+        var rest = count % c;
+        return full ? rest === 0 : rest === 0 || rest > c / 2;
+    };
+    for (var i = 0; i < order.length; i++)
+        if (ok(order[i], true))
+            return order[i];
+    for (var j = 0; j < order.length; j++)
+        if (ok(order[j], false))
+            return order[j];
+    return f;
 }
 
 // [{x, y}] of `count` cards `w` x `h` in `cols` columns, `gap` apart, the
-// short last row centred under the full ones.
+// short last row centred under the full ones (a single short row starts at
+// the left, like the rows around it).
 function places(count, cols, w, h, gap) {
     var out = [];
     var c = Math.max(1, cols);
@@ -41,7 +84,7 @@ function places(count, cols, w, h, gap) {
         var r = Math.floor(i / c);
         var k = i % c;
         var inRow = i < full ? c : count - full;
-        var left = i < full ? 0 : (rowW - (inRow * w + (inRow - 1) * gap)) / 2;
+        var left = i < full || full === 0 ? 0 : (rowW - (inRow * w + (inRow - 1) * gap)) / 2;
         out.push({
             "x": Math.round(left + k * (w + gap)),
             "y": r * (h + gap)

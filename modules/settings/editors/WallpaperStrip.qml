@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings.controls
+import "../controls/PictureGrid.js" as PictureGrid
 
 // The wallpaper library: real thumbnails of every folder, the one on screen
 // ringed and scrolled into view; a click sets it live. In its card (no
@@ -28,7 +29,9 @@ Item {
     readonly property real rowH: Space.px(72)
     // in a card: a grid of its own height (as many rows as the library, four at most)
     readonly property bool inCard: root.fillHeight <= 0
-    readonly property int cardCols: Math.max(2, Math.floor((root.width + Space.s) / (Space.px(128) + Space.s)))
+    // as many columns as fit, or a neighbour that ends the grid on an even
+    // or more than half full row (never 3 + 3 + 3 + 1: PictureGrid)
+    readonly property int cardCols: PictureGrid.libraryColumns(root.paths.length, Math.max(2, Math.floor((root.width + Space.s) / (Space.px(128) + Space.s))), 4)
     readonly property int cardRows: Math.max(1, Math.min(4, Math.ceil(root.paths.length / root.cardCols)))
     readonly property real cardThumbH: Math.round(((root.width + Space.s) / root.cardCols - Space.s) * 9 / 16)
     readonly property real gridH: root.inCard ? root.cardRows * (root.cardThumbH + Space.s) - Space.s : root.fillHeight

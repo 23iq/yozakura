@@ -54,9 +54,13 @@ Item {
             visible: tile.chosen && box.width >= width * 3
             width: Math.round(Type.iconSize("caption") * 1.4)
             height: width
-            x: parent.width - width - Space.xs
-            y: Space.xs
+            // on the corner, mostly outside the picture (ChoiceCard's)
+            x: parent.width - width * 0.65
+            y: -width * 0.35
+            z: 2
             color: Type.accent
+            border.width: Space.stroke - 1
+            border.color: Qt.rgba(Look.cardFill(false).r, Look.cardFill(false).g, Look.cardFill(false).b, 1)
             Icon {
                 anchors.centerIn: parent
                 icon: Icons.accept

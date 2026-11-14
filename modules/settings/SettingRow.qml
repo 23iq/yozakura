@@ -79,6 +79,8 @@ FocusScope {
     property real column: 0
     // the readout width the steppers of the card share (0: their own)
     property real readout: 0
+    // the columns the picture grids of the card share (0: their own)
+    property int pictureColumns: 0
     readonly property bool labelHidden: row.bare && row.stacked
     // A bare editor sits at the rows' inset like every picture choice,
     // unless it draws its own row inset (`rowInset: false` on the editor: a
@@ -91,7 +93,7 @@ FocusScope {
     readonly property bool grouped: row.stacked && (row.asCards || type === "custom" || type === "list" || type === "color-role" || type === "multiselect" || type === "screens")
     // the inline control takes the card's column (when the label, with
     // room for its reset button while it shows, still fits beside it)
-    readonly property bool columnar: row.column > 0 && !row.stacked && !(row.fixable && !row.dimmed) && row.textWidth(I18n.t(entry.label || "")) + row.column + Space.l * 2 + (row.resettable && row.modified ? Space.controlXS + Space.s : 0) <= row.width - Look.rowInset * 2 && (row.dropdown || (type === "selector" && !row.asCards && ControlColumn.need(entry, t => row.textWidth(t), Space.px, t => I18n.t(t), true) <= row.column + 1) || type === "slider" || (type === "font" && !entry.sizeKey) || (type === "text" && entry.multiline !== true && row.column >= Space.px(280)))
+    readonly property bool columnar: row.column > 0 && !row.stacked && !(row.fixable && !row.dimmed) && row.textWidth(I18n.t(entry.label || "")) + row.column + Space.l * 2 + (row.resettable && row.modified ? Space.controlXS + Space.s : 0) <= row.width - Look.rowInset * 2 && (row.dropdown || (type === "selector" && !row.asCards && ControlColumn.need(entry, t => row.textWidth(t), Space.px, t => I18n.t(t), true) <= row.column + 1) || type === "slider" || (type === "macro" && row.dense) || (type === "font" && !entry.sizeKey) || (type === "text" && entry.multiline !== true && row.column >= Space.px(280)))
     readonly property bool noteRepeats: {
         if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
             return false;
@@ -586,6 +588,7 @@ FocusScope {
     Component {
         id: cardsComponent
         CardSelector {
+            sharedColumns: row.pictureColumns
             entry: row.entry
             fillHeight: row.fillHeight
             options: row.entry.options
@@ -635,6 +638,8 @@ FocusScope {
                 Ui.setIfPresent(item, "entry", row.entry);
                 if (item && "fillHeight" in item)
                     item.fillHeight = Qt.binding(() => row.fillHeight);
+                if (item && "sharedColumns" in item)
+                    item.sharedColumns = Qt.binding(() => row.pictureColumns);
             }
         }
     }

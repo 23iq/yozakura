@@ -120,7 +120,9 @@ function layout(entries, width, gap, min, max, sideMin, pairMin) {
     var paired = [];
     out.forEach(function (it) {
         var prev = paired.length > 0 ? paired[paired.length - 1] : null;
-        if (pairable(entries, it) && prev && prev.rows.length === 1 && pairable(entries, prev))
+        // two of a kind only (two switches, two steppers, two choices): a
+        // switch beside a dropdown would stand in the middle of the card
+        if (pairable(entries, it) && prev && prev.rows.length === 1 && pairable(entries, prev) && entries[prev.rows[0]].type === entries[it.rows[0]].type)
             prev.rows.push(it.rows[0]);
         else
             paired.push(it);
