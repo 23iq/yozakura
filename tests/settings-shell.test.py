@@ -250,6 +250,20 @@ h.eval(ev('w.findItem("backPill")'), "clicked()")
 check(sev("atHome") is True, "the back pill returns home")
 check(wait_until(lambda: sev("reveal") == 0), "home shown again")
 
+# home's History is the same menu: the session's changes, then All changes
+QTest.qWait(1700)
+ev("SettingsStore.set('bar.compact', true)")
+h.eval(ev('w.findItem("homeHistory")'), "clicked()")
+QTest.qWait(50)
+check(ev('w.findItem("menu:undo:1")') is not None, "home History lists the session's changes")
+all_changes = ev('w.findItem("menu:changes")')
+check(all_changes is not None, "...and offers All changes")
+h.eval(all_changes, "clicked()")
+check(env.wait_page(win) and sev("currentCategory") == "changes", "All changes opens the Changes tab")
+ev("SettingsStore.undo()")
+h.eval(ev('w.findItem("backPill")'), "clicked()")
+check(wait_until(lambda: sev("reveal") == 0), "home shown once more")
+
 # ---- what the window shows -----------------------------------------------------
 select("bar")
 check(ev('w.findItem("settingRow:bar.hoverRegionHeight")') is None, "an out-of-window entry has no row")

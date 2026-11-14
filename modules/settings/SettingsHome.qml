@@ -95,7 +95,6 @@ FocusScope {
     // A search result opens, from its row.
     signal resultActivated(var result, var row)
     signal presetAction(string id)
-    signal historyRequested(var button)
 
     onQueryChanged: resultIndex = 0
 
@@ -255,23 +254,21 @@ FocusScope {
                     onAccepted: home.activateResult(home.resultIndex)
                 }
 
-                // what you changed (the Changes tab: every change, a way
-                // back for each), named, not a bare arrow
+                // the session's changes (the same History menu as a
+                // page's header; "All changes" in it opens the Changes
+                // tab), named, not a bare arrow
                 PillButton {
                     id: history
                     objectName: "homeHistory"
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     icon: "clockCounterClockwise"
-                    text: I18n.t("prefs.home.history")
-                    kind: "ghost"
-                    onClicked: home.historyRequested(history)
-                    Tooltip {
-                        text: I18n.t("prefs.home.history.tip")
-                        shown: historyHover.hovered
-                    }
-                    HoverHandler {
-                        id: historyHover
+                    text: I18n.t("prefs.history")
+                    kind: historyMenu.opened ? "tonal" : "ghost"
+                    onClicked: historyMenu.opened ? historyMenu.close() : historyMenu.open()
+
+                    HistoryMenu {
+                        id: historyMenu
                     }
                 }
             }

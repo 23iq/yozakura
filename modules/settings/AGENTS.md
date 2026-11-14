@@ -121,8 +121,8 @@ branches on the language name (`Look`).
   solid in tiles / device / classic, a soft RectangularShadow); `accented`
   rings and glows the card the screen is about.
 - Home: header (brand, a boxed `SearchField` starting and ending on tile
-  edges (`HomeLayout.searchSpan`), a labelled History button that opens
-  the Changes tab), then the nine
+  edges (`HomeLayout.searchSpan`), a labelled History button with the
+  same HistoryMenu as a page header: session changes, All changes), then the nine
   destinations as a bento sized by weight (`Categories.HOME_SIZES`, in
   six-column cells: Screen 4x2, Look 2x2, Panels / Windows / Notifications /
   Devices / Assistant 2x1, Keyboard and System 1x1; `HomeLayout.columns`:
@@ -132,7 +132,8 @@ branches on the language name (`Look`).
   hover, springs on press, FocusRing; an `Accessible` button with its
   status as description). Screen draws your whole screen as a 16:9 monitor
   (Stage + ScreenMini, every bar, the island and the dock) on its card,
-  beside the name where the tile is wide; Look a big "Aa" with the font's
+  beside the name and its line (centred on the left) where the tile is
+  wide, the parts that are off named too ("dock off"); Look a big "Aa" with the font's
   name on its baseline, standing on the palette strip; every other tile is
   its icon on a plate at the top left (the language's control box:
   hairline ring, tonal box, solid tile, an instrument's well; accent tonal

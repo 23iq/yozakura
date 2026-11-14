@@ -33,10 +33,12 @@ Card {
     // no scene: the icon on a plate at the top left
     readonly property bool glyph: tile.sceneFile === ""
     // The screen monitor beside the name where the tile is wide enough for
-    // both (side by side), else above it.
+    // both (side by side: the name and its line centred on the left, the
+    // monitor as tall as the card holds, centred in the rest), else above it.
     readonly property real monitorAspect: 16 / 9
-    readonly property real sideMonitorWidth: Math.min(body.width * 0.62, body.height * tile.monitorAspect)
-    readonly property bool side: tile.kind === "screen" && body.width - tile.sideMonitorWidth >= Space.px(200)
+    readonly property real sideLabelWidth: Math.max(Space.px(190), body.width * 0.28)
+    readonly property real sideMonitorWidth: Math.min(body.width - tile.sideLabelWidth - Space.xl, body.height * tile.monitorAspect)
+    readonly property bool side: tile.kind === "screen" && tile.sideMonitorWidth >= Space.px(320)
     readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
@@ -97,8 +99,7 @@ Card {
         Mark {
             id: plate
             objectName: "homeTileIcon"
-            // (the wide Screen tile too: the same anatomy beside its monitor)
-            visible: tile.glyph || tile.side
+            visible: tile.glyph
             // a small tile: never into the name under it
             width: Math.round(Math.max(Type.iconSize("title") * 1.8, Math.min(Type.iconSize("title") * 2.4, body.height - label.height - Space.m)))
             height: width
@@ -124,20 +125,23 @@ Card {
         Scene {
             objectName: "homeTileScene"
             visible: !tile.glyph
-            x: tile.side ? body.width - width : 0
-            width: tile.side ? tile.sideMonitorWidth : body.width
+            // side by side: the room right of the name, the monitor centred in it
+            x: tile.side ? tile.sideLabelWidth + Space.xl : 0
+            width: tile.side ? body.width - x : body.width
             height: tile.side ? body.height : Math.max(0, body.height - label.height - Space.m)
         }
 
         Column {
             id: label
-            y: body.height - height
-            width: tile.side ? body.width - tile.sideMonitorWidth - Space.l : body.width
-            spacing: Space.hairline
+            y: tile.side ? Math.round((body.height - height) / 2) : body.height - height
+            width: tile.side ? tile.sideLabelWidth : body.width
+            spacing: tile.side ? Space.xs : Space.hairline
 
             KitText {
                 width: parent.width
                 role: "title"
+                // the hero tile's name a step up, beside its picture
+                font.pixelSize: tile.side ? Math.round(Type.size("title") * 1.3) : Type.size("title")
                 text: I18n.t(tile.destination.title)
                 // a narrow tile: the name wraps, whole ("Notifications &
                 // focus"), never cut

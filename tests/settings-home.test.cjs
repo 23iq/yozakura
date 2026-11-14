@@ -176,7 +176,11 @@ test('every tile has a live status line in every language', () => {
     assert.equal(HomeStatus.line('notifications', ctx), 'Do Not Disturb is on');
     values['bar.panels'] = [{}, {}];
     values['dock.enabled'] = false;
-    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island');
+    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island · dock off');
+    values['notch.enabled'] = false;
+    values['dock.enabled'] = true;
+    values['dock.theme'] = 'integrated';
+    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island off · dock in the bar');
 });
 
 test('a status line drops its last parts until it fits one line', () => {
