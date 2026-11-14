@@ -2053,6 +2053,8 @@
   "prefs.presets.menu.details": "Details",
   "prefs.presets.menu.edit": "Open editor",
   "prefs.presets.empty": "No presets yet. Save your current look to create the first one.",
+  "prefs.presets.load_failed": "Presets couldn't load",
+  "prefs.presets.retry": "Retry",
   "prefs.presets.no_match": "No preset matches “%1”.",
   "prefs.presets.drop": "Drop a preset file to import it",
   "prefs.presets.undo": "Undo",

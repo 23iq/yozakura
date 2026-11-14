@@ -34,10 +34,13 @@ Column {
     spacing: Space.s
 
     // name, author, tags: on the rows' text edge
+    // (no preset to show, the list still loading or failed: only what
+    // works without one, never a nameless disabled Apply)
     Column {
         x: Look.rowInset
         width: parent.width - Look.rowInset
         spacing: Space.xs
+        visible: !!root.shown
 
         Item {
             width: parent.width
@@ -113,6 +116,7 @@ Column {
     // accent tint of an active state, not a disabled primary)
     Chip {
         objectName: "presetApply"
+        visible: !!root.shown
         width: parent.width
         primary: !root.inUse
         active: root.inUse
@@ -150,7 +154,7 @@ Column {
                     "text": I18n.t("prefs.presets.save_current"),
                     "enabled": true
                 }
-            ]
+            ].filter(a => !!root.shown || a.id === "save")
             delegate: ListRow {
                 id: act
                 required property var modelData

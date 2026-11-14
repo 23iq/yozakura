@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.theme
 import qs.modules.globals
 import qs.modules.lockscreen
 import qs.modules.services
@@ -108,11 +109,46 @@ Item {
                         property var grabbed: null
                         anchors.fill: parent
 
+                        // until its picture is taken: a quiet placeholder
+                        // (a slow pulse; none with animations off), then
+                        // the picture fades in over it
+                        Mark {
+                            objectName: "lockPreviewWaiting"
+                            anchors.fill: parent
+                            radius: 0
+                            visible: picture.status !== Image.Ready
+                            color: Look.raisedFill(false)
+                            SequentialAnimation on opacity {
+                                running: parent.visible && Motion.base > 0
+                                loops: Animation.Infinite
+                                NumberAnimation {
+                                    from: 1
+                                    to: 0.5
+                                    duration: Motion.palette
+                                    easing.type: Easing.InOutSine
+                                }
+                                NumberAnimation {
+                                    from: 0.5
+                                    to: 1
+                                    duration: Motion.palette
+                                    easing.type: Easing.InOutSine
+                                }
+                            }
+                        }
                         Image {
+                            id: picture
                             anchors.fill: parent
                             source: shot.grabbed ? shot.grabbed.url : ""
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
+                            opacity: status === Image.Ready ? 1 : 0
+                            Behavior on opacity {
+                                enabled: Motion.glide.duration > 0
+                                NumberAnimation {
+                                    duration: Motion.glide.duration
+                                    easing.type: Motion.glide.easing
+                                }
+                            }
                         }
                         Item {
                             id: stagePort

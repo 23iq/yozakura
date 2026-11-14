@@ -2053,6 +2053,8 @@
   "prefs.presets.menu.details": "Detalles",
   "prefs.presets.menu.edit": "Abrir editor",
   "prefs.presets.empty": "Aún no hay presets. Guarda tu estilo actual para crear el primero.",
+  "prefs.presets.load_failed": "No se pudieron cargar los preajustes",
+  "prefs.presets.retry": "Reintentar",
   "prefs.presets.no_match": "Ningún preset coincide con «%1».",
   "prefs.presets.drop": "Suelta un archivo de preset para importarlo",
   "prefs.presets.undo": "Deshacer",
