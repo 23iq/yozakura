@@ -24,6 +24,8 @@ Item {
     // horizontal row of equal pictures with the title inside, scrolling
     // sideways with an edge fade when they do not fit.
     property real fillHeight: 0
+    // the columns the card's picture grids share (0: its own)
+    property int sharedColumns: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: root.options.length
     // all whole when they fit at a small picture each (three or fewer: always),
@@ -37,6 +39,7 @@ Item {
         id: grid
         visible: !root.strip
         width: parent.width
+        sharedColumns: root.sharedColumns
         options: root.strip ? [] : root.options
         value: root.value
         entry: root.entry

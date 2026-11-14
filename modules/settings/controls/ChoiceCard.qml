@@ -122,21 +122,27 @@ Item {
                 }
             }
         }
-        // The chosen one also carries a check badge in its corner: the
-        // choice reads without telling the accent from the hairline.
+        // The chosen one also carries a check badge: the choice reads
+        // without telling the accent from the hairline. It sits on the
+        // picture's corner, mostly outside it, ringed in the card colour
+        // (never over the thumb's content), smaller on a small picture.
         Mark {
             objectName: "choiceBadge"
             visible: card.selected
-            width: Math.round(Type.iconSize("caption") * 1.7)
+            width: Math.max(Space.px(16), Math.min(Math.round(Type.iconSize("caption") * 1.7), Math.round(Math.min(parent.width, parent.height) * 0.3)))
             height: width
-            x: parent.width - width - Space.s
-            y: Space.s
+            x: parent.width - width * 0.65
+            y: -width * 0.35
+            z: 2
             color: Type.accent
+            border.width: Space.stroke - 1
+            border.color: Qt.rgba(Look.cardFill(false).r, Look.cardFill(false).g, Look.cardFill(false).b, 1)
             Icon {
                 anchors.centerIn: parent
                 icon: Icons.accept
                 role: "caption"
                 tone: "accentInk"
+                scale: Math.min(1, (parent.width - Space.xs) / implicitWidth)
             }
         }
 

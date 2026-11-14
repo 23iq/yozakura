@@ -9,6 +9,7 @@ import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
 import "CardGate.js" as CardGate
 import "RowLines.js" as RowLines
+import "controls/PictureGrid.js" as PictureGrid
 import "ControlColumn.js" as ControlColumn
 
 // One schema section as a bento card (kit Card): a heading (the section
@@ -80,6 +81,20 @@ Card {
     // One width for the inline segmented / dropdown / slider / field rows
     // of the card (ControlColumn.js): their left edges line up row to row.
     // Measured like SettingRow measures a label (the body font, +10 %).
+    // One cell size for the picture grids of the card (each on a line of
+    // its own): the columns they share (PictureGrid.shared; 0: one grid)
+    readonly property int pictureColumns: {
+        const counts = [];
+        for (const line of sectionRoot.lines || []) {
+            if (line.rows.length !== 1 || line.side.length > 0)
+                continue;
+            const e = sectionRoot.entries[line.rows[0]];
+            const n = RowLines.shown(e);
+            if (n >= 2 && sectionRoot.visibleEntries.indexOf(e) >= 0)
+                counts.push(n);
+        }
+        return sectionRoot.fixed ? 0 : PictureGrid.shared(counts, sectionRoot.contentWidth - Look.rowInset * 2, Space.m, Space.px(96));
+    }
     readonly property real controlColumn: ControlColumn.column(sectionRoot.visibleEntries, t => columnMetrics.advanceWidth(t) * 1.1, sectionRoot.contentWidth - Look.rowInset * 2, Space.px, t => I18n.t(t))
     // ... and one readout width for its steppers (their - / + line up)
     readonly property real stepperReadout: ControlColumn.readout(sectionRoot.visibleEntries, (v, e) => columnMetrics.advanceWidth(Ui.formatValue(v, e.unit ?? "", e.specialValues ?? [], I18n.t)))
@@ -231,6 +246,7 @@ Card {
                         // a full-width row takes the card's control column
                         column: lineItem.width >= rowsColumn.width - 1 ? sectionRoot.controlColumn : 0
                         readout: sectionRoot.stepperReadout
+                        pictureColumns: lineItem.width >= rowsColumn.width - 1 ? sectionRoot.pictureColumns : 0
                     }
                 }
 

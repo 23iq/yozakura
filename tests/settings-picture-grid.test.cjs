@@ -41,8 +41,8 @@ test('cards fill the row; only a very short row stops growing', () => {
     assert.equal(G.cardWidth(500, 12, 4, 190), Math.floor((500 - 36) / 4));
     // three in a wide card reach the edge
     assert.equal(G.cardWidth(790, 12, 3, 190), Math.floor((790 - 24) / 3));
-    // two in a wide card stop at 1.5x the cap
-    assert.equal(G.cardWidth(900, 8, 2, 150), 225);
+    // two in a wide card stop at 1.4x the cap
+    assert.equal(G.cardWidth(900, 8, 2, 150), 210);
 });
 
 test('the short last row is centred', () => {
@@ -52,4 +52,32 @@ test('the short last row is centred', () => {
     // row of three in a row of four: shifted by half a card and gap
     assert.deepEqual(p[4], { x: 55, y: 70 });
     assert.deepEqual(p[6], { x: 275, y: 70 });
+});
+
+test('a single short row starts at the left', () => {
+    const p = JSON.parse(JSON.stringify(G.places(2, 3, 100, 60, 10)));
+    assert.deepEqual(p[0], { x: 0, y: 0 });
+    assert.deepEqual(p[1], { x: 110, y: 0 });
+});
+
+test('the picture grids of one card share one cell size', () => {
+    // a single grid keeps its own columns
+    assert.equal(G.shared([5], 480, 12, 96), 0);
+    // three modes and five styles: three columns for both (3, then 3 + 2)
+    assert.equal(G.shared([3, 5], 480, 12, 96), 3);
+    // two fits and six transitions: three columns
+    assert.equal(G.shared([2, 6], 480, 12, 96), 3);
+    // two and two: two
+    assert.equal(G.shared([2, 2], 480, 12, 96), 2);
+});
+
+test('a library grid never ends on an orphan', () => {
+    // ten in three columns would be 3 + 3 + 3 + 1: five columns, 5 + 5
+    assert.equal(G.libraryColumns(10, 3, 4), 5);
+    // nine in three: even
+    assert.equal(G.libraryColumns(9, 3, 4), 3);
+    // seven in three: 4 + 3
+    assert.equal(G.libraryColumns(7, 3, 4), 4);
+    // a library past the rows shown scrolls: the columns that fit
+    assert.equal(G.libraryColumns(40, 3, 4), 3);
 });

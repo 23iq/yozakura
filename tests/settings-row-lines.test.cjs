@@ -61,8 +61,12 @@ test('a wide card puts short rows two a line', () => {
     const T = (...a) => JSON.parse(JSON.stringify(R.layout(...a)));
     const sw = { type: 'toggle' }, fold = { type: 'toggle', visibleWhen: { key: 'x', truthy: true } };
     const scr = { type: 'screens' };
-    assert.deepEqual(T([sw, sw, sw, scr], 1100, 12, 96, 190, 280, 720),
+    assert.deepEqual(T([sw, sw, scr, scr], 1100, 12, 96, 190, 280, 720),
         [{ rows: [0, 1], side: [] }, { rows: [2, 3], side: [] }]);
+    // two of a kind only: a switch beside a screens row (or a dropdown)
+    // would put a control in the middle of the card
+    assert.deepEqual(T([sw, scr], 1100, 12, 96, 190, 280, 720),
+        [{ rows: [0], side: [] }, { rows: [1], side: [] }]);
     assert.deepEqual(T([sw, { type: 'list' }, sw], 1100, 12, 96, 190, 280, 720),
         [{ rows: [0], side: [] }, { rows: [1], side: [] }, { rows: [2], side: [] }]);
     // equal shares, the gap between them

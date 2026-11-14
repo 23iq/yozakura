@@ -21,7 +21,7 @@ function need(entry, measure, px, tr, bare) {
     if (!entry || entry.advanced)
         return 0;
     var t = entry.type;
-    if (t === "slider")
+    if (t === "slider" || t === "macro")
         return px(240);
     // a font picker without its size: the family name whole
     if (t === "font")

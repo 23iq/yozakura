@@ -43,7 +43,10 @@ Item {
     property real maxWidth: Space.px(190)
     readonly property real gap: Space.m
     readonly property int count: root.options ? root.options.length : 0
-    readonly property int columns: PictureGrid.columns(root.width, root.gap, root.count, root.minWidth)
+    // the columns every picture grid of the card shares (one cell size per
+    // card: SettingsSection.pictureColumns, PictureGrid.shared); 0: its own
+    property int sharedColumns: 0
+    readonly property int columns: root.sharedColumns > 0 ? root.sharedColumns : PictureGrid.columns(root.width, root.gap, root.count, root.minWidth)
     readonly property real cardWidth: PictureGrid.cardWidth(root.width, root.gap, root.columns, root.maxWidth)
     readonly property int rows: Math.ceil(root.count / Math.max(1, root.columns))
     // the tallest card (its name may take two lines): every card that tall

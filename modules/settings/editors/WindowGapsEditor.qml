@@ -1,12 +1,14 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 
-// The two window gaps as a pair of sliders, each a caption over its line
+// The two window gaps as a pair of slider rows, the label on the left and
+// the slider on the card's control column like every slider row
 // (compositor.gapsIn between windows, compositor.gapsOut to the screen
 // edges): a drag is applied live and coalesces into one undo step; the
 // stage moves the windows as it goes. Hovering a slider lights its gap on
@@ -31,31 +33,42 @@ Column {
         }
     ]
 
-    spacing: Space.m
+    spacing: 0
+
+    // one value column for both: the tracks end on one line
+    FontMetrics {
+        id: valueMetrics
+        font.family: Type.family("secondary")
+        font.pixelSize: Type.size("secondary")
+    }
 
     Repeater {
         model: root.gaps
-        delegate: Column {
+        delegate: RowLayout {
             id: gap
             required property var modelData
             readonly property real value: Number(SettingsStore.get(modelData.key) ?? 0)
             objectName: "gap:" + modelData.key
             width: root.width
-            spacing: Space.xs
+            height: Space.rowHeight - Space.xs * 2
+            spacing: Space.l
 
             KitText {
-                role: "secondary"
+                Layout.fillWidth: true
+                role: "body"
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
                 text: I18n.t(gap.modelData.label)
             }
             LineSlider {
                 id: line
-                width: parent.width
+                Layout.preferredWidth: Math.round(root.width * 0.6)
                 from: 0
                 to: gap.modelData.to
                 step: 1
                 value: gap.value
-                icon: gap.modelData.icon
                 showValue: true
+                valueWidth: Math.ceil(valueMetrics.advanceWidth("100 px"))
                 valueText: Math.round(gap.value) + " px"
                 onMoved: v => {
                     SettingsStore.set(gap.modelData.key, Math.round(v));
