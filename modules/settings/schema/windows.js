@@ -73,7 +73,7 @@ var category = {
                     "type": "custom",
                     "component": "WindowGapsEditor",
                     "keys": ["compositor.gapsIn", "compositor.gapsOut"],
-                    "label": "prefs.windows.gaps",
+                    "label": "prefs.windows.section.gaps",
                     "description": "prefs.windows.gaps.desc",
                     "keywords": "gaps spacing between windows padding margin screen edges outer inner"
                 },

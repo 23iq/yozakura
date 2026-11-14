@@ -1401,7 +1401,6 @@
   "prefs.glass.inactive_opacity.desc": "Opacidad de las ventanas sin foco. Auto las mantiene opacas.",
   "prefs.windows.section.tiling": "Disposición",
   "prefs.windows.section.gaps": "Espacios",
-  "prefs.windows.gaps": "Espacios de ventana",
   "prefs.windows.gaps.desc": "Espacio entre ventanas y hasta los bordes.",
   "prefs.windows.section.corners": "Esquinas",
   "prefs.windows.section.pulse": "Pulso musical",

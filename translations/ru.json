@@ -1403,7 +1403,6 @@
   "prefs.glass.inactive_opacity.desc": "Непрозрачность окон без фокуса. Авто оставляет их непрозрачными.",
   "prefs.windows.section.tiling": "Раскладка",
   "prefs.windows.section.gaps": "Отступы",
-  "prefs.windows.gaps": "Отступы окон",
   "prefs.windows.gaps.desc": "Расстояние между окнами и до краёв экрана.",
   "prefs.windows.section.corners": "Углы",
   "prefs.windows.section.pulse": "Пульс музыки",
