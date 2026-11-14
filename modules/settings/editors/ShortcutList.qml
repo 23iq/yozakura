@@ -59,6 +59,7 @@ Item {
                         Component.onCompleted: sync(group.rows.map(r => r.uid))
                     }
                     SectionLabel {
+                        role: "group"
                         width: parent.width
                         text: I18n.t(group.modelData.title)
                     }

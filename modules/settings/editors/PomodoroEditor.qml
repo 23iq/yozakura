@@ -15,6 +15,9 @@ import qs.modules.settings.store
 Column {
     id: root
 
+    // full-width rows with their own inset (SettingRow.fullBleed)
+    readonly property bool rowInset: false
+
     property var entry
     readonly property int work: Math.round(Number(SettingsStore.get("system.pomodoro.workTime") ?? 1500) / 60)
     readonly property int rest: Math.round(Number(SettingsStore.get("system.pomodoro.restTime") ?? 300) / 60)

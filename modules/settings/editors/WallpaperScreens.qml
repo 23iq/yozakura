@@ -29,6 +29,7 @@ Column {
         spacing: Space.m
 
         SectionLabel {
+            role: "group"
             width: parent.width - allButton.width - parent.spacing
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t("prefs.wall.per_screen")

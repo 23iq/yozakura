@@ -27,6 +27,19 @@ function formatValue(value, unit, special, tr) {
     return unit ? v + " " + unit : String(v);
 }
 
+// A slider's value text: formatValue, except a unitless fraction (a range
+// inside 0..1, e.g. a preview scale of 0.15) reads as a percentage ("15 %"),
+// never as a raw float.
+function formatLevel(value, from, to, unit, special, tr) {
+    for (var i = 0; special && i < special.length; i++) {
+        if (special[i].value === value)
+            return tr ? tr(special[i].label) : special[i].label;
+    }
+    if (!unit && from >= 0 && to <= 1 && to > from)
+        return Math.round(value * 100) + " %";
+    return formatValue(value, unit, special, tr);
+}
+
 // Heuristic monospace detection for font family names (Qt only lists
 // family names to QML).
 function looksMonospace(family) {

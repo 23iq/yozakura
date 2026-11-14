@@ -96,6 +96,7 @@ Item {
             visible: root.presets.length > 0 && !root.strip
 
             SectionLabel {
+                role: "group"
                 width: parent.width
                 text: I18n.t("prefs.scheme.presets")
             }

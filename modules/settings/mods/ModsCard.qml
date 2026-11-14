@@ -24,13 +24,9 @@ Column {
 
         KitText {
             id: titleText
-            role: "caption"
+            role: "title"
             anchors.verticalCenter: parent.verticalCenter
-            leftPadding: Space.s
-            text: card.title.toUpperCase()
-            font.weight: Font.Bold
-            font.letterSpacing: 1.4
-            color: Ui.alpha(Colors.overSurfaceVariant, 0.85)
+            text: card.title
         }
 
         Row {

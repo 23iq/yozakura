@@ -53,6 +53,7 @@ ColumnLayout {
                     spacing: 0
 
                     SectionLabel {
+                        role: "group"
                         Layout.fillWidth: true
                         text: I18n.t("routines.category." + grp.modelData.category)
                     }

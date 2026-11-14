@@ -14,6 +14,8 @@ import "../../theme/TypeRoles.js" as TypeRoles
 //   caption    0.86x, outline (muted)
 //   label      0.78x, semibold, UPPERCASE, tracked, muted: the section label
 //              (the mono font where the language says so: Look.monoLabels)
+//   group      0.86x, semibold, muted, sentence case: a group of rows inside
+//              a card (card title > group > row label; the settings window)
 // plus one optional voice, `editorial`: 1.1x, regular, the serif display
 // face (theme.type.editorial, else the system serif) for text that reads
 // as prose (the sentence bar); never for controls or labels.
@@ -23,7 +25,7 @@ import "../../theme/TypeRoles.js" as TypeRoles
 QtObject {
     id: root
 
-    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label", "editorial"]
+    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label", "group", "editorial"]
     readonly property real base: Config.theme.fontSize
     readonly property var scale: ({
             "display": 3,
@@ -32,6 +34,7 @@ QtObject {
             "secondary": 0.93,
             "caption": 0.86,
             "label": 0.78,
+            "group": 0.86,
             "editorial": 1.1
         })
 
@@ -91,7 +94,7 @@ QtObject {
     function weight(role: string): int {
         if (role === "display")
             return Font.Light;
-        if (role === "title" || role === "label")
+        if (role === "title" || role === "label" || role === "group")
             return Font.DemiBold;
         return Font.Normal;
     }
@@ -107,7 +110,7 @@ QtObject {
     function color(role: string): color {
         if (role === "secondary")
             return root.secondary;
-        if (role === "caption" || role === "label")
+        if (role === "caption" || role === "label" || role === "group")
             return root.muted;
         return root.text;
     }

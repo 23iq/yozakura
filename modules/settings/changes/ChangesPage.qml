@@ -192,6 +192,7 @@ FittedFrame {
 
                         delegate: Group {
                             id: groupItem
+                            labelRole: "group"
                             required property var modelData
                             required property int index
                             width: column.width

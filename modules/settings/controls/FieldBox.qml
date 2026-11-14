@@ -29,24 +29,32 @@ StyledRect {
         hovered: root.lit
     }
 
-    // A ghost language (ink: no box at rest) underlines the field instead.
+    // A ghost language (ink: no box at rest): the raised fill of the kit's
+    // big controls instead, so a field, a dropdown and a segmented read as
+    // one family of boxes.
     readonly property bool ghost: root.boxed && Look.controlFill(false).a === 0 && Look.controlEdge.a === 0
     readonly property color edge: root.invalid ? Colors.error : (root.focused ? Type.accent : Type.track)
 
-    Rectangle {
+    Mark {
         visible: root.ghost
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: Space.hairline
-        color: root.edge
+        anchors.fill: parent
+        z: -1
+        radius: root.radius
+        color: Look.raisedFill(root.lit)
+        Behavior on color {
+            enabled: Motion.micro.duration > 0
+            ColorAnimation {
+                duration: Motion.micro.duration
+            }
+        }
     }
 
     // Editing / error edge.
-    Rectangle {
+    Mark {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        visible: !root.ghost && (root.focused || root.invalid)
+        visible: root.focused || root.invalid
         border.width: Space.hairline
         border.color: root.edge
     }

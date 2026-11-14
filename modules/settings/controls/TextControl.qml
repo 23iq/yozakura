@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import qs.config
 import qs.modules.components.kit
 
@@ -54,6 +55,16 @@ Item {
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         interactive: contentHeight > height
+        // more text above / below the box: it fades out at the cut
+        readonly property bool moreAbove: areaFlick.contentY > 1
+        readonly property bool moreBelow: areaFlick.contentY < areaFlick.contentHeight - areaFlick.height - 1
+        layer.enabled: root.multiline && (areaFlick.moreAbove || areaFlick.moreBelow)
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: fadeMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
+        }
         TextEdit {
             id: area
             objectName: "textArea"
@@ -94,6 +105,38 @@ Item {
             color: Type.muted
             wrapMode: Text.WordWrap
             visible: area.text === "" && !area.activeFocus
+        }
+    }
+    // the mask of the fades: opaque, transparent over the last line or so
+    // on the side that has more
+    Item {
+        id: fadeMask
+        visible: false
+        width: areaFlick.width
+        height: areaFlick.height
+        layer.enabled: root.multiline
+        readonly property real band: Math.min(0.45, Space.xl / Math.max(1, height))
+        Mark {
+            anchors.fill: parent
+            radius: 0
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: areaFlick.moreAbove ? "transparent" : "black"
+                }
+                GradientStop {
+                    position: fadeMask.band
+                    color: "black"
+                }
+                GradientStop {
+                    position: 1 - fadeMask.band
+                    color: "black"
+                }
+                GradientStop {
+                    position: 1
+                    color: areaFlick.moreBelow ? "transparent" : "black"
+                }
+            }
         }
     }
 

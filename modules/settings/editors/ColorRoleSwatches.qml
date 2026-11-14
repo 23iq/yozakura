@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Palette role picker: one swatch per entry option ({value: role | "auto",
@@ -18,11 +19,17 @@ Item {
     readonly property var current: SettingsStore.get(entry ? entry.key : "")
     readonly property var options: entry ? (entry.options || []) : []
 
+    // the picture grid's balanced rows (9 roles: 5 + 4, never 4 + 4 + 1),
+    // each swatch centred in an equal cell
+    readonly property int columns: PictureGrid.columns(root.width, Space.m, root.options.length, Space.px(76))
+    readonly property real cell: PictureGrid.cardWidth(root.width, Space.m, root.columns, Space.px(76))
+
     implicitHeight: flow.implicitHeight
 
-    Flow {
+    Grid {
         id: flow
         width: parent.width
+        columns: root.columns
         spacing: Space.m
 
         Repeater {
@@ -35,7 +42,7 @@ Item {
                 readonly property bool auto: modelData.value === "auto"
                 readonly property color fill: auto ? Colors.primaryFixed : (Colors[modelData.value] ?? Colors.outline)
                 objectName: "swatch:" + modelData.value
-                width: Space.px(76)
+                width: root.cell
                 height: ring.height + Space.s + nameText.height
                 activeFocusOnTab: true
                 Accessible.role: Accessible.RadioButton

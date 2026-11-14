@@ -64,6 +64,7 @@ modules/settings/
 ├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor / widen / stretch (same test)
 ├── RowLines.js            pure: a card's rows in lines (picture rows side by side; settings-row-lines.test.cjs)
+├── ControlColumn.js        pure: a card's control column and stepper readout (settings-control-column.test.cjs)
 ├── SettingsSection.qml     one section as a kit Card of SettingRows (window entries only)
 ├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
 ├── UndoPill.qml            "<what> changed · Undo" after every change (Redo after an undo)
@@ -84,7 +85,8 @@ modules/settings/
 │                           KeyDeck.js (node-tested)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
-│                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
+│                           List, Path, Screens, Chips, Macro) + ChoiceCard, ChoiceGrid (the one picture
+│                           grid, PictureGrid.js), CardSelector
 ├── editors/                rich `custom` editors (one file each, `property var entry`); PageCard +
 │                           CardScroll: a hand-written one-screen page's card and its scrolling body
 ├── previews/               old under-row previews (`preview`), for pages not converted yet
@@ -170,10 +172,29 @@ branches on the language name (`Look`).
   font name is never cut, it goes under its label instead); the header is
   one centred line (its tabs take a line of their own, scrolling sideways,
   when they would run under the title or undo).
+- Text hierarchy (one scale, sentence case): card title (`title`) > group
+  label (kit `group` role: smaller, muted, semibold, more room above than
+  below; a stacked row over pictures, an editor, a list or swatches, and
+  SectionLabel / Group `role: "group"` in hand-written pages) > row label
+  (`body`). The uppercase tracked `label` role is not used in the window.
+  The card title, group labels, row labels and pictures share one left
+  edge (`Look.rowInset`; a bare editor whose rows draw their own inset
+  declares `rowInset: false` and fills the card).
 - Rows: label `body`, control flush right (inline) or full width under the
-  label (cards, editors, lists, and sliders / selectors / text fields in a
-  narrow card); hover / focus = the language's hover box; a search jump =
-  accent wash + focus.
+  label (cards, editors, lists, sliders under ~380 px, text fields in a
+  narrow card);
+  hover / focus = the language's hover box (fades, Motion.micro); a search
+  jump = accent wash + focus. The control column (ControlColumn.js): every
+  inline segmented (equal segments, `Segmented.segmentWidth`), dropdown,
+  slider, field and font picker of a card takes one width, flush right, so
+  their left edges line up; switches and steppers keep theirs (steppers of
+  a card share one tabular readout width). Two short rows share a line only
+  on two shared columns: the odd one after a run of pairs stays in the left
+  column (RowLines `half`). Dropdowns and fields in a ghost language (ink)
+  are boxes (the raised fill, like Segmented), never underlines; a slider
+  of a unitless 0..1 range reads as a percentage; a multiline field
+  scrolls inside its box and fades at the cut. A dimmed (CardGate) row
+  drains its colour with Motion.micro; a lazy editor fades in.
 - Picture cards: `ChoiceCard` - the picture is the card (rounded mask, a
   hairline edge, lifts on hover); selected = the accent ring drawn inside
   the edge (never clipped) + a check badge in the picture's corner + the
@@ -409,9 +430,13 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
   whose edges move the OSD). Where a thing sits is its Edge row, not the hero. Every StageSpot
   flashes briefly when one of its keys changes. settings-fit wants the
   smallest glyph on the bar, island and dock strips at 10 px or more.
-- Picture cards: compact (controls/PictureGrid.js: about 96 to 150 px,
-  five or six a row in a wide card, wrapped, never clipped; the columns
-  stretch to fill the row, up to about 190 px), the object
+- Picture cards: one pattern (controls/ChoiceGrid.qml + PictureGrid.js,
+  also used by the picture editors and PickTile): compact (about 96 to
+  150 px), the rows balanced (5 on one line, 6 -> 3 + 3, 7 -> 4 + 3, never
+  an orphan; a short last row centred), every row filled to the card's
+  edge (a very short row stops at 1.5x the cap), every card of a grid as
+  tall as the tallest; a single choice between named things (a key combo,
+  a resolution) is a Segmented or a Dropdown, never chips. The object
   drawn on a plain ground (thumbs/MiniScreen `desktop: false`,
   thumbs/ThumbGround); the wallpaper only where it is the subject (fit,
   transition) and in real captures (lock styles, presets). Names wrap to

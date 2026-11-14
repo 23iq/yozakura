@@ -64,7 +64,7 @@ Item {
 
                 KitText {
                     width: parent.width
-                    role: "label"
+                    role: "group"
                     text: I18n.t("presets.status.label")
                 }
                 KitText {

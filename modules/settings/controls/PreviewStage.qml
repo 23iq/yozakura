@@ -57,7 +57,7 @@ Item {
         KitText {
             id: tag
             anchors.centerIn: parent
-            role: "label"
+            role: "group"
             text: I18n.t("prefs.common.live_preview")
         }
     }

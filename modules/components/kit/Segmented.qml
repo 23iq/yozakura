@@ -16,6 +16,19 @@ Item {
 
     property var model: []
     property int currentIndex: 0
+    // Room added to every segment (a segmented filling a given width: the
+    // settings card's control column); 0: each as wide as its content
+    property real segmentExtra: 0
+    // the width without `segmentExtra`: each segment as wide as its content
+    readonly property real naturalWidth: {
+        let w = Space.xs * 2;
+        for (let i = 0; i < segments.count; i++) {
+            const s = segments.itemAt(i);
+            if (s)
+                w += s.natural;
+        }
+        return Math.ceil(w);
+    }
     readonly property int count: Array.isArray(root.model) ? root.model.length : 0
     readonly property Item currentItem: segments.count > root.currentIndex && root.currentIndex >= 0 ? segments.itemAt(root.currentIndex) : null
 
@@ -103,7 +116,8 @@ Item {
                 signal clicked
 
                 objectName: seg.modelData.name || ""
-                width: content.implicitWidth + Space.l * 2
+                readonly property real natural: content.implicitWidth + Space.l * 2
+                width: seg.natural + root.segmentExtra
                 height: row.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: seg.text

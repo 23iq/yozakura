@@ -201,15 +201,12 @@ Column {
             }
             section.property: "group"
             section.delegate: KitText {
-                role: "caption"
+                role: "group"
                 required property string section
                 leftPadding: Space.l
                 topPadding: Space.s
                 bottomPadding: Space.xs / 2
-                text: (section === "_apps" ? I18n.t("binds.apps_section") : I18n.t(BindModel.group(section).title)).toUpperCase()
-                font.weight: Font.Bold
-                font.letterSpacing: 1
-                color: Colors.overSurfaceVariant
+                text: section === "_apps" ? I18n.t("binds.apps_section") : I18n.t(BindModel.group(section).title)
             }
             delegate: Item {
                 id: option

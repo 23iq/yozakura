@@ -10,6 +10,7 @@ import qs.modules.components.kit
 // rows (children); `headless` (with Group's `bare`) inside a row card.
 Group {
     id: root
+    labelRole: "group"
 
     bare: root.headless
 

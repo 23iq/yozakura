@@ -12,6 +12,9 @@ import "ConnectModel.js" as ConnectModel
 Item {
     id: root
 
+    // full-width rows with their own inset (SettingRow.fullBleed)
+    readonly property bool rowInset: false
+
     property var entry
     property real fillHeight: 0
     readonly property var apps: Audio.outputAppNodes || []

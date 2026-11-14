@@ -70,7 +70,7 @@ Item {
         property real tOut: 0
         property bool leaving: false
 
-        readonly property bool animated: spec.enabled && mini.visible
+        readonly property bool animated: spec.enabled && mini.visible && Config.animDuration > 0
         readonly property var aIn: MotionSpec.animation(spec, "windowsIn")
         readonly property var aOut: MotionSpec.animation(spec, "windowsOut")
         readonly property var fIn: MotionSpec.animation(spec, "fadeIn")
