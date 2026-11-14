@@ -10,9 +10,6 @@ var category = {
     "description": "prefs.cat.notch.desc",
     "keywords": "notch island dynamic activities visualizer media panels",
     "stage": "IslandStage",
-    "hero": {
-        "hint": "prefs.notch.hero_hint"
-    },
     "row": [{ "id": "notch", "weight": 1.2 }, { "id": "media", "weight": 1 }, { "id": "activities", "weight": 1.3 }],
     "sections": [
         {
@@ -126,6 +123,9 @@ var category = {
                 {
                     "key": "notch.position",
                     "type": "selector",
+                    // pictures: on a side edge the island stands upright
+                    "display": "cards",
+                    "thumb": "IslandEdgeThumb",
                     "options": [
                         {
                             "value": "top",

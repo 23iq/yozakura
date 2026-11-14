@@ -20,7 +20,6 @@ var EDITORS = {
     "BranchBlossomChips": "editors/BranchBlossomChips.qml",
     "SurfaceEffectCards": "editors/SurfaceEffectCards.qml",
     "WallpaperStrip": "editors/WallpaperStrip.qml",
-    "WallpaperColours": "editors/WallpaperColours.qml",
     "WallpaperScreens": "editors/WallpaperScreens.qml",
     "FolderList": "editors/FolderList.qml",
     "SpecialsEditor": "editors/SpecialsEditor.qml",
@@ -102,9 +101,11 @@ var THUMBS = {
     "EdgeThumb": "thumbs/EdgeThumb.qml",
     "DockStyleThumb": "thumbs/DockStyleThumb.qml",
     "IslandShapeThumb": "thumbs/IslandShapeThumb.qml",
+    "IslandEdgeThumb": "thumbs/IslandEdgeThumb.qml",
     "OsdStyleThumb": "thumbs/OsdStyleThumb.qml",
     "PopupAnimThumb": "thumbs/PopupAnimThumb.qml",
     "PresentationThumb": "thumbs/PresentationThumb.qml",
+    "NotifPositionThumb": "thumbs/NotifPositionThumb.qml",
     "BarEdgeThumb": "thumbs/BarEdgeThumb.qml",
     "ClockFaceThumb": "thumbs/ClockFaceThumb.qml",
     "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
@@ -143,8 +144,8 @@ var DESKTOP_STAGES = {
 // Plain stages of the pages that are not about the desktop: the thing itself
 // on the card fill, never the wallpaper (Stage `calm`): the status bands of
 // list pages, the battery and power profiles, the update state, a terminal,
-// the launcher, the dashboard and the chat.
-var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage", "LauncherStage", "DashboardStage", "AssistantStage"];
+// the launcher, the dashboard, the chat and the type specimen.
+var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage", "LauncherStage", "DashboardStage", "AssistantStage", "TypeStage"];
 
 // Tabs of the Screen destination whose two-pane stage is the whole screen
 // (stages/ScreenCanvas.qml) with their own stage as its loupe: the part each
@@ -174,6 +175,7 @@ var STAGES = {
     "DashboardStage": "stages/DashboardStage.qml",
     "UpdatesStage": "stages/UpdatesStage.qml",
     "TerminalStage": "stages/TerminalStage.qml",
+    "TypeStage": "stages/TypeStage.qml",
     "NetworkBand": "stages/NetworkBand.qml",
     "BluetoothBand": "stages/BluetoothBand.qml",
     "SoundBand": "stages/SoundBand.qml",

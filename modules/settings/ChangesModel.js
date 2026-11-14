@@ -31,6 +31,9 @@ function describe(entry, value, tr) {
     }
     if (entry && entry.invert && typeof value === "boolean")
         value = !value;
+    // a fraction (unit "fraction": 0.15) reads as a percentage
+    if (typeof value === "number" && entry && entry.unit === "fraction")
+        return Math.round(value * 100) + " %";
     var unit = entry && entry.unit ? " " + entry.unit : "";
     if (typeof value === "number")
         return (Math.round(value * 100) / 100) + unit;

@@ -26,11 +26,13 @@ Item {
     // a vertical bar's strip only repeats the canvas: no loupe then
     // a part that is off has nothing to magnify (the canvas shows it gone)
     readonly property bool partOn: canvas.part === "dock" ? SettingsStore.get("dock.enabled") !== false : canvas.part === "island" ? SettingsStore.get("notch.enabled") !== false : true
-    readonly property bool loupeShown: canvas.partOn && loupeLoader.status === Loader.Ready && !(canvas.part === "bar" && canvas.loupe && canvas.loupe.vertical === true)
+    // ... unless its stage draws a ghost of it with its switch (the dock)
+    readonly property bool ghostLoupe: !canvas.partOn && !!canvas.loupe && canvas.loupe.ghost === true
+    readonly property bool loupeShown: (canvas.partOn || canvas.ghostLoupe) && loupeLoader.status === Loader.Ready && !(canvas.part === "bar" && canvas.loupe && canvas.loupe.vertical === true)
     readonly property real screenH: Math.round(canvas.width * 9 / 16)
     readonly property real loupeH: canvas.loupeShown ? Math.min(Space.px(260), Math.max(Space.px(96), canvas.loupe.preferredHeight || Space.px(120))) : 0
     // a part that is off: a note with its switch instead of the loupe
-    readonly property bool offNote: !canvas.partOn && canvas.part !== "bar"
+    readonly property bool offNote: !canvas.partOn && canvas.part !== "bar" && !canvas.ghostLoupe
     // asked of the page: the canvas, the gap and the loupe (or the note)
     readonly property real preferredHeight: canvas.screenH + (canvas.loupeShown ? Space.m + canvas.loupeH : 0) + (canvas.offNote ? Space.m + offRow.height : 0)
     readonly property bool pageWide: false

@@ -74,7 +74,8 @@ Item {
 
                 width: parent.width - browse.width - (clear.visible ? clear.width + parent.spacing : 0) - parent.spacing
                 text: root.path
-                monospace: true
+                // a path is data (mono); the placeholder ("Built-in tone") is words
+                monospace: root.path !== ""
                 placeholder: root.placeholder
                 onEdited: t => {
                     return root.submit(t);

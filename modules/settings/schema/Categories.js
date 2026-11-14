@@ -257,7 +257,8 @@ var categories = [
     IconsType.category,
     mergeInto(Wallpapers.category, "panorama", ["transition"]),
     mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]),
-    mergeInto(Notch.category, "notch", ["behaviour", "place", "idle"]),
+    // the screen edge is a picture choice: a card of its own (its pictures say what "edge" means)
+    mergeInto(Notch.category, "notch", ["behaviour", "idle"]),
     Dock.category,
     mergeInto(Overview.category, "grid", ["size", "wallpaper"]),
     withEntries(Launcher.category, "appearance", [Layout.placed("layout.launcher.host", "prefs.layout.opens_in")]),

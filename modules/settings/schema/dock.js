@@ -25,9 +25,6 @@ var category = {
     "description": "prefs.cat.dock.desc",
     "keywords": "dock taskbar apps favorites pinned running launcher",
     "stage": "DockStage",
-    "hero": {
-        "hint": "prefs.dock.hero_hint"
-    },
     "row": [{ "id": "dock", "weight": 1.3 }, { "id": "size", "weight": 1.25 }, { "id": "content", "weight": 0.8 }],
     "sections": [
         {

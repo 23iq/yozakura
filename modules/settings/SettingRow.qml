@@ -228,11 +228,12 @@ FocusScope {
     // label above it (SectionLabel.inset).
     // A waiting (disabled) row reads as off, not as a faded copy of an
     // enabled one: its colours drained to grey, a little faded, so a chosen
-    // segment or switch never looks merely unselected
+    // segment never looks merely unselected. A switch keeps its colour (only
+    // faded): drained, an "on" track reads like an "off" one.
     Column {
         id: body
-        opacity: row.dimmed ? 0.6 : 1
-        layer.enabled: row.dimmed
+        opacity: row.dimmed ? (row.type === "toggle" ? 0.45 : 0.6) : 1
+        layer.enabled: row.dimmed && row.type !== "toggle"
         layer.effect: MultiEffect {
             saturation: -1
         }

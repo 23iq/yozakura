@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.settings
 import "../../dock/indicators/IndicatorRegistry.js" as Indicators
 
 // Stage of the dock tab: the dock itself, a strip at a readable scale (a
@@ -21,6 +22,9 @@ Stage {
     objectName: "dockStage"
 
     readonly property bool dockOn: SettingsStore.get("dock.enabled") !== false
+    // off: a ghost of the dock as it would be, outlined, with its switch
+    // (the canvas shows this loupe then, instead of a bare note)
+    readonly property bool ghost: !stage.dockOn
     readonly property string theme: String(SettingsStore.get("dock.theme") || "default")
     readonly property real zoom: 1.3
     readonly property real iconSize: Math.round(Number(SettingsStore.get("dock.iconSize") || 24) * stage.zoom)
@@ -80,7 +84,9 @@ Stage {
     StyledRect {
         id: dock
         objectName: "dockShape"
-        visible: stage.dockOn && stage.theme !== "integrated"
+        visible: stage.theme !== "integrated"
+        // off: only its place is drawn (the outline below), never faded apps under the note
+        opacity: stage.ghost ? 0 : 1
         anchors.horizontalCenter: parent.horizontalCenter
         width: row.implicitWidth + Math.round(stage.dockHeight - stage.iconSize)
         height: stage.dockHeight
@@ -189,16 +195,50 @@ Stage {
         MouseArea {
             objectName: "dockPart"
             anchors.fill: parent
+            enabled: !stage.ghost
             acceptedButtons: Qt.LeftButton
             cursorShape: Qt.PointingHandCursor
             onClicked: SettingsStore.navigate("dock", "size", "")
         }
     }
 
+    // the ghost's outline: where the dock would be
+    DashedFrame {
+        objectName: "dockGhost"
+        visible: stage.ghost && dock.visible
+        x: Math.round(dock.x + dock.width / 2 - width / 2)
+        y: dock.y - Space.s
+        width: Math.max(dock.width + Space.s * 2, offRow.implicitWidth + Space.xl * 2)
+        height: dock.height + Space.s * 2
+        radius: dock.radius + Space.s
+        color: Type.muted
+    }
+
+    // off: say so over the ghost, with the switch that brings it back
+    Row {
+        id: offRow
+        objectName: "dockOff"
+        visible: stage.ghost
+        anchors.centerIn: dock.visible ? dock : parent
+        spacing: Space.m
+        KitText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "body"
+            text: I18n.t("prefs.dock.off_stage")
+        }
+        PillButton {
+            objectName: "dockTurnOn"
+            anchors.verticalCenter: parent.verticalCenter
+            kind: "tonal"
+            text: I18n.t("prefs.disabled.turn_on")
+            onClicked: SettingsStore.set("dock.enabled", true)
+        }
+    }
+
     KitText {
-        visible: !stage.dockOn || stage.theme === "integrated"
+        visible: stage.dockOn && stage.theme === "integrated"
         anchors.centerIn: parent
         role: "secondary"
-        text: !stage.dockOn ? I18n.t("prefs.dock.off_stage") : I18n.t("prefs.dock.in_bar_stage")
+        text: I18n.t("prefs.dock.in_bar_stage")
     }
 }
