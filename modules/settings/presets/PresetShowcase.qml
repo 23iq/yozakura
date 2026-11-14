@@ -46,6 +46,9 @@ FittedFrame {
     // ---- the hero: the stage and the preset's actions beside it -----------
     Item {
         id: hero
+        HoverHandler {
+            id: heroHover
+        }
         objectName: "pageHero"
         x: root.margin
         y: Space.s
@@ -98,14 +101,13 @@ FittedFrame {
         }
     }
 
-    KitText {
+    // the instruction: only while the pointer is over the stage
+    HoverHint {
         id: hint
-        objectName: "heroHint"
+        shown: heroHover.hovered
         x: root.margin
         y: hero.y + hero.height + Space.s
         width: root.width - root.margin * 2
-        horizontalAlignment: Text.AlignHCenter
-        role: "secondary"
         // one line on a fitted page: a long translation shrinks a little
         // in a narrow window rather than losing its end
         fontSizeMode: Text.HorizontalFit

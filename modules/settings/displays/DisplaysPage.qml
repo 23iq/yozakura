@@ -120,6 +120,9 @@ FittedFrame {
     // ---- the hero: the arrangement and the picked monitor beside it --------
     Item {
         id: hero
+        HoverHandler {
+            id: heroHover
+        }
         // the page's hero (tests/settings-fit.test.py)
         readonly property bool fittedHero: true
         x: page.margin
@@ -232,14 +235,13 @@ FittedFrame {
         }
     }
 
-    KitText {
+    // the instruction: only while the pointer is over the stage
+    HoverHint {
         id: hint
-        objectName: "heroHint"
+        shown: heroHover.hovered
         x: page.margin
         y: hero.y + hero.height + Space.s
         width: page.width - page.margin * 2
-        horizontalAlignment: Text.AlignHCenter
-        role: "secondary"
         text: I18n.t("prefs.displays.hero_hint")
     }
 

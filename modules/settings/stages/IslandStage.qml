@@ -62,10 +62,15 @@ Stage {
     // under the island instead of beside it
     readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
     // as tall as the island and its room (and the chips under it), no more
-    readonly property real preferredHeight: Math.round(stage.u * 1.6 + Space.m * 2 + (stage.narrow ? chips.implicitHeight + Space.m : 0))
+    // (narrow: the island, then the chips right under it, nothing more)
+    readonly property real preferredHeight: Math.round(stage.narrow ? stage.u + Space.m * 2 + chips.implicitHeight : stage.u * 1.6 + Space.m * 2)
 
     stageHeight: stage.preferredHeight
     calm: true
+    // the loupe under the Screen canvas is no second card: the island and
+    // its state chips stand on the page under the canvas
+    backdrop: !stage.narrow
+    framed: !stage.narrow
 
     // the bar's surface along the edge, faint: the island sits on it
     StyledRect {
@@ -236,7 +241,7 @@ Stage {
         objectName: "islandStates"
         // beside the island, on the right; under it on a narrow stage
         x: stage.narrow ? Math.round((parent.width - width) / 2) : parent.width - width - Space.xl
-        y: stage.narrow ? (stage.atBottom ? Space.m : parent.height - height - Space.m) : Math.round((parent.height - height) / 2)
+        y: stage.narrow ? (stage.atBottom ? 0 : island.y + island.height + Space.m) : Math.round((parent.height - height) / 2)
         visible: stage.islandOn
         model: stage.stateList.map(s => ({
                     "name": "islandState:" + s.id,

@@ -93,6 +93,9 @@ FittedFrame {
     // ---- the hero: the keyboard, the try field, what needs saying ---------
     Item {
         id: hero
+        HoverHandler {
+            id: heroHover
+        }
         readonly property bool fittedHero: true
         x: page.margin
         y: Space.s
@@ -166,14 +169,13 @@ FittedFrame {
         }
     }
 
-    KitText {
+    // the instruction: only while the pointer is over the stage
+    HoverHint {
         id: hint
-        objectName: "heroHint"
+        shown: heroHover.hovered
         x: page.margin
         y: hero.y + hero.height + Space.s
         width: page.width - page.margin * 2
-        horizontalAlignment: Text.AlignHCenter
-        role: "secondary"
         // one line on a fitted page: a long translation shrinks a little
         // in a narrow window rather than losing its end
         fontSizeMode: Text.HorizontalFit

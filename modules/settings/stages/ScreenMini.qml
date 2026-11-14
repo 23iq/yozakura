@@ -111,7 +111,9 @@ Item {
     readonly property real dockGap: Math.round(screen.unit * (screen.dockFloating ? 0.5 : 0.2))
     // the shell's rounded screen corners (a tile that crops the screen sets false)
     property bool corners: screen.get("theme.enableCorners", true) !== false
-    readonly property string islandEdge: screen.get("notch.position", "top") === "bottom" ? "bottom" : "top"
+    // the island's edge: top / bottom, or a side (it stands upright there)
+    readonly property string islandEdge: ["bottom", "left", "right"].indexOf(screen.get("notch.position", "top")) >= 0 ? screen.get("notch.position", "top") : "top"
+    readonly property bool islandUpright: screen.islandEdge === "left" || screen.islandEdge === "right"
     // Room taken on an edge by the bars, the frame and the dock.
     function edgeDepth(edge) {
         return screen.frameWidth + (screen.depths[edge] || 0) + (screen.dockOn && screen.dockEdge === edge ? screen.dockThick + screen.dockGap * 2 : 0);
@@ -511,22 +513,27 @@ Item {
     Mark {
         id: island
         visible: screen.showIsland && screen.island
-        width: Math.round(screen.width * 0.13)
-        height: Math.round(screen.unit * 1.2)
-        x: (screen.width - width) / 2
-        y: {
+        // along its edge: wide on top / bottom, upright on a side
+        readonly property real along: Math.round(screen.width * 0.13)
+        readonly property real across: Math.round(screen.unit * 1.2)
+        // from its edge: centred in a bar on that edge, else just inside
+        readonly property real inset: {
             const barOnEdge = screen.panels.some(p => p.edge === screen.islandEdge);
-            const inset = screen.frameWidth + (barOnEdge && screen.depths[screen.islandEdge] > 0 ? Math.max(0, (screen.depths[screen.islandEdge] - height) / 2) : Space.xs);
-            return screen.islandEdge === "bottom" ? screen.height - height - inset : inset;
+            return screen.frameWidth + (barOnEdge && screen.depths[screen.islandEdge] > 0 ? Math.max(0, (screen.depths[screen.islandEdge] - island.across) / 2) : Space.xs);
         }
+        width: screen.islandUpright ? island.across : island.along
+        height: screen.islandUpright ? island.along : island.across
+        x: screen.islandEdge === "left" ? island.inset : screen.islandEdge === "right" ? screen.width - width - island.inset : (screen.width - width) / 2
+        y: screen.islandEdge === "top" ? island.inset : screen.islandEdge === "bottom" ? screen.height - height - island.inset : (screen.height - height) / 2
         color: Colors.surfaceContainerLowest
         border.width: Space.hairline
         border.color: Qt.alpha(Colors.outlineVariant, 0.7)
 
         Mark {
             anchors.centerIn: parent
-            width: parent.width * 0.36
-            height: Math.max(2, Math.round(screen.unit * 0.14))
+            readonly property real line: Math.max(2, Math.round(screen.unit * 0.14))
+            width: screen.islandUpright ? line : parent.width * 0.36
+            height: screen.islandUpright ? parent.height * 0.36 : line
             color: Qt.alpha(Colors.overBackground, 0.35)
         }
         StageSpot {

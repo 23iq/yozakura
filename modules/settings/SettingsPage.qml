@@ -108,19 +108,8 @@ Flickable {
     // once shown, cards glide to new places (a toggle that shows rows):
     // before, they land in place
     property bool settled: false
-    onEnterReadyChanged: if (enterReady) {
-        Qt.callLater(() => page.settled = true);
-        hintOnce.start();
-    }
-    // the hint shows once by itself, the first time the page shows
-    property bool hintIntro: false
-    Timer {
-        id: hintOnce
-        interval: 3200
-        onRunningChanged: if (running)
-            page.hintIntro = true
-        onTriggered: page.hintIntro = false
-    }
+    onEnterReadyChanged: if (enterReady)
+        Qt.callLater(() => page.settled = true)
 
     // every card placed inside the viewport is built (a card still to build
     // has no height: it would appear, or grow, after the page showed; cards
@@ -316,36 +305,40 @@ Flickable {
         }
     }
 
-    // the hint: a quiet caption under the stage, there while the pointer
-    // is over the stage (and once by itself); its line is kept, so
-    // nothing moves when it shows
-    KitText {
+    // the hint: a quiet caption under the stage, there only while the
+    // pointer is over the stage (HoverHint); its line is kept, so nothing
+    // moves when it shows
+    HoverHint {
         id: heroHint
-        objectName: "heroHint"
         // (none while the stage says its part is off: the hint would talk
         // about something not there)
-        readonly property bool wanted: heroArea.visible && !!page.hero.hint && !(page.stageItem && page.stageItem.offNote === true)
-        readonly property bool shown: heroHint.wanted && (page.previewHovered || page.hintIntro)
+        shown: heroArea.visible && !!page.hero.hint && !(page.stageItem && page.stageItem.offNote === true) && page.previewHovered
         visible: !!page.hero.hint && heroArea.visible
         z: 2
         x: page.split ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
         y: heroArea.y + heroArea.height * heroArea.scale + Space.m
         width: page.split ? heroArea.width : page.footSide ? stageLoader.width : page.cardsW
-        horizontalAlignment: Text.AlignHCenter
-        role: "caption"
-        color: Type.muted
         // two lines at most in a narrow window, whole
         wrapMode: Text.WordWrap
         maximumLineCount: 2
-        opacity: heroHint.shown ? heroArea.opacity : 0
-        Behavior on opacity {
-            enabled: Motion.glide.duration > 0
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
         text: page.hero.hint ? I18n.t(page.hero.hint) : ""
+    }
+
+    // Two panes: under the sticky stage, the inspector fills the column
+    // (the pointed setting, or a summary of the tab); none where the stage
+    // leaves no room for it.
+    PageInspector {
+        id: inspectorBox
+        readonly property real room: page.height - (heroArea.y - page.contentY) - page.heroBlockH - page.gap - page.margin
+        page: page
+        category: page.category
+        visible: page.split && inspectorBox.room >= Space.px(150)
+        z: 2
+        x: heroArea.x
+        y: heroArea.y + page.heroBlockH + page.gap
+        width: heroArea.width
+        height: Math.min(inspectorBox.room, inspectorBox.implicitHeight)
+        clip: true
     }
 
     // The cards.

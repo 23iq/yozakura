@@ -28,17 +28,12 @@ Item {
     // A plain backdrop (the status band of a list page, with text and
     // controls on it): a card fill, no wallpaper picture at all.
     property bool calm: false
+    // the hairline edge (false: the stage draws no frame of its own)
+    property bool framed: true
     default property alias content: area.data
     property real radius: Look.radius("surface", stage.height)
     // The wallpaper as a file URL ("" while there is none).
     readonly property string wallpaper: SettingsStore.wallpaper
-    // The camera: the picture (wallpaper and miniature together) zoomed
-    // by `zoom` around `lookAt` (a point in 0..1 of the stage), eased
-    // when a page sets them (normalised: a resize never animates them).
-    property real zoom: 1
-    property point lookAt: Qt.point(0.5, 0.5)
-    // false: the camera jumps (the first placement)
-    property bool cameraEased: true
 
     implicitHeight: stage.stageHeight
 
@@ -63,12 +58,6 @@ Item {
         Item {
             id: lens
             anchors.fill: parent
-            transform: Scale {
-                origin.x: stage.lookAt.x * lens.width
-                origin.y: stage.lookAt.y * lens.height
-                xScale: stage.zoom
-                yScale: stage.zoom
-            }
 
             ScreenBackdrop {
                 anchors.fill: parent
@@ -133,21 +122,6 @@ Item {
         }
     }
 
-    Behavior on zoom {
-        enabled: stage.cameraEased && Motion.morph.duration > 0
-        NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.glide.easing
-        }
-    }
-    Behavior on lookAt {
-        enabled: stage.cameraEased && Motion.morph.duration > 0
-        PropertyAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.glide.easing
-        }
-    }
-
     Mark {
         id: mask
         anchors.fill: parent
@@ -159,6 +133,7 @@ Item {
 
     // A hairline edge so the stage reads as a screen in every language.
     Mark {
+        visible: stage.framed
         anchors.fill: parent
         radius: stage.radius
         color: "transparent"

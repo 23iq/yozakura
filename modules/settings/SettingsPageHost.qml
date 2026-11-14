@@ -37,6 +37,9 @@ import "Ui.js" as Ui
 Item {
     id: host
 
+    // pages slide inside the content area, never over the window's edge
+    clip: true
+
     property var category: null
     property int keep: 4
     property int direction: 0
@@ -176,7 +179,7 @@ Item {
             fade.restart();
             return;
         }
-        inX.from = host.direction * Space.xl;
+        inX.from = host.direction * Space.xl * 2;
         outX.to = -host.direction * Space.xl;
         swap.restart();
     }
@@ -201,39 +204,55 @@ Item {
         easing.type: Motion.glide.easing
     }
 
-    ParallelAnimation {
+    // In turn, never superimposed: the old page leaves quickly toward the
+    // side away from the new tab (micro), then the new one slides in from
+    // that tab's side (glide). The host clips, so pages travel inside the
+    // content area only.
+    SequentialAnimation {
         id: swap
-        NumberAnimation {
-            id: inX
-            target: host.item
-            property: "x"
-            to: 0
-            duration: Math.max(1, Motion.glide.duration)
-            easing.type: Motion.glide.easing
+        ParallelAnimation {
+            NumberAnimation {
+                id: outX
+                target: host.leaving
+                property: "x"
+                from: 0
+                duration: Math.max(1, Motion.micro.duration)
+                easing.type: Motion.exit.easing
+            }
+            NumberAnimation {
+                target: host.leaving
+                property: "opacity"
+                from: 1
+                to: 0
+                duration: Math.max(1, Motion.micro.duration)
+                easing.type: Motion.exit.easing
+            }
         }
-        NumberAnimation {
-            target: host.item
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: Math.max(1, Motion.glide.duration)
-            easing.type: Motion.glide.easing
+        ScriptAction {
+            script: {
+                if (host.leaving) {
+                    host.leaving.visible = false;
+                    host.leaving.enabled = false;
+                }
+            }
         }
-        NumberAnimation {
-            id: outX
-            target: host.leaving
-            property: "x"
-            from: 0
-            duration: Math.max(1, Motion.exit.duration)
-            easing.type: Motion.exit.easing
-        }
-        NumberAnimation {
-            target: host.leaving
-            property: "opacity"
-            from: 1
-            to: 0
-            duration: Math.max(1, Motion.exit.duration)
-            easing.type: Motion.exit.easing
+        ParallelAnimation {
+            NumberAnimation {
+                id: inX
+                target: host.item
+                property: "x"
+                to: 0
+                duration: Math.max(1, Motion.glide.duration)
+                easing.type: Motion.glide.easing
+            }
+            NumberAnimation {
+                target: host.item
+                property: "opacity"
+                from: 0
+                to: 1
+                duration: Math.max(1, Motion.glide.duration)
+                easing.type: Motion.glide.easing
+            }
         }
         onFinished: host.settle()
     }
