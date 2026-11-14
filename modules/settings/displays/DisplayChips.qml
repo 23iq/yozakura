@@ -10,13 +10,18 @@ import qs.modules.components.kit
 
 // Single-choice chips: options [{value, label, max}]. The option flagged
 // `max` carries an accent glyph (`accentIcon`): the highest refresh rate, the
-// suggested scale. The lit chip is the one matching `value`.
+// suggested scale. The lit chip is the one matching `value`. `maxTip`: the
+// glyph's tooltip, said on hover of that chip (the suggestion is the chip
+// itself, never a second button of the same value); `maxHint: false` hides
+// the glyph (nothing to suggest: that one is already in use).
 Flow {
     id: root
 
     property var options: []
     property var value: 0
     property string accentIcon: "lightning"
+    property string maxTip: ""
+    property bool maxHint: true
     signal selected(var value)
 
     spacing: Space.s
@@ -59,7 +64,7 @@ Flow {
 
                 Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: !!chip.modelData.max
+                    visible: !!chip.modelData.max && root.maxHint
                     icon: Icons[root.accentIcon] ?? ""
                     color: Colors.tertiary
                 }
@@ -71,6 +76,11 @@ Flow {
                     font.weight: chip.on ? Font.DemiBold : Font.Normal
                     color: chip.on ? Colors.overBackground : Colors.overSurfaceVariant
                 }
+            }
+
+            Tooltip {
+                text: root.maxTip
+                shown: area.containsMouse && !!chip.modelData.max && root.maxHint && root.maxTip !== ""
             }
 
             MouseArea {

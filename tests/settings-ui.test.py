@@ -291,7 +291,7 @@ until(lambda: ev("currentCategory") == "sound", "settingsCategory opens the page
 # Power / System: list editor (idle listeners), string list of paths (disks)
 select("power")
 n0 = ev("Config.system.idle.listeners.length")
-lst = row("system.idle.listeners")
+lst = row("power.commands")
 h.eval(lst, """(function() {
     function find(item) {
         if (item.objectName === "listAdd") return item;

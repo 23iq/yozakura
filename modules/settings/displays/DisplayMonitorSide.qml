@@ -7,12 +7,13 @@ import qs.modules.settings
 import qs.modules.components.kit
 import "DisplayFormat.js" as DisplayFormat
 
-// Beside the Displays hero: the picked monitor (its name, connector and an
-// on / off switch), its rotation as four tilted screens, adaptive sync,
-// and the actions: Identify, Discard and Apply (15 s to keep or go back).
-// Edits nothing itself: every change is a `patch` the page merges into
-// the draft.
-Column {
+// The inspector of the Displays hero card, beside the arrangement: the
+// picked monitor (its name, connector and an on / off switch), its
+// rotation as four tilted screens, adaptive sync and Identify at the top;
+// the draft's actions at its foot, attached to it: Apply (15 s to keep or
+// go back) and Discard. Edits nothing itself: every change is a `patch`
+// the page merges into the draft. The page gives it its height.
+Item {
     id: root
 
     property var config: null
@@ -20,22 +21,21 @@ Column {
     property bool dirty: false
     property bool busy: false
     readonly property bool active: !!root.config && root.config.enabled !== false
+    // the height the inspector needs (the hero card is at least this tall)
+    readonly property real needed: top.implicitHeight + Space.l + actions.implicitHeight
 
     signal patch(var values)
     signal identify
     signal discard
     signal apply
 
-    spacing: Space.s
-
-    Card {
-        id: monitor
+    Column {
+        id: top
         width: root.width
-        padding: Space.m
-        spacing: Space.s
+        spacing: Space.m
 
         Item {
-            width: monitor.contentWidth
+            width: root.width
             height: Math.max(names.implicitHeight, toggle.height)
             Column {
                 id: names
@@ -98,7 +98,7 @@ Column {
         // adaptive sync (VRR) on / off
         Item {
             visible: root.active
-            width: monitor.contentWidth
+            width: root.width
             height: Math.max(vrr.height, vrrLabel.height)
             // the name wraps in a narrow side column, whole
             KitText {
@@ -122,10 +122,7 @@ Column {
                     })
             }
         }
-    }
 
-    Row {
-        spacing: Space.s
         PillButton {
             objectName: "identifyButton"
             icon: "eye"
@@ -134,23 +131,34 @@ Column {
             onClicked: root.identify()
         }
     }
-    Row {
+
+    // the draft's actions, at the inspector's foot
+    Column {
+        id: actions
+        anchors.bottom: parent.bottom
+        width: root.width
         spacing: Space.s
-        PillButton {
-            objectName: "applyButton"
-            kind: "filled"
-            enabled: root.dirty && !root.busy
-            icon: "accept"
-            text: I18n.t("prefs.displays.apply")
-            onClicked: root.apply()
+        Divider {
+            width: parent.width
         }
-        PillButton {
-            objectName: "discardButton"
-            visible: root.dirty
-            icon: "arrowCounterClockwise"
-            kind: "ghost"
-            text: I18n.t("prefs.displays.discard")
-            onClicked: root.discard()
+        Row {
+            spacing: Space.s
+            PillButton {
+                objectName: "applyButton"
+                kind: "filled"
+                enabled: root.dirty && !root.busy
+                icon: "accept"
+                text: I18n.t("prefs.displays.apply")
+                onClicked: root.apply()
+            }
+            PillButton {
+                objectName: "discardButton"
+                visible: root.dirty
+                icon: "arrowCounterClockwise"
+                kind: "ghost"
+                text: I18n.t("prefs.displays.discard")
+                onClicked: root.discard()
+            }
         }
     }
 }

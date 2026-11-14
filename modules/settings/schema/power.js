@@ -56,52 +56,61 @@ var category = {
         },
         {
             // the raw listeners (a command at a time), for what the timeline
-            // does not draw: in the More sheet
+            // does not draw: an Advanced card, folded away (IdleCommands)
             "id": "commands",
-            "title": "prefs.power.section.commands",
+            "title": "prefs.power.section.advanced",
             "entries": [
                 {
-                    "key": "system.idle.listeners",
+                    "id": "power.commands",
+                    "type": "custom",
+                    "component": "IdleCommands",
                     "part": true,
-                    "type": "list",
-                    "fields": [
-                        {
-                            "key": "timeout",
-                            "type": "number",
-                            "min": 5,
-                            "max": 7200,
-                            "step": 5,
-                            "unit": "s",
-                            "label": "idle.timeout"
-                        },
-                        {
-                            "key": "onTimeout",
-                            "type": "text",
-                            "monospace": true,
-                            "placeholder": "prefs.sys.idle_on_timeout.placeholder",
-                            "flex": 0.5,
-                            "label": "idle.on_timeout"
-                        },
-                        {
-                            "key": "onResume",
-                            "type": "text",
-                            "monospace": true,
-                            "placeholder": "prefs.sys.idle_on_resume.placeholder",
-                            "flex": 0.5,
-                            "label": "idle.on_resume"
-                        }
-                    ],
-                    "newItem": {
-                        "timeout": 60,
-                        "onTimeout": "",
-                        "onResume": ""
-                    },
-                    "itemLabel": "idle.listener_n",
-                    "addLabel": "idle.add_listener",
-                    "emptyLabel": "prefs.sys.idle_listeners.empty",
-                    "label": "idle.listeners",
+                    "keys": ["system.idle.listeners"],
+                    "label": "prefs.power.section.commands",
                     "description": "prefs.sys.idle_listeners.desc",
-                    "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
+                    "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle command advanced",
+                    "list": {
+                        "key": "system.idle.listeners",
+                        "type": "list",
+                        "fields": [
+                            {
+                                "key": "timeout",
+                                "type": "number",
+                                "min": 5,
+                                "max": 7200,
+                                "step": 5,
+                                "unit": "s",
+                                "label": "idle.timeout"
+                            },
+                            {
+                                "key": "onTimeout",
+                                "type": "text",
+                                "monospace": true,
+                                "placeholder": "prefs.sys.idle_on_timeout.placeholder",
+                                "flex": 0.5,
+                                "label": "idle.on_timeout"
+                            },
+                            {
+                                "key": "onResume",
+                                "type": "text",
+                                "monospace": true,
+                                "placeholder": "prefs.sys.idle_on_resume.placeholder",
+                                "flex": 0.5,
+                                "label": "idle.on_resume"
+                            }
+                        ],
+                        "newItem": {
+                            "timeout": 60,
+                            "onTimeout": "",
+                            "onResume": ""
+                        },
+                        "itemLabel": "idle.listener_n",
+                        "addLabel": "idle.add_listener",
+                        "emptyLabel": "prefs.sys.idle_listeners.empty",
+                        "label": "idle.listeners",
+                        "description": "prefs.sys.idle_listeners.desc",
+                        "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
+                    }
                 }
             ]
         },

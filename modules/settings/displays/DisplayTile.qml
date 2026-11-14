@@ -93,17 +93,15 @@ StyledRect {
             target: tile
             property: "gx"
             to: 0
-            duration: Config.animDuration * 1.3
-            easing.type: Motion.emphasis.easing
-            easing.overshoot: 1.4
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
         }
         NumberAnimation {
             target: tile
             property: "gy"
             to: 0
-            duration: Config.animDuration * 1.3
-            easing.type: Motion.emphasis.easing
-            easing.overshoot: 1.4
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
         }
     }
 

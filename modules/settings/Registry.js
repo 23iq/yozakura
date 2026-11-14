@@ -46,7 +46,6 @@ var EDITORS = {
     "KeybindsOverview": "editors/KeybindsOverview.qml",
     "LockStyleGallery": "editors/LockStyleGallery.qml",
     "LoginScreenCard": "editors/LoginScreenCard.qml",
-    "LauncherSearchChips": "editors/LauncherSearchChips.qml",
     "LauncherPrefixList": "editors/LauncherPrefixList.qml",
     "MotionProfileCards": "editors/MotionProfileCards.qml",
     "PageLink": "editors/PageLink.qml",
@@ -78,7 +77,8 @@ var EDITORS = {
     "AppVolumes": "connect/AppVolumes.qml",
     "EffectPresets": "connect/EffectPresets.qml",
     "ShortcutList": "editors/ShortcutList.qml",
-    "SleepSwitches": "editors/SleepSwitches.qml"
+    "SleepSwitches": "editors/SleepSwitches.qml",
+    "IdleCommands": "editors/IdleCommands.qml"
 };
 
 var PREVIEWS = {

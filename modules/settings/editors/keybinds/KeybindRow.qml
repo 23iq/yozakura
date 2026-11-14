@@ -9,6 +9,7 @@ import qs.modules.services
 import qs.modules.keybinds
 import qs.config
 import "../../Ui.js" as Ui
+import "BindIcons.js" as BindIcons
 import "../../../keybinds/BindModel.js" as BindModel
 import qs.modules.components.kit
 
@@ -95,9 +96,10 @@ Item {
                 anchors.rightMargin: Space.m
                 spacing: Space.m
 
-                // Apps group: the app's icon (or a terminal for commands).
+                // What the bind does: an app's own icon, else the icon of
+                // its action (BindIcons.js: a lock, a camera, a closing
+                // window), in every group.
                 Item {
-                    visible: root.bind.group === "apps"
                     Layout.preferredWidth: 20
                     Layout.preferredHeight: 20
                     opacity: root.bind.enabled ? 1 : 0.45
@@ -114,7 +116,7 @@ Item {
                         tone: "secondary"
                         anchors.centerIn: parent
                         visible: !root.app || root.app.id === ""
-                        icon: Icons[BindModel.group(root.bind.group).icon] ?? ""
+                        icon: Icons[BindIcons.forBind(root.bind, BindModel.group(root.bind.group).icon)] ?? ""
                     }
                 }
 

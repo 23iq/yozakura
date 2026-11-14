@@ -184,14 +184,15 @@
           "items": {
             "type": "object"
           },
-          "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
           "x-settings": {
             "category": "power",
             "section": "commands",
-            "label": "idle.listeners",
-            "control": "list",
-            "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
-          }
+            "label": "prefs.power.section.commands",
+            "entry": "power.commands",
+            "entryTitle": "Idle commands",
+            "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle command advanced"
+          },
+          "description": "Idle listeners: [{timeout (s), onTimeout (command), onResume (command)}]."
         }
       },
       "additionalProperties": false

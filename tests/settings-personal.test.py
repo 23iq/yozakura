@@ -120,9 +120,9 @@ check(wait_until(lambda: item("launcherMini") is not None), "launcher: the stage
 rows = lambda: h.eval(item("launcherStage"), "results.map(r => r.id).join(',')")  # noqa: E731
 check(item("settingRow:layout.launcher.host") is not None, "launcher: Opens in is on the page")
 n = steps()
-h.eval(item("launcherSearch:calculator"), "clicked()")
+h.eval(item("launcherSearch:calculator"), "toggled(false)")
 check("calculator" in ev("JSON.stringify(Config.prefix.launcher.disabled)") and steps() == n + 1,
-      "launcher: a chip turns a provider off in one undo step")
+      "launcher: a switch turns a provider off in one undo step")
 ev("SettingsStore.undo()")
 check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)") and "calculator" in rows(),
       "launcher: undo brings it back, on the stage too")
@@ -224,8 +224,10 @@ h.eval(item("presetPick:Kaze"), "clicked()")
 check(h.eval(item("presetName"), "text") == "Kaze" and h.eval(item("presetStageShell"), "edge") == "bottom",
       "presets: a click on a preset shows it on the stage")
 check(h.eval(item("presetApply"), "enabled") is True, "presets: ...and offers to apply it")
-check(item("presetsAutoSave") is not None, "presets: the studio's setting is on the gallery's heading line")
-h.eval(item("presetBrowse"), "clicked()")
+check(item("presetsAutoSave") is not None, "presets: the studio's setting is in the info panel")
+# Browse lives in the info panel's ⋯ menu (with Mixer and Import)
+check(item("presetMore") is not None, "presets: the rarer studio actions sit behind a ⋯ button")
+h.eval(item("presetSide"), "browseRequested()")
 check(h.eval(ev('findItem("settingsPage").item'), "view") == "browse", "presets: Browse opens every preset and part")
 
 # ---- Extras / Mods: the list form ---------------------------------------------

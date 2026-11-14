@@ -12,19 +12,21 @@ var category = {
     "description": "prefs.cat.launcher.desc",
     "keywords": "launcher search apps run calculator converter currency units files commands ai prefixes",
     "stage": "LauncherStage",
-    "row": [{ "id": "searches", "weight": 1.3 }, { "id": "appearance", "weight": 0.85 }, "providers"],
+    "row": [{ "id": "searches", "weight": 1.3 }, { "id": "appearance", "weight": 0.85 }],
     "sections": [
         {
             "id": "searches",
             "title": "prefs.launcher.section.searches",
             "entries": [
+                // one list: a switch, the prefix and a drag handle a provider
                 {
-                    "key": "prefix.launcher.disabled",
+                    "id": "launcher.providers",
                     "type": "custom",
-                    "component": "LauncherSearchChips",
+                    "component": "LauncherPrefixList",
+                    "keys": ["prefix.launcher.disabled", "prefix.launcher.order", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.timers", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
                     "label": "prefs.launcher.searches",
                     "description": "prefs.launcher.searches.desc",
-                    "keywords": "providers enable disable on off search apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+                    "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
                 }
             ]
         },
@@ -68,21 +70,6 @@ var category = {
                     "label": "prefs.launcher.icons",
                     "description": "prefs.launcher.icons.desc",
                     "keywords": "icons text only command line minimal rows"
-                }
-            ]
-        },
-        {
-            "id": "providers",
-            "title": "prefs.launcher.section.providers",
-            "entries": [
-                {
-                    "id": "launcher.providers",
-                    "type": "custom",
-                    "component": "LauncherPrefixList",
-                    "keys": ["prefix.launcher.order", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.timers", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
-                    "label": "prefs.launcher.providers",
-                    "description": "prefs.launcher.providers.desc",
-                    "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
                 }
             ]
         },

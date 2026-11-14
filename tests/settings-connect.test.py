@@ -102,7 +102,7 @@ check(ev('w.find("btAction").text') == "Pair" and ev('w.find("btForget").visible
 open_page("sound")
 slider = ev('w.find("soundOutputSlider")')
 check(abs(h.eval(slider, "value") - 0.62) < 0.001, "the band's output slider shows the volume")
-check(h.eval(slider, "level") > 0, "...with a live meter while shown")
+check(h.eval(ev('w.find("soundOutputMeter")'), "level") > 0, "...with a live meter (a line of its own) while shown")
 check(ev("CavaService.consumers.settingsSound") is True, "the meter asks for the visualizer's levels only while shown")
 h.eval(slider, "moved(0.4)")
 check(["volume", 0.4] in calls("Audio"), "moving it sets the volume")

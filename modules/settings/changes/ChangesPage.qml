@@ -54,6 +54,25 @@ FittedFrame {
 
     Component.onCompleted: PresetStatusService.refresh()
 
+    // the band grows with its content (the summary and its chips are never
+    // clipped); the chips stay on two lines, the rest behind "+N more"
+    bandMin: Math.max(count.implicitHeight, summary.implicitHeight, actions.implicitHeight) + Space.l * 2
+    // all chips shown ("+N more" clicked)
+    property bool chipsOpen: false
+    // how many chips fit on two lines (measured on the hidden flow)
+    property int chipsFit: page.groups.length
+
+    function measureChips() {
+        const lineH = measureRep.count > 0 && measureRep.itemAt(0) ? measureRep.itemAt(0).height : 0;
+        let fit = 0;
+        for (let i = 0; i < measureRep.count; i++) {
+            const it = measureRep.itemAt(i);
+            if (it && it.y < lineH * 2 + Space.xs)
+                fit++;
+        }
+        page.chipsFit = fit;
+    }
+
     // the band: how many, where, since what, and the one action
     Stage {
         id: band
@@ -65,49 +84,76 @@ FittedFrame {
         width: page.width - page.margin * 2
         height: page.bandH
 
-        Row {
+        KitText {
             id: count
             x: Space.xl
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Space.l
+            role: "display"
+            font.pixelSize: Math.round(Type.size("display") * 1.5)
+            font.weight: Font.Light
+            color: page.total > 0 ? Type.accent : Type.text
+            text: String(page.total)
+        }
+        Column {
+            id: summary
+            readonly property bool clipped: page.chipsFit < page.groups.length && !page.chipsOpen
+            x: count.x + count.width + Space.l
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Space.s
+            width: Math.max(0, actions.x - x - Space.xl)
             KitText {
-                anchors.verticalCenter: parent.verticalCenter
-                role: "display"
-                font.pixelSize: Math.round(band.height * 0.42)
-                font.weight: Font.Light
-                color: page.total > 0 ? Type.accent : Type.text
-                text: String(page.total)
+                objectName: "changesSummary"
+                width: parent.width
+                role: "title"
+                wrapMode: Text.WordWrap
+                text: page.total === 0 ? I18n.t(page.presetMode ? "prefs.changes.none_preset" : "prefs.changes.none") : I18n.tn("prefs.changes.band", page.total)
             }
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Space.s
-                width: band.width * 0.5
-                KitText {
-                    objectName: "changesSummary"
-                    width: parent.width
-                    role: "title"
-                    wrapMode: Text.WordWrap
-                    text: page.total === 0 ? I18n.t(page.presetMode ? "prefs.changes.none_preset" : "prefs.changes.none") : I18n.tn("prefs.changes.band", page.total)
-                }
-                // where: a chip per page
-                Flow {
-                    width: parent.width
-                    spacing: Space.xs
-                    Repeater {
-                        model: page.groups
-                        delegate: Chip {
-                            required property var modelData
-                            dense: true
-                            quiet: true
-                            text: modelData.title + " · " + modelData.rows.length
-                        }
+            // where: a chip per page (two lines, then "+N more")
+            Flow {
+                objectName: "changesChips"
+                width: parent.width
+                spacing: Space.xs
+                Repeater {
+                    model: summary.clipped ? page.groups.slice(0, Math.max(0, page.chipsFit - 1)) : page.groups
+                    delegate: Chip {
+                        required property var modelData
+                        dense: true
+                        quiet: true
+                        text: modelData.title + " · " + modelData.rows.length
                     }
+                }
+                Chip {
+                    objectName: "changesMore"
+                    visible: summary.clipped || page.chipsOpen
+                    dense: true
+                    text: page.chipsOpen ? I18n.t("prefs.changes.less") : I18n.t("prefs.changes.more", page.groups.length - Math.max(0, page.chipsFit - 1))
+                    onClicked: page.chipsOpen = !page.chipsOpen
+                }
+            }
+        }
+        // the chips laid out at full length, unseen: how many fit
+        Flow {
+            id: measure
+            width: summary.width
+            opacity: 0
+            enabled: false
+            spacing: Space.xs
+            onPositioningComplete: page.measureChips()
+            onWidthChanged: Qt.callLater(page.measureChips)
+            Repeater {
+                id: measureRep
+                model: page.groups
+                delegate: Chip {
+                    required property var modelData
+                    dense: true
+                    quiet: true
+                    text: modelData.title + " · " + modelData.rows.length
                 }
             }
         }
         Column {
-            anchors.right: parent.right
-            anchors.rightMargin: Space.xl
+            id: actions
+            x: band.width - width - Space.xl
             anchors.verticalCenter: parent.verticalCenter
             spacing: Space.s
             Segmented {
@@ -129,11 +175,14 @@ FittedFrame {
                 currentIndex: page.presetMode ? 1 : 0
                 onActivated: i => page.mode = i === 1 ? "preset" : "defaults"
             }
+            // destructive: the danger look, never the accent (one undo step
+            // brings everything back: the undo pill offers it)
             Chip {
                 objectName: "changesResetAll"
                 anchors.right: parent.right
                 visible: page.total > 0
-                primary: true
+                danger: true
+                active: true
                 icon: Icons.arrowCounterClockwise
                 text: I18n.t(page.presetMode ? "prefs.changes.back_to_preset" : "prefs.changes.back_to_defaults")
                 onClicked: page.resetAll()
@@ -152,16 +201,18 @@ FittedFrame {
         height: page.height - y - page.pad
         padding: Look.boxPadding + Space.s
 
-        Item {
+        // the list runs on under the card's foot (masked fade, no second box)
+        EdgeFade {
             width: listCard.contentWidth
-            height: listCard.height - listCard.padding * 2
+            height: listCard.height - listCard.padding
+            start: flick.contentY > 1 ? Space.l : 0
+            end: flick.contentY < flick.contentHeight - flick.height - 1 ? Space.xl : 0
 
             Flickable {
                 id: flick
                 anchors.fill: parent
                 contentWidth: width
-                contentHeight: column.implicitHeight
-                clip: true
+                contentHeight: column.implicitHeight + listCard.padding
                 boundsBehavior: Flickable.StopAtBounds
                 flickableDirection: Flickable.VerticalFlick
                 ScrollBar.vertical: ScrollBar {
@@ -190,10 +241,12 @@ FittedFrame {
                     Repeater {
                         model: page.groups
 
+                        // the card is the one box: groups are bare
                         delegate: Group {
                             id: groupItem
                             required property var modelData
                             required property int index
+                            bare: true
                             width: column.width
                             label: modelData.title
                             divider: index > 0
@@ -211,24 +264,6 @@ FittedFrame {
                                 }
                             }
                         }
-                    }
-                }
-            }
-            // more below: a fade at the bottom
-            Mark {
-                visible: flick.contentY < flick.contentHeight - flick.height - 1
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: Space.xl
-                radius: 0
-                gradient: Gradient {
-                    GradientStop {
-                        position: 0
-                        color: "transparent"
-                    }
-                    GradientStop {
-                        position: 1
-                        color: Look.cardFill(false)
                     }
                 }
             }

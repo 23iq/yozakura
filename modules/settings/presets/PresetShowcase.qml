@@ -80,126 +80,21 @@ FittedFrame {
             }
         }
 
-        Column {
+        PresetSide {
             id: side
             objectName: "presetSide"
             x: stage.x + stage.width + root.gap
             width: root.actionsW
             y: Space.s
-            spacing: Space.s
-
-            KitText {
-                objectName: "presetName"
-                width: parent.width
-                role: "title"
-                text: root.shown ? root.shown.name : ""
-                elide: Text.ElideRight
-            }
-            KitText {
-                width: parent.width
-                visible: text !== ""
-                role: "secondary"
-                text: root.shown && root.shown.author ? root.shown.author : ""
-                elide: Text.ElideRight
-            }
-            Flow {
-                width: parent.width
-                spacing: Space.xs
-                Repeater {
-                    model: root.shown ? (root.shown.tags || []).slice(0, 3) : []
-                    // the preset's tags: read-only labels at full ink (a
-                    // disabled chip was nearly invisible)
-                    delegate: Chip {
-                        required property string modelData
-                        dense: true
-                        Accessible.role: Accessible.StaticText
-                        text: I18n.t(PresetModel.tagLabel(modelData))
-                    }
-                }
-            }
-            Item {
-                width: 1
-                height: Space.s
-            }
-            PillButton {
-                objectName: "presetApply"
-                width: parent.width
-                // the preset in use: a quiet tonal state, not a loud
-                // disabled primary
-                kind: root.shown && root.shown.active ? "tonal" : "filled"
-                icon: root.shown && root.shown.active ? "check" : "magicWand"
-                text: root.shown && root.shown.active ? I18n.t("prefs.presets.in_use") : I18n.t("prefs.presets.apply")
-                enabled: !!root.shown && !root.shown.active && !root.locked
-                onClicked: root.action(root.shown.name, "apply")
-            }
-            // try it for a while, or open it to change it
-            Row {
-                width: parent.width
-                spacing: Space.xs
-                PillButton {
-                    objectName: "presetTry"
-                    width: (parent.width - parent.spacing) / 2
-                    kind: "tonal"
-                    icon: "clock"
-                    text: I18n.t("prefs.presets.try", PresetStudio.trialSeconds)
-                    enabled: !!root.shown && !root.shown.active && !root.locked
-                    onClicked: root.action(root.shown.name, "try")
-                }
-                PillButton {
-                    objectName: "presetEdit"
-                    width: (parent.width - parent.spacing) / 2
-                    kind: "ghost"
-                    icon: "pencil"
-                    text: I18n.t("prefs.presets.edit")
-                    enabled: !!root.shown
-                    onClicked: root.openPreset(root.shown.name)
-                }
-            }
-            Divider {
-                width: parent.width
-            }
-            // the studio's own actions, each named: save what is on screen
-            // now, mix, browse everything, import
-            PillButton {
-                objectName: "saveCurrentLook"
-                width: parent.width
-                kind: "ghost"
-                icon: "plus"
-                text: I18n.t("prefs.presets.save_current")
-                onClicked: root.saveRequested()
-            }
-            Row {
-                id: studio
-                objectName: "presetStudioActions"
-                width: parent.width
-                spacing: Space.xs
-                readonly property real each: (width - spacing * 2) / 3
-                PillButton {
-                    objectName: "presetMix"
-                    width: studio.each
-                    kind: "ghost"
-                    icon: "faders"
-                    text: I18n.t("prefs.presets.tab.mixer")
-                    onClicked: root.mixRequested()
-                }
-                PillButton {
-                    objectName: "presetBrowse"
-                    width: studio.each
-                    kind: "ghost"
-                    icon: "squaresFour"
-                    text: I18n.t("prefs.presets.browse_short")
-                    Accessible.description: I18n.t("prefs.presets.browse")
-                    onClicked: root.browseRequested()
-                }
-                PillButton {
-                    objectName: "importPreset"
-                    width: studio.each
-                    kind: "ghost"
-                    icon: "downloadSimple"
-                    text: I18n.t("prefs.presets.import")
-                    onClicked: root.importRequested()
-                }
-            }
+            shown: root.shown
+            locked: root.locked
+            autoSaveEntry: (((root.category.sections || [])[0] || {}).entries || [])[0] || ({})
+            onAction: (name, id) => root.action(name, id)
+            onOpenPreset: name => root.openPreset(name)
+            onSaveRequested: root.saveRequested()
+            onMixRequested: root.mixRequested()
+            onImportRequested: root.importRequested()
+            onBrowseRequested: root.browseRequested()
         }
     }
 
@@ -235,25 +130,10 @@ FittedFrame {
             padding: Look.boxPadding + Space.s
             spacing: Space.s
 
-            Item {
-                width: stripCard.contentWidth
-                height: Math.max(heading.implicitHeight, count.implicitHeight)
-                KitText {
-                    id: heading
-                    role: "title"
-                    text: I18n.t("prefs.presets.gallery")
-                }
-                // the studio's one setting, on the gallery's heading line
-                // (it had a whole card of its own)
-                SettingRow {
-                    id: count
-                    objectName: "presetsAutoSave"
-                    anchors.right: parent.right
-                    anchors.verticalCenter: heading.verticalCenter
-                    width: Math.min(Space.px(420), parent.width - heading.implicitWidth - Space.xl)
-                    dense: true
-                    entry: (((root.category.sections || [])[0] || {}).entries || [])[0] || ({})
-                }
+            KitText {
+                id: heading
+                role: "title"
+                text: I18n.t("prefs.presets.gallery")
             }
 
             Item {
@@ -263,80 +143,86 @@ FittedFrame {
                 readonly property real cardH: height - Space.s * 2
                 readonly property real cardW: Math.round(cardH * 16 / 10)
 
-                Flickable {
-                    id: flick
-                    objectName: "presetStrip"
+                // the strip runs on under the card's sides: a masked fade on
+                // the side that has more (never painted over the card)
+                EdgeFade {
                     anchors.fill: parent
-                    contentWidth: strip.width + Space.m * 2
-                    interactive: contentWidth > width
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    flickableDirection: Flickable.HorizontalFlick
-                    // the preset on the stage in view (centred when it can be)
-                    function reveal() {
-                        const i = root.presets.indexOf(root.shown);
-                        if (i < 0 || width <= 0)
-                            return;
-                        const w = stripArea.cardW;
-                        contentX = Math.max(0, Math.min(Space.m + i * (w + Space.m) - (width - w) / 2, contentWidth - width));
-                    }
-                    onContentWidthChanged: Qt.callLater(flick.reveal)
-                    Connections {
-                        target: root
-                        function onShownChanged() {
-                            Qt.callLater(flick.reveal);
+                    horizontal: true
+                    start: flick.interactive && flick.contentX > 1 ? Space.xxl : 0
+                    end: flick.interactive && flick.contentX < flick.contentWidth - flick.width - 1 ? Space.xxl : 0
+
+                    Flickable {
+                        id: flick
+                        objectName: "presetStrip"
+                        anchors.fill: parent
+                        contentWidth: strip.width + Space.m * 2
+                        interactive: contentWidth > width
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        flickableDirection: Flickable.HorizontalFlick
+                        // the preset on the stage in view (centred when it can be)
+                        function reveal() {
+                            const i = root.presets.indexOf(root.shown);
+                            if (i < 0 || width <= 0)
+                                return;
+                            const w = stripArea.cardW;
+                            contentX = Math.max(0, Math.min(Space.m + i * (w + Space.m) - (width - w) / 2, contentWidth - width));
                         }
-                    }
+                        onContentWidthChanged: Qt.callLater(flick.reveal)
+                        Connections {
+                            target: root
+                            function onShownChanged() {
+                                Qt.callLater(flick.reveal);
+                            }
+                        }
 
-                    Row {
-                        id: strip
-                        x: Space.m
-                        y: Space.s
-                        spacing: Space.m
-                        Repeater {
-                            model: root.presets
-                            delegate: ChoiceCard {
-                                id: card
-                                required property var modelData
-                                objectName: "presetPick:" + modelData.name
-                                width: stripArea.cardW
-                                previewHeight: stripArea.cardH
-                                inset: true
-                                selected: !!modelData.active
-                                title: modelData.name
-                                onClicked: root.highlighted = card.modelData.name
+                        Row {
+                            id: strip
+                            x: Space.m
+                            y: Space.s
+                            spacing: Space.m
+                            Repeater {
+                                model: root.presets
+                                delegate: ChoiceCard {
+                                    id: card
+                                    required property var modelData
+                                    objectName: "presetPick:" + modelData.name
+                                    width: stripArea.cardW
+                                    previewHeight: stripArea.cardH
+                                    inset: true
+                                    selected: !!modelData.active
+                                    title: modelData.name
+                                    onClicked: root.highlighted = card.modelData.name
 
-                                // the preset's miniature, built off the frame
-                                Loader {
-                                    anchors.fill: parent
-                                    asynchronous: true
-                                    opacity: status === Loader.Ready ? 1 : 0
-                                    sourceComponent: PresetMiniShell {
-                                        look: card.modelData.look || ({})
-                                        colorMap: PresetModel.paletteFor(card.modelData.look, SchemePreviews.palettes, ColorPresetPalettes.palettes)
-                                        wallpaper: root.wallpaper
-                                    }
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: Motion.micro.duration
+                                    // the preset's miniature, built off the frame
+                                    Loader {
+                                        anchors.fill: parent
+                                        asynchronous: true
+                                        opacity: status === Loader.Ready ? 1 : 0
+                                        sourceComponent: PresetMiniShell {
+                                            look: card.modelData.look || ({})
+                                            colorMap: PresetModel.paletteFor(card.modelData.look, SchemePreviews.palettes, ColorPresetPalettes.palettes)
+                                            wallpaper: root.wallpaper
+                                        }
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: Motion.micro.duration
+                                            }
                                         }
                                     }
-                                }
-                                // on the stage now
-                                Mark {
-                                    visible: root.shown && root.shown.name === card.modelData.name && !card.selected
-                                    anchors.fill: parent
-                                    radius: card.radius
-                                    color: "transparent"
-                                    border.width: Space.stroke - 1
-                                    border.color: Type.text
+                                    // on the stage now
+                                    Mark {
+                                        visible: root.shown && root.shown.name === card.modelData.name && !card.selected
+                                        anchors.fill: parent
+                                        radius: card.radius
+                                        color: "transparent"
+                                        border.width: Space.stroke - 1
+                                        border.color: Type.text
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                StripFade {
-                    flick: flick
                 }
             }
         }
