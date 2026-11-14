@@ -69,8 +69,10 @@ StyledRect {
                 spacing: Space.s
                 AiText {
                     role: "secondary"
-                    Layout.fillWidth: !localTag.visible
-                    Layout.maximumWidth: localTag.visible ? Math.max(0, parent.width - localTag.width - Space.s) : -1
+                    // as wide as the name, shrinking (and wrapping) when the
+                    // row is short; the tag follows it, the filler takes the rest
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: implicitWidth
                     text: root.preset.label || root.preset.id || ""
                     // a long name wraps (two lines at most), whole
                     wrapMode: Text.WordWrap
@@ -96,7 +98,7 @@ StyledRect {
                     }
                 }
                 Item {
-                    Layout.fillWidth: localTag.visible
+                    Layout.fillWidth: true
                 }
             }
             RowLayout {
