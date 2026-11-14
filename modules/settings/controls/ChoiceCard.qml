@@ -126,13 +126,15 @@ Item {
         // without telling the accent from the hairline. It sits on the
         // picture's corner, mostly outside it, ringed in the card colour
         // (never over the thumb's content), smaller on a small picture.
+        // An inset card lives in a strip that clips (Presets, the lock
+        // styles): there the badge sits inside the corner, never cut.
         Mark {
             objectName: "choiceBadge"
             visible: card.selected
             width: Math.max(Space.px(16), Math.min(Math.round(Type.iconSize("caption") * 1.7), Math.round(Math.min(parent.width, parent.height) * 0.3)))
             height: width
-            x: parent.width - width * 0.65
-            y: -width * 0.35
+            x: card.inset ? parent.width - width - Space.s : parent.width - width * 0.65
+            y: card.inset ? Space.s : -width * 0.35
             z: 2
             color: Type.accent
             border.width: Space.stroke - 1

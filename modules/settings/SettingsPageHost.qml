@@ -204,54 +204,51 @@ Item {
         easing.type: Motion.glide.easing
     }
 
-    // In turn, never superimposed: the old page leaves quickly toward the
-    // side away from the new tab (micro), then the new one slides in from
-    // that tab's side (glide). The host clips, so pages travel inside the
+    // One exchange, overlapped but never superimposed at full contrast: the
+    // old page leaves toward the side away from the new tab, fading out
+    // fast (micro, decelerating: mostly gone at its half); from that half
+    // the new one already slides in from its tab's side (glide), so the
+    // column is never empty. The host clips, so pages travel inside the
     // content area only.
-    SequentialAnimation {
+    ParallelAnimation {
         id: swap
-        ParallelAnimation {
-            NumberAnimation {
-                id: outX
-                target: host.leaving
-                property: "x"
-                from: 0
-                duration: Math.max(1, Motion.micro.duration)
-                easing.type: Motion.exit.easing
-            }
-            NumberAnimation {
-                target: host.leaving
-                property: "opacity"
-                from: 1
-                to: 0
-                duration: Math.max(1, Motion.micro.duration)
-                easing.type: Motion.exit.easing
-            }
+        NumberAnimation {
+            id: outX
+            target: host.leaving
+            property: "x"
+            from: 0
+            duration: Math.max(1, Motion.micro.duration)
+            easing.type: Motion.micro.easing
         }
-        ScriptAction {
-            script: {
-                if (host.leaving) {
-                    host.leaving.visible = false;
-                    host.leaving.enabled = false;
+        NumberAnimation {
+            target: host.leaving
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: Math.max(1, Motion.micro.duration)
+            easing.type: Motion.micro.easing
+        }
+        SequentialAnimation {
+            PauseAnimation {
+                duration: Math.round(Motion.micro.duration / 2)
+            }
+            ParallelAnimation {
+                NumberAnimation {
+                    id: inX
+                    target: host.item
+                    property: "x"
+                    to: 0
+                    duration: Math.max(1, Motion.glide.duration)
+                    easing.type: Motion.glide.easing
                 }
-            }
-        }
-        ParallelAnimation {
-            NumberAnimation {
-                id: inX
-                target: host.item
-                property: "x"
-                to: 0
-                duration: Math.max(1, Motion.glide.duration)
-                easing.type: Motion.glide.easing
-            }
-            NumberAnimation {
-                target: host.item
-                property: "opacity"
-                from: 0
-                to: 1
-                duration: Math.max(1, Motion.glide.duration)
-                easing.type: Motion.glide.easing
+                NumberAnimation {
+                    target: host.item
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: Math.max(1, Motion.glide.duration)
+                    easing.type: Motion.glide.easing
+                }
             }
         }
         onFinished: host.settle()

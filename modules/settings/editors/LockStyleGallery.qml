@@ -63,7 +63,28 @@ Item {
     }
     // What the pictures show: a change pictures them again.
     readonly property string look: JSON.stringify([root.wallpaper, SettingsStore.get("lockscreen.tone"), SettingsStore.get("lockscreen.position"), SettingsStore.get("lockscreen.showMedia"), SettingsStore.get("lockscreen.showStatus"), SettingsStore.get("theme.lightMode")])
-    onLookChanged: root.building = 0
+    // The styles in the order they are pictured: the chosen one first,
+    // then the others as the strip shows them; a style already pictured
+    // this session for the same look (LockShots) is skipped, its picture
+    // shows at once.
+    property var order: []
+    function startRound() {
+        const ids = LockStyles.styles.map(st => st.id);
+        root.order = [root.current].concat(ids.filter(id => id !== root.current));
+        root.building = -1;
+        root.building = root.skipDone(0);
+    }
+    function skipDone(from) {
+        let i = from;
+        while (i < root.order.length && LockShots.get(root.order[i], root.look) !== null)
+            i++;
+        return i;
+    }
+    function advance() {
+        root.building = root.skipDone(root.building + 1);
+    }
+    onLookChanged: root.startRound()
+    Component.onCompleted: root.startRound()
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
@@ -104,9 +125,14 @@ Item {
                     Item {
                         id: shot
                         objectName: "lockPreview:" + card.modelData.id
-                        readonly property bool live: card.index === root.building
-                        // the still picture of the last capture
-                        property var grabbed: null
+                        readonly property bool live: root.building >= 0 && root.order[root.building] === card.modelData.id
+                        // the still picture: this session's for this look,
+                        // else the last one taken (until it is retaken)
+                        readonly property var cached: LockShots.get(card.modelData.id, root.look)
+                        property var last: null
+                        onCachedChanged: if (shot.cached)
+                            shot.last = shot.cached
+                        readonly property var grabbed: shot.cached || shot.last
                         anchors.fill: parent
 
                         // until its picture is taken: a quiet placeholder
@@ -177,10 +203,10 @@ Item {
                         // Captured once the reveal and the wallpaper settled.
                         Timer {
                             id: settle
-                            interval: 900
+                            interval: 600
                             onTriggered: {
                                 if (!liveView.item) {
-                                    root.building++;
+                                    root.advance();
                                     return;
                                 }
                                 if (!root.canGrab) {
@@ -188,9 +214,9 @@ Item {
                                     return;
                                 }
                                 const ok = (liveView.item as Item).grabToImage(result => {
-                                    shot.grabbed = result;
+                                    LockShots.put(card.modelData.id, root.look, result);
                                     if (shot.live)
-                                        root.building++;
+                                        root.advance();
                                 }, Qt.size(Math.max(1, shot.width * 2), Math.max(1, shot.height * 2)));
                                 if (!ok)
                                     root.stalled = true;

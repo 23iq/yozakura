@@ -102,8 +102,8 @@ Stage {
             onMoved: v => ch.volumeSet(v)
             onIconClicked: ch.muteClicked()
 
-            // 100 %: a notch on the track's top edge (past it the sound is
-            // amplified), named on hover; none when the range ends at 100 %
+            // 100 %: a quiet notch line inside the track (past it the sound
+            // is amplified), named on hover; none when the range ends at 100 %
             Item {
                 id: full
                 objectName: "fullMark"
@@ -113,10 +113,11 @@ Stage {
                 height: slider.height
                 Mark {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: Space.hairline * 2
-                    height: Space.s
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Space.hairline
+                    height: parent.height - Space.s * 2
                     radius: 0
-                    color: Type.secondary
+                    color: Qt.alpha(Type.text, 0.35)
                 }
                 HoverHandler {
                     id: fullHover

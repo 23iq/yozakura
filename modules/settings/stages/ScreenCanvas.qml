@@ -68,7 +68,7 @@ Item {
     readonly property bool ghostLoupe: !canvas.partOn && !!canvas.loupe && canvas.loupe.ghost === true
     readonly property bool loupeShown: !canvas.covered && (canvas.partOn || canvas.ghostLoupe) && !!canvas.loupe && !(canvas.part === "bar" && canvas.loupe.vertical === true)
     readonly property real screenH: Math.round(canvas.width * 9 / 16)
-    readonly property real loupeH: canvas.loupeShown ? Math.min(Space.px(260), Math.max(Space.px(96), canvas.loupe.preferredHeight || Space.px(120))) : 0
+    readonly property real loupeH: canvas.loupeShown ? Math.min(Space.px(320), Math.max(Space.px(96), canvas.loupe.preferredHeight || Space.px(120))) : 0
     // a part that is off: a note with its switch instead of the loupe
     readonly property bool offNote: !canvas.partOn && !canvas.ghostLoupe && (canvas.part === "island" || canvas.part === "dock")
     // what the column under the canvas holds (eased between tabs; a resize
@@ -185,7 +185,7 @@ Item {
             objectName: "screenCanvasLoupe:" + loupeLoader.modelData
             y: loupeLoader.cover ? 0 : frame.height + Space.m
             width: canvas.width
-            height: loupeLoader.cover ? canvas.screenH : (loupeLoader.current ? canvas.loupeH : (loupeLoader.item ? Math.min(Space.px(260), Math.max(Space.px(96), loupeLoader.item.preferredHeight || Space.px(120))) : 0))
+            height: loupeLoader.cover ? canvas.screenH : (loupeLoader.current ? canvas.loupeH : (loupeLoader.item ? Math.min(Space.px(320), Math.max(Space.px(96), loupeLoader.item.preferredHeight || Space.px(120))) : 0))
             z: loupeLoader.cover ? 1 : 0
             active: !!canvas.urls[loupeLoader.modelData]
             source: canvas.urls[loupeLoader.modelData] || ""
