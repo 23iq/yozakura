@@ -225,11 +225,11 @@ ColumnLayout {
                 loops: Animation.Infinite
                 ColorAnimation {
                     to: Ui.alpha(Colors.primary, 0.35)
-                    duration: 700
+                    duration: Motion.pan.duration
                 }
                 ColorAnimation {
                     to: Colors.primary
-                    duration: 700
+                    duration: Motion.pan.duration
                 }
             }
         }

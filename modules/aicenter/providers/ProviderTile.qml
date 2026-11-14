@@ -63,16 +63,41 @@ StyledRect {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Space.xs / 2
-            AiText {
-                role: "secondary"
+            // the name, the "Local" tag right after it (it belongs to it)
+            RowLayout {
                 Layout.fillWidth: true
-                text: root.preset.label || root.preset.id || ""
-                // a long name wraps (two lines at most), whole
-                wrapMode: Text.WordWrap
-                maximumLineCount: 2
-                elide: Text.ElideNone
-                font.weight: Font.Medium
-                color: Type.text
+                spacing: Space.s
+                AiText {
+                    role: "secondary"
+                    Layout.fillWidth: !localTag.visible
+                    Layout.maximumWidth: localTag.visible ? Math.max(0, parent.width - localTag.width - Space.s) : -1
+                    text: root.preset.label || root.preset.id || ""
+                    // a long name wraps (two lines at most), whole
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideNone
+                    font.weight: Font.Medium
+                    color: Type.text
+                }
+                StyledRect {
+                    id: localTag
+                    visible: root.preset.local === true
+                    Layout.alignment: Qt.AlignVCenter
+                    implicitWidth: localLabel.implicitWidth + 2 * Space.s
+                    implicitHeight: localLabel.implicitHeight + Space.xs
+                    radius: Look.radius("round", height)
+                    variant: "common"
+                    AiText {
+                        id: localLabel
+                        role: "caption"
+                        anchors.centerIn: parent
+                        text: I18n.t("ai.connect.local")
+                        color: Type.secondary
+                    }
+                }
+                Item {
+                    Layout.fillWidth: localTag.visible
+                }
             }
             RowLayout {
                 spacing: Space.xs
@@ -87,20 +112,6 @@ StyledRect {
                     text: root.stateText
                     color: root.connected ? Colors.success : Colors.outline
                 }
-            }
-        }
-        StyledRect {
-            visible: root.preset.local === true
-            implicitWidth: localLabel.implicitWidth + 2 * Space.s
-            implicitHeight: localLabel.implicitHeight + Space.xs
-            radius: Look.radius("round", height)
-            variant: "common"
-            AiText {
-                id: localLabel
-                role: "caption"
-                anchors.centerIn: parent
-                text: I18n.t("ai.connect.local")
-                color: Type.secondary
             }
         }
     }

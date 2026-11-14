@@ -16,7 +16,18 @@ Flickable {
     signal picked(string provider)
 
     readonly property var presets: Connect.presets()
-    readonly property int columns: Math.max(1, Math.min(3, Math.floor(width / 190)))
+    readonly property int columns: Math.max(1, Math.min(4, Math.floor(width / 190)))
+
+    // A group's columns: the most that fit, or one fewer when that fills
+    // every line (8 cloud providers in two lines of 4, 3 local ones in one
+    // line: no lone hole at the end of a group).
+    function columnsFor(n) {
+        for (let c = root.columns; c >= Math.max(2, root.columns - 1); c--) {
+            if (n % c === 0)
+                return c;
+        }
+        return root.columns;
+    }
 
     clip: true
     contentWidth: width
@@ -55,12 +66,13 @@ Flickable {
                     font.weight: Font.Medium
                 }
                 GridLayout {
+                    readonly property var items: root.presets.filter(group.modelData.filter)
                     Layout.fillWidth: true
-                    columns: root.columns
+                    columns: root.columnsFor(items.length)
                     columnSpacing: BarLook.gap
                     rowSpacing: BarLook.gap
                     Repeater {
-                        model: root.presets.filter(group.modelData.filter)
+                        model: parent.items
                         delegate: ProviderTile {
                             required property var modelData
                             Layout.fillWidth: true

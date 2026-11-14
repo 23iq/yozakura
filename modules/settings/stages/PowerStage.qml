@@ -7,8 +7,8 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 
 // Stage of the Power page: the battery as a big ring (charge, charging or
-// time left; a plug on a desktop) and the three power profiles as big
-// tiles, the current one lit. A click on a tile switches the profile at
+// time left; a plug on a desktop) and the three power profiles as one
+// segmented choice, the current one lit. A click switches the profile at
 // once (PowerProfileClient; a live system setting, not on the undo
 // history). Battery saver beside the stage greys the ring's arc.
 Stage {
@@ -51,8 +51,7 @@ Stage {
     }
 
     stageHeight: Space.px(300)
-    // a narrow stage (a pane beside the cards): the gauge over the profiles,
-    // each profile tile wide enough for its name
+    // a narrow stage (a pane beside the cards): the gauge over the profiles
     readonly property bool narrow: stage.width > 0 && stage.width < Space.px(640)
     readonly property real gaugeSize: stage.narrow ? Math.round(Math.min(stage.width * 0.4, Space.px(170))) : Math.round(stage.height * 0.76)
     readonly property real preferredHeight: stage.narrow ? Math.round(stage.gaugeSize + Space.l + tiles.height + Space.l * 2) : 0
@@ -108,30 +107,24 @@ Stage {
             }
         }
 
-        Row {
+        // the profiles: one exclusive choice in the shared segmented
+        // style (the accent marks the current one only)
+        Segmented {
             id: tiles
-            spacing: Space.m
-            readonly property real tileW: stage.narrow ? Math.round(Math.min(Space.px(130), (stage.width - Space.l * 2 - Space.m * 2) / 3)) : Math.round(stage.width * 0.17)
-
-            Repeater {
-                model: stage.profiles
-                delegate: Tile {
-                    id: tile
-                    required property var modelData
-                    objectName: "powerProfile:" + modelData.id
-                    width: tiles.tileW
-                    height: Math.round(tiles.tileW * (stage.narrow ? 0.72 : 1.35))
-                    vertical: true
-                    enabled: stage.profilesOn
-                    opacity: enabled ? 1 : 0.5
-                    icon: modelData.icon
-                    text: I18n.t(modelData.label)
-                    active: stage.profile === modelData.id
-                    onClicked: {
-                        stage.picked = tile.modelData.id;
-                        PowerProfileClient.setProfile(tile.modelData.id);
-                    }
-                }
+            objectName: "powerProfiles"
+            enabled: stage.profilesOn
+            opacity: enabled ? 1 : 0.5
+            focusable: true
+            model: stage.profiles.map(p => ({
+                        "name": "powerProfile:" + p.id,
+                        "icon": p.icon,
+                        "text": I18n.t(p.label)
+                    }))
+            currentIndex: stage.profiles.findIndex(p => p.id === stage.profile)
+            onActivated: i => {
+                const id = stage.profiles[i].id;
+                stage.picked = id;
+                PowerProfileClient.setProfile(id);
             }
         }
     }

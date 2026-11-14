@@ -13,10 +13,13 @@ import qs.modules.components.kit
 // as a scaled tile; drag one to move it (snaps to the others' edges on
 // release), click one to pick it. Disabled monitors sit in a strip
 // underneath. `configs` is the draft layout, `outputs` the live
-// outputs (model names, wallpaper aspect).
+// outputs (model names, wallpaper aspect). `framed: false` drops the pane,
+// its edge and the dotted grid (the arrangement inside a card that already
+// is the surface: only the monitors are drawn).
 StyledRect {
     id: root
 
+    property bool framed: true
     property var configs: []
     property var outputs: []
     property string selectedName: ""
@@ -29,7 +32,7 @@ StyledRect {
     readonly property var layout: DisplayFormat.fitLayout(configs, canvas.width, canvas.height)
     readonly property var disabled: configs.filter(c => c.enabled === false)
 
-    variant: "pane"
+    variant: root.framed ? "pane" : "transparent"
     radius: Look.radius("box")
     enableShadow: false
     readonly property int margin: Space.l
@@ -39,6 +42,7 @@ StyledRect {
     implicitHeight: Space.px(340)
 
     Rectangle {
+        visible: root.framed
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
@@ -50,6 +54,7 @@ StyledRect {
     // Dotted grid backdrop
     Canvas {
         id: grid
+        visible: root.framed
         anchors.fill: canvas
         opacity: 0.5
         onWidthChanged: requestPaint()

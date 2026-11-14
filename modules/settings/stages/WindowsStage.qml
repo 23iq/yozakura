@@ -80,7 +80,10 @@ Stage {
 
     ScreenMini {
         id: mini
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: readoutBand.top
         barOpacity: stage.barOpacity
         cornerRadius: stage.radius
         showWindows: false
@@ -158,21 +161,29 @@ Stage {
         }
     }
 
-    // the numbers the picture is drawn with
+    // the numbers the picture is drawn with: a band of their own under
+    // the screen (never over a window)
     Mark {
+        id: readoutBand
+        objectName: "windowsReadoutBand"
+        anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: Space.m
-        width: readout.implicitWidth + Space.l * 2
         height: readout.implicitHeight + Space.s * 2
-        radius: Look.radius("chip", height)
-        color: Look.raisedFill(false)
-        border.width: Space.hairline
-        border.color: Type.hairline
+        radius: 0
+        color: Colors.surfaceContainer
+        Mark {
+            width: parent.width
+            height: Space.hairline
+            radius: 0
+            color: Type.hairline
+        }
         KitText {
             id: readout
             objectName: "windowsReadout"
-            anchors.centerIn: parent
+            anchors.right: parent.right
+            anchors.rightMargin: Space.l
+            anchors.verticalCenter: parent.verticalCenter
             role: "caption"
             color: Type.secondary
             text: I18n.t("prefs.windows.preview.readout").replace("%1", Math.round(stage.shownGapsIn)).replace("%2", Math.round(stage.shownGapsOut)).replace("%3", Math.round(stage.border)).replace("%4", Math.round(stage.shownRounding))

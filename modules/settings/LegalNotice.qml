@@ -5,7 +5,8 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.globals
 
-// One small legal row ("AGPL-3.0 · Licenses & credits"). Clicking it shows
+// One small legal row ("Licenses & credits": the card above it names the
+// license already). Clicking it shows
 // NOTICE inline (in the language's control box); the full license text
 // opens in the default viewer.
 Column {
@@ -26,9 +27,8 @@ Column {
 
     KitText {
         objectName: "aboutLegal"
-        anchors.horizontalCenter: parent.horizontalCenter
         role: "caption"
-        text: I18n.t("prefs.about.legal")
+        text: I18n.t("prefs.about.credits")
         font.underline: legalArea.containsMouse
         color: legalArea.containsMouse || activeFocus ? Type.text : Type.muted
         activeFocusOnTab: true

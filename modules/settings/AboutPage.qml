@@ -28,10 +28,11 @@ FittedFrame {
         objectName: "aboutScene"
         calm: true
         readonly property real room: page.height - Space.s - page.gap - page.rowH - page.pad
-        x: Math.round((page.width - width) / 2)
+        // as wide as the row of cards under it: one column edge for both
+        x: page.margin
         y: Space.s
         height: Math.round(Math.max(Space.px(160), Math.min(scene.room, (page.width - page.margin * 2) * 9 / 16, Space.px(560))))
-        width: Math.round(Math.min(page.width - page.margin * 2, height * 16 / 9))
+        width: page.width - page.margin * 2
 
         Column {
             anchors.centerIn: parent

@@ -273,13 +273,14 @@ Stage {
                 }
             }
         }
-        // the player: the art, the title and the timeline
+        // the player: the art on the left, the title and the transport
+        // beside it (never over it), the timeline under both
         Mark {
             id: art
             visible: box.player
             x: Math.round(box.u * 0.6)
-            y: Math.round(box.u * 1.4)
-            width: Math.min(box.height * 0.5, box.width * 0.4)
+            y: Math.round(box.u * 0.6)
+            width: Math.max(0, Math.min(timeline.y - y - Math.round(box.u * 0.5), box.width * 0.36))
             height: width
             radius: Look.radius("small", height)
             gradient: Gradient {
@@ -299,19 +300,37 @@ Stage {
                 color: Colors.overPrimary
             }
         }
-        Row {
+        Item {
+            objectName: "dashboardPlayerInfo"
             visible: box.player
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: timeline.top
-            anchors.bottomMargin: Math.round(box.u * 0.3)
-            spacing: Math.round(box.u * 0.6)
-            Repeater {
-                model: ["previous", "play", "next"]
-                delegate: Icon {
-                    required property string modelData
-                    icon: Icons[modelData] ?? ""
-                    role: "secondary"
-                    tone: modelData === "play" ? "accent" : "secondary"
+            x: art.x + art.width + Math.round(box.u * 0.6)
+            y: art.y
+            width: box.width - x - Math.round(box.u * 0.6)
+            height: art.height
+            Column {
+                width: parent.width
+                spacing: Math.round(box.u * 0.18)
+                Repeater {
+                    model: 2
+                    delegate: Mark {
+                        required property int index
+                        width: parent.width * (index === 0 ? 0.8 : 0.5)
+                        height: Math.max(2, Math.round(box.u * 0.18))
+                        color: Qt.alpha(Type.text, index === 0 ? 0.6 : 0.3)
+                    }
+                }
+            }
+            Row {
+                anchors.bottom: parent.bottom
+                spacing: Math.round(box.u * 0.5)
+                Repeater {
+                    model: ["previous", "play", "next"]
+                    delegate: Icon {
+                        required property string modelData
+                        icon: Icons[modelData] ?? ""
+                        role: "secondary"
+                        tone: modelData === "play" ? "accent" : "secondary"
+                    }
                 }
             }
         }

@@ -93,6 +93,9 @@ FittedFrame {
     // (package source, the version-check bypass). Each card scrolls inside.
     readonly property var mods: ModsService.mods ?? []
     readonly property int onCount: page.mods.filter(m => m.enabled).length
+    // nothing installed: no master switch or count, one empty-state card
+    // with the package source as the one action, no details pane
+    readonly property bool empty: page.mods.length === 0
 
     Item {
         id: hero
@@ -126,7 +129,7 @@ FittedFrame {
                     anchors.verticalCenter: parent.verticalCenter
                     icon: Icons.puzzlePiece
                     size: Math.round(band.height * 0.36)
-                    tone: ModsService.modsEnabled ? "accent" : "muted"
+                    tone: ModsService.modsEnabled && !page.empty ? "accent" : "muted"
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
@@ -136,10 +139,11 @@ FittedFrame {
                         KitText {
                             anchors.verticalCenter: parent.verticalCenter
                             role: "title"
-                            text: I18n.t("mods.band_count", page.onCount, page.mods.length)
+                            text: page.empty ? I18n.t(page.category.title) : I18n.t("mods.band_count", page.onCount, page.mods.length)
                         }
                         Switch {
                             objectName: "modsMasterSwitch"
+                            visible: !page.empty
                             anchors.verticalCenter: parent.verticalCenter
                             checked: ModsService.modsEnabled
                             Accessible.name: I18n.t("mods.toggle_title")
@@ -180,6 +184,7 @@ FittedFrame {
                         onClicked: ModsService.refresh()
                     }
                     PillButton {
+                        visible: !page.empty
                         icon: "arrowsClockwise"
                         text: I18n.t("mods.rebuild")
                         enabled: !ModsService.busy
@@ -206,9 +211,20 @@ FittedFrame {
         }
     }
 
+    ModsEmpty {
+        objectName: "modsEmpty"
+        visible: page.empty
+        x: row.x
+        y: row.y
+        width: row.width
+        height: row.height
+        onInstallRequested: source => page.askConfirm("install", null, source)
+    }
+
     // the row: the list (and adding a mod under it), the selected mod
     Item {
         id: row
+        visible: !page.empty
         x: page.margin
         y: hero.y + hero.height + page.gap
         width: page.width - page.margin * 2

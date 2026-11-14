@@ -91,21 +91,29 @@ Stage {
             height: launcher.height - y - launcher.pad - (tabRow.visible ? tabRow.height + launcher.pad : 0)
             clip: true
             readonly property real listW: stage.preview ? Math.round(width * 0.6) : width
+            // only the results that fit whole (the stage's height follows its
+            // column, the launcher never shows a cut row)
+            readonly property real rowGap: Math.round(launcher.u * 0.15)
+            readonly property real rowH: Math.round(launcher.u * (stage.style === "cards" ? 1.9 : 1.15))
+            readonly property int listFit: Math.max(1, Math.floor((body.height + body.rowGap) / (body.rowH + body.rowGap)))
+            readonly property real tileGap: Math.round(launcher.u * 0.2)
+            readonly property real tileH: (body.listW - launcher.u * 0.6) / 4 * 0.86
+            readonly property int gridFit: 4 * Math.max(1, Math.floor((body.height + body.tileGap) / (body.tileH + body.tileGap)))
 
             // list / cards: one row per result
             Column {
                 visible: !stage.grid
                 width: body.listW
-                spacing: Math.round(launcher.u * 0.15)
+                spacing: body.rowGap
                 Repeater {
-                    model: stage.grid ? [] : stage.results
+                    model: stage.grid ? [] : stage.results.slice(0, body.listFit)
                     delegate: Mark {
                         id: rowMark
                         required property var modelData
                         required property int index
                         readonly property bool cards: stage.style === "cards"
                         width: body.listW
-                        height: Math.round(launcher.u * (rowMark.cards ? 1.9 : 1.15))
+                        height: body.rowH
                         radius: Look.radius("small", height)
                         color: rowMark.index === 0 ? Qt.alpha(Type.accent, 0.16) : (rowMark.cards ? Look.raisedFill(false) : "transparent")
                         Row {
@@ -142,15 +150,15 @@ Stage {
                 visible: stage.grid
                 width: body.listW
                 columns: 4
-                spacing: Math.round(launcher.u * 0.2)
+                spacing: body.tileGap
                 Repeater {
-                    model: stage.grid ? stage.results : []
+                    model: stage.grid ? stage.results.slice(0, body.gridFit) : []
                     delegate: Mark {
                         id: tile
                         required property var modelData
                         required property int index
                         width: (body.listW - launcher.u * 0.6) / 4
-                        height: width * 0.86
+                        height: body.tileH
                         radius: Look.radius("small", height)
                         color: tile.index === 0 ? Qt.alpha(Type.accent, 0.16) : Look.raisedFill(false)
                         Icon {

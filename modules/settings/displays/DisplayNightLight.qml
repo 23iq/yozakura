@@ -4,8 +4,8 @@ import qs.modules.services
 import qs.modules.components.kit
 
 // Night light (NightLightClient, live: no Apply): a switch and the warmth
-// as a slider over a strip that runs from candle to daylight, the chosen
-// warmth marked on it. Warmer = a lower colour temperature.
+// as one slider with Warmer and Cooler at its ends (the card's heading
+// shows the temperature). Warmer = a lower colour temperature.
 Column {
     id: root
 
@@ -44,56 +44,60 @@ Column {
         }
     }
 
-    // what the bar and the slider under it are: the warmth, candle to
-    // daylight
-    KitText {
+    // the warmth: one slider, Warmer and Cooler at its ends; greyed out
+    // (and still) while night light is off
+    Column {
+        objectName: "nightWarmthBlock"
         width: root.width
-        role: "secondary"
-        text: I18n.t("prefs.displays.warmth")
-        opacity: root.on ? 1 : 0.6
-    }
-    // candle -> daylight
-    Mark {
-        width: root.width
-        height: Space.s
-        opacity: root.on ? 1 : 0.4
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0
-                color: Colors.tertiary
-            }
-            GradientStop {
-                position: 1
-                color: Colors.overBackground
-            }
-        }
-    }
-
-    LineSlider {
-        objectName: "nightWarmth"
-        width: root.width
+        spacing: Space.s
         enabled: root.on
-        from: root.warmest
-        to: root.coolest
-        step: 100
-        value: root.temp
-        showValue: true
-        valueText: root.temp + " K"
-        onMoved: v => NightLightClient.setTemperature(Math.round(v / 100) * 100)
-    }
-    Item {
-        width: root.width
-        height: warmer.height
-        KitText {
-            id: warmer
-            role: "caption"
-            text: I18n.t("prefs.displays.warmer")
+        opacity: root.on ? 1 : 0.38
+        Behavior on opacity {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
+            }
         }
+
         KitText {
-            anchors.right: parent.right
-            role: "caption"
-            text: I18n.t("prefs.displays.cooler")
+            width: parent.width
+            role: "secondary"
+            text: I18n.t("prefs.displays.warmth")
+        }
+        Item {
+            width: parent.width
+            height: Math.max(warmth.implicitHeight, warmer.implicitHeight)
+            KitText {
+                id: warmer
+                anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
+                color: Type.secondary
+                text: I18n.t("prefs.displays.warmer")
+            }
+            LineSlider {
+                id: warmth
+                objectName: "nightWarmth"
+                anchors.left: warmer.right
+                anchors.leftMargin: Space.s
+                anchors.right: cooler.left
+                anchors.rightMargin: Space.s
+                anchors.verticalCenter: parent.verticalCenter
+                from: root.warmest
+                to: root.coolest
+                step: 100
+                value: root.temp
+                showValue: false
+                Accessible.name: I18n.t("prefs.displays.warmth")
+                onMoved: v => NightLightClient.setTemperature(Math.round(v / 100) * 100)
+            }
+            KitText {
+                id: cooler
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
+                color: Type.secondary
+                text: I18n.t("prefs.displays.cooler")
+            }
         }
     }
 }

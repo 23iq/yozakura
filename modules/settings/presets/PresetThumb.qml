@@ -166,7 +166,8 @@ Item {
                 running: skeleton.visible && Config.animDuration > 0
                 from: -shine.width
                 to: skeleton.width
-                duration: 1200
+                // one sweep: two camera moves long (0 with motion off)
+                duration: Motion.pan.duration * 2
                 loops: Animation.Infinite
             }
         }

@@ -13,11 +13,12 @@ import "../../../config/JsonUtil.js" as JsonUtil
 import qs.modules.components.kit
 
 // Settings > Displays, fitted like a converted page (modules/settings/
-// AGENTS.md, PAGE COMPOSITION): the hero is your monitors as they are
-// arranged (drag one to move it, click one to pick it), the picked monitor
-// beside it (on / off, rotation, adaptive sync, Identify, Apply), one hint
-// line, then one row of cards for the picked monitor: resolution, refresh
-// rate, scale ("Aa" that grows) and night light. Edits build a draft;
+// AGENTS.md, PAGE COMPOSITION): the hero is one card, your monitors as they
+// are arranged (drag one to move it, click one to pick it) beside the
+// inspector of the picked one (on / off, rotation, adaptive sync, Identify;
+// Apply at its foot), one hint line, then one row of cards for the picked
+// monitor: resolution, refresh rate, scale ("Aa" that grows) and night
+// light. Edits build a draft;
 // Apply runs it for 15 s on every screen with a "keep these settings?"
 // prompt (DisplayConfirmOverlay); keeping it saves it. Night light is live.
 FittedFrame {
@@ -42,6 +43,12 @@ FittedFrame {
     readonly property int selectedIndex: draft.findIndex(c => c.name === selectedName)
     readonly property var selectedOutput: page.selectedConfig ? DisplayFormat.outputFor(DisplaysService.outputs, page.selectedName) : null
     readonly property bool active: !!page.selectedConfig && page.selectedConfig.enabled !== false
+    // the best refresh rate the picked monitor could run at, while it runs
+    // slower at this resolution (0 = nothing to suggest)
+    readonly property real upgrade: {
+        const o = page.selectedOutput && page.selectedConfig ? Object.assign({}, page.selectedOutput, page.selectedConfig) : null;
+        return o && DisplayModel.canUpgradeRefresh(o) ? DisplayModel.bestRefresh(o) : 0;
+    }
     readonly property bool busy: DisplaysService.pending || DisplaysService.applying || page.overlap.length > 0
 
     // SettingsShell calls reveal() on search jumps for every page type; this
@@ -120,98 +127,108 @@ FittedFrame {
         width: page.width - page.margin * 2
         height: page.heroH
 
-        readonly property real stageW: Math.min(hero.width - page.sideW - page.gap, hero.height * 16 / 9)
-        readonly property real groupX: (hero.width - hero.stageW - page.sideW - page.gap) / 2
+        // the inspector's column inside the hero card
+        readonly property real sideW: Math.max(page.sideW, Space.px(240))
 
-        RectangularShadow {
-            anchors.fill: arrangement
-            radius: Look.radius("surface", arrangement.height)
-            offset: Qt.vector2d(0, Space.l)
-            blur: Space.xxl * 2
-            // the cards' own shadow (a fixed dark one showed through the
-            // translucent pane as a grey slab in light schemes)
-            color: Look.cardShadow
-        }
-        DisplayArrangement {
-            id: arrangement
-            objectName: "arrangement"
-            x: hero.groupX
-            width: hero.stageW
-            height: hero.height
-            configs: page.draft
-            outputs: DisplaysService.outputs
-            selectedName: page.selectedName
-            onPicked: name => page.selectedName = name
-            onMoved: (name, x, y) => page.draft = DisplayModel.arrange(page.draft, name, x, y)
-        }
+        Card {
+            id: heroCard
+            objectName: "displaysHero"
+            anchors.fill: parent
+            padding: Look.boxPadding + Space.s
 
-        // what needs saying sits over the arrangement's foot
-        Column {
-            x: arrangement.x + Space.l
-            width: arrangement.width - Space.l * 2
-            anchors.bottom: arrangement.bottom
-            anchors.bottomMargin: Space.l
-            spacing: Space.s
+            Item {
+                width: heroCard.contentWidth
+                height: heroCard.height - heroCard.padding * 2
 
-            DisplayNotice {
-                objectName: "applyError"
-                width: parent.width
-                visible: page.notice.message !== "" && page.notice.kind !== "info"
-                tone: "error"
-                icon: "warning"
-                title: I18n.t("prefs.displays." + ({
-                        "keep": "keep_failed",
-                        "revert": "revert_failed",
-                        "restore": "restore_failed"
-                    })[page.notice.kind] ?? "apply_failed")
-                message: page.notice.message
-            }
-            DisplayNotice {
-                objectName: "unchangedNote"
-                width: parent.width
-                visible: page.notice.kind === "info"
-                tone: "info"
-                icon: "info"
-                title: I18n.t("prefs.displays.unchanged")
-            }
-            DisplayNotice {
-                objectName: "overlapNote"
-                width: parent.width
-                visible: page.overlap.length > 0
-                tone: "warning"
-                icon: "warning"
-                title: I18n.t("prefs.displays.overlap")
-                message: page.overlap.join(" / ")
-            }
-            DisplayPendingNote {
-                objectName: "deferredNote"
-                width: parent.width
-                visible: DisplaysService.pending && !DisplaysService.session.live
-            }
-            DisplayConflictBanner {
-                objectName: "conflictBanner"
-                width: parent.width
-                visible: DisplaysService.conflicts.length > 0
-                count: DisplaysService.conflicts.length
-                skipped: DisplaysService.moveSkipped
-                onMoveRequested: DisplaysService.moveConflicts()
-            }
-        }
+                DisplayArrangement {
+                    id: arrangement
+                    objectName: "arrangement"
+                    framed: false
+                    width: parent.width - hero.sideW - Space.xl * 2 - Space.hairline
+                    height: parent.height
+                    configs: page.draft
+                    outputs: DisplaysService.outputs
+                    selectedName: page.selectedName
+                    onPicked: name => page.selectedName = name
+                    onMoved: (name, x, y) => page.draft = DisplayModel.arrange(page.draft, name, x, y)
+                }
 
-        DisplayMonitorSide {
-            id: side
-            objectName: "monitorSide"
-            x: arrangement.x + arrangement.width + page.gap
-            y: Space.l
-            width: page.sideW
-            config: page.selectedConfig
-            output: page.selectedOutput
-            dirty: page.dirty
-            busy: page.busy
-            onPatch: values => page.edit(page.selectedName, values)
-            onIdentify: DisplaysService.identify()
-            onDiscard: page.resync()
-            onApply: page.applyDraft()
+                // what needs saying sits over the arrangement's foot
+                Column {
+                    x: arrangement.x
+                    width: arrangement.width
+                    anchors.bottom: arrangement.bottom
+                    spacing: Space.s
+
+                    DisplayNotice {
+                        objectName: "applyError"
+                        width: parent.width
+                        visible: page.notice.message !== "" && page.notice.kind !== "info"
+                        tone: "error"
+                        icon: "warning"
+                        title: I18n.t("prefs.displays." + ({
+                                "keep": "keep_failed",
+                                "revert": "revert_failed",
+                                "restore": "restore_failed"
+                            })[page.notice.kind] ?? "apply_failed")
+                        message: page.notice.message
+                    }
+                    DisplayNotice {
+                        objectName: "unchangedNote"
+                        width: parent.width
+                        visible: page.notice.kind === "info"
+                        tone: "info"
+                        icon: "info"
+                        title: I18n.t("prefs.displays.unchanged")
+                    }
+                    DisplayNotice {
+                        objectName: "overlapNote"
+                        width: parent.width
+                        visible: page.overlap.length > 0
+                        tone: "warning"
+                        icon: "warning"
+                        title: I18n.t("prefs.displays.overlap")
+                        message: page.overlap.join(" / ")
+                    }
+                    DisplayPendingNote {
+                        objectName: "deferredNote"
+                        width: parent.width
+                        visible: DisplaysService.pending && !DisplaysService.session.live
+                    }
+                    DisplayConflictBanner {
+                        objectName: "conflictBanner"
+                        width: parent.width
+                        visible: DisplaysService.conflicts.length > 0
+                        count: DisplaysService.conflicts.length
+                        skipped: DisplaysService.moveSkipped
+                        onMoveRequested: DisplaysService.moveConflicts()
+                    }
+                }
+
+                // the inspector, ruled off from the arrangement
+                Mark {
+                    x: arrangement.width + Space.xl
+                    width: Space.hairline
+                    height: parent.height
+                    radius: 0
+                    color: Type.hairline
+                }
+                DisplayMonitorSide {
+                    id: side
+                    objectName: "monitorSide"
+                    x: parent.width - width
+                    width: hero.sideW
+                    height: parent.height
+                    config: page.selectedConfig
+                    output: page.selectedOutput
+                    dirty: page.dirty
+                    busy: page.busy
+                    onPatch: values => page.edit(page.selectedName, values)
+                    onIdentify: DisplaysService.identify()
+                    onDiscard: page.resync()
+                    onApply: page.applyDraft()
+                }
+            }
         }
     }
 
@@ -270,34 +287,19 @@ FittedFrame {
                 width: parent.width
                 spacing: Space.m
                 enabled: page.active
+                // the best rate the monitor can do carries a lightning glyph
+                // while it runs slower (its tooltip says so): the hint is
+                // on that chip, never a second button of the same rate
                 DisplayChips {
                     objectName: "refreshChips"
                     width: parent.width
+                    maxHint: page.upgrade > 0
+                    maxTip: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(page.upgrade))
                     options: refreshCard.draftOutput ? DisplayFormat.refreshOptions(page.selectedOutput, page.selectedConfig) : []
                     value: page.selectedConfig ? page.selectedConfig.refresh : 0
                     onSelected: v => page.edit(page.selectedName, {
                             "refresh": v
                         })
-                }
-                Chip {
-                    id: upgradeChip
-                    objectName: "upgradeHint"
-                    readonly property real best: refreshCard.draftOutput ? DisplayModel.bestRefresh(refreshCard.draftOutput) : 0
-                    visible: !!refreshCard.draftOutput && DisplayModel.canUpgradeRefresh(refreshCard.draftOutput)
-                    dense: true
-                    icon: Icons.lightning
-                    primary: true
-                    // a short action ("Use 240 Hz": not a second chip of the
-                    // same rate); the sentence is its accessible name and tooltip
-                    text: I18n.t("prefs.displays.refresh_use", DisplayFormat.formatHz(best))
-                    Accessible.name: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(best))
-                    Tooltip {
-                        text: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(upgradeChip.best))
-                        shown: upgradeChip.hovered
-                    }
-                    onClicked: page.edit(page.selectedName, {
-                        "refresh": best
-                    })
                 }
             }
         }

@@ -51,7 +51,7 @@ Item {
     readonly property var ids: Steps.STEPS.map(s => s.id)
     readonly property real knob: Space.controlXS
     // knob centres on the track, pushed apart where times nearly meet
-    readonly property var centres: Steps.spread(root.ids.map(id => track.x + Steps.toPos(root.steps[id]) * track.width), root.knob + Space.s, track.x, track.x + track.width)
+    readonly property var centres: Steps.spread(root.ids.map(id => track.x + Steps.toPos(root.steps[id]) * track.width), root.knob + Space.m, track.x, track.x + track.width)
 
     function commit() {
         const id = root.dragging, v = root.dragValue;
