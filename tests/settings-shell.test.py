@@ -111,14 +111,32 @@ check(ev("Config.workspaces.shown") == 10, "and one undo returns to where it sta
 ev("SettingsStore.set('bar.compact', true)")
 ev("SettingsStore.set('bar.clockShowDate', true)")
 QTest.qWait(50)
-reset = ev('w.findItem("pageReset")')
-check(h.eval(reset, "visible") is True, "Reset page shows while the page differs from its defaults")
+# (in the header's ⋯ menu: the header never reflows when it can act)
+h.eval(ev('w.findItem("pageMore")'), "clicked()")
+QTest.qWait(50)
+reset = ev('w.findItem("menu:reset")')
+check(reset is not None and h.eval(reset, "enabled") is True, "Reset page is offered while the page differs from its defaults")
 h.eval(reset, "clicked()")
 check(ev("Config.bar.compact") is False and ev("Config.bar.clockShowDate") is False, "Reset page resets the page")
 check(ev('w.findItem("undoText").text') == "Page reset", ev('w.findItem("undoText").text'))
 ev("SettingsStore.undo()")
 check(ev("Config.bar.compact") is True and ev("Config.bar.clockShowDate") is True, "one undo brings the whole page back")
 ev("SettingsStore.set('bar.compact', false); SettingsStore.set('bar.clockShowDate', false)")
+
+# History (the header's labelled undo): the session's changes, newest
+# first; a click on an older one undoes back to it (past the 1.5 s in
+# which a setting changed again joins its last step)
+QTest.qWait(1700)
+ev("SettingsStore.set('bar.compact', true)")
+ev("SettingsStore.set('bar.clockShowDate', true)")
+h.eval(ev('w.findItem("pageUndo")'), "clicked()")
+QTest.qWait(50)
+newest = ev('w.findItem("menu:undo:1")')
+older = ev('w.findItem("menu:undo:2")')
+check(newest is not None and older is not None, "History lists the changes")
+check(h.eval(older, "title") == "Compact changed", f"...by name, newest first ({h.eval(older, 'title')!r})")
+h.eval(older, "clicked()")
+check(ev("Config.bar.compact") is False and ev("Config.bar.clockShowDate") is False, "a click undoes back to that change")
 
 # a row's reset is shown only while it differs
 row = ev('w.findItem("settingRow:bar.compact")')
@@ -129,7 +147,7 @@ check(ev('w.findItem("rowReset", w.findItem("settingRow:bar.compact"))') is not 
 ev("SettingsStore.set('bar.compact', false)")
 
 # ---- the stage ---------------------------------------------------------------
-check(ev('w.findItem("pageStage", w.findItem("settingsPage").item).item') is not None, "the Bar page has its stage")
+check(ev('w.findItem("sharedCanvas").item') is not None, "the Bar page has its stage (the Screen canvas the host keeps)")
 # a row on the first screen (the edge pictures lead the page)
 styleRow = ev('w.findItem("settingRow:bar.position")')
 p = h.eval(styleRow, "mapToItem(null, 40, 20)")
@@ -138,7 +156,7 @@ QTest.qWait(80)
 check(ev("SettingsStore.focusKeys.indexOf('bar.position') >= 0"), "hovering a row tells the stage its keys")
 lit = ev("""(function() {
     var n = 0;
-    (function walk(it) { if (it.lit === true) n++; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("pageStage", w.findItem("settingsPage").item));
+    (function walk(it) { if (it.lit === true) n++; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("sharedCanvas"));
     return n;
 })()""")
 check(lit > 0, f"...and the stage lights the bar ({lit} parts)")
@@ -148,14 +166,14 @@ check(ev("SettingsStore.focusKeys.length") == 0, "leaving the row clears it")
 
 # the stage is the bar itself: a click on a module scrolls to its card and
 # flashes it
-clock = ev('w.findItem("barModule:clock", w.findItem("settingsPage").item)')
+clock = ev('w.findItem("barModule:clock", w.findItem("sharedCanvas"))')
 check(clock is not None, "the bar's clock on the stage is a button")
 h.eval(clock, "clicked(null)")
 check(wait_until(lambda: ev("SettingsStore.highlightedSection") == "clock"), "a click on the clock flashes the Clock card")
-ws = ev('w.findItem("barModule:workspaces", w.findItem("settingsPage").item)')
+ws = ev('w.findItem("barModule:workspaces", w.findItem("sharedCanvas"))')
 h.eval(ws, "clicked(null)")
 check(wait_until(lambda: ev("SettingsStore.highlightedSection") == "workspaces"), "...the workspaces their card")
-tray = ev('w.findItem("barModule:systray", w.findItem("settingsPage").item)')
+tray = ev('w.findItem("barModule:systray", w.findItem("sharedCanvas"))')
 if tray is not None:
     h.eval(tray, "clicked(null)")
     check(wait_until(lambda: ev("SettingsStore.highlightedSection") == "layout"), "...any other module On the bar")
@@ -164,7 +182,7 @@ ev("SettingsStore.set('bar.position', 'left')")
 check(ev("Config.bar.position") == "left", "the Edge row moves the bar")
 ev("SettingsStore.undo()")
 check(ev("Config.bar.position") == "top", "and one undo puts it back")
-part = ev('w.findItem("stagePart:island", w.findItem("settingsPage").item)')
+part = ev('w.findItem("stagePart:island", w.findItem("sharedCanvas"))')
 check(part is not None, "the island on the Bar stage is a button")
 h.eval(part, "clicked(null)")
 check(env.wait_page(win) and sev("currentCategory") == "notch", "a click on the island opens the Island tab")
@@ -186,7 +204,7 @@ ev(f"SettingsStore.set('bar.panels', {PANELS})")
 QTest.qWait(150)
 mini = ev("""(function() {
     var found = null;
-    (function walk(it) { if (!found && it.panelPicked !== undefined) found = it; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("pageStage", w.findItem("settingsPage").item));
+    (function walk(it) { if (!found && it.panelPicked !== undefined) found = it; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("sharedCanvas"));
     return found;
 })()""")
 check(mini is not None and h.eval(mini, "sketches.length") == 2, "the stage draws every bar")

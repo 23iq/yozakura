@@ -9,15 +9,21 @@ Scenes:
   tile-hover   the pointer moves onto the Screen tile: it lifts, the
                wallpaper swells and follows the pointer, windows slide in
   tile-open    a click on the Look tile: the tile grows into its page
-  gate-toggle  on Screen > Bar, the frame switch goes on and off: its rows
-               appear and go, the cards under them land without crossing
+  gate-toggle  on Notifications, toasts go to a corner and back: the
+               corner rows fold open and shut, the cards under them follow
+               in lockstep
   resize       the window narrows to its minimum and widens back: home's
                and the page's columns switch once each way
   scroll       on Screen > Bar, the page scrolls down and back: the stage
                recedes, the header and tabs stay
-  module-click on Screen > Bar, the clock on the bar strip is clicked: the
-               page scrolls to the Clock card and flashes it; then the
-               compact switch: the strip shrinks and its part flashes
+  module-click on Screen > Bar, the clock on the Screen canvas is clicked:
+               the page scrolls to the Clock card and flashes it (no bar
+               is added or picked); then the compact switch: the bar
+               shrinks and its part flashes
+  tab-switch   on Screen, the tabs are clicked in turn (Island, Dock,
+               Widgets & clock, Lock screen, back to Bar): the old page
+               slides out as the new one slides in, the canvas stays and
+               its camera eases toward each part
   island-states on Screen > Island, the state chips are stepped through
   windows-gap  on Windows, the gap grip between the windows is dragged: the
                gaps widen live, the readout follows, one undo step
@@ -45,9 +51,10 @@ from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-SCENES = ("tile-hover", "tile-open", "gate-toggle", "resize", "scroll", "module-click", "island-states", "windows-gap", "power-idle")
+SCENES = ("tile-hover", "tile-open", "gate-toggle", "resize", "scroll", "module-click", "tab-switch", "island-states",
+          "windows-gap", "power-idle")
 # the page a scene starts on ("" = home)
-PAGES = {"module-click": "bar", "island-states": "notch", "windows-gap": "windows", "power-idle": "power", "gate-toggle": "bar", "scroll": "bar"}
+PAGES = {"module-click": "bar", "tab-switch": "bar", "island-states": "notch", "windows-gap": "windows", "power-idle": "power", "gate-toggle": "notifications", "scroll": "bar"}
 
 
 class Recorder:
@@ -82,6 +89,20 @@ class Recorder:
         subprocess.run(base + ["-vf", f"{vf},split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a",
                                "-loop", "0", str(out / f"settings-{name}.gif")], check=True)
         print(out / f"settings-{name}.webp")
+
+
+def find_shown(item, name: str):
+    """First item named `name` that is on screen (visible all the way up):
+    kept pages and loupes hold hidden copies."""
+    if item.objectName() == name and item.isVisible():
+        return item
+    for child in item.childItems():
+        if not child.isVisible():
+            continue
+        found = find_shown(child, name)
+        if found is not None:
+            return found
+    return None
 
 
 def centre(item) -> QPoint:
@@ -147,9 +168,9 @@ Window {{
         rec.grab(700)
     elif name == "gate-toggle":
         rec.grab(300)
-        env.h.eval(shell, "SettingsStore.set('bar.frameEnabled', true)")
+        env.h.eval(shell, "SettingsStore.set('notifications.presentation', 'corner')")
         rec.grab(900)
-        env.h.eval(shell, "SettingsStore.set('bar.frameEnabled', false)")
+        env.h.eval(shell, "SettingsStore.set('notifications.presentation', 'auto')")
         rec.grab(900)
     elif name == "resize":
         rec.grab(300)
@@ -170,7 +191,7 @@ Window {{
             rec.grab(30)
         rec.grab(300)
     elif name == "module-click":
-        clock = sr.find_visual(root, "barModule:clock")
+        clock = find_shown(root, "barModule:clock")
         spot = centre(clock)
         rec.grab(200)
         glide(win, rest, spot, rec, 10)
@@ -181,8 +202,17 @@ Window {{
         rec.grab(900)
         env.h.eval(shell, "SettingsStore.set('bar.compact', false)")
         rec.grab(700)
+    elif name == "tab-switch":
+        rec.grab(300)
+        for tab in ("notch", "dock", "desktop", "lockscreen", "bar"):
+            seg = find_shown(root, f"tab:{tab}")
+            QTest.mouseMove(win, centre(seg))
+            rec.grab(60)
+            QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, centre(seg))
+            rec.grab(650)
+        rec.grab(300)
     elif name == "island-states":
-        stage = sr.find_visual(root, "islandStage")
+        stage = find_shown(root, "islandStage")
         rec.grab(300)
         for st in ("media", "notification", "timer", "rest"):
             stage.setProperty("showing", st)

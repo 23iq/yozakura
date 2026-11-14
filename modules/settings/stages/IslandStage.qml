@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.settings
 
 // Stage of the Island page: the island itself, big, as configured: its
 // shape (attached to the edge, floating, a small pill), its place along the
@@ -85,28 +86,23 @@ Stage {
         visible: stage.islandOn
         readonly property real r: stage.shape === "pill" ? height / 2 : Math.round(stage.u * 0.45)
         readonly property bool attached: stage.shape === "attached"
-        width: Math.round(Math.max(content.implicitWidth + stage.u * 1.2, stage.u * 5))
         height: stage.u + (attached ? r : 0)
-        // centred in the room the chips leave (or at its start / end)
-        readonly property real room: stage.narrow ? stage.width - Space.xl * 2 : stage.width - chips.width - Space.xl * 3
-        x: stage.align === "start" ? Space.xl : (stage.align === "end" ? room - width + Space.xl : (room - width) / 2 + Space.xl)
         y: island.attached ? (stage.atBottom ? band.y + band.height - height + r : band.y - r) : (stage.atBottom ? band.y + band.height - height - Space.s : band.y + Space.s)
         variant: "bg"
         enableShadow: true
         radius: r
-        Behavior on x {
-            enabled: Motion.glide.duration > 0
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        Behavior on width {
-            enabled: Motion.glide.duration > 0
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
+        // a new state or alignment glides; a resize of the stage lands
+        // at once (never rubber-bands)
+        readonly property real wantW: Math.round(Math.max(content.implicitWidth + stage.u * 1.2, stage.u * 5))
+        // centred in the room the chips leave (or at its start / end)
+        readonly property real room: stage.narrow ? stage.width - Space.xl * 2 : stage.width - chips.width - Space.xl * 3
+        RectGlide {
+            target: island
+            frame: stage
+            rect: ({
+                    "x": stage.align === "start" ? Space.xl : (stage.align === "end" ? island.room - island.wantW + Space.xl : (island.room - island.wantW) / 2 + Space.xl),
+                    "w": island.wantW
+                })
         }
 
         Row {

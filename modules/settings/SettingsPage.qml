@@ -12,17 +12,21 @@ import "SchemaUtil.js" as SchemaUtil
 import "BentoLayout.js" as BentoLayout
 import "Registry.js" as Registry
 
-// A schema-driven tab, one scrolling page: an optional compact stage at the
-// top (`stage`: the live picture of what the tab places or styles, at most
-// about a third of the page; only tabs about something on the desktop have
-// one, see Registry.DESKTOP_STAGES) with a one-line hint under it
-// (`hero.hint`) and, for Wallpaper, a film strip along its foot
-// (`hero.foot`); then every section of the tab as a card of a masonry
-// (BentoLayout.js: one to three columns, cards as tall as their rows; a
-// card with pictures or an editor takes two columns). `row` names the
-// cards that come first, in that order. Nothing is hidden behind a sheet:
-// every window row of the tab is on the page, and the stage recedes as the
-// cards scroll up over it. Nothing here is category specific.
+// A schema-driven tab, one scrolling page on the destination's grid: in a
+// wide window two equal columns, the same in every tab of a destination
+// (switching tabs never changes the content width). A tab with a stage
+// (`stage`: the live picture of what the tab places or styles; only tabs
+// about something on the desktop have one, see Registry.DESKTOP_STAGES)
+// keeps the right column for it, sticky (it stays in view while the cards
+// scroll in the left column; nothing sits under it); a tab without one
+// fills both columns with its cards. The Screen tabs share one canvas the
+// page host keeps across them (`sharedCanvas`, stages/ScreenCanvas.qml).
+// The tab's hint (`hero.hint`) shows quietly while the pointer is over the
+// stage (and once, the first time the page shows); the Wallpaper library is
+// a strip along the stage's foot (`hero.foot`). A narrow window stacks the
+// stage over one or two columns of cards. Cards are a masonry
+// (BentoLayout.js, cards as tall as their rows); `row` names the cards
+// that come first, in that order. Nothing here is category specific.
 Flickable {
     id: page
 
@@ -35,8 +39,7 @@ Flickable {
     // library), as wide as the stage; not in their card
     readonly property var heroIds: page.hero.foot || []
     readonly property real footH: page.heroIds.length > 0 && page.stageUrl !== "" ? Space.px(76) : 0
-    // a wide page puts the foot beside the stage (the library as a grid as
-    // tall as the miniature) instead of under it: one band, not two
+    // a wide page (no right column for it) puts the foot beside the stage
     readonly property bool footSide: !page.split && page.footH > 0 && heroArea.width - page.height / 3 * 16 / 9 - Space.l >= Space.px(480)
     // `row`: the sections that lead the page, in this order
     readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
@@ -57,21 +60,41 @@ Flickable {
     readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inWindow(e, sec)).map(e => e.key)), [])
     readonly property real margin: Space.xl
     readonly property real gap: Look.screenGap
-    // Two columns (a wide page with a stage, not a list band): the stage
-    // and its hint head the right column, the cards fill both columns in
-    // importance order and flow on under the stage (no blank pane beside a
-    // short stage, no stage over the cards).
-    readonly property bool split: page.stageUrl !== "" && !page.listForm && page.width - page.margin * 2 >= Space.px(900)
-    // a Screen tab in two panes: its stage is the whole screen with the
-    // tab's own stage as a loupe under it (stages/ScreenCanvas.qml)
+    // room kept under the last card: the undo pill floats there
+    readonly property real pillRoom: Space.controlM + Space.xl * 2
+    // The destination grid: two equal columns in a wide window (every tab
+    // of a destination the same, a list band excepted)
+    readonly property real cardsW: page.width - page.margin * 2
+    readonly property bool wide: !page.listForm && page.cardsW >= Space.px(900)
+    readonly property real colW: Math.floor((page.cardsW - page.gap) / 2)
+    // two panes: the cards in the left column, the stage alone in the
+    // right one, sticky
+    readonly property bool split: page.wide && page.stageUrl !== ""
+    // a Screen tab in two panes: the stage is the host's Screen canvas
+    // (the whole screen, this tab's part in focus), kept across the tabs
     readonly property string canvasPart: page.split ? (Registry.SCREEN_PARTS[page.category.id] || "") : ""
-    // no stage: one readable column, centred (no masonry holes)
-    readonly property bool solo: page.stageUrl === "" && !page.listForm
-    // importance order (the lead cards, then the schema's): one column, or
-    // two columns that start beside the stage
-    readonly property bool oneColumn: page.solo
-    readonly property bool importanceOrder: page.split || page.solo
-    readonly property real cardsW: page.solo ? Math.min(page.width - page.margin * 2, Space.px(760)) : page.width - page.margin * 2
+    property Item sharedCanvas: null
+    readonly property bool usesShared: page.canvasPart !== "" && page.sharedCanvas !== null
+    // the page's own stage: built the first time it is needed and kept
+    // (a resize across the two-pane width never rebuilds it)
+    readonly property bool ownStage: page.stageUrl !== "" && !page.usesShared
+    property bool ownStageBuilt: false
+    // (decided on the next tick: the host hands a Screen tab its shared
+    // canvas just after creating the page)
+    function wantOwnStage() {
+        if (page.ownStage)
+            page.ownStageBuilt = true;
+    }
+    onOwnStageChanged: Qt.callLater(page.wantOwnStage)
+    Component.onCompleted: Qt.callLater(page.wantOwnStage)
+    // what the stage area shows (its height, its off note)
+    readonly property var stageItem: page.usesShared ? page.sharedCanvas : (page.ownStage ? stageLoader.stage : null)
+    readonly property bool importanceOrder: page.wide
+    // where the shared canvas goes, in the page's (viewport) coordinates
+    readonly property point previewAt: Qt.point(heroArea.x, heroArea.y - page.contentY)
+    readonly property real previewW: heroArea.width
+    // the pointer is over the stage (its hint shows meanwhile)
+    readonly property bool previewHovered: heroHover.hovered || (page.usesShared && page.sharedCanvas.hovered === true)
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -85,8 +108,19 @@ Flickable {
     // once shown, cards glide to new places (a toggle that shows rows):
     // before, they land in place
     property bool settled: false
-    onEnterReadyChanged: if (enterReady)
-        Qt.callLater(() => page.settled = true)
+    onEnterReadyChanged: if (enterReady) {
+        Qt.callLater(() => page.settled = true);
+        hintOnce.start();
+    }
+    // the hint shows once by itself, the first time the page shows
+    property bool hintIntro: false
+    Timer {
+        id: hintOnce
+        interval: 3200
+        onRunningChanged: if (running)
+            page.hintIntro = true
+        onTriggered: page.hintIntro = false
+    }
 
     // every card placed inside the viewport is built (a card still to build
     // has no height: it would appear, or grow, after the page showed; cards
@@ -123,7 +157,7 @@ Flickable {
     }
 
     contentWidth: width
-    contentHeight: body.y + body.height + page.margin
+    contentHeight: Math.max(body.y + body.height, page.split ? Space.s + page.heroBlockH : 0) + page.margin + page.pillRoom
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -196,68 +230,54 @@ Flickable {
         }
     }
 
-    // A desktop stage (a 16:9 screen) on a wide page (two or three columns)
-    // stands in the first column, the cards beside and under it (no blank band beside a
-    // centred stage); a strip, a band or a narrower page keeps it on top.
-    readonly property bool beside: !page.split && !!stageLoader.stage && !stageLoader.strip && !page.listForm && !page.plainStage && bento.fullCols >= 3 && bento.cols >= 2 && page.footH === 0
-    // the block the stage and its hint take in the first column
-    readonly property real besideH: page.beside || page.split ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) : 0
-    onBesideChanged: Qt.callLater(bento.relayout)
-    onBesideHChanged: Qt.callLater(bento.relayout)
+    // The stage block (the stage, its foot, its hint) and, in two panes,
+    // how far it scrolls before it sticks (a block taller than the window
+    // scrolls until its foot shows, then stays)
+    readonly property real heroBlockH: heroArea.height + (page.hero.hint ? heroHint.height + Space.m : 0)
+    readonly property real stickAfter: Math.max(0, Space.s + page.heroBlockH + page.margin - page.height)
 
-    // The stage: compact, centred, receding as the page scrolls.
+    // The stage: in two panes the right column, sticky; else on top,
+    // receding as the page scrolls.
     Item {
         id: heroArea
         objectName: "pageHero"
-        readonly property real recede: page.beside || page.split ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
-        x: page.split ? body.x + bento.x + bento.colW + bento.gap : page.beside ? body.x + bento.x : page.margin
-        y: page.split || page.beside ? body.y : Space.s + page.contentY * 0.35
+        readonly property real recede: page.split ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
+        x: page.split ? page.margin + page.colW + page.gap : page.margin
+        y: page.split ? Space.s + Math.max(0, page.contentY - page.stickAfter) : Space.s + page.contentY * 0.35
         z: 2
-        width: page.split || page.beside ? bento.colW : page.width - page.margin * 2
-        height: stageLoader.active ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0
-        visible: stageLoader.active
+        width: page.split ? page.cardsW - page.colW - page.gap : page.cardsW
+        height: page.usesShared ? Math.round(page.sharedCanvas.preferredHeight) : (stageLoader.shown ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0)
+        visible: page.stageUrl !== ""
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7
         transformOrigin: Item.Top
 
+        HoverHandler {
+            id: heroHover
+        }
+
         Loader {
             id: stageLoader
             objectName: "pageStage"
-            // a third of the page at most, 16:9, never taller than a band
-            // needs (a list page's band is short)
-            // a stage that is a strip (the bar, the dock) asks for its height
             // the loaded stage, untyped (stages declare what they ask for)
             readonly property var stage: stageLoader.item
+            readonly property bool shown: page.ownStage && stageLoader.status === Loader.Ready
             readonly property real asked: stageLoader.stage && stageLoader.stage.preferredHeight > 0 ? stageLoader.stage.preferredHeight : 0
-            // beside the cards: the column's width, a third of the page at most
-            height: page.split ? Math.round(stageLoader.asked > 0 ? Math.min(stageLoader.asked, page.height - page.margin * 2) : heroArea.width * 9 / 16) : page.beside ? Math.round(Math.min(heroArea.width * 9 / 16, page.height / 3)) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            // two panes: the column's width, as tall as it asks (a 16:9
+            // screen by default); on top: a third of the page at most, a
+            // list page's band short
+            height: page.split ? Math.round(stageLoader.asked > 0 ? Math.min(stageLoader.asked, page.height - page.margin * 2) : heroArea.width * 9 / 16) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
-            // battery, a terminal) is a wide strip of the thing itself
-            // a strip stage (`pageWide: true`) takes the page's width (a flag,
-            // never its height: that follows from the width)
+            // battery, a terminal) is a wide strip of the thing itself;
+            // a strip stage (`pageWide: true`) takes the page's width
             readonly property bool strip: !!stageLoader.stage && stageLoader.stage.pageWide === true
             width: Math.round(page.split || page.listForm || stageLoader.strip ? heroArea.width : (page.plainStage ? Math.min(heroArea.width, Space.px(900)) : Math.min(heroArea.width, height * 16 / 9)))
             x: page.footSide ? 0 : (heroArea.width - width) / 2
-            active: page.stageUrl !== ""
-            // the stage to show: the tab's own, or (a Screen tab in two panes)
-            // the Screen canvas with the tab's stage as its loupe; reloaded
-            // when the window crosses the two-pane width
-            readonly property string canvasPart: page.canvasPart
-            onCanvasPartChanged: stageLoader.load()
-            Component.onCompleted: stageLoader.load()
-            function load() {
-                if (!stageLoader.active)
-                    return;
-                if (page.canvasPart !== "")
-                    stageLoader.setSource(Qt.resolvedUrl(Registry.stage("ScreenCanvas")), {
-                        "part": page.canvasPart,
-                        "loupeUrl": page.stageUrl
-                    });
-                else
-                    stageLoader.setSource(page.stageUrl);
-            }
-            // a page that is not about the desktop, or a strip of the thing itself
-            // (the bar, the island): a plain stage, no picture
+            visible: page.ownStage
+            active: page.ownStageBuilt
+            source: page.stageUrl
+            // a page that is not about the desktop, or a strip of the thing
+            // itself (the bar, the island): a plain stage, no picture
             onLoaded: {
                 if (item && "calm" in item)
                     item.calm = Qt.binding(() => page.plainStage || stageLoader.strip);
@@ -278,7 +298,7 @@ Flickable {
         Column {
             id: heroFoot
             objectName: "heroFoot"
-            visible: page.footH > 0
+            visible: page.footH > 0 && stageLoader.shown
             x: page.footSide ? stageLoader.width + Space.l : stageLoader.x
             y: page.footSide ? 0 : stageLoader.height + Space.s
             width: page.footSide ? heroArea.width - x : stageLoader.width
@@ -296,23 +316,35 @@ Flickable {
         }
     }
 
-    // the hint: a plain caption line under the stage, clear of it
+    // the hint: a quiet caption under the stage, there while the pointer
+    // is over the stage (and once by itself); its line is kept, so
+    // nothing moves when it shows
     KitText {
         id: heroHint
         objectName: "heroHint"
         // (none while the stage says its part is off: the hint would talk
         // about something not there)
-        visible: heroArea.visible && !!page.hero.hint && !(stageLoader.stage && stageLoader.stage.offNote === true)
+        readonly property bool wanted: heroArea.visible && !!page.hero.hint && !(page.stageItem && page.stageItem.offNote === true)
+        readonly property bool shown: heroHint.wanted && (page.previewHovered || page.hintIntro)
+        visible: !!page.hero.hint && heroArea.visible
         z: 2
-        x: page.beside || page.split ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
+        x: page.split ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
         y: heroArea.y + heroArea.height * heroArea.scale + Space.m
-        width: page.beside || page.split ? heroArea.width : page.footSide ? stageLoader.width : page.width - page.margin * 2
+        width: page.split ? heroArea.width : page.footSide ? stageLoader.width : page.cardsW
         horizontalAlignment: Text.AlignHCenter
         role: "caption"
+        color: Type.muted
         // two lines at most in a narrow window, whole
         wrapMode: Text.WordWrap
         maximumLineCount: 2
-        opacity: heroArea.opacity
+        opacity: heroHint.shown ? heroArea.opacity : 0
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
         text: page.hero.hint ? I18n.t(page.hero.hint) : ""
     }
 
@@ -320,9 +352,10 @@ Flickable {
     Item {
         id: body
         z: 1
-        width: page.cardsW
-        x: page.solo ? Math.round((page.width - page.cardsW) / 2) : page.margin
-        y: heroArea.visible && !page.beside && !page.split ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + page.gap + Space.s : Space.s
+        // two panes: the left column; else the whole grid
+        width: page.split ? page.colW : page.cardsW
+        x: page.margin
+        y: heroArea.visible && !page.split ? page.heroBlockH + page.gap + Space.s : Space.s
         height: bento.height + (note.visible ? note.height + page.gap : 0)
 
         Item {
@@ -333,11 +366,13 @@ Flickable {
             // the cards flip back and forth
             property int fullCols: 1
             function pickCols() {
-                const w = body.width;
-                if (page.oneColumn || page.split) {
-                    bento.fullCols = page.split ? 2 : 1;
+                if (page.split || page.wide) {
+                    // the destination grid: the left column of two panes,
+                    // or both columns
+                    bento.fullCols = page.split ? 1 : 2;
                     return;
                 }
+                const w = body.width;
                 const n = BentoLayout.columns(w, Space.px(340));
                 // fewer columns only once the width is clearly under the
                 // switch point
@@ -350,20 +385,19 @@ Flickable {
                 }
             }
             Component.onCompleted: bento.pickCols()
-            readonly property bool oneColumn: page.oneColumn
-            onOneColumnChanged: bento.pickCols()
+            readonly property bool wide: page.wide
+            onWideChanged: bento.pickCols()
             readonly property bool split: page.split
             onSplitChanged: bento.pickCols()
             readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
             // the cards that show (a section without a window row is no card)
-            readonly property int cols: page.split ? 2 : BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
-            // two or three columns share the page's width; one card alone keeps
-            // a column's width (centred), never stretched across
-            readonly property real colW: bento.cols >= 2 ? (parent.width - gap * (cols - 1)) / cols : (parent.width - gap * (fullCols - 1)) / fullCols
+            readonly property int cols: page.split ? 1 : BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
+            // the grid's column: a lone card keeps a column's width, at the
+            // grid's start (the grid never moves between tabs)
+            readonly property real colW: page.split ? body.width : (body.width - gap * (fullCols - 1)) / fullCols
             // card places {x, y, w} (in page order), re-run when a card's
             // height or visibility changes
             property var places: []
-            property bool jump: false
             // the columns of the cards once the page is whole (see relayout)
             property var assigned: null
             property bool frozen: false
@@ -381,17 +415,18 @@ Flickable {
             property int grownCols: 0
             property real floor: 0
             width: colW * cols + gap * (cols - 1)
-            x: (parent.width - width) / 2
+            x: page.wide ? 0 : (parent.width - width) / 2
             height: 0
 
-            function relayout() {
+            // `eased`: a discrete relayout (a card shown or hidden, a new
+            // column count): the cards glide to their places. Otherwise (a
+            // card folding rows open or shut, content wrapping, a resize)
+            // they follow in the same frame, in lockstep with the fold.
+            function relayout(eased) {
                 const items = [];
                 for (const i of page.order) {
                     const s = sections.itemAt(i);
                     items.push({
-                        // two columns beside the stage: every card one column
-                        // wide (a wide one would drop under the stage and
-                        // break the importance order)
                         "span": page.split ? 1 : Math.max(bento.spans[i] || 1, bento.grownCols === bento.cols ? (bento.grown[i] || 1) : 1),
                         "height": s && s.visible ? s.implicitHeight : 0
                     });
@@ -401,13 +436,7 @@ Flickable {
                 // for a new column count, they are placed afresh (content
                 // that loads late still balances the columns)
                 const keep = bento.frozen && bento.assigned !== null && bento.assignedCols === bento.cols;
-                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, page.beside || page.split ? [
-                    {
-                        "col": page.split ? 1 : 0,
-                        "span": 1,
-                        "height": page.besideH + bento.gap
-                    }
-                ] : null);
+                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, null);
                 if (!keep) {
                     const a = [];
                     page.order.forEach((i, k) => a[i] = r.places[k]);
@@ -435,18 +464,23 @@ Flickable {
                         "extra": r.extra[k] || 0
                     };
                 });
-                // one card pushed down: every card lands at once (a glide
-                // up beside a jump down could cross for a few frames)
-                bento.jump = out.some((pl, i) => {
-                    const s = sections.itemAt(i);
-                    return s && pl && pl.y > s.y + 0.5;
-                });
                 bento.places = out;
+                // (only after a change made on the page: a page that builds or
+                // loads content late never moves by itself once shown)
+                const glide = eased === true && page.settled && bento.frozen && Motion.glide.duration > 0;
+                for (let i = 0; i < sections.count; i++) {
+                    const s = sections.itemAt(i);
+                    if (s && out[i])
+                        s.moveTo(out[i], glide);
+                }
                 bento.height = r.height;
                 bento.floor = r.floor;
             }
-            onColsChanged: Qt.callLater(bento.relayout)
-            onWidthChanged: Qt.callLater(bento.relayout)
+            function relayoutEased() {
+                bento.relayout(true);
+            }
+            onColsChanged: Qt.callLater(bento.relayoutEased)
+            onColWChanged: Qt.callLater(bento.relayout)
 
             Repeater {
                 id: sections
@@ -465,36 +499,74 @@ Flickable {
                     exclude: page.heroIds
                     pageKeys: page.pageKeys
                     pending: page.rank[index] >= page.builtSections
-                    x: card.place.x
-                    width: card.place.w
                     height: implicitHeight + (card.place.extra || 0)
-                    // cards that move up (rows hidden above them) glide into
-                    // the room; when one is pushed down (a card above grew)
-                    // all land at once, so none sits under another, even for
-                    // a frame
-                    readonly property real placeY: card.place.y
-                    onPlaceYChanged: {
-                        if (page.settled && Motion.glide.duration > 0 && !bento.jump && card.placeY < card.y) {
-                            glideY.to = card.placeY;
-                            glideY.restart();
-                        } else {
-                            glideY.stop();
-                            card.y = card.placeY;
-                        }
+
+                    // To a place: gliding (a discrete relayout) or at once.
+                    // A placement at once leaves alone a glide already
+                    // heading there (a fold under a gliding card).
+                    function moveTo(pl, glide) {
+                        const props = [["x", pl.x, ax], ["y", pl.y, ay], ["width", pl.w, aw]];
+                        props.forEach(p => {
+                            const a = p[2];
+                            if (glide && Math.abs(card[p[0]] - p[1]) > 0.5) {
+                                a.stop();
+                                a.to = p[1];
+                                a.start();
+                            } else if (!(a.running && a.to === p[1])) {
+                                a.stop();
+                                card[p[0]] = p[1];
+                            }
+                        });
                     }
                     NumberAnimation {
-                        id: glideY
+                        id: ax
+                        target: card
+                        property: "x"
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                    NumberAnimation {
+                        id: ay
                         target: card
                         property: "y"
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                    NumberAnimation {
+                        id: aw
+                        target: card
+                        property: "width"
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                    // a card that shows on a shown page fades in (built late,
+                    // or brought back by a setting)
+                    NumberAnimation {
+                        id: fadeIn
+                        target: card
+                        property: "opacity"
+                        from: 0
+                        to: 1
                         duration: Motion.glide.duration
                         easing.type: Motion.glide.easing
                     }
                     // at once, in the same frame: a card that grows never
                     // paints over the card under it
                     onImplicitHeightChanged: bento.relayout()
-                    onVisibleChanged: Qt.callLater(bento.relayout)
+                    // just built (not brought back by a setting): built
+                    // cards land out of sight, they need no fade
+                    property bool fresh: false
+                    onPendingChanged: if (!card.pending) {
+                        card.fresh = true;
+                        Qt.callLater(() => card.fresh = false);
+                    }
+                    onVisibleChanged: {
+                        if (card.visible && page.settled && page.complete && !card.fresh && Motion.glide.duration > 0)
+                            fadeIn.restart();
+                        Qt.callLater(bento.relayoutEased);
+                    }
                     Component.onCompleted: {
-                        card.y = card.placeY;
+                        card.moveTo(card.place, false);
                         Qt.callLater(bento.relayout);
                     }
                 }

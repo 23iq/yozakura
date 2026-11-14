@@ -10,17 +10,47 @@ import qs.modules.components.kit
 // explains; it opens below it after a short delay.
 //
 //   Tooltip { text: I18n.t(entry.description); shown: row.hovered }
+//
+// `bounds` (an ancestor, e.g. the row or card it explains): the tooltip
+// stays inside its width (never over a neighbouring column). It hides
+// while the view it is in scrolls, and stays hidden until it is pointed
+// at again.
 ToolTip {
     id: root
 
     property bool shown: false
+    property Item bounds: null
+    // the scrolling view around it (found when it is pointed at)
+    property Item view: null
+    property bool scrolled: false
+    onShownChanged: {
+        if (!root.shown) {
+            root.scrolled = false;
+            return;
+        }
+        let p = root.parent;
+        while (p && !("flicking" in p && "contentY" in p))
+            p = p.parent;
+        root.view = p;
+    }
+    Connections {
+        target: root.shown ? root.view : null
+        function onContentYChanged() {
+            root.scrolled = true;
+        }
+        function onContentXChanged() {
+            root.scrolled = true;
+        }
+    }
+    // room from the parent's left edge to the end of `bounds`
+    readonly property real room: root.bounds && root.parent ? root.bounds.width - root.parent.mapToItem(root.bounds, 0, 0).x - root.leftPadding - root.rightPadding : Space.px(340)
 
     delay: 550
     timeout: -1
-    visible: root.shown && root.text.length > 0
+    visible: root.shown && !root.scrolled && root.text.length > 0
     y: parent ? parent.height + Space.xs : 0
     padding: Space.m
-    width: Math.min(root.contentItem.implicitWidth, Space.px(340)) + root.leftPadding + root.rightPadding
+    width: Math.max(Space.px(120), Math.min(root.contentItem.implicitWidth, Space.px(340), root.room)) + root.leftPadding + root.rightPadding
     margins: Space.s
 
     contentItem: KitText {

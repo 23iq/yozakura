@@ -147,12 +147,15 @@ var DESKTOP_STAGES = {
 var PLAIN_STAGES = ["NetworkBand", "BluetoothBand", "SoundBand", "EffectsBand", "KeysBand", "ProvidersBand", "RoutinesBand", "PowerStage", "UpdatesStage", "TerminalStage", "LauncherStage", "DashboardStage", "AssistantStage"];
 
 // Tabs of the Screen destination whose two-pane stage is the whole screen
-// (stages/ScreenCanvas.qml) with their own stage as its loupe: the part each
-// edits.
+// (stages/ScreenCanvas.qml, one canvas kept across these tabs by
+// SettingsPageHost) with their own stage as its loupe (or, for the desktop
+// and the lock screen, drawn over it): the part each edits.
 var SCREEN_PARTS = {
     "bar": "bar",
     "notch": "island",
-    "dock": "dock"
+    "dock": "dock",
+    "desktop": "desktop",
+    "lockscreen": "lock"
 };
 
 var STAGES = {

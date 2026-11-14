@@ -32,6 +32,13 @@ Item {
     property real radius: Look.radius("surface", stage.height)
     // The wallpaper as a file URL ("" while there is none).
     readonly property string wallpaper: SettingsStore.wallpaper
+    // The camera: the picture (wallpaper and miniature together) zoomed
+    // by `zoom` around `lookAt` (a point in 0..1 of the stage), eased
+    // when a page sets them (normalised: a resize never animates them).
+    property real zoom: 1
+    property point lookAt: Qt.point(0.5, 0.5)
+    // false: the camera jumps (the first placement)
+    property bool cameraEased: true
 
     implicitHeight: stage.stageHeight
 
@@ -53,55 +60,91 @@ Item {
             maskSpreadAtMin: 1.0
         }
 
-        ScreenBackdrop {
-            anchors.fill: parent
-            radius: 0
-            visible: stage.backdrop && !stage.calm
-        }
-        Image {
-            anchors.fill: parent
-            visible: stage.backdrop && !stage.calm && status === Image.Ready
-            source: stage.calm ? "" : stage.wallpaper
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
-            cache: true
-            sourceSize.width: Math.max(1, stage.width * 1.5)
-            scale: stage.imageScale
-            transform: Translate {
-                x: stage.imageShift.x
-                y: stage.imageShift.y
-                Behavior on x {
-                    enabled: Motion.glide.duration > 0
-                    NumberAnimation {
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                }
-                Behavior on y {
-                    enabled: Motion.glide.duration > 0
-                    NumberAnimation {
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                }
-            }
-            Behavior on scale {
-                enabled: Motion.pan.duration > 0
-                NumberAnimation {
-                    duration: Motion.pan.duration
-                    easing.type: Motion.pan.easing
-                }
-            }
-        }
-        Mark {
-            anchors.fill: parent
-            radius: 0
-            visible: stage.calm && stage.backdrop
-            color: Look.cardFill(false)
-        }
         Item {
-            id: area
+            id: lens
             anchors.fill: parent
+            transform: Scale {
+                origin.x: stage.lookAt.x * lens.width
+                origin.y: stage.lookAt.y * lens.height
+                xScale: stage.zoom
+                yScale: stage.zoom
+            }
+
+            ScreenBackdrop {
+                anchors.fill: parent
+                radius: 0
+                visible: stage.backdrop && !stage.calm
+            }
+            Image {
+                id: picture
+                anchors.fill: parent
+                visible: stage.backdrop && !stage.calm
+                // fades in once decoded (never pops over the backdrop)
+                opacity: status === Image.Ready ? 1 : 0
+                Behavior on opacity {
+                    enabled: Motion.glide.duration > 0
+                    NumberAnimation {
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                }
+                source: stage.calm ? "" : stage.wallpaper
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: true
+                sourceSize.width: Math.max(1, stage.width * 1.5)
+                scale: stage.imageScale
+                transform: Translate {
+                    x: stage.imageShift.x
+                    y: stage.imageShift.y
+                    Behavior on x {
+                        enabled: Motion.glide.duration > 0
+                        NumberAnimation {
+                            duration: Motion.glide.duration
+                            easing.type: Motion.glide.easing
+                        }
+                    }
+                    Behavior on y {
+                        enabled: Motion.glide.duration > 0
+                        NumberAnimation {
+                            duration: Motion.glide.duration
+                            easing.type: Motion.glide.easing
+                        }
+                    }
+                }
+                Behavior on scale {
+                    enabled: Motion.pan.duration > 0
+                    NumberAnimation {
+                        duration: Motion.pan.duration
+                        easing.type: Motion.pan.easing
+                    }
+                }
+            }
+            Mark {
+                anchors.fill: parent
+                radius: 0
+                visible: stage.calm && stage.backdrop
+                color: Look.cardFill(false)
+            }
+            Item {
+                id: area
+                anchors.fill: parent
+            }
+        }
+    }
+
+    Behavior on zoom {
+        enabled: stage.cameraEased && Motion.morph.duration > 0
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.glide.easing
+        }
+    }
+    Behavior on lookAt {
+        enabled: stage.cameraEased && Motion.morph.duration > 0
+        PropertyAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.glide.easing
         }
     }
 

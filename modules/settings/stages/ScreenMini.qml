@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.settings
 import "../PanelSketch.js" as PanelSketch
 import "../SchemaUtil.js" as SchemaUtil
 import "../../bar/panels/PanelLayout.js" as PanelLayout
@@ -169,21 +170,17 @@ Item {
                 easing.type: Motion.glide.easing
             }
         }
-        x: screen.freeRect.x + gap
-        y: screen.freeRect.y + gap
-        width: screen.freeRect.w - gap * 2
-        height: screen.freeRect.h - gap * 2
-        Behavior on x {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        Behavior on y {
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
+        // the space the bars leave: glides when a bar or the dock moves,
+        // lands at once when the miniature is resized
+        RectGlide {
+            target: windows
+            frame: screen
+            rect: ({
+                    "x": screen.freeRect.x + windows.gap,
+                    "y": screen.freeRect.y + windows.gap,
+                    "w": screen.freeRect.w - windows.gap * 2,
+                    "h": screen.freeRect.h - windows.gap * 2
+                })
         }
 
         Repeater {
@@ -285,19 +282,32 @@ Item {
                             keys: ["bar.layout", "bar.position", "bar.compact", "bar.panels", "bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen", "bar.screenList"]
                             cornerRadius: shape.radius
                         }
-                        // the panel picked for editing
+                        // the panel picked for editing (ringed), or under
+                        // the pointer (a fainter ring: it can be picked)
                         Mark {
                             anchors.fill: parent
                             anchors.margins: -Space.xs
-                            visible: screen.selectable && screen.selectedPanel === panel.index
+                            readonly property bool picked: screen.selectable && screen.selectedPanel === panel.index
+                            opacity: picked ? 1 : (panelArea.containsMouse ? 0.55 : 0)
+                            visible: opacity > 0
                             radius: shape.radius + Space.xs
                             color: "transparent"
                             border.width: Space.stroke - 1
                             border.color: Type.accent
+                            Behavior on opacity {
+                                enabled: Motion.micro.duration > 0
+                                NumberAnimation {
+                                    duration: Motion.micro.duration
+                                    easing.type: Motion.micro.easing
+                                }
+                            }
                         }
                         MouseArea {
+                            id: panelArea
+                            objectName: "barPanel:" + panel.index
                             anchors.fill: parent
                             enabled: screen.selectable
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: screen.panelPicked(panel.index)
                         }
@@ -415,13 +425,32 @@ Item {
                             keys: ["workspaces"]
                         }
                         MouseArea {
+                            id: moduleArea
                             objectName: "barModule:" + slot.modelData.id
                             anchors.fill: parent
                             anchors.margins: -Math.round(screen.unit * 0.12)
                             enabled: screen.modulesClickable
                             visible: enabled
+                            hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: screen.modulePicked(slot.modelData.id)
+
+                            // under the pointer: a soft wash (a click goes
+                            // to its card)
+                            Mark {
+                                anchors.fill: parent
+                                radius: Space.smallRadius
+                                color: Qt.alpha(Type.accent, 0.18)
+                                opacity: moduleArea.containsMouse ? 1 : 0
+                                visible: opacity > 0
+                                Behavior on opacity {
+                                    enabled: Motion.micro.duration > 0
+                                    NumberAnimation {
+                                        duration: Motion.micro.duration
+                                        easing.type: Motion.micro.easing
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -43,8 +43,10 @@ Mark {
     anchors.margins: -spot.spread
     z: 50
     radius: spot.cornerRadius + spot.spread
-    color: Qt.alpha(Type.accent, 0.12)
-    border.width: Space.stroke - 1
+    // a clear wash and a full stroke: readable on the wallpaper in every
+    // language (the row under the pointer names this part)
+    color: Qt.alpha(Type.accent, 0.22)
+    border.width: Space.stroke
     border.color: Type.accent
     opacity: spot.lit ? 1 : 0
     visible: opacity > 0

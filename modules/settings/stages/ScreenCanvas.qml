@@ -1,48 +1,144 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings
 
-// The Screen destination's canvas (SettingsPage, two panes): the whole
-// screen as it is laid out (every bar, the island, the dock, the frame, on
-// your wallpaper), the part this tab edits ringed in the accent, every other
-// part a click away (a bar picks that bar on the Bar tab, the island and the
-// dock open their tabs); under it a loupe: the tab's own stage (the bar
-// strip, the island in its states, the dock) at a readable scale. The rows
-// of the page are the inspector of the ringed part.
+// The Screen destination's canvas (two panes): the whole screen as it is
+// laid out (every bar, the island, the dock, the frame, on your wallpaper).
+// One canvas serves every Screen tab (SettingsPageHost keeps it while the
+// tabs change): a tab only changes `part`, and the camera eases toward it
+// (a slight zoom around the bar's edge, the island, the dock). Every other
+// part is a click away (a bar opens the Bar tab and picks it, the island
+// and the dock their tabs; on the Bar tab a module scrolls to its card).
+// Under it a loupe, the tab's own stage at a readable scale (the bar strip,
+// the island in its states, the dock); the desktop and the lock screen
+// tabs draw their stage over the canvas instead (the same screen, its
+// widgets shown, or locked). Each tab's stage is built once and kept, so
+// going back to a tab never rebuilds it; parts cross-fade.
 Item {
     id: canvas
     objectName: "screenCanvas"
 
-    // "bar" | "island" | "dock": the part this tab edits
+    // "bar" | "island" | "dock" | "desktop" | "lock": the part this tab edits
     property string part: "bar"
-    // the tab's own stage (the loupe), by URL
+    // the tab's own stage (the loupe, or the cover), by URL
     property string loupeUrl: ""
+    // the pointer is over the canvas (the page shows its hint meanwhile)
+    readonly property bool hovered: hover.hovered
 
-    readonly property var loupe: loupeLoader.item
-    // a vertical bar's strip only repeats the canvas: no loupe then
+    readonly property var parts: ["bar", "island", "dock", "desktop", "lock"]
+    // part -> stage URL, filled as tabs are visited (kept)
+    property var urls: ({})
+    onPartChanged: canvas.remember()
+    onLoupeUrlChanged: canvas.remember()
+    // a tab shows: its part and its stage at once
+    function show(part, url) {
+        // a new part: what is under the canvas takes its height at once
+        // (its stage cross-fades in; only a change within a tab eases)
+        switchHold.restart();
+        canvas.loupeUrl = "";
+        canvas.part = part;
+        canvas.loupeUrl = url;
+    }
+    Component.onCompleted: {
+        canvas.remember();
+        Qt.callLater(() => frame.cameraEased = true);
+    }
+    function remember() {
+        if (canvas.loupeUrl === "" || canvas.urls[canvas.part] === canvas.loupeUrl)
+            return;
+        const u = Object.assign({}, canvas.urls);
+        u[canvas.part] = canvas.loupeUrl;
+        canvas.urls = u;
+    }
+
+    readonly property bool covered: canvas.part === "desktop" || canvas.part === "lock"
+    readonly property Item current: loupes.count > 0 ? loupes.itemAt(canvas.parts.indexOf(canvas.part)) : null
+    readonly property var loupe: canvas.current ? canvas.current.item : null
     // a part that is off has nothing to magnify (the canvas shows it gone)
     readonly property bool partOn: canvas.part === "dock" ? SettingsStore.get("dock.enabled") !== false : canvas.part === "island" ? SettingsStore.get("notch.enabled") !== false : true
-    readonly property bool loupeShown: canvas.partOn && loupeLoader.status === Loader.Ready && !(canvas.part === "bar" && canvas.loupe && canvas.loupe.vertical === true)
+    // a vertical bar's strip only repeats the canvas: no loupe then
+    readonly property bool loupeShown: !canvas.covered && canvas.partOn && !!canvas.loupe && !(canvas.part === "bar" && canvas.loupe.vertical === true)
     readonly property real screenH: Math.round(canvas.width * 9 / 16)
     readonly property real loupeH: canvas.loupeShown ? Math.min(Space.px(260), Math.max(Space.px(96), canvas.loupe.preferredHeight || Space.px(120))) : 0
     // a part that is off: a note with its switch instead of the loupe
-    readonly property bool offNote: !canvas.partOn && canvas.part !== "bar"
-    // asked of the page: the canvas, the gap and the loupe (or the note)
-    readonly property real preferredHeight: canvas.screenH + (canvas.loupeShown ? Space.m + canvas.loupeH : 0) + (canvas.offNote ? Space.m + offRow.height : 0)
+    readonly property bool offNote: !canvas.partOn && (canvas.part === "island" || canvas.part === "dock")
+    // what the column under the canvas holds (eased between tabs; a resize
+    // lands at once)
+    readonly property real underH: canvas.loupeShown ? Space.m + canvas.loupeH : (canvas.offNote ? Space.m + offRow.height : 0)
+    property real shownUnderH: 0
+    property real _lastW: -1
+    onUnderHChanged: {
+        const resized = canvas.width !== canvas._lastW;
+        canvas._lastW = canvas.width;
+        underAnim.stop();
+        if (resized || switchHold.running || Motion.glide.duration <= 0 || !frame.cameraEased) {
+            canvas.shownUnderH = canvas.underH;
+        } else {
+            underAnim.to = canvas.underH;
+            underAnim.start();
+        }
+    }
+    Timer {
+        id: switchHold
+        interval: Math.max(1, Motion.glide.duration)
+    }
+    NumberAnimation {
+        id: underAnim
+        target: canvas
+        property: "shownUnderH"
+        duration: Motion.glide.duration
+        easing.type: Motion.glide.easing
+    }
+    // asked of the page: the canvas and what is under it
+    readonly property real preferredHeight: canvas.screenH + canvas.shownUnderH
     readonly property bool pageWide: false
     property bool calm: false
 
     implicitHeight: canvas.preferredHeight
+
+    HoverHandler {
+        id: hover
+    }
+
+    // the camera: where the part sits on the screen (0..1) and how close
+    readonly property var camera: {
+        const edgePoint = e => e === "left" ? Qt.point(0, 0.5) : e === "right" ? Qt.point(1, 0.5) : e === "bottom" ? Qt.point(0.5, 1) : Qt.point(0.5, 0);
+        if (canvas.part === "bar") {
+            const p = mini.panels[Math.max(0, Math.min(SettingsStore.selectedPanel, mini.panels.length - 1))];
+            return {
+                "at": edgePoint(p ? p.edge : "top"),
+                "zoom": 1.05
+            };
+        }
+        if (canvas.part === "island" && canvas.partOn)
+            return {
+                "at": edgePoint(mini.islandEdge),
+                "zoom": 1.1
+            };
+        if (canvas.part === "dock" && canvas.partOn)
+            return {
+                "at": edgePoint(mini.dockEdge),
+                "zoom": 1.07
+            };
+        return {
+            "at": Qt.point(0.5, 0.5),
+            "zoom": 1
+        };
+    }
 
     Stage {
         id: frame
         width: parent.width
         height: canvas.screenH
         stageHeight: canvas.screenH
+        cameraEased: false
+        zoom: canvas.camera.zoom
+        lookAt: canvas.camera.at
 
         ScreenMini {
             id: mini
@@ -52,14 +148,16 @@ Item {
             windowsOpacity: 0.55
             barOpacity: frame.barOpacity
             cornerRadius: 0
-            emphasis: canvas.part === "bar" ? "" : canvas.part
-            partsClickable: true
+            emphasis: canvas.part === "island" || canvas.part === "dock" ? canvas.part : ""
+            // the island and the dock open their tabs
+            partsClickable: !canvas.covered
             onPartPicked: part => SettingsStore.navigate(part === "island" ? "notch" : "dock")
-            // the bar's modules are buttons: each scrolls to its card
+            // on the Bar tab the bar's modules are buttons: each scrolls
+            // to its card and flashes it (never adds or picks a bar)
             modulesClickable: canvas.part === "bar"
             onModulePicked: id => SettingsStore.navigate("bar", id === "clock" ? "clock" : (id === "workspaces" ? "workspaces" : "layout"), "")
             // every bar can be picked; on the Bar tab the picked one is ringed
-            selectable: true
+            selectable: !canvas.covered
             selectedPanel: canvas.part === "bar" ? SettingsStore.selectedPanel : -1
             onPanelPicked: index => {
                 SettingsStore.selectedPanel = index;
@@ -73,10 +171,18 @@ Item {
     Row {
         id: offRow
         objectName: "screenCanvasOff"
-        visible: canvas.offNote
         y: frame.height + Space.m
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Space.m
+        opacity: canvas.offNote ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
         KitText {
             anchors.verticalCenter: parent.verticalCenter
             role: "secondary"
@@ -90,19 +196,38 @@ Item {
         }
     }
 
-    // the loupe: the tab's stage on its own plain ground
-    Loader {
-        id: loupeLoader
-        objectName: "screenCanvasLoupe"
-        y: frame.height + Space.m
-        width: parent.width
-        height: canvas.loupeH
-        visible: canvas.loupeShown
-        active: canvas.loupeUrl !== ""
-        source: canvas.loupeUrl
-        onLoaded: {
-            if (item && "calm" in item)
-                item.calm = true;
+    // every visited tab's stage, kept: the loupe under the canvas, or the
+    // cover over it (desktop, lock screen); the current one fades in
+    Repeater {
+        id: loupes
+        model: canvas.parts
+        delegate: Loader {
+            id: loupeLoader
+            required property string modelData
+            readonly property bool cover: loupeLoader.modelData === "desktop" || loupeLoader.modelData === "lock"
+            readonly property bool current: canvas.part === loupeLoader.modelData
+            readonly property bool shown: loupeLoader.current && (loupeLoader.cover || canvas.loupeShown)
+            objectName: "screenCanvasLoupe:" + loupeLoader.modelData
+            y: loupeLoader.cover ? 0 : frame.height + Space.m
+            width: canvas.width
+            height: loupeLoader.cover ? canvas.screenH : (loupeLoader.current ? canvas.loupeH : (loupeLoader.item ? Math.min(Space.px(260), Math.max(Space.px(96), loupeLoader.item.preferredHeight || Space.px(120))) : 0))
+            z: loupeLoader.cover ? 1 : 0
+            active: !!canvas.urls[loupeLoader.modelData]
+            source: canvas.urls[loupeLoader.modelData] || ""
+            opacity: loupeLoader.shown ? 1 : 0
+            visible: opacity > 0
+            enabled: loupeLoader.shown
+            Behavior on opacity {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+            onLoaded: {
+                if (item && "calm" in item)
+                    item.calm = !loupeLoader.cover;
+            }
         }
     }
 }

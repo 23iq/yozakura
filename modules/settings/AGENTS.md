@@ -15,13 +15,13 @@ the nine destinations as a bento whose tile sizes follow their weight:
 Screen and Look big live scenes, the others their icon on a plate with
 their tabs named beside it, each with its name and a plain status line)
 and an opaque card grows from the tile into its destination. A destination
-page: a round back button, the title, the tabs, Reset page and undo stay on
-top (a hairline under them once the page scrolls); under them, on a wide
-window, two equal columns: the **stage** with its hint heads the right one
-and the cards fill both in importance order, flowing on under the stage
-(the Screen tabs: the whole screen as a canvas, the tab's own stage as a
-loupe under it); a page without a stage is one centred column of cards
-(no "More" sheet). Search, modified / reset state, the CLI /
+page: a round back button, the title, the tabs, History and ⋯ (Reset page)
+stay on top (a hairline under them once the page scrolls); under them, on a
+wide window, the destination grid of two equal columns, the same in every
+tab: the **stage** alone holds the right one, sticky, while the cards
+scroll in the left one (the Screen tabs: one whole-screen canvas kept
+across the tabs, the tab's own stage as a loupe under it); a page without
+a stage fills both columns with cards (no "More" sheet). Search, modified / reset state, the CLI /
 MCP catalog and the audits are all generated from the same declarations.
 
 Design rules (owner's brief, binding for every page; in this order: clear,
@@ -57,10 +57,13 @@ modules/settings/
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
 ├── HomeLayout.js           pure: home columns (6 / 4 / 2), weighted tile packing (no holes), arrow-key
 │                           neighbours (same test)
-├── DestinationHeader.qml   back pill, title, centred tabs (kit Segmented), Reset page
-├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js)
-├── SettingsPage.qml        a schema category: two columns (`split`: the stage heads the right one), one centred
-│                           column without a stage (`solo`), the stage-on-top bento in a narrow window
+├── DestinationHeader.qml   back pill, title, tabs after it (kit Segmented `navigation`), History + ⋯ (PageMenu)
+├── PageMenu.qml            the header's small menus (History steps, ⋯: Reset page, All changes)
+├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js); tab switches
+│                           as one two-page transition; the shared Screen canvas
+├── SettingsPage.qml        a schema category on the destination grid (`wide`: two columns; `split`: the
+│                           stage alone in the right one, sticky), the stage-on-top bento in a narrow window
+├── RectGlide.qml           glides an item to a rect on a discrete change, lands at once on a resize
 ├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor / widen / stretch (same test)
 ├── RowLines.js            pure: a card's rows in lines (picture rows side by side; settings-row-lines.test.cjs)
@@ -137,25 +140,36 @@ branches on the language name (`Look`).
   (`<app> run settings <id>`, `GlobalStates.settingsCategory` at open)
   opens straight on its page with no motion.
 - Destination: `DestinationHeader` = back pill (IconButton), title role,
-  the tabs centred (`Segmented`, `focusable`, Left / Right), Reset page on
-  the right; a tab to the right slides the page in from the right
-  (`SettingsPageHost.direction`).
-- Page body (SettingsPage): with a stage and a content width of 900 px or
-  more, two equal columns (`split`): the stage and its hint head the right
-  column (a reserved block of `BentoLayout.place`), the cards, each one
-  column wide, fill both in importance order (the `row` lead sections,
-  then the schema order: `BentoLayout.order(..., single)`) and flow on
-  under the stage (no blank pane under a short stage). A stage in a column
+  the tabs right after the title (`Segmented` with `navigation`: a neutral
+  raised pill, `focusable`, Left / Right), then on the right two buttons
+  that are always there (the header never reflows): History (the session's
+  steps, a click undoes back to one) and ⋯ (Reset page, one undoable step;
+  All changes). A tab switch is one transition (`SettingsPageHost`): the
+  old page stays until the new one is built, then slides out as the new
+  one slides in from the side of its tab (`direction`), glide.
+- Page body (SettingsPage): with a content width of 900 px or more, the
+  destination grid of two equal columns (`wide`), the same in every tab of
+  a destination (switching tabs never changes the content width). With a
+  stage (`split`) the right column is the stage alone, sticky (it scrolls
+  only until its foot shows, then stays; nothing sits under it) and the
+  cards fill the left one in importance order (the `row` lead sections,
+  then the schema order: `BentoLayout.order(..., single)`); without one
+  the cards fill both columns. The hint under the stage shows while the
+  pointer is over it (and once, when the page first shows); its line is
+  kept so nothing moves. A stage in a column
   is asked for its height (`preferredHeight`) or is 16:9; stages built as
   page-wide strips have a `narrow` layout (Notifications: the small screen
   over the toast; Menus & OSD: screen and OSD on a line, the menu under
   them; Power: the gauge over the profiles; Island: the state chips under
-  the island). The Bar, Island and Dock tabs show `stages/ScreenCanvas.qml`
-  (`Registry.SCREEN_PARTS`): the whole screen (bars, island, dock; the
-  tab's part ringed; a bar picks it, the island / dock open their tab, the
-  bar's modules scroll to their card) with the tab's own stage as a loupe
-  under it (none for a vertical bar or a part that is off). Without a
-  stage: one centred column of cards (`solo`, 760 px at most). A narrow
+  the island). The five Screen tabs share `stages/ScreenCanvas.qml`
+  (`Registry.SCREEN_PARTS`), one instance kept by SettingsPageHost above
+  the pages (`sharedCanvas`; the page reserves its place, `previewAt`):
+  the whole screen (bars, island, dock; the tab's part ringed, the camera
+  easing a little toward it: `Stage.zoom` / `lookAt`; a bar picks it, the
+  island / dock open their tab, the bar's modules scroll to their card)
+  with the tab's own stage as a loupe under it (none for a vertical bar or
+  a part that is off), or over it for Widgets & clock and Lock screen;
+  each tab's stage is built once and cross-fades. A narrow
   window keeps the stack: stage on top, a bento (`BentoLayout.js`, 1 to 3
   columns) under it. A card (SettingsSection) has a
   heading (`title` role) with the current value on the right when it holds
@@ -168,8 +182,8 @@ branches on the language name (`Look`).
   (`Space.xs` above and below), label left and control right on one line,
   the control as wide as its content (measured: a segmented, dropdown or
   font name is never cut, it goes under its label instead); the header is
-  one centred line (its tabs take a line of their own, scrolling sideways,
-  when they would run under the title or undo).
+  one line (its tabs take a line of their own, scrolling sideways, when
+  they would run under the title or the right-hand buttons).
 - Rows: label `body`, control flush right (inline) or full width under the
   label (cards, editors, lists, and sliders / selectors / text fields in a
   narrow card); hover / focus = the language's hover box; a search jump =
@@ -185,7 +199,9 @@ branches on the language name (`Look`).
   (>= 4.5:1) in light schemes too; the Switch shows the kit FocusRing.
 - Stage: `Stage` = wallpaper (palette backdrop without one) in a rounded,
   hair-lined frame, Look.radius("surface"); the miniature on top.
-- Undo pill: popup surface, springs in, stays 5 s (longer while hovered).
+- Undo pill: an opaque popup surface with a shadow at the bottom centre
+  (pages keep room for it under their last card), rises in (enter), its
+  words cross-fade, stays 5 s (longer while hovered).
 Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-01.png --palette default
 --languages ink,glass,tiles,classic,device [--mode light] [--size 1180x2400] home|PAGE...`
 (`home` with `--search Q` shows results, `--hover ENTRY` lights a stage part,
@@ -474,9 +490,12 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
 - Picture choices (`display: "cards"`) are always pictures, wrapped so
   every option is visible (CardSelector); only a strip of more than eight
   scrolls sideways (fades, the chosen one scrolled into view).
-- Motion: a card that moves up glides into the room; when one is pushed
-  down every card lands at once (no frame where a card sits under
-  another); relayout is synchronous with a card's height change.
+- Motion: a card folding rows open or shut moves the cards under it in
+  the same frame (lockstep, no gap, no snap); a discrete relayout (a card
+  shown or hidden, a new column count) glides x, y and width; a resize
+  never animates. Geometry that follows a container (PartChip,
+  ScreenMini's windows, the island stage) uses RectGlide, never a bare
+  Behavior.
 - entry `part: true`: an editor of one part of a composite value that
   another row also edits, or the window's control of a key another page
   owns (Windows' Corners card: Look's `compositor.rounding`); it declares

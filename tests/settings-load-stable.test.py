@@ -81,13 +81,15 @@ Window {
         });
         var view = findItem("settingsPageView");
         var page = findItem("settingsPage");
-        s.opacity = page && view && view.visible ? page.opacity * view.opacity : 0;
+        // (a page enters with its own opacity: SettingsPageHost)
+        s.opacity = page && view && view.visible ? page.opacity * view.opacity * (page.item ? page.item.opacity : 1) : 0;
         if (page && page.item) {
             walk(page.item, x => {
                 var n = String(x.objectName);
                 if ((n.indexOf("settingRow:") !== 0 && n.indexOf("settingsSection:") !== 0) || !shown(x))
                     return;
-                var p = x.mapToItem(page, 0, 0);
+                // (in the page's own frame: a tab slides in as a whole)
+                var p = x.mapToItem(page.item, 0, 0);
                 if (p.y < page.height)
                     s.rows[n] = [Math.round(p.x), Math.round(p.y), Math.round(x.width), Math.round(x.height)];
             });

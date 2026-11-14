@@ -23,10 +23,17 @@ import "Ui.js" as Ui
 // ones: Registry.PAGES), so opening the window compiles only the page it
 // shows. The last `keep` visited pages stay alive, hidden and disabled
 // (PageCache.js decides which one goes), so a revisit is instant and keeps
-// its scroll position; the oldest is destroyed. A new page stays hidden
-// until what is on screen is built (`enterReady`, SettingsPage fills its
-// sections a few per frame) and then enters; `direction` (+1 / -1, a tab to
-// the right / left) slides it in from that side, 0 from below.
+// its scroll position; the oldest is destroyed.
+// A tab switch is one transition of two pages: the page left keeps showing
+// (disabled) until the new one has what is on screen built (`enterReady`,
+// SettingsPage fills its sections a few per frame; a kept page at once),
+// then the old one slides out and fades while the new one slides in from
+// the other side (`direction` +1 / -1: a tab to the right / left), never a
+// blank frame. From another destination (0) the page shows as soon as it
+// is built (the window's morph brings it in).
+// The Screen tabs in two panes share one canvas (stages/ScreenCanvas.qml),
+// kept here above the pages: it stays on screen while the tabs slide under
+// it and only changes the part it shows.
 Item {
     id: host
 
@@ -35,11 +42,29 @@ Item {
     property int direction: 0
     // The shown page.
     property Item item: null
+    // The page sliding out (a tab switch).
+    property Item leaving: null
     // [{id, item}] most recent first.
     property var _pages: []
-    property real slide: 0
     // The shown page has what is on screen built.
-    readonly property bool pageReady: !!host.item && Ui.prop(host.item, "enterReady") !== false
+    readonly property bool itemReady: !!host.item && Ui.prop(host.item, "enterReady") !== false
+    // Something is on screen: the shown page, or the page left while the
+    // new one builds (the window never shows an empty frame)
+    readonly property bool pageReady: host.itemReady || !!host.leaving
+    // the Screen part of the shown page ("": no shared canvas)
+    readonly property string canvasPart: host.item ? (Ui.prop(host.item, "canvasPart") || "") : ""
+    property bool canvasWanted: false
+    // what the canvas last showed (kept while no Screen tab shows)
+    property string canvasShows: "bar"
+    property string canvasStage: ""
+    onCanvasPartChanged: {
+        if (host.canvasPart === "")
+            return;
+        host.canvasWanted = true;
+        host.canvasStage = Ui.prop(host.item, "stageUrl") || "";
+        host.canvasShows = host.canvasPart;
+        Ui.invoke(canvasLoader.item, "show", [host.canvasShows, host.canvasStage]);
+    }
 
     signal loaded
 
@@ -61,7 +86,8 @@ Item {
             "category": cat,
             "width": Qt.binding(() => host.width),
             "height": Qt.binding(() => host.height),
-            "visible": false
+            "visible": false,
+            "opacity": 0
         };
         const p = cat.page ? Registry.page(cat.page) : null;
         if (p && p.props)
@@ -69,53 +95,92 @@ Item {
         const page = component.createObject(pages, props);
         // createObject's property map converts the schema object (arrays
         // become lists); the page reads the schema itself.
-        if (page)
+        if (page) {
             page.category = cat;
+            if ("sharedCanvas" in page)
+                page.sharedCanvas = Qt.binding(() => canvasLoader.item);
+        }
         return page;
+    }
+
+    // Ends a transition at once: the page left hides, the shown one sits.
+    function settle() {
+        swap.stop();
+        fade.stop();
+        if (host.leaving) {
+            host.leaving.visible = false;
+            host.leaving.enabled = false;
+            host.leaving.opacity = 1;
+            host.leaving.x = 0;
+            host.leaving = null;
+        }
+        if (host.item) {
+            host.item.opacity = 1;
+            host.item.x = 0;
+        }
     }
 
     // Shows `cat` (null: nothing): its kept page or a new one.
     function load(cat) {
-        enterAnim.stop();
-        if (host.item) {
-            host.item.visible = false;
-            host.item.enabled = false;
-        }
+        host.settle();
+        const old = host.item;
         host.category = cat;
-        if (!cat) {
-            host.item = null;
-            return;
-        }
-        let page = PageCache.find(host._pages, cat.id);
-        const fresh = page === null;
-        if (fresh)
+        let page = cat ? PageCache.find(host._pages, cat.id) : null;
+        if (cat && page === null)
             page = host.create(cat);
         if (!page) {
+            if (old) {
+                old.visible = false;
+                old.enabled = false;
+            }
             host.item = null;
             return;
         }
         const next = PageCache.visit(host._pages, cat.id, page, host.keep);
         host._pages = next.pages;
+        // a tab of the same destination: the old page stays until the new
+        // one enters with it; else it goes at once
+        if (old && old !== page && host.direction !== 0 && next.dropped.indexOf(old) < 0)
+            host.leaving = old;
+        else if (old && old !== page) {
+            old.visible = false;
+            old.enabled = false;
+        }
         next.dropped.forEach(d => d.destroy());
-        host.slide = 1;
+        page.x = 0;
+        page.opacity = 0;
         page.enabled = true;
         page.visible = true;
         host.item = page;
-        // A kept page is complete: it enters at once.
-        if (host.pageReady)
-            enterAnim.restart();
+        // a kept page is complete: it enters at once
+        if (host.itemReady)
+            host.enter();
         host.loaded();
     }
 
-    onPageReadyChanged: {
-        if (host.pageReady)
-            enterAnim.restart();
+    function enter() {
+        if (!host.item)
+            return;
+        if (Motion.glide.duration <= 0) {
+            host.settle();
+            return;
+        }
+        // from another destination (or nothing): a plain fade, from the
+        // next frame on (the page and the header lay out first)
+        if (host.direction === 0 || !host.leaving) {
+            host.settle();
+            host.item.opacity = 0;
+            fade.restart();
+            return;
+        }
+        inX.from = host.direction * Space.xl;
+        outX.to = -host.direction * Space.xl;
+        swap.restart();
     }
 
-    opacity: 1 - host.slide
-    transform: Translate {
-        x: host.direction * host.slide * Space.xl
-        y: host.direction === 0 ? host.slide * Space.l : 0
+    onItemReadyChanged: {
+        if (host.itemReady && host.item && host.item.opacity === 0 && !swap.running && !fade.running)
+            host.enter();
     }
 
     Item {
@@ -124,12 +189,70 @@ Item {
     }
 
     NumberAnimation {
-        id: enterAnim
-        target: host
-        property: "slide"
-        from: 1
-        to: 0
+        id: fade
+        target: host.item
+        property: "opacity"
+        from: 0
+        to: 1
         duration: Math.max(1, Motion.glide.duration)
         easing.type: Motion.glide.easing
+    }
+
+    ParallelAnimation {
+        id: swap
+        NumberAnimation {
+            id: inX
+            target: host.item
+            property: "x"
+            to: 0
+            duration: Math.max(1, Motion.glide.duration)
+            easing.type: Motion.glide.easing
+        }
+        NumberAnimation {
+            target: host.item
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: Math.max(1, Motion.glide.duration)
+            easing.type: Motion.glide.easing
+        }
+        NumberAnimation {
+            id: outX
+            target: host.leaving
+            property: "x"
+            from: 0
+            duration: Math.max(1, Motion.exit.duration)
+            easing.type: Motion.exit.easing
+        }
+        NumberAnimation {
+            target: host.leaving
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: Math.max(1, Motion.exit.duration)
+            easing.type: Motion.exit.easing
+        }
+        onFinished: host.settle()
+    }
+
+    // The Screen canvas, one for the Screen tabs: built the first time a
+    // Screen tab shows in two panes, then kept; it sits where the shown
+    // page keeps its stage (a sticky column: the same place in every tab).
+    Loader {
+        id: canvasLoader
+        objectName: "sharedCanvas"
+        readonly property point slot: host.canvasPart !== "" ? (Ui.prop(host.item, "previewAt") || Qt.point(0, 0)) : Qt.point(0, 0)
+        z: 2
+        x: canvasLoader.slot.x
+        y: canvasLoader.slot.y
+        width: host.canvasPart !== "" ? (Ui.prop(host.item, "previewW") || 0) : 0
+        height: canvasLoader.item ? canvasLoader.item.implicitHeight : 0
+        active: host.canvasWanted
+        visible: host.canvasPart !== "" && !!host.item && host.item.visible
+        source: Qt.resolvedUrl("stages/ScreenCanvas.qml")
+        onLoaded: {
+            item.width = Qt.binding(() => canvasLoader.width);
+            item.show(host.canvasShows, host.canvasStage);
+        }
     }
 }

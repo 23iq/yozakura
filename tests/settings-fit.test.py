@@ -94,9 +94,11 @@ def page(cat: str, label: str | None = None) -> dict | None:
 # cards beside a sticky stage; no stage: one centred column) instead of a
 # masonry of two or three columns: fewer rows reach the first screen, by
 # design (the owner chose readability over density).
+# Lowered again on 2026-11-14 for notifications and ai: in two panes the
+# right column is the sticky stage alone (no cards under it, AUDIT M5).
 SHORT = {"appearance": 2, "wallpapers": 1, "bar": 4, "launcher": 5, "desktop": 5, "lockscreen": 5, "menus": 5,
          "dashboard": 6, "power": 2, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 3,
-         "ai": 7, "voice": 6, "timers": 7}
+         "ai": 6, "voice": 6, "timers": 7, "notifications": 7}
 
 
 def dense(cat: str, m: dict | None) -> None:

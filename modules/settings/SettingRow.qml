@@ -273,6 +273,7 @@ FocusScope {
                             objectName: "rowTooltip"
                             text: row.description
                             shown: row.pointed && !row.stacked || labelHover.hovered
+                            bounds: row
                         }
                         HoverHandler {
                             id: labelHover

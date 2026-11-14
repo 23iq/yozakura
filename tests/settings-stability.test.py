@@ -79,7 +79,7 @@ TABS = ["bar", "notch", "appearance", "terminal", "network", "ai"]
 for cat in TABS:
     h.eval(shell, f'select("{cat}")')
     check(env.wait_page(win), f"{cat}: page built")
-    check(wait_until(lambda: h.eval(win, 'find("settingsPage").opacity * find("settingsPageView").opacity') == 1),
+    check(wait_until(lambda: h.eval(win, 'find("settingsPage").opacity * find("settingsPage").item.opacity * find("settingsPageView").opacity') == 1),
           f"{cat}: shown")
     first = snap()
     for ms in (200, 800, 1000):

@@ -62,7 +62,12 @@ Window {
         for (var i = 0; i < kids.length; i++) { var f = findItem(name, kids[i]); if (f) return f; }
         return null;
     }
-    function onPage(name) { return findItem(name, findItem("settingsPage").item) }
+    // the page's items, or the Screen canvas the host keeps for it
+    function onPage(name) {
+        var host = findItem("settingsPage");
+        var shared = host.item && host.item.usesShared ? findItem(name, findItem("sharedCanvas")) : null;
+        return shared || findItem(name, host.item);
+    }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
 }""")
 shell = h.find(win, "shell")
