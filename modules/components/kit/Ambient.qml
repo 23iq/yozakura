@@ -8,7 +8,7 @@ import qs.modules.components.kit
 // colour; surfaces (kit Card) sit over it. Static and cheap: the image is
 // decoded tiny (sourceSize) and blurred once into a cached layer - nothing
 // is re-rendered per frame, it only redraws when the wallpaper changes
-// (then the new one cross-fades in, Motion.glide). How much shows is the
+// (then the new one cross-fades in, Motion.palette). How much shows is the
 // visual language's `Look.ambientStrength` (glass / ink all of it, the
 // solid languages a little around their surfaces). `plain`: no picture at
 // all, the theme background only (blur off, battery saver).
@@ -19,6 +19,17 @@ Item {
     property bool plain: false
     // 0..1: how much of the wallpaper shows through the darkening
     property real strength: Look.ambientStrength
+    // `strength` as drawn: it moves with a page morph (Motion.morph), and the
+    // wallpaper and the wash over it follow the same value, so the colour
+    // never jumps while the picture fades.
+    property real level: root.strength
+    Behavior on level {
+        enabled: Motion.morph.duration > 0
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
 
     // the theme background under everything (and the plain fallback)
     Mark {
@@ -40,10 +51,9 @@ Item {
         id: img
         property bool shown: false
         property bool plain: false
-        property real strength: 1
         anchors.fill: parent
         visible: !img.plain && img.opacity > 0
-        opacity: img.shown && img.status === Image.Ready ? img.strength : 0
+        opacity: img.shown && img.status === Image.Ready ? 1 : 0
         // decoded very small: no shape of the wallpaper survives (a moon or a
         // flower read as a smudge behind the content), only its colours
         sourceSize.width: 24
@@ -63,24 +73,27 @@ Item {
             brightness: -0.06
         }
         Behavior on opacity {
-            enabled: Motion.glide.duration > 0
+            enabled: Motion.palette > 0
             NumberAnimation {
-                duration: Motion.glide.duration * 2
-                easing.type: Motion.glide.easing
+                duration: Motion.palette
+                easing.type: Motion.micro.easing
             }
         }
     }
-    Blurred {
-        id: a
-        plain: root.plain
-        strength: root.strength
-        shown: root.front === 0
-    }
-    Blurred {
-        id: b
-        plain: root.plain
-        strength: root.strength
-        shown: root.front === 1
+    // how much shows: the drawn level over both (the cross-fade is theirs)
+    Item {
+        anchors.fill: parent
+        opacity: root.level
+        Blurred {
+            id: a
+            plain: root.plain
+            shown: root.front === 0
+        }
+        Blurred {
+            id: b
+            plain: root.plain
+            shown: root.front === 1
+        }
     }
 
     // On a light theme the wash is stronger: a dark wallpaper under a
@@ -92,7 +105,14 @@ Item {
         anchors.fill: parent
         radius: 0
         visible: !root.plain
-        color: Qt.alpha(Colors.background, root.lightTheme ? 0.74 - 0.2 * root.strength : 0.5 - 0.28 * root.strength)
+        color: Qt.alpha(Colors.background, root.lightTheme ? 0.74 - 0.2 * root.level : 0.5 - 0.28 * root.level)
+        // a new theme: the wash turns with the palette
+        Behavior on color {
+            enabled: Motion.palette > 0
+            ColorAnimation {
+                duration: Motion.palette
+            }
+        }
     }
     Mark {
         anchors.fill: parent

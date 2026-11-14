@@ -7,21 +7,24 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
-import qs.modules.settings.presets
+import qs.modules.settings.home
 import "schema/Categories.js" as Categories
 import "SchemaUtil.js" as SchemaUtil
 import "ChangesModel.js" as ChangesModel
 import "HomeLayout.js" as HomeLayout
 import "Ui.js" as Ui
 
-// The home screen of the settings window: the sakura brand, one large
-// search field and undo, then the nine destinations as a bento whose tile
-// sizes follow their weight (HomeTile: Screen and Look a live scene, the
-// others their icon; each with its name and a live status line; fewer
-// columns in a narrow window, the rows stretched so home fills it). Typing anywhere searches; the results
-// (window rows only, with their current value) replace the bento; Enter
-// opens the first, Esc clears. Arrows move between tiles, Enter opens one.
-// Cheap by design: no page is created here, the tiles read config only.
+// The home screen of the settings window: a header (the sakura brand, the
+// search field on the grid's columns, a History button), then the nine
+// destinations as a bento whose tile sizes follow their weight (HomeTile:
+// Screen and Look a live scene, the others their icon; each with its name
+// and one live status line; fewer columns in a narrow window, the rows
+// stretched so home fills it). Typing anywhere searches: the bento gives way
+// to the results (a cross-fade with a short glide), a command palette of
+// window rows with their breadcrumb and current value (HomeResults); Up /
+// Down pick, Enter opens the picked one (it flashes), Esc clears. Arrows
+// move between tiles, Enter opens one. Cheap by design: no page is created
+// here, the tiles read config only.
 FocusScope {
     id: home
 
@@ -50,6 +53,15 @@ FocusScope {
         "get": SettingsStore.get
     }) : []
     property int resultIndex: 0
+    // 0 = the bento, 1 = the results (animated: the two cross-fade)
+    property real searching: home.query.length > 0 ? 1 : 0
+    Behavior on searching {
+        enabled: Motion.glide.duration > 0
+        NumberAnimation {
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
+        }
+    }
     // Once home has shown its first frame: what that frame does not need
     // (tile pictures and status lines, the preset footer) fills in then.
     property bool warm: false
@@ -78,9 +90,12 @@ FocusScope {
     readonly property real gap: Look.screenGap
     readonly property var packing: HomeLayout.pack(home.tiles, home.columns)
 
+    // A tile (its destination) opens, from the item it grows out of.
     signal destinationOpened(string id, var tile)
-    signal resultActivated(var result)
+    // A search result opens, from its row.
+    signal resultActivated(var result, var row)
     signal presetAction(string id)
+    signal historyRequested(var button)
 
     onQueryChanged: resultIndex = 0
 
@@ -111,9 +126,15 @@ FocusScope {
         search.field.selectAll();
     }
 
+    function clearSearch() {
+        search.text = "";
+    }
+
     function activateResult(i) {
-        if (i >= 0 && i < home.results.length)
-            home.resultActivated(home.results[i]);
+        if (i < 0 || i >= home.results.length)
+            return;
+        resultsList.flash(i);
+        home.resultActivated(home.results[i], resultsList.rowAt(i));
     }
 
     function focusTile(i) {
@@ -121,6 +142,31 @@ FocusScope {
         if (t)
             t.forceActiveFocus();
     }
+
+    // The tile of a destination (the shell grows a page out of it and
+    // shrinks it back into it), null while the bento is not what home shows.
+    function tileFor(destinationId) {
+        if (home.query.length > 0)
+            return null;
+        for (let i = 0; i < tileRepeater.count; i++) {
+            const t = tileRepeater.itemAt(i);
+            if (t && t.destination && t.destination.id === destinationId)
+                return t;
+        }
+        return null;
+    }
+
+    // Keeps the picked result in view.
+    onResultIndexChanged: Qt.callLater(() => {
+        const r = resultsList.rowAt(home.resultIndex);
+        if (!r)
+            return;
+        const p = r.mapToItem(flick.contentItem, 0, 0);
+        if (p.y < flick.contentY)
+            flick.contentY = Math.max(0, p.y - home.gap);
+        else if (p.y + r.height > flick.contentY + flick.height)
+            flick.contentY = p.y + r.height - flick.height + home.gap;
+    })
 
     // Typing anywhere goes to the search field.
     Keys.onPressed: event => {
@@ -149,11 +195,13 @@ FocusScope {
             width: flick.width - home.margin * 2
             spacing: home.gap
 
-            // Header: the brand, the search, undo
+            // Header: the brand, the search on the grid's columns, History
             Item {
                 id: header
                 width: parent.width
                 height: Space.controlL
+                // the field's place on the columns (null: between brand and button)
+                readonly property var span: HomeLayout.searchSpan(home.packing.cells, home.columns, grid.colW, grid.gap, brand.width)
 
                 Row {
                     id: brand
@@ -187,8 +235,8 @@ FocusScope {
                     id: search
                     objectName: "settingsSearch"
                     anchors.verticalCenter: parent.verticalCenter
-                    x: Math.max(brand.width + home.gap, (parent.width - width) / 2)
-                    width: Math.min(parent.width - brand.width - undoButton.width - home.gap * 2, Space.px(620))
+                    x: header.span ? header.span.x : brand.width + home.gap
+                    width: header.span ? header.span.width : Math.max(0, history.x - home.gap - x)
                     boxed: true
                     onWindow: true
                     // the question, or one word where the field is too narrow
@@ -207,120 +255,109 @@ FocusScope {
                     onAccepted: home.activateResult(home.resultIndex)
                 }
 
-                IconButton {
-                    id: undoButton
-                    objectName: "homeUndo"
+                // what you changed (the Changes tab: every change, a way
+                // back for each), named, not a bare arrow
+                PillButton {
+                    id: history
+                    objectName: "homeHistory"
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    icon: Icons.arrowCounterClockwise
-                    size: "m"
-                    focusable: true
-                    enabled: SettingsStore.undoStack.length > 0
-                    opacity: enabled ? 1 : 0.4
-                    tooltip: I18n.t("prefs.home.undo")
-                    onClicked: SettingsStore.undo()
+                    icon: "clockCounterClockwise"
+                    text: I18n.t("prefs.home.history")
+                    kind: "ghost"
+                    onClicked: home.historyRequested(history)
+                    Tooltip {
+                        text: I18n.t("prefs.home.history.tip")
+                        shown: historyHover.hovered
+                    }
+                    HoverHandler {
+                        id: historyHover
+                    }
                 }
             }
 
-            // Search results
-            Column {
-                id: resultsList
-                objectName: "settingsSearchResults"
-                readonly property var model: home.results
-                readonly property int count: home.results.length
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Math.min(parent.width, Space.px(760))
-                visible: home.query.length > 0
-                spacing: Space.hairline
+            // The bento and the results in one place: one gives way to the
+            // other (a cross-fade, the incoming one gliding a little).
+            Item {
+                id: stage
+                width: parent.width
+                height: Math.max(grid.height * (1 - home.searching), resultsList.implicitHeight * home.searching)
 
-                Repeater {
-                    model: home.results
-                    delegate: ListRow {
-                        id: result
-                        required property var modelData
-                        required property int index
-                        width: resultsList.width
-                        title: modelData.label
-                        subtitle: modelData.context
-                        selected: index === home.resultIndex
-                        onClicked: {
-                            home.resultIndex = result.index;
-                            home.activateResult(result.index);
-                        }
-                        leading: Component {
-                            Icon {
-                                icon: Icons[result.modelData.icon] ?? ""
-                                tone: result.selected ? "accent" : "secondary"
+                // The bento: its rows stretch so it and the status tiles
+                // fill the window (HomeLayout.rowUnit), never under a
+                // readable size.
+                Item {
+                    id: grid
+                    objectName: "homeGrid"
+                    onWidthChanged: home.columns = HomeLayout.columns(grid.width, Space.px(150), home.columns)
+                    width: parent.width
+                    visible: home.searching < 1
+                    enabled: home.query.length === 0
+                    opacity: 1 - home.searching
+                    y: -Space.l * home.searching
+                    readonly property real gap: home.gap
+                    readonly property real colW: (width - gap * (home.columns - 1)) / home.columns
+                    readonly property real avail: flick.height - home.margin * 2 - header.height - home.gap
+                    readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(118))
+                    height: home.packing.rows * rowH + Math.max(0, home.packing.rows - 1) * gap
+
+                    Repeater {
+                        id: tileRepeater
+                        model: home.packing.cells
+                        delegate: HomeTile {
+                            id: tile
+                            required property var modelData
+                            required property int index
+                            destination: home.tiles.find(t => t.id === modelData.id)
+                            // shadows after the first frame (18 of them cost
+                            // it); they fade in (kit Card)
+                            shadow: home.warm
+                            live: home.warm && tile.index < home.scenes
+                            x: modelData.col * (grid.colW + grid.gap)
+                            y: modelData.row * (grid.rowH + grid.gap)
+                            width: modelData.w * grid.colW + (modelData.w - 1) * grid.gap
+                            height: modelData.h * grid.rowH + (modelData.h - 1) * grid.gap
+                            onClicked: home.destinationOpened(modelData.id, tile)
+                            Keys.onLeftPressed: home.focusTile(HomeLayout.neighbour(home.packing.cells, tile.index, "left"))
+                            Keys.onRightPressed: home.focusTile(HomeLayout.neighbour(home.packing.cells, tile.index, "right"))
+                            Keys.onUpPressed: {
+                                const n = HomeLayout.neighbour(home.packing.cells, tile.index, "up");
+                                if (n === tile.index)
+                                    home.focusSearch();
+                                else
+                                    home.focusTile(n);
                             }
-                        }
-                        trailing: Component {
-                            KitText {
-                                role: "secondary"
-                                text: home.valueOf(result.modelData)
-                                elide: Text.ElideRight
+                            Keys.onDownPressed: {
+                                const n = HomeLayout.neighbour(home.packing.cells, tile.index, "down");
+                                if (n !== tile.index)
+                                    home.focusTile(n);
                             }
                         }
                     }
                 }
-                KitText {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: home.results.length === 0
-                    role: "secondary"
-                    text: I18n.t("prefs.search.empty")
-                }
-            }
 
-            // The bento: its rows stretch so it and the status tiles fill
-            // the window (HomeLayout.rowUnit), never under a readable size.
-            Item {
-                id: grid
-                objectName: "homeGrid"
-                onWidthChanged: home.columns = HomeLayout.columns(grid.width, Space.px(150), home.columns)
-                width: parent.width
-                visible: home.query.length === 0
-                readonly property real gap: home.gap
-                readonly property real colW: (width - gap * (home.columns - 1)) / home.columns
-                readonly property real avail: flick.height - home.margin * 2 - header.height - home.gap
-                readonly property real rowH: HomeLayout.rowUnit(grid.avail, home.packing.rows, grid.gap, Space.px(118))
-                height: home.packing.rows * rowH + Math.max(0, home.packing.rows - 1) * gap
-
-                Repeater {
-                    id: tileRepeater
-                    model: home.packing.cells
-                    delegate: HomeTile {
-                        id: tile
-                        required property var modelData
-                        required property int index
-                        destination: home.tiles.find(t => t.id === modelData.id)
-                        // shadows after the first frame (18 of them cost it)
-                        shadow: home.warm
-                        live: home.warm && tile.index < home.scenes
-                        x: modelData.col * (grid.colW + grid.gap)
-                        y: modelData.row * (grid.rowH + grid.gap)
-                        width: modelData.w * grid.colW + (modelData.w - 1) * grid.gap
-                        height: modelData.h * grid.rowH + (modelData.h - 1) * grid.gap
-                        onClicked: home.destinationOpened(modelData.id, tile)
-                        Keys.onLeftPressed: home.focusTile(HomeLayout.neighbour(home.packing.cells, tile.index, "left"))
-                        Keys.onRightPressed: home.focusTile(HomeLayout.neighbour(home.packing.cells, tile.index, "right"))
-                        Keys.onUpPressed: {
-                            const n = HomeLayout.neighbour(home.packing.cells, tile.index, "up");
-                            if (n === tile.index)
-                                home.focusSearch();
-                            else
-                                home.focusTile(n);
-                        }
-                        Keys.onDownPressed: {
-                            const n = HomeLayout.neighbour(home.packing.cells, tile.index, "down");
-                            if (n !== tile.index)
-                                home.focusTile(n);
-                        }
+                // The results, under the field and on its columns.
+                HomeResults {
+                    id: resultsList
+                    x: search.x
+                    width: search.width
+                    height: implicitHeight
+                    visible: home.searching > 0
+                    opacity: home.searching
+                    y: Space.l * (1 - home.searching)
+                    results: home.results
+                    selectedIndex: home.resultIndex
+                    valueOf: it => home.valueOf(it)
+                    onActivated: (i, row) => {
+                        home.resultIndex = i;
+                        home.activateResult(i);
                     }
                 }
             }
 
             // The active preset and its drift from it (Save to current
             // preset); by URL, after home shows (the preset service is not
-            // needed for the first frame).
+            // needed for the first frame); it fades in.
             Loader {
                 id: footer
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -328,7 +365,16 @@ FocusScope {
                 active: home.warm
                 asynchronous: true
                 source: Qt.resolvedUrl("presets/PresetStatusFooter.qml")
-                visible: Ui.prop(footer.item, "shown") === true && home.query.length === 0
+                readonly property bool shown: Ui.prop(footer.item, "shown") === true && home.query.length === 0
+                visible: footer.opacity > 0
+                opacity: footer.shown ? 1 : 0
+                Behavior on opacity {
+                    enabled: Motion.glide.duration > 0
+                    NumberAnimation {
+                        duration: Motion.glide.duration
+                        easing.type: Motion.glide.easing
+                    }
+                }
                 Connections {
                     target: footer.item
                     ignoreUnknownSignals: true

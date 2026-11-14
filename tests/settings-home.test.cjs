@@ -53,6 +53,19 @@ test('home tiles pack without overlap or holes, the heaviest first', () => {
     assert.deepEqual([six[1].id, six[1].col, six[1].w, six[1].h], ['look', 4, 2, 2]);
 });
 
+test('the search field starts and ends on tile edges, short of the last column', () => {
+    const tiles = Categories.home();
+    // six columns of 168 with gaps of 24: Windows' left edge (column 2) to
+    // Keyboard's right edge (column 4)
+    assert.deepEqual(plain(HomeLayout.searchSpan(HomeLayout.pack(tiles, 6).cells, 6, 168, 24, 160)), { x: 384, width: 552 });
+    // a wider brand never runs under the field
+    const wide = HomeLayout.searchSpan(HomeLayout.pack(tiles, 6).cells, 6, 168, 24, 400);
+    assert.ok(wide.x >= 400 + 24);
+    assert.deepEqual(plain(HomeLayout.searchSpan(HomeLayout.pack(tiles, 4).cells, 4, 168, 24, 160)), { x: 192, width: 360 });
+    // two columns: no span (the field fills the room between)
+    assert.equal(HomeLayout.searchSpan(HomeLayout.pack(tiles, 2).cells, 2, 300, 24, 160), null);
+});
+
 test('arrow keys move to the next tile that way', () => {
     const { cells } = HomeLayout.pack(Categories.home(), 6);
     const at = id => cells.findIndex(c => c.id === id);
@@ -133,8 +146,10 @@ test('every tile has a live status line in every language', () => {
     const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
     assert.equal(HomeStatus.line('screen', ctx), 'Top bar · island · dock');
     assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6\u00a0px · border 2\u00a0px');
-    // an "auto" corner is named as the shell resolves it
-    assert.equal(HomeStatus.line('notifications', ctx), 'Top right');
+    // an "auto" presentation follows the bar and the island (both on top: the island)
+    assert.equal(HomeStatus.line('notifications', ctx), 'In the island');
+    // corner toasts and their corner, an "auto" one resolved as the shell does
+    assert.equal(HomeStatus.line('notifications', { ...ctx, get: k => k === 'notifications.presentation' ? 'corner' : values[k] }), 'Corner toasts · top right');
     // the former status tiles' live values, in plain words
     // one short line: the network and the volume; the monitor only alone
     assert.equal(HomeStatus.line('devices', { ...ctx, network: 'Sakura 5G', volume: 0.62, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), 'Sakura 5G · Volume 62\u00a0%');
@@ -142,19 +157,34 @@ test('every tile has a live status line in every language', () => {
     // the first letter is capitalised
     assert.equal(HomeStatus.line('system', { ...ctx, update: false }), 'Up to date');
     assert.equal(HomeStatus.line('system', { ...ctx, language: 'English', update: false }), 'English · up to date');
-    assert.equal(HomeStatus.line('assistant', ctx), 'On');
+    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', language: 'English', update: false }), '1.3.9 · up to date');
+    assert.equal(HomeStatus.line('assistant', ctx), 'Ready to chat');
     values['ai.defaultModel'] = 'claude-opus';
     assert.equal(HomeStatus.line('assistant', ctx), 'claude-opus');
+    // "provider:model": the provider by its name
+    values['ai.defaultModel'] = 'ollama:llama3.2';
+    assert.equal(HomeStatus.line('assistant', ctx), 'Ollama · llama3.2');
     values['ai.enabled'] = false;
     assert.equal(HomeStatus.line('assistant', ctx), 'Off');
     values['keyboard.layouts'] = [{ layout: 'us' }, { layout: 'ru' }];
     assert.equal(HomeStatus.line('keys', ctx), 'US, RU');
-    assert.equal(HomeStatus.line('panels', ctx), 'Launcher: Auto');
+    assert.equal(HomeStatus.line('keys', { ...ctx, layoutName: c => ({ us: 'English (US)', ru: 'Russian' })[c] }), 'English (US), Russian');
+    assert.equal(HomeStatus.line('panels', ctx), 'Island launcher');
+    // the island off: "auto" falls back as the shell does
+    assert.equal(HomeStatus.line('panels', { ...ctx, get: k => k === 'notch.enabled' ? false : values[k] }), 'Spotlight launcher');
     values['notifications.dnd.enabled'] = true;
     assert.equal(HomeStatus.line('notifications', ctx), 'Do Not Disturb is on');
     values['bar.panels'] = [{}, {}];
     values['dock.enabled'] = false;
     assert.equal(HomeStatus.line('screen', ctx), '2 bars · island');
+});
+
+test('a status line drops its last parts until it fits one line', () => {
+    const measure = s => s.length * 10;
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 500), 'Top bar · island · dock');
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 170), 'Top bar · island');
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 20), 'Top bar');
+    assert.equal(HomeStatus.fit('', measure, 20), '');
 });
 
 test('every home scene is registered by its full path (the audit sees it) and exists', () => {

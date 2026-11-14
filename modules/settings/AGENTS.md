@@ -10,11 +10,11 @@ once and can be undone; there is no Apply step.
 The frame is a **showcase** over an **ambient** background (kit Ambient:
 the wallpaper blurred, darkened and vignetted; at full strength only at
 home and on desktop pages, toned down on the others). It opens on a home
-screen (the brand, one big search "What do you want to change?", undo and
-the nine destinations as a bento whose tile sizes follow their weight:
-Screen and Look big live scenes, the others their icon on a plate with
-their tabs named beside it, each with its name and a plain status line)
-and an opaque card grows from the tile into its destination. A destination
+screen (the brand, one big search "What do you want to change?", a History
+button and the nine destinations as a bento whose tile sizes follow their
+weight: Screen and Look big live scenes, the others their icon on a plate,
+each with its name and one live status line) and the tile grows into its
+destination (a shared element, home/MorphFrame). A destination
 page: a round back button, the title, the tabs, Reset page and undo stay on
 top (a hairline under them once the page scrolls); under them, on a wide
 window, two equal columns: the **stage** with its hint heads the right one
@@ -53,7 +53,8 @@ modules/settings/
 ├── HomeTile.qml            one destination tile (kit Card): a scene (home/<X>Scene.qml, by URL) or its icon
 │                           on a plate (`glyph`; side by side with the name on a wide tile), name, status
 ├── home/                   tile scenes: Layout (ScreenMini; the only one on the wallpaper), Look (Aa + font
-│                           name + palette strip); NameScrim
+│                           name + palette strip); HomeResults (the search palette), MorphFrame
+│                           (the tile <-> page shared element)
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
 ├── HomeLayout.js           pure: home columns (6 / 4 / 2), weighted tile packing (no holes), arrow-key
 │                           neighbours (same test)
@@ -113,7 +114,9 @@ branches on the language name (`Look`).
   (VisualLanguage `card`: translucent with a hairline in ink and glass,
   solid in tiles / device / classic, a soft RectangularShadow); `accented`
   rings and glows the card the screen is about.
-- Home: header (brand, a boxed `SearchField`, undo), then the nine
+- Home: header (brand, a boxed `SearchField` starting and ending on tile
+  edges (`HomeLayout.searchSpan`), a labelled History button that opens
+  the Changes tab), then the nine
   destinations as a bento sized by weight (`Categories.HOME_SIZES`, in
   six-column cells: Screen 4x2, Look 2x2, Panels / Windows / Notifications /
   Devices / Assistant 2x1, Keyboard and System 1x1; `HomeLayout.columns`:
@@ -121,19 +124,35 @@ branches on the language name (`Look`).
   takes a hole after it; `Look.screenGap` between them and around), then
   the preset footer. Each tile is a kit `Card` (`interactive`: lifts on
   hover, springs on press, FocusRing; an `Accessible` button with its
-  status as description). Screen draws the screen miniature on the
-  wallpaper, Look a big "Aa" with the font's name and the palette strip;
-  every other tile is its icon on a plate at the top left (accent tonal on
-  hover / focus) with its tabs named beside it (`homeTileContents`), the
-  name and status at the foot (one layout for all of them). Name = `title` role, status one size down
-  (`secondary`), plain words (HomeStatus.js). A scene must not declare a property named like an
+  status as description). Screen draws your whole screen as a 16:9 monitor
+  (Stage + ScreenMini, every bar, the island and the dock) on its card,
+  beside the name where the tile is wide; Look a big "Aa" with the font's
+  name on its baseline, standing on the palette strip; every other tile is
+  its icon on a plate at the top left (the language's control box:
+  hairline ring, tonal box, solid tile, an instrument's well; accent tonal
+  on hover / focus), the name and status at the foot (one layout for all
+  of them). Name = `title` role, status one size down (`secondary`), one
+  line that never wraps: its room is there from the first frame, the
+  words fade in, trailing " · " parts drop where it is too long
+  (`HomeStatus.fit`); in device a lit LED precedes it. Search: typing
+  cross-fades the bento into the results (HomeResults: a KeyedListModel,
+  rows glide / fade, never rebuilt; breadcrumb + current value; the picked
+  row wears the Enter keycap; Enter flashes it and the page grows out of
+  it). A scene must not declare a property named like an
   Item anchor line (`top`, `bottom`, `left`, `right`, ...): it hangs the
   type loader.
-- Opening: an opaque card (the card fill at full alpha) grows from the
-  tile to the window (`Motion.morph`); home is gone under it in the first
-  third, the page fades in over the last 40 % and only once it is laid
-  out (`SettingsPageHost.pageReady`): never two screens at once; going
-  back reverses it. A deep link
+- Opening (home/MorphFrame): a snapshot of the tile (ShaderEffectSource;
+  the real tile is hidden only while it shows) grows from the tile to the
+  window (`Motion.morph`) over a card of the language, and the page grows
+  with it (scaled to cover the frame, clipped to it) and cross-fades in
+  once it is laid out (`SettingsPageHost.pageReady`; `quiet` while the
+  morph runs: one fade for the header and the cards). Home is gone in the
+  first third. A search result's row grows the same way. A jump to a row
+  runs once the morph ended. Back (`Motion.exit`): the page shrinks into
+  the tile of the destination shown now (origin taken in `goHome()`, so
+  after tabs, Ctrl+Tab, a search or a resize alike) and the snapshot
+  takes over. Slow-motion proof: `tools/render/settings_morph_frames.py`.
+  A deep link
   (`<app> run settings <id>`, `GlobalStates.settingsCategory` at open)
   opens straight on its page with no motion.
 - Destination: `DestinationHeader` = back pill (IconButton), title role,

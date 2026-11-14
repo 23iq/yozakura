@@ -144,7 +144,9 @@ function apply(lang, variant, cfg) {
 // card: the bento surfaces of the settings window (kit Card) over the
 //       window's ambient wallpaper (kit Ambient): {fill, fillOpacity,
 //       edge (hairline alpha), shadow (alpha), ambient (how much of the
-//       blurred wallpaper the window shows around the cards, 0..1)}
+//       blurred wallpaper the window shows around the cards, 0..1),
+//       highlight (white alpha of a lit top edge: glass frost, device's
+//       machined edge), shade (dark alpha of the bottom edge: a bevel)}
 var KIT = {
     "ink": {
         card: { fill: "surfaceContainerLow", fillOpacity: 0.58, edge: 0.10, shadow: 0.34, ambient: 1 },
@@ -159,7 +161,7 @@ var KIT = {
         light: { edge: 0.3, wash: 0, dim: 0.12, lantern: 0.26 }
     },
     "glass": {
-        card: { fill: "surface", fillOpacity: 0.42, edge: 0.16, shadow: 0.30, ambient: 1 },
+        card: { fill: "surface", fillOpacity: 0.42, edge: 0.16, shadow: 0.30, ambient: 1, highlight: 0.22 },
         screen: { gap: "m", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         weather: { drop: "bead", alpha: 1 },
@@ -183,7 +185,7 @@ var KIT = {
         light: { edge: 0.5, wash: 0.3, dim: 0.18, lantern: 0.3 }
     },
     "device": {
-        card: { fill: "surfaceContainer", fillOpacity: 1, edge: 0.09, shadow: 0.40, ambient: 0.5 },
+        card: { fill: "surfaceContainer", fillOpacity: 1, edge: 0.09, shadow: 0.40, ambient: 0.5, highlight: 0.07, shade: 0.3 },
         screen: { gap: "s", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0.09, highlight: 0.05, shade: 0.24, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },

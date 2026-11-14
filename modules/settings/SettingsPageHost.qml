@@ -38,6 +38,9 @@ Item {
     // [{id, item}] most recent first.
     property var _pages: []
     property real slide: 0
+    // Someone else fades the page in (the shell's tile morph): no enter of
+    // its own, the page stands in place at once.
+    property bool quiet: false
     // The shown page has what is on screen built.
     readonly property bool pageReady: !!host.item && Ui.prop(host.item, "enterReady") !== false
 
@@ -97,18 +100,18 @@ Item {
         const next = PageCache.visit(host._pages, cat.id, page, host.keep);
         host._pages = next.pages;
         next.dropped.forEach(d => d.destroy());
-        host.slide = 1;
+        host.slide = host.quiet ? 0 : 1;
         page.enabled = true;
         page.visible = true;
         host.item = page;
         // A kept page is complete: it enters at once.
-        if (host.pageReady)
+        if (host.pageReady && !host.quiet)
             enterAnim.restart();
         host.loaded();
     }
 
     onPageReadyChanged: {
-        if (host.pageReady)
+        if (host.pageReady && !host.quiet)
             enterAnim.restart();
     }
 
