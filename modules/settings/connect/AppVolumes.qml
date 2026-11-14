@@ -8,7 +8,8 @@ import qs.modules.components.kit
 import "ConnectModel.js" as ConnectModel
 
 // Sound > the apps playing now, each its icon, its name and its own volume
-// line (applied at once); the list scrolls inside its card.
+// line (applied at once); the list scrolls inside its card. Rows sit on
+// the card's row inset (the title's text edge).
 Item {
     id: root
 
@@ -50,15 +51,16 @@ Item {
             objectName: "appVolume:" + app.name
             width: list.width
             // a few apps share the card's height (up to a roomy row each)
-            height: Math.max(Space.controlL + Space.s, Math.min((Space.controlL + Space.s) * 1.9, (list.height - list.spacing * (root.apps.length - 1)) / Math.max(1, root.apps.length)))
+            height: Space.controlL
 
-            // the app's icon (its initials while there is none)
+            // the app's icon (a small round monogram while there is none),
+            // at the size of the device rows' icons
             Avatar {
                 id: face
+                x: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(Space.controlL, app.height - Space.s * 2)
+                width: Space.controlXS
                 height: width
-                radius: Look.radius("small", height)
                 name: app.name
                 source: app.iconName !== "" ? "image://icon/" + app.iconName : ""
             }
@@ -66,6 +68,7 @@ Item {
                 anchors.left: face.right
                 anchors.leftMargin: Space.m
                 anchors.right: parent.right
+                anchors.rightMargin: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Space.xs
                 KitText {

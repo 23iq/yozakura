@@ -141,7 +141,10 @@ FittedFrame {
                 width: stripCard.contentWidth
                 height: stripCard.height - stripCard.padding * 2 - heading.implicitHeight - stripCard.spacing
                 readonly property real cardH: height - Space.s * 2
-                readonly property real cardW: Math.round(cardH * 16 / 10)
+                // 16:10 pictures; a few presets narrow down (to 5:4) so the
+                // strip fits whole and never scrolls
+                readonly property real fitW: (width - Space.m * Math.max(0, root.presets.length - 1)) / Math.max(1, root.presets.length)
+                readonly property real cardW: Math.round(Math.min(cardH * 16 / 10, Math.max(cardH * 5 / 4, fitW)))
 
                 // the strip runs on under the card's sides: a masked fade on
                 // the side that has more (never painted over the card)
@@ -155,7 +158,7 @@ FittedFrame {
                         id: flick
                         objectName: "presetStrip"
                         anchors.fill: parent
-                        contentWidth: strip.width + Space.m * 2
+                        contentWidth: strip.width
                         interactive: contentWidth > width
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
@@ -165,8 +168,14 @@ FittedFrame {
                             const i = root.presets.indexOf(root.shown);
                             if (i < 0 || width <= 0)
                                 return;
+                            // the least scroll that shows it whole (at rest the
+                            // strip starts flush at the card's inset)
                             const w = stripArea.cardW;
-                            contentX = Math.max(0, Math.min(Space.m + i * (w + Space.m) - (width - w) / 2, contentWidth - width));
+                            const left = i * (w + Space.m);
+                            if (left < contentX)
+                                contentX = Math.max(0, left);
+                            else if (left + w > contentX + width)
+                                contentX = Math.min(left + w - width, Math.max(0, contentWidth - width));
                         }
                         onContentWidthChanged: Qt.callLater(flick.reveal)
                         Connections {
@@ -178,7 +187,6 @@ FittedFrame {
 
                         Row {
                             id: strip
-                            x: Space.m
                             y: Space.s
                             spacing: Space.m
                             Repeater {

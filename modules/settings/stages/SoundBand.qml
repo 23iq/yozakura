@@ -89,7 +89,7 @@ Stage {
             id: slider
             objectName: ch.objectName + "Slider"
             width: ch.width
-            height: Math.max(Space.controlL, Math.round(band.height * 0.3))
+            height: Space.controlM + Space.s
             enabled: ch.node !== null
             from: 0
             to: 1.5
@@ -102,34 +102,45 @@ Stage {
             onMoved: v => ch.volumeSet(v)
             onIconClicked: ch.muteClicked()
 
-            // 100 %: where amplification starts
-            Mark {
+            // 100 %: a notch on the track's top edge (past it the sound is
+            // amplified), named on hover; none when the range ends at 100 %
+            Item {
+                id: full
                 objectName: "fullMark"
+                visible: slider.to > 1.001
                 x: Math.round(slider.cap + slider.span / slider.to - width / 2)
-                y: Math.round(slider.height * 0.25)
-                width: Space.hairline * 2
-                height: Math.round(slider.height * 0.5)
-                color: Type.secondary
-                opacity: 0.7
+                width: Space.l
+                height: slider.height
+                Mark {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Space.hairline * 2
+                    height: Space.s
+                    radius: 0
+                    color: Type.secondary
+                }
+                HoverHandler {
+                    id: fullHover
+                }
+                Tooltip {
+                    text: "100 %"
+                    shown: fullHover.hovered
+                }
             }
-        }
-        // the live meter: a thin line under the slider's track
-        Item {
-            objectName: ch.objectName + "Meter"
-            visible: ch.level >= 0
-            x: slider.cap
-            width: slider.span
-            height: Space.xs
-            readonly property real level: Math.max(0, ch.level)
-            Mark {
-                width: parent.width
-                height: parent.height
-                color: Look.raisedFill(false)
-            }
-            Mark {
-                width: Math.round(parent.width * parent.level)
-                height: parent.height
-                color: Type.secondary
+            // the live meter of what is playing: a thin line along the
+            // track's own foot, inside its rounded ends
+            Item {
+                objectName: ch.objectName + "Meter"
+                visible: ch.level >= 0
+                readonly property real level: Math.max(0, ch.level)
+                x: Math.round(slider.cap / 2)
+                width: slider.width - slider.cap
+                height: Space.hairline * 2
+                y: slider.height - Space.xs - height
+                Mark {
+                    width: Math.round(parent.width * parent.level)
+                    height: parent.height
+                    color: Type.secondary
+                }
             }
         }
     }

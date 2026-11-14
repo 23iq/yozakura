@@ -44,24 +44,17 @@ Column {
         }
     }
 
-    // the warmth: one slider, Warmer and Cooler at its ends; greyed out
-    // (and still) while night light is off
+    // the warmth: one slider, Warmer and Cooler at its ends; while night
+    // light is off it is still and grey, but legible (muted ink, a grey fill)
     Column {
         objectName: "nightWarmthBlock"
         width: root.width
         spacing: Space.s
-        enabled: root.on
-        opacity: root.on ? 1 : 0.38
-        Behavior on opacity {
-            enabled: Motion.micro.duration > 0
-            NumberAnimation {
-                duration: Motion.micro.duration
-            }
-        }
 
         KitText {
             width: parent.width
             role: "secondary"
+            color: root.on ? Type.secondary : Type.muted
             text: I18n.t("prefs.displays.warmth")
         }
         Item {
@@ -71,7 +64,7 @@ Column {
                 id: warmer
                 anchors.verticalCenter: parent.verticalCenter
                 role: "caption"
-                color: Type.secondary
+                color: root.on ? Type.secondary : Type.muted
                 text: I18n.t("prefs.displays.warmer")
             }
             LineSlider {
@@ -87,6 +80,11 @@ Column {
                 step: 100
                 value: root.temp
                 showValue: false
+                // off: still, grey and legible (not the kit's faint
+                // disabled look)
+                enabled: root.on
+                opacity: 1
+                fillColor: root.on ? Type.progress : Type.muted
                 Accessible.name: I18n.t("prefs.displays.warmth")
                 onMoved: v => NightLightClient.setTemperature(Math.round(v / 100) * 100)
             }
@@ -95,7 +93,7 @@ Column {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 role: "caption"
-                color: Type.secondary
+                color: root.on ? Type.secondary : Type.muted
                 text: I18n.t("prefs.displays.cooler")
             }
         }

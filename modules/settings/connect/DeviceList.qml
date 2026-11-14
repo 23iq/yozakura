@@ -58,7 +58,9 @@ Item {
             readonly property bool hasVolume: (row.modelData.volume ?? -1) >= 0
             objectName: "deviceRow:" + modelData.key
             width: list.width
-            readonly property real need: root.baseH + (row.hasVolume ? Space.controlS : 0)
+            // the name line(s): a long name wraps (never elided), the row grows
+            readonly property real headH: Math.max(root.baseH, titles.implicitHeight + Space.s * 2)
+            readonly property real need: row.headH + (row.hasVolume ? Space.controlS : 0)
             height: root.stretch && root.rows.length > 0 ? Math.max(row.need, Math.min(row.need * 1.9, (list.height - list.spacing * (root.rows.length - 1)) / root.rows.length)) : row.need
             // the extra height of a stretched row, split around its content
             readonly property real lift: Math.round((row.height - row.need) / 2)
@@ -68,9 +70,10 @@ Item {
                 radius: Look.radius("control", height)
                 color: row.chosen ? Qt.alpha(Type.accent, 0.16) : (area.containsMouse ? Look.raisedFill(true) : "transparent")
             }
+            // the content on the card's row inset (the title's text edge)
             Icon {
                 id: glyph
-                x: Space.m
+                x: Look.rowInset
                 anchors.verticalCenter: titles.verticalCenter
                 icon: Icons[row.modelData.icon] ?? Icons.circle
                 role: root.stretch ? "display" : "title"
@@ -82,11 +85,11 @@ Item {
                 anchors.leftMargin: Space.m
                 anchors.right: tail.left
                 anchors.rightMargin: Space.s
-                y: row.lift + Math.round((root.baseH - height) / 2)
+                y: row.lift + Math.round((row.headH - height) / 2)
                 KitText {
                     width: parent.width
                     role: "body"
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                     font.weight: row.modelData.on ? Type.weight("title") : Type.weight("body")
                     text: row.modelData.title
                 }
@@ -102,7 +105,7 @@ Item {
             Icon {
                 id: tail
                 anchors.right: parent.right
-                anchors.rightMargin: Space.m
+                anchors.rightMargin: Look.rowInset
                 anchors.verticalCenter: titles.verticalCenter
                 visible: (row.modelData.trailing || "") !== ""
                 icon: Icons[row.modelData.trailing || "circle"] ?? ""
@@ -118,8 +121,8 @@ Item {
                 z: 1
                 anchors.left: titles.left
                 anchors.right: parent.right
-                anchors.rightMargin: Space.m
-                y: row.lift + Space.controlM
+                anchors.rightMargin: Look.rowInset
+                y: row.lift + row.headH - Space.s
                 height: Space.controlS
                 from: 0
                 to: 1.5
