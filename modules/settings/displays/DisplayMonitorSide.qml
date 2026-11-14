@@ -9,9 +9,9 @@ import "DisplayFormat.js" as DisplayFormat
 
 // The inspector of the Displays hero card, beside the arrangement: the
 // picked monitor (its name, connector and an on / off switch), its
-// rotation as four tilted screens, adaptive sync and Identify at the top;
-// the draft's actions at its foot, attached to it: Apply (15 s to keep or
-// go back) and Discard. Edits nothing itself: every change is a `patch`
+// rotation as four tilted screens and adaptive sync at the top; the
+// actions in one row at its foot: Identify, Discard and Apply (15 s to
+// keep or go back). Edits nothing itself: every change is a `patch`
 // the page merges into the draft. The page gives it its height.
 Item {
     id: root
@@ -122,14 +122,6 @@ Item {
                     })
             }
         }
-
-        PillButton {
-            objectName: "identifyButton"
-            icon: "eye"
-            kind: "ghost"
-            text: I18n.t("prefs.displays.identify")
-            onClicked: root.identify()
-        }
     }
 
     // the draft's actions, at the inspector's foot
@@ -141,8 +133,12 @@ Item {
         Divider {
             width: parent.width
         }
-        Row {
+        // one actions row, Apply on the right edge (Identify wraps to a
+        // line of its own when Discard needs the room)
+        Flow {
+            width: parent.width
             spacing: Space.s
+            layoutDirection: Qt.RightToLeft
             PillButton {
                 objectName: "applyButton"
                 kind: "filled"
@@ -158,6 +154,13 @@ Item {
                 kind: "ghost"
                 text: I18n.t("prefs.displays.discard")
                 onClicked: root.discard()
+            }
+            PillButton {
+                objectName: "identifyButton"
+                icon: "eye"
+                kind: "ghost"
+                text: I18n.t("prefs.displays.identify")
+                onClicked: root.identify()
             }
         }
     }
