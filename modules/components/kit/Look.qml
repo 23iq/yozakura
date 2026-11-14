@@ -87,6 +87,10 @@ QtObject {
     readonly property color cardEdge: root.alpha("overBackground", root.card.edge)
     readonly property color cardShadow: root.alpha("shadow", root.card.shadow)
     readonly property real ambientStrength: root.card.ambient
+    // A card's lit top edge and dark bottom edge (transparent where the
+    // language has none).
+    readonly property color cardHighlight: Qt.rgba(1, 1, 1, root.card.highlight || 0)
+    readonly property color cardShade: root.alpha("shadow", root.card.shade || 0)
     function cardFill(hovered: bool): color {
         return Qt.tint(root.alpha(root.card.fill, root.card.fillOpacity), root.alpha("overBackground", hovered ? 0.06 : 0));
     }

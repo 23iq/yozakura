@@ -8,6 +8,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import qs.modules.settings.store
+import qs.modules.settings.home
 import "schema/Categories.js" as Categories
 import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
@@ -15,13 +16,16 @@ import "Registry.js" as Registry
 
 // Settings window content, the "showcase" frame: a home screen
 // (SettingsHome: search + a bento of live tiles + pills) and, once a
-// destination is opened, its page - the tile expands into it (a shared
-// element: a box grows from the tile to the window while the page fades
-// in) - with only a back pill, the title and the tabs as chrome
-// (DestinationHeader) over the page (SettingsPageHost: built on first
-// visit, kept alive). Esc, the back pill, the mouse back button and
-// Alt+Left return home (the page collapses back into its tile). Every
-// change applies at once; Ctrl+Z / Ctrl+Shift+Z undo / redo it (UndoPill).
+// destination is opened, its page - the tile grows into it (a shared
+// element, home/MorphFrame: a snapshot of the tile grows from its place to
+// the window and cross-fades into the page, which grows with it) - with
+// only a back pill, the title and the tabs as chrome (DestinationHeader)
+// over the page (SettingsPageHost: built on first visit, kept alive). Esc,
+// the back pill, the mouse back button and Alt+Left return home: the page
+// shrinks back into the tile of the destination it shows now (after tabs,
+// Ctrl+Tab, a search jump or a deep link alike) and the tile takes over.
+// Every change applies at once; Ctrl+Z / Ctrl+Shift+Z undo / redo it
+// (UndoPill).
 Item {
     id: shell
 
@@ -29,10 +33,21 @@ Item {
     property bool atHome: true
     // 0 = home, 1 = page fully open (animated).
     property real reveal: atHome ? 0 : 1
-    // Where the page grows from / shrinks back to (a home tile), in shell
-    // coordinates; null: from the middle.
+    // Where the page grows from / shrinks back to (a home tile or a search
+    // result), in shell coordinates; null: from the middle.
     property var origin: null
     property var pendingReveal: null
+    // A tile grows into its page (until the page is in and laid out) /
+    // a page shrinks into its tile: the shared-element transition runs.
+    property bool opening: false
+    property bool closing: false
+    readonly property bool morphing: shell.opening || shell.closing
+    // The page's share while it opens: 0 until it is laid out, then it
+    // fades up (it never shows half built).
+    property real readyFade: 1
+    // The item the next opening grows out of (a tile, a result row).
+    property Item morphItem: null
+    property bool selecting: false
     // The active preset's changes sheet is open (home footer, toast).
     property bool changesOpen: false
     // The preset overlays (edit banner, trial pill, toast, changes sheet,
@@ -43,14 +58,85 @@ Item {
     // Off until the first frame: a deep link opens straight on its page.
     property bool animated: false
 
-    // A whole-window morph (the morph token, not a glide: a short glide
-    // reads as a flash at this size), decelerating so it lands softly.
+    // Open: a whole-window morph (the morph token, not a glide: a short
+    // glide reads as a flash at this size), decelerating so it lands
+    // softly. Back: the exit token (shorter, accelerating away).
     Behavior on reveal {
         enabled: shell.animated && Motion.morph.duration > 0
         NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
+            duration: shell.atHome ? Motion.exit.duration : Motion.morph.duration
+            easing.type: shell.atHome ? Motion.exit.easing : Motion.morph.easing
         }
+    }
+    onRevealChanged: shell.settle()
+    onReadyFadeChanged: shell.settle()
+
+    NumberAnimation {
+        id: readyAnim
+        target: shell
+        property: "readyFade"
+        to: 1
+        duration: Motion.glide.duration
+        easing.type: Motion.glide.easing
+    }
+    Connections {
+        target: page
+        function onPageReadyChanged() {
+            if (!page.pageReady) {
+                readyAnim.stop();
+                shell.readyFade = 0;
+            } else if (shell.opening && shell.animated && Motion.glide.duration > 0) {
+                readyAnim.restart();
+            } else {
+                shell.readyFade = 1;
+            }
+            shell.maybeReveal();
+        }
+    }
+
+    // The item a transition grows out of / shrinks into: its rect (as home
+    // lays it out at rest: home's own scale left out) and its snapshot.
+    function morphFrom(item) {
+        if (item) {
+            const p = item.mapToItem(homeView, 0, 0);
+            shell.origin = {
+                "x": homeView.x + p.x,
+                "y": homeView.y + p.y,
+                "w": item.width,
+                "h": item.height
+            };
+        } else {
+            shell.origin = null;
+        }
+        morph.capture(item);
+    }
+
+    // The tile of the destination a category belongs to.
+    function tileOf(categoryId) {
+        const g = Categories.groupOf(categoryId);
+        return g ? homeView.tileFor(g.id) : null;
+    }
+
+    // A transition ends: the real tile is back, a jump to a row runs.
+    function settle() {
+        if (shell.closing && shell.reveal === 0) {
+            shell.closing = false;
+            morph.capture(null);
+        }
+        if (shell.opening && shell.reveal === 1 && shell.readyFade === 1) {
+            shell.opening = false;
+            morph.capture(null);
+            // a search jump: the palette closes behind the page
+            homeView.clearSearch();
+            shell.maybeReveal();
+        }
+    }
+
+    // Scroll to / flash the row a search or a link asked for, once the page
+    // is laid out and stands still (never mid-morph).
+    function maybeReveal() {
+        if (shell.pendingReveal && page.item && page.pageReady && !shell.opening && !shell.atHome)
+            revealTimer.restart();
     }
 
     // Accepts a category id, a moved id or a destination id
@@ -65,10 +151,24 @@ Item {
         const from = tabs.findIndex(t => t.id === currentCategory);
         const to = tabs.findIndex(t => t.id === c.id);
         page.direction = !shell.atHome && from >= 0 && to >= 0 && from !== to ? (to > from ? 1 : -1) : 0;
+        // from home (or on the way back to it): the destination's tile grows
+        // into the page
+        const grow = shell.atHome && shell.animated;
+        if (grow) {
+            readyAnim.stop();
+            shell.morphFrom(shell.morphItem || shell.tileOf(c.id));
+            shell.closing = false;
+            shell.opening = true;
+        }
+        shell.morphItem = null;
         currentCategory = c.id;
+        shell.selecting = true;
         GlobalStates.settingsCategory = c.id;
+        shell.selecting = false;
         if (changed)
             page.load(c);
+        if (grow)
+            shell.readyFade = page.pageReady ? 1 : 0;
         shell.atHome = false;
     }
 
@@ -78,23 +178,22 @@ Item {
         const g = Categories.groupById(id);
         if (!g)
             return;
-        if (from) {
-            const p = from.mapToItem(shell, 0, 0);
-            shell.origin = {
-                "x": p.x,
-                "y": p.y,
-                "w": from.width,
-                "h": from.height
-            };
-        } else {
-            shell.origin = null;
-        }
+        shell.morphItem = from || null;
         select(g.categories[0]);
     }
 
     function goHome() {
         if (shell.atHome)
             return;
+        // into the tile of the destination shown now, wherever the page
+        // came from
+        if (shell.animated) {
+            shell.opening = false;
+            readyAnim.stop();
+            shell.readyFade = 1;
+            shell.morphFrom(shell.tileOf(shell.currentCategory));
+            shell.closing = true;
+        }
         shell.atHome = true;
         GlobalStates.settingsCategory = "";
         homeView.forceActiveFocus();
@@ -112,7 +211,7 @@ Item {
         };
         const c = Categories.resolve(categoryId);
         if (c && c.id === currentCategory && page.item && !shell.atHome)
-            revealTimer.restart();
+            shell.maybeReveal();
         else
             select(categoryId);
     }
@@ -142,7 +241,8 @@ Item {
     Connections {
         target: GlobalStates
         function onSettingsCategoryChanged() {
-            if (GlobalStates.settingsCategory && (GlobalStates.settingsCategory !== shell.currentCategory || shell.atHome))
+            // (not the echo of a select() under way)
+            if (!shell.selecting && GlobalStates.settingsCategory && (GlobalStates.settingsCategory !== shell.currentCategory || shell.atHome))
                 shell.select(GlobalStates.settingsCategory);
         }
         // a plain open after a close starts at home
@@ -150,6 +250,10 @@ Item {
             if (!GlobalStates.settingsWindowVisible) {
                 // the next open (maybe a deep link) starts without motion
                 shell.animated = false;
+                shell.opening = false;
+                shell.closing = false;
+                morph.capture(null);
+                shell.readyFade = 1;
                 shell.atHome = true;
                 GlobalStates.settingsCategory = "";
             } else {
@@ -239,92 +343,91 @@ Item {
         y: editBanner.height
         width: parent.width
         height: parent.height - y
-        visible: shell.reveal < 1
+        // shown on the way back from its first frame (the tile's snapshot
+        // is taken from it)
+        visible: shell.reveal < 1 || shell.closing
         enabled: shell.atHome
         focus: shell.atHome
-        // gone under the growing card early: never two screens at once
+        // gone under the growing page early: never two screens at once
         opacity: Math.max(0, 1 - shell.reveal / 0.35)
         scale: 1 - Math.min(1, shell.reveal / 0.35) * 0.03
         onDestinationOpened: (id, tile) => shell.openDestination(id, tile)
-        onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
+        onResultActivated: (r, row) => {
+            shell.morphItem = row || null;
+            shell.navigate(r.categoryId, r.sectionId, r.entryId);
+        }
+        onHistoryRequested: button => {
+            shell.morphItem = button || null;
+            shell.select("changes");
+        }
         onPresetAction: id => shell.presetAction(id)
         wantIndex: shell.changesOpen
     }
 
-    // The shared element: a box growing from the tile to the window.
-    Mark {
-        readonly property var o: shell.origin || {
-            "x": shell.width * 0.4,
-            "y": shell.height * 0.4,
-            "w": shell.width * 0.2,
-            "h": shell.height * 0.2
-        }
-        readonly property real t: shell.reveal
-        visible: t > 0 && t < 1
-        x: o.x * (1 - t)
-        y: o.y * (1 - t)
-        width: o.w + (shell.width - o.w) * t
-        height: o.h + (shell.height - o.h) * t
-        radius: Look.bigRadius(Space.controlXL) * (1 - t)
-        // opaque (a translucent box over a fading home and a fading page
-        // was three layers at once): the window's own ground, then it
-        // gives way to the page in the last third
-        readonly property color ground: Look.cardFill(false)
-        color: Qt.rgba(ground.r, ground.g, ground.b, 1)
-        opacity: t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.3)
-    }
+    // The shared element: the page grows out of the tile (and back), the
+    // tile's snapshot cross-fading with it.
+    MorphFrame {
+        id: morph
+        objectName: "settingsMorph"
+        anchors.fill: parent
+        active: shell.morphing
+        t: shell.reveal
+        origin: shell.origin
+        pageFade: pageView.opacity
 
-    FocusScope {
-        id: pageView
-        objectName: "settingsPageView"
-        y: editBanner.height
-        width: parent.width
-        height: parent.height - y
-        visible: shell.reveal > 0
-        enabled: !shell.atHome
-        focus: !shell.atHome
-        // the page arrives once the card has grown and the page is laid
-        // out (it never reflows in view)
-        opacity: page.pageReady ? Math.max(0, (shell.reveal - 0.6) / 0.4) : 0
-
-        DestinationHeader {
-            id: header
-            objectName: "destinationHeader"
-            x: Space.xl
-            y: Space.l
-            width: parent.width - Space.xl * 2
-            category: page.category
-            onTabSelected: id => shell.select(id)
-            onBack: shell.goHome()
-        }
-
-        SettingsPageHost {
-            id: page
-            objectName: "settingsPage"
-            y: header.y + header.height + Space.m
+        FocusScope {
+            id: pageView
+            objectName: "settingsPageView"
+            y: editBanner.height
             width: parent.width
             height: parent.height - y
-            onLoaded: {
-                if (shell.pendingReveal)
-                    revealTimer.restart();
-            }
-        }
+            visible: shell.reveal > 0
+            enabled: !shell.atHome
+            focus: !shell.atHome
+            // One fade for the header and the cards together while the
+            // transition runs: in as the frame grows (once the page is
+            // laid out: it never reflows in view), out as it shrinks. The
+            // page host's own enter (tabs) does the rest.
+            opacity: shell.morphing ? shell.readyFade * Math.max(0, Math.min(1, (shell.reveal - 0.15) / 0.5)) : 1
 
-        // once the page scrolls, a hairline under the header: cards slide
-        // under a clear edge instead of being cut mid-heading
-        Mark {
-            objectName: "headerEdge"
-            x: Space.xl
-            y: page.y - Space.xs
-            width: parent.width - Space.xl * 2
-            height: Space.hairline
-            radius: 0
-            color: Type.hairline
-            opacity: (Ui.prop(page.item, "contentY") || 0) > Space.s ? 1 : 0
-            Behavior on opacity {
-                enabled: Motion.micro.duration > 0
-                NumberAnimation {
-                    duration: Motion.micro.duration
+            DestinationHeader {
+                id: header
+                objectName: "destinationHeader"
+                x: Space.xl
+                y: Space.l
+                width: parent.width - Space.xl * 2
+                category: page.category
+                onTabSelected: id => shell.select(id)
+                onBack: shell.goHome()
+            }
+
+            SettingsPageHost {
+                id: page
+                objectName: "settingsPage"
+                y: header.y + header.height + Space.m
+                width: parent.width
+                height: parent.height - y
+                // the morph fades the page in: no enter of its own then
+                quiet: shell.opening
+                onLoaded: shell.maybeReveal()
+            }
+
+            // once the page scrolls, a hairline under the header: cards slide
+            // under a clear edge instead of being cut mid-heading
+            Mark {
+                objectName: "headerEdge"
+                x: Space.xl
+                y: page.y - Space.xs
+                width: parent.width - Space.xl * 2
+                height: Space.hairline
+                radius: 0
+                color: Type.hairline
+                opacity: (Ui.prop(page.item, "contentY") || 0) > Space.s ? 1 : 0
+                Behavior on opacity {
+                    enabled: Motion.micro.duration > 0
+                    NumberAnimation {
+                        duration: Motion.micro.duration
+                    }
                 }
             }
         }

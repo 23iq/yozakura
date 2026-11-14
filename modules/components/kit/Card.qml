@@ -51,19 +51,35 @@ Item {
     Accessible.role: root.interactive ? Accessible.Button : Accessible.Grouping
     Accessible.name: root.label
 
-    // The box, lifted a little while hovered, pressed in on a press.
+    // 0 at rest, 1 hovered (Motion.micro): the box rises, its shadow drops
+    // further and softens with it, one curve for all three.
+    property real lift: root.interactive && root.hovered && !area.pressed ? 1 : 0
+    Behavior on lift {
+        enabled: Motion.micro.duration > 0
+        NumberAnimation {
+            duration: Motion.micro.duration
+            easing.type: Motion.micro.easing
+        }
+    }
+    // The shadow fades in when it is turned on (a home tile turns its own
+    // on after the first frame) instead of popping.
+    property real shadowLevel: root.shadow && (root.fill || root.accented) ? 1 : 0
+    Behavior on shadowLevel {
+        enabled: Motion.glide.duration > 0
+        NumberAnimation {
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
+        }
+    }
+
+    // The box, lifted a little while hovered, pressed in on a press (sized
+    // by binding, not anchors, so its y can move).
     Item {
         id: shell
-        anchors.fill: parent
-        y: root.interactive && root.hovered && !area.pressed ? -Space.xs : 0
+        width: root.width
+        height: root.height
+        y: -Space.xs * root.lift
         scale: area.pressed ? 0.985 : 1
-        Behavior on y {
-            enabled: Motion.micro.duration > 0
-            NumberAnimation {
-                duration: Motion.micro.duration
-                easing.type: Motion.micro.easing
-            }
-        }
         Behavior on scale {
             enabled: Motion.spring.duration > 0
             NumberAnimation {
@@ -75,18 +91,13 @@ Item {
 
         RectangularShadow {
             anchors.fill: parent
-            visible: root.shadow && (root.fill || root.accented)
+            visible: root.shadowLevel > 0
+            opacity: root.shadowLevel
             radius: root.radius
-            offset: Qt.vector2d(0, root.interactive && root.hovered ? Space.s : Space.xs)
-            blur: root.interactive && root.hovered ? Space.xxl : Space.xl
+            offset: Qt.vector2d(0, Space.xs + (Space.s - Space.xs) * root.lift)
+            blur: Space.xl + (Space.xxl - Space.xl) * root.lift
             spread: 0
             color: root.accented ? Qt.alpha(Type.accent, 0.35) : Look.cardShadow
-            Behavior on blur {
-                enabled: Motion.micro.duration > 0
-                NumberAnimation {
-                    duration: Motion.micro.duration
-                }
-            }
         }
         Mark {
             anchors.fill: parent
@@ -101,6 +112,25 @@ Item {
                     duration: Motion.micro.duration
                 }
             }
+        }
+        // The language's edge light: a lit top edge (glass frost, device's
+        // machined edge) and a dark lower edge (device's bevel).
+        Mark {
+            x: root.radius
+            width: parent.width - root.radius * 2
+            height: Space.hairline
+            visible: root.fill && Look.cardHighlight.a > 0
+            radius: 0
+            color: Look.cardHighlight
+        }
+        Mark {
+            x: root.radius
+            y: parent.height - height
+            width: parent.width - root.radius * 2
+            height: Space.hairline
+            visible: root.fill && Look.cardShade.a > 0
+            radius: 0
+            color: Look.cardShade
         }
         Item {
             id: backdrop

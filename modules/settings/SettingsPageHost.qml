@@ -46,6 +46,9 @@ Item {
     property Item leaving: null
     // [{id, item}] most recent first.
     property var _pages: []
+    // Someone else fades the page in (the shell's tile morph): no enter of
+    // its own, the page stands in place at once.
+    property bool quiet: false
     // The shown page has what is on screen built.
     readonly property bool itemReady: !!host.item && Ui.prop(host.item, "enterReady") !== false
     // Something is on screen: the shown page, or the page left while the
@@ -161,7 +164,7 @@ Item {
     function enter() {
         if (!host.item)
             return;
-        if (Motion.glide.duration <= 0) {
+        if (Motion.glide.duration <= 0 || host.quiet) {
             host.settle();
             return;
         }

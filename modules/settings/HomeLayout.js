@@ -125,3 +125,32 @@ function neighbour(cells, from, dir) {
     }
     return best;
 }
+
+// Where home's search field sits on the grid's columns: it starts on the
+// left edge of a tile (the first one clear of the brand, `lead` px wide)
+// and ends on the right edge of a tile, short of the last column (room for
+// the History button), so the field lines up with tiles under it. `cells`
+// is pack()'s. {x, width} in grid coordinates, or null where the grid is
+// too narrow (two columns: the field takes the room between the brand and
+// the button).
+function searchSpan(cells, cols, colW, gap, lead) {
+    if (cols < 4)
+        return null;
+    var step = colW + gap;
+    var need = Math.max(1, Math.ceil((lead + gap) / step));
+    var first = cols;
+    var last = -1;
+    (cells || []).forEach(function (c) {
+        if (c.col >= need && c.col < first)
+            first = c.col;
+        var end = c.col + c.w - 1;
+        if (end <= cols - 2 && end > last)
+            last = end;
+    });
+    if (last < first)
+        return null;
+    return {
+        "x": first * step,
+        "width": (last - first + 1) * colW + (last - first) * gap
+    };
+}
