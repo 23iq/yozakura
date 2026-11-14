@@ -96,7 +96,9 @@ def page(cat: str, label: str | None = None) -> dict | None:
 # design (the owner chose readability over density).
 # Lowered again on 2026-11-14 for notifications and ai: in two panes the
 # right column is the sticky stage alone (no cards under it, AUDIT M5).
-SHORT = {"appearance": 2, "wallpapers": 1, "bar": 4, "launcher": 5, "desktop": 5, "lockscreen": 5, "menus": 5,
+# launcher: its searches are one list editor (switch + prefix + order per
+# row), counted as one row although it shows all of them.
+SHORT = {"appearance": 2, "wallpapers": 1, "bar": 4, "launcher": 1, "desktop": 5, "lockscreen": 5, "menus": 5,
          "dashboard": 6, "power": 2, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 3,
          "ai": 6, "voice": 6, "timers": 7, "notifications": 7}
 

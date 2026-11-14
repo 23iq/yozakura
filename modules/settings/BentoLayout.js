@@ -225,7 +225,7 @@ var WIDE_EDITORS = ["BarStyleCards", "PanelStyleCards", "PanelShapeCards", "Sche
     "BarLayoutEditor", "PanelsEditor", "PanelModulesCard", "PanelList", "LayoutBuilder", "IdleTimeline", "PromptStrip",
     "FastfetchEditor", "TerminalLookEditor", "AppThemingEditor", "ShortcutList", "KeybindsOverview", "SpecialsEditor",
     "AiProvidersEditor", "PomodoroEditor", "WallpaperStrip", "SurfaceEffectCards", "IndicatorCards", "NumeralCards",
-    "IslandActivitiesEditor", "ActivitiesEditor", "FolderList", "LauncherPrefixList"];
+    "IslandActivitiesEditor", "ActivitiesEditor", "FolderList", "LauncherPrefixList", "LanguageCards"];
 
 // The span a schema section asks for: `span` when it sets one, else two
 // columns when it holds a wide control (WIDE_EDITORS, a picture choice of
