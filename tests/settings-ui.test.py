@@ -256,7 +256,7 @@ lock_styles = ["glass", "paper", "terminal", "aurora", "neon", "poster"]
 for sid in lock_styles:
     until(lambda: ev(f'w.findItem("lockPreview:{sid}") !== null'), f"gallery preview for {sid}")  # noqa: B023
 until(lambda: ev('w.findItem("lockPreview:glass").grabbed !== null'), "every style is pictured, one after the other")
-check(ev('w.findItem("lockPreview:glass").children[1].children[0].active') is False, "no live lock view stays after its picture")
+check(ev('w.findItem("lockPreview:glass").children[2].children[0].active') is False, "no live lock view stays after its picture")  # (placeholder, picture, live port)
 # the stage: the real lock screen in the chosen style, pictured, then no
 # live view; a change shows it live and pictures it again
 until(lambda: ev('w.findItem("lockStage") !== null && w.findItem("lockStage").grabbed !== null'), "the stage pictures the real lock screen")

@@ -46,6 +46,9 @@ FittedFrame {
     // ---- the hero: the stage and the preset's actions beside it -----------
     Item {
         id: hero
+        HoverHandler {
+            id: heroHover
+        }
         objectName: "pageHero"
         x: root.margin
         y: Space.s
@@ -98,14 +101,13 @@ FittedFrame {
         }
     }
 
-    KitText {
+    // the instruction: only while the pointer is over the stage
+    HoverHint {
         id: hint
-        objectName: "heroHint"
+        shown: heroHover.hovered
         x: root.margin
         y: hero.y + hero.height + Space.s
         width: root.width - root.margin * 2
-        horizontalAlignment: Text.AlignHCenter
-        role: "secondary"
         // one line on a fitted page: a long translation shrinks a little
         // in a narrow window rather than losing its end
         fontSizeMode: Text.HorizontalFit
@@ -145,6 +147,88 @@ FittedFrame {
                 // strip fits whole and never scrolls
                 readonly property real fitW: (width - Space.m * Math.max(0, root.presets.length - 1)) / Math.max(1, root.presets.length)
                 readonly property real cardW: Math.round(Math.min(cardH * 16 / 10, Math.max(cardH * 5 / 4, fitW)))
+
+                // no preset yet: while the list loads, quiet placeholders
+                // the size of the cards (a slow pulse; none with animations
+                // off); once it failed or came back empty, say so
+                readonly property bool waiting: root.presets.length === 0 && PresetStudio.error === "" && !stripArea.gaveUp && (PresetStudio.loading || !PresetStudio.loaded)
+                // a list that never comes (no backend) is a failure too
+                readonly property bool failed: PresetStudio.error !== "" || stripArea.gaveUp
+                property bool gaveUp: false
+                Timer {
+                    interval: 8000
+                    running: stripArea.waiting
+                    onTriggered: stripArea.gaveUp = true
+                }
+                Row {
+                    objectName: "presetStripLoading"
+                    y: Space.s
+                    spacing: Space.m
+                    visible: stripArea.waiting
+                    Repeater {
+                        model: Math.max(1, Math.min(5, Math.floor((stripArea.width + Space.m) / (stripArea.cardH * 16 / 10 + Space.m))))
+                        delegate: Mark {
+                            width: Math.round(stripArea.cardH * 16 / 10)
+                            height: stripArea.cardH
+                            radius: Look.radius("box", height)
+                            color: Look.raisedFill(false)
+                            SequentialAnimation on opacity {
+                                running: stripArea.waiting && Motion.base > 0
+                                loops: Animation.Infinite
+                                NumberAnimation {
+                                    from: 1
+                                    to: 0.5
+                                    duration: Motion.palette
+                                    easing.type: Easing.InOutSine
+                                }
+                                NumberAnimation {
+                                    from: 0.5
+                                    to: 1
+                                    duration: Motion.palette
+                                    easing.type: Easing.InOutSine
+                                }
+                            }
+                        }
+                    }
+                }
+                Column {
+                    objectName: "presetStripEmpty"
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, Space.px(420))
+                    spacing: Space.s
+                    visible: root.presets.length === 0 && !stripArea.waiting
+                    KitText {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        role: "body"
+                        wrapMode: Text.WordWrap
+                        text: stripArea.failed ? I18n.t("prefs.presets.load_failed") : I18n.t("prefs.presets.empty")
+                    }
+                    KitText {
+                        width: parent.width
+                        visible: PresetStudio.error !== ""
+                        horizontalAlignment: Text.AlignHCenter
+                        role: "caption"
+                        color: Type.muted
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                        text: PresetStudio.error
+                    }
+                    PillButton {
+                        objectName: "presetRetry"
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: stripArea.failed
+                        kind: "tonal"
+                        icon: Icons.arrowsClockwise
+                        text: I18n.t("prefs.presets.retry")
+                        onClicked: {
+                            PresetStudio.error = "";
+                            stripArea.gaveUp = false;
+                            PresetStudio.refresh();
+                        }
+                    }
+                }
 
                 // the strip runs on under the card's sides: a masked fade on
                 // the side that has more (never painted over the card)

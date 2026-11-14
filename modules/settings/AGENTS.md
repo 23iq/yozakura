@@ -187,8 +187,8 @@ branches on the language name (`Look`).
   the island). The five Screen tabs share `stages/ScreenCanvas.qml`
   (`Registry.SCREEN_PARTS`), one instance kept by SettingsPageHost above
   the pages (`sharedCanvas`; the page reserves its place, `previewAt`):
-  the whole screen (bars, island, dock; the tab's part ringed, the camera
-  easing a little toward it: `Stage.zoom` / `lookAt`; a bar picks it, the
+  the whole screen (bars, island, dock; the tab's part ringed, the whole
+  monitor always in frame; a bar picks it, the
   island / dock open their tab, the bar's modules scroll to their card)
   with the tab's own stage as a loupe under it (none for a vertical bar or
   a part that is off), or over it for Widgets & clock and Lock screen;

@@ -10,8 +10,8 @@ import qs.modules.settings
 // The Screen destination's canvas (two panes): the whole screen as it is
 // laid out (every bar, the island, the dock, the frame, on your wallpaper).
 // One canvas serves every Screen tab (SettingsPageHost keeps it while the
-// tabs change): a tab only changes `part`, and the camera eases toward it
-// (a slight zoom around the bar's edge, the island, the dock). Every other
+// tabs change): a tab only changes `part`, which is ringed; the whole
+// monitor always stays in frame (never cropped by a zoom). Every other
 // part is a click away (a bar opens the Bar tab and picks it, the island
 // and the dock their tabs; on the Bar tab a module scrolls to its card).
 // Under it a loupe, the tab's own stage at a readable scale (the bar strip,
@@ -46,7 +46,7 @@ Item {
     }
     Component.onCompleted: {
         canvas.remember();
-        Qt.callLater(() => frame.cameraEased = true);
+        Qt.callLater(() => canvas.ready = true);
     }
     function remember() {
         if (canvas.loupeUrl === "" || canvas.urls[canvas.part] === canvas.loupeUrl)
@@ -56,6 +56,8 @@ Item {
         canvas.urls = u;
     }
 
+    // past the first placement (later height changes ease)
+    property bool ready: false
     readonly property bool covered: canvas.part === "desktop" || canvas.part === "lock"
     readonly property Item current: loupes.count > 0 ? loupes.itemAt(canvas.parts.indexOf(canvas.part)) : null
     readonly property var loupe: canvas.current ? canvas.current.item : null
@@ -78,7 +80,7 @@ Item {
         const resized = canvas.width !== canvas._lastW;
         canvas._lastW = canvas.width;
         underAnim.stop();
-        if (resized || switchHold.running || Motion.glide.duration <= 0 || !frame.cameraEased) {
+        if (resized || switchHold.running || Motion.glide.duration <= 0 || !canvas.ready) {
             canvas.shownUnderH = canvas.underH;
         } else {
             underAnim.to = canvas.underH;
@@ -107,40 +109,11 @@ Item {
         id: hover
     }
 
-    // the camera: where the part sits on the screen (0..1) and how close
-    readonly property var camera: {
-        const edgePoint = e => e === "left" ? Qt.point(0, 0.5) : e === "right" ? Qt.point(1, 0.5) : e === "bottom" ? Qt.point(0.5, 1) : Qt.point(0.5, 0);
-        if (canvas.part === "bar") {
-            const p = mini.panels[Math.max(0, Math.min(SettingsStore.selectedPanel, mini.panels.length - 1))];
-            return {
-                "at": edgePoint(p ? p.edge : "top"),
-                "zoom": 1.05
-            };
-        }
-        if (canvas.part === "island" && canvas.partOn)
-            return {
-                "at": edgePoint(mini.islandEdge),
-                "zoom": 1.1
-            };
-        if (canvas.part === "dock" && canvas.partOn)
-            return {
-                "at": edgePoint(mini.dockEdge),
-                "zoom": 1.07
-            };
-        return {
-            "at": Qt.point(0.5, 0.5),
-            "zoom": 1
-        };
-    }
-
     Stage {
         id: frame
         width: parent.width
         height: canvas.screenH
         stageHeight: canvas.screenH
-        cameraEased: false
-        zoom: canvas.camera.zoom
-        lookAt: canvas.camera.at
 
         ScreenMini {
             id: mini
@@ -219,11 +192,18 @@ Item {
             opacity: loupeLoader.shown ? 1 : 0
             visible: opacity > 0
             enabled: loupeLoader.shown
+            // in turn, never two stages superimposed: the one left fades
+            // out quickly, the new one fades in once it has gone
             Behavior on opacity {
                 enabled: Motion.glide.duration > 0
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: loupeLoader.shown ? Motion.micro.duration : 0
+                    }
+                    NumberAnimation {
+                        duration: loupeLoader.shown ? Motion.glide.duration : Motion.micro.duration
+                        easing.type: loupeLoader.shown ? Motion.glide.easing : Motion.exit.easing
+                    }
                 }
             }
             onLoaded: {

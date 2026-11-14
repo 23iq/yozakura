@@ -160,9 +160,15 @@ lit = ev("""(function() {
     return n;
 })()""")
 check(lit > 0, f"...and the stage lights the bar ({lit} parts)")
+# the inspector under the sticky stage tells about the pointed setting
+insp = ev('w.findItem("pageInspector", w.findItem("settingsPage").item)')
+check(insp is not None and h.eval(insp, "visible") is True, "two panes: the inspector fills the column under the stage")
+check(wait_until(lambda: h.eval(insp, "row") is not None and h.eval(insp, "row.entryId") == "bar.position"),
+      "...it shows the pointed setting (after a short hold)")
 QTest.mouseMove(win, QPoint(4, 4))
 QTest.qWait(80)
 check(ev("SettingsStore.focusKeys.length") == 0, "leaving the row clears it")
+check(wait_until(lambda: h.eval(insp, "row") is None), "...and the inspector goes back to the tab's summary")
 
 # the stage is the bar itself: a click on a module scrolls to its card and
 # flashes it

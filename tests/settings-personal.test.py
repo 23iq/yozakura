@@ -214,8 +214,21 @@ check(ev("Config.terminal.greeting") == "none", "terminal: Off turns it off")
 PRESETS = ('[{name: "Hanami", official: true, active: true, tags: ["dark"], look: {"bar.position": "top"}},'
            ' {name: "Kaze", official: true, active: false, tags: ["light"], look: {"bar.position": "bottom", "theme.lightMode": true}}]')
 select("presets")
+# the list failed to load (no backend): an error with Retry, never a blank
+# card and a nameless disabled Apply
+ev('PresetStudio.presets = []; PresetStudio.loading = false; PresetStudio.error = "backend unavailable"')
+QTest.qWait(100)
+check(item("presetStripEmpty") is not None and h.eval(item("presetStripEmpty"), "visible") is True
+      and item("presetRetry") is not None and h.eval(item("presetRetry"), "visible") is True,
+      "presets: a list that failed to load says so and offers Retry")
+check(h.eval(item("presetApply"), "visible") is False, "presets: ...with no Apply for no preset")
+ev('PresetStudio.error = ""')
 ev(f"PresetStudio.presets = {PRESETS}")
 QTest.qWait(100)
+check(h.eval(item("presetStripEmpty"), "visible") is False and h.eval(item("presetStripLoading"), "visible") is False,
+      "presets: with the list, the strip shows the presets")
+check(h.eval(item("presetStrip"), "contentWidth") > 0 and item("presetPick:Kaze") is not None,
+      "presets: the strip has a card per preset")
 check(item("pageStage") is not None and item("presetStageShell") is not None, "presets: the stage is the preset's miniature")
 check(item("presetName") is not None and h.eval(item("presetName"), "text") == "Hanami", "presets: the active preset is on the stage")
 check(h.eval(item("presetPick:Hanami"), "selected") is True, "presets: the strip rings the active preset")
