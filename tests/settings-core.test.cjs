@@ -125,3 +125,10 @@ test('Ui.on connects a runtime object\'s signal, or says it cannot', () => {
     assert.equal(Ui.on({}, 'closed', fn), false);
     assert.equal(Ui.on(null, 'closed', fn), false);
 });
+
+test('a unitless fraction slider reads as a percentage', () => {
+    assert.equal(Ui.formatLevel(0.15, 0.05, 0.5, '', [], null), '15 %');
+    assert.equal(Ui.formatLevel(12, 0, 40, 'px', [], null), '12 px');
+    assert.equal(Ui.formatLevel(3, 1, 10, '', [], null), '3');
+    assert.equal(Ui.formatLevel(0, 0, 1, '', [{ value: 0, label: 'Off' }], null), 'Off');
+});

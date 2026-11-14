@@ -4,13 +4,14 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
-import "PictureGrid.js" as PictureGrid
 import "../Registry.js" as Registry
 
 // A selector shown as cards (schema `display: "cards"`): one ChoiceCard per
 // option with a small picture of it, drawn by the entry's `thumb`
 // (Registry.THUMBS; the thumb gets `value` = the option's value and
-// `entry`). Option `description` (i18n) is the card's second line.
+// `entry`). Option `description` (i18n) is the card's second line. Laid
+// out as the one picture grid (ChoiceGrid: balanced rows reaching the
+// card's edge).
 Item {
     id: root
 
@@ -28,47 +29,50 @@ Item {
     // all whole when they fit at a small picture each (three or fewer: always),
     // else as many as fit at a regular size and a peek of the next
     readonly property real stripWidth: root.stripCount <= 3 || root.stripCount * Space.px(60) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(96))) + 0.4) - Space.m
-    // compact pictures: about 130 px, five or six a row in a wide card
-    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.options.length, Space.px(96))
-    // A few options do not stretch into huge cards.
-    // All on one line: the pictures share the whole row (no ragged blank
-    // after a short row in a wide card); a wrapped grid keeps them compact.
-    readonly property real cardWidth: PictureGrid.cardWidth(width, grid.columnSpacing, columns, root.options.length <= root.columns ? Space.px(250) : Space.px(190))
-    readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
+    readonly property url thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
+
+    ChoiceGrid {
+        id: grid
+        visible: !root.strip
+        width: parent.width
+        options: root.strip ? [] : root.options
+        value: root.value
+        entry: root.entry
+        thumb: root.thumbUrl
+        onSelected: v => root.selected(v)
+    }
 
     Flickable {
         id: stripFlick
         objectName: "pictureStrip"
+        visible: root.strip
         width: parent.width
-        height: grid.height + (root.strip ? Space.m * 2 : 0)
-        contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
+        height: root.strip ? stripRow.height + Space.m * 2 : 0
+        contentWidth: stripRow.width + Space.m * 2
         interactive: root.strip && contentWidth > width
-        clip: root.strip
+        clip: true
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalFlick
 
-        Grid {
-            id: grid
-            width: root.strip ? implicitWidth : stripFlick.width
+        Row {
+            id: stripRow
             // inset: the ring, glow and lift of a picture never clip
-            x: root.strip ? Space.m : 0
-            y: root.strip ? Space.m : 0
-            columns: root.columns
-            rowSpacing: Space.m
-            columnSpacing: Space.m
+            x: Space.m
+            y: Space.m
+            spacing: Space.m
 
             Repeater {
-                model: root.options
+                model: root.strip ? root.options : []
 
                 delegate: ChoiceCard {
                     id: card
                     required property var modelData
                     objectName: "card:" + card.modelData.value
-                    width: root.strip ? root.stripWidth : root.cardWidth
-                    previewHeight: root.strip ? root.fillHeight - Space.m * 2 : Math.round(width * 0.6)
-                    inset: root.strip
+                    width: root.stripWidth
+                    previewHeight: root.fillHeight - Space.m * 2
+                    inset: true
                     selected: root.value === card.modelData.value
                     title: I18n.t(card.modelData.label)
                     subtitle: card.modelData.description ? I18n.t(card.modelData.description) : ""
@@ -77,11 +81,11 @@ Item {
                     // Pictures are built off the frame (asynchronous): the cards
                     // show at once, each picture fades in when ready.
                     Loader {
-                        id: picture
                         anchors.fill: parent
                         asynchronous: true
                         opacity: status === Loader.Ready ? 1 : 0
                         Behavior on opacity {
+                            enabled: Motion.micro.duration > 0
                             NumberAnimation {
                                 duration: Motion.micro.duration
                             }

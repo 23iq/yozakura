@@ -12,6 +12,7 @@ import qs.modules.settings.store
 import "SchemaUtil.js" as SchemaUtil
 import "Registry.js" as Registry
 import "Macros.js" as Macros
+import "ControlColumn.js" as ControlColumn
 import "Ui.js" as Ui
 import "../components/kit/KitStates.js" as KitStates
 import "../shell/hosts/HostResolve.js" as HostResolve
@@ -71,7 +72,26 @@ FocusScope {
     property real fillHeight: 0
     // in a card of the page row: tighter vertical rhythm
     property bool dense: false
+    // The card's control column (SettingsSection, ControlColumn.js): the
+    // width every inline segmented, dropdown, slider and field of the card
+    // takes, flush right, so their left edges line up row to row (0: the
+    // control's own width; a switch and a stepper keep theirs).
+    property real column: 0
+    // the readout width the steppers of the card share (0: their own)
+    property real readout: 0
     readonly property bool labelHidden: row.bare && row.stacked
+    // A bare editor sits at the rows' inset like every picture choice,
+    // unless it draws its own row inset (`rowInset: false` on the editor: a
+    // list of full-width rows): then it fills the card's width.
+    readonly property bool fullBleed: row.labelHidden && type === "custom" && !!(stackedControl.item && stackedControl.item.item && stackedControl.item.item.rowInset === false)
+    // A label over a big control (pictures, an editor, a list, swatches):
+    // it names a group of the card, not one setting of a line: the kit
+    // `group` role (smaller, muted, more room above than below), between
+    // the card title and the row labels.
+    readonly property bool grouped: row.stacked && (row.asCards || type === "custom" || type === "list" || type === "color-role" || type === "multiselect" || type === "screens")
+    // the inline control takes the card's column (when the label, with
+    // room for its reset button while it shows, still fits beside it)
+    readonly property bool columnar: row.column > 0 && !row.stacked && !(row.fixable && !row.dimmed) && row.textWidth(I18n.t(entry.label || "")) + row.column + Space.l * 2 + (row.resettable && row.modified ? Space.controlXS + Space.s : 0) <= row.width - Look.rowInset * 2 && (row.dropdown || (type === "selector" && !row.asCards && ControlColumn.need(entry, t => row.textWidth(t), Space.px, t => I18n.t(t), true) <= row.column + 1) || type === "slider" || (type === "font" && !entry.sizeKey) || (type === "text" && entry.multiline !== true && row.column >= Space.px(280)))
     readonly property bool noteRepeats: {
         if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
             return false;
@@ -126,7 +146,7 @@ FocusScope {
     // a choice between looks is always pictures (every option visible,
     // wrapped: CardSelector), whatever the card holds
     readonly property bool asCards: entry.display === "cards"
-    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "text" && entry.multiline === true) || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || ((row.dropdown || (type === "selector" && !row.asCards) || (type === "font" && row.dense)) && row.labelWordNeed + row.inlineNeed + Space.l * 4 + Space.xl > width) || (type === "selector" && row.asCards) || ((narrow && (type === "slider" || type === "text" || (type === "macro" && !row.dense))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
+    readonly property bool stacked: (row.usable || row.dimmed) && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "text" && entry.multiline === true) || (type === "font" && row.dense && (!!entry.sizeKey ? (width < Space.px(400) || row.fontNeed + Space.px(150) > width * 0.8) : row.fontNeed > width * 0.6)) || (row.dropdown && row.dropdownNeed > width * 0.6) || ((row.dropdown || (type === "selector" && !row.asCards) || (type === "font" && row.dense)) && row.labelWordNeed + row.inlineNeed + Space.l * 4 + Space.xl > width) || (type === "selector" && row.asCards) || (((type === "slider" && width < Space.px(380)) || (narrow && (type === "text" || (type === "macro" && !row.dense)))) || (!row.dense && type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     // a dense row (a card of the page row) keeps a selector inline: a
     // dropdown when its segmented would not fit beside the label
     readonly property bool selectorAsDropdown: row.dense && type === "selector" && entry.iconOnly !== true && row.selectorWidth > width - Space.px(170)
@@ -203,7 +223,15 @@ FocusScope {
     // own hover states), and the accent wash of a search jump.
     StyledRect {
         anchors.fill: parent
-        visible: !row.stacked && (row.hovered || row.activeFocus)
+        opacity: !row.stacked && (row.hovered || row.activeFocus) ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
+                easing.type: Motion.micro.easing
+            }
+        }
         variant: "focus"
         backgroundOpacity: KitStates.opacity("hover", true)
         enableBorder: false
@@ -228,20 +256,36 @@ FocusScope {
     // label above it (SectionLabel.inset).
     // A waiting (disabled) row reads as off, not as a faded copy of an
     // enabled one: its colours drained to grey, a little faded, so a chosen
-    // segment never looks merely unselected. A switch keeps its colour (only
-    // faded): drained, an "on" track reads like an "off" one.
+    // segment or switch never looks merely unselected
+    // (the drain eases in and out: a press that turns the card's switch on
+    // brings the colour back, it does not snap)
+    property real drain: row.dimmed ? 1 : 0
+    Behavior on drain {
+        enabled: Motion.micro.duration > 0
+        NumberAnimation {
+            duration: Motion.micro.duration
+            easing.type: Motion.micro.easing
+        }
+    }
     Column {
         id: body
-        opacity: row.dimmed ? (row.type === "toggle" ? 0.45 : 0.6) : 1
-        layer.enabled: row.dimmed && row.type !== "toggle"
+        // a switch keeps its colour (only faded): drained, an "on" track
+        // reads like an "off" one
+        opacity: 1 - (row.type === "toggle" ? 0.55 : 0.4) * row.drain
+        layer.enabled: row.drain > 0 && row.type !== "toggle"
         layer.effect: MultiEffect {
-            saturation: -1
+            saturation: -row.drain
         }
-        x: row.labelHidden ? 0 : Look.rowInset
-        width: parent.width - (row.labelHidden ? 0 : Look.rowInset * 2)
-        topPadding: row.dense ? Space.xs : Space.s
+        // every row of a card, its pictures included, sits at the kit's row
+        // inset: the card title, the group labels, the row labels and the
+        // pictures share one left edge (a bare list editor fills the card:
+        // its own rows draw the inset)
+        x: row.fullBleed ? 0 : Look.rowInset
+        width: parent.width - (row.fullBleed ? 0 : Look.rowInset * 2)
+        // a group label has more room above than below it
+        topPadding: row.grouped && !row.labelHidden ? Space.m : (row.dense ? Space.xs : Space.s)
         bottomPadding: row.dense ? Space.xs : Space.s
-        spacing: row.dense ? Space.xs : Space.m
+        spacing: row.grouped ? Space.s : (row.dense ? Space.xs : Space.m)
 
         RowLayout {
             width: parent.width
@@ -265,8 +309,8 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && (row.type === "macro" || row.type === "font" || row.dropdown) ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
-                        role: "body"
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.columnar || (row.dense && (row.type === "macro" || row.type === "font" || row.dropdown)) ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
+                        role: row.grouped ? "group" : "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
 
@@ -315,7 +359,7 @@ FocusScope {
                 id: inlineControl
                 objectName: "rowControl"
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.7 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.dropdown ? Math.max(row.selectorAsDropdown ? body.width * 0.48 : 0, Math.min(row.dropdownNeed, body.width * 0.6)) : -1)))
+                Layout.preferredWidth: row.columnar ? row.column : row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? (row.dense ? body.width * (row.entry.sizeKey ? 0.7 : 0.6) : Math.min(Space.px(340), row.width * 0.48)) : (row.dropdown ? Math.max(row.selectorAsDropdown ? body.width * 0.48 : 0, Math.min(row.dropdownNeed, body.width * 0.6)) : -1)))
                 focus: !row.stacked
                 active: row.built && !row.stacked
                 sourceComponent: row.fixable && !row.dimmed ? fixComponent : row.controlComponent()
@@ -438,6 +482,7 @@ FocusScope {
     Component {
         id: numberComponent
         NumberControl {
+            readoutMin: row.readout
             value: Ui.finite(row.value, row.entry.min ?? 0)
             from: row.entry.min
             to: row.entry.max
@@ -452,6 +497,7 @@ FocusScope {
         id: selectorComponent
         SelectorControl {
             segmentLimit: row.selectorAsDropdown ? 0 : (row.entry.iconOnly === true ? 6 : 4)
+            stretch: row.columnar
             iconOnly: row.entry.iconOnly === true
             options: row.entry.options
             value: row.value
@@ -575,6 +621,15 @@ FocusScope {
                 }
             }
             source: !waits || shown ? Qt.resolvedUrl(Registry.editor(row.entry.component)) : ""
+            // a lazy editor fades in once built (it never pops in)
+            opacity: !waits || status === Loader.Ready ? 1 : 0
+            Behavior on opacity {
+                enabled: editorLoader.waits && Motion.glide.duration > 0
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
             height: row.fillHeight > 0 ? Math.max(row.fillHeight, implicitHeight) : implicitHeight
             onLoaded: {
                 Ui.setIfPresent(item, "entry", row.entry);

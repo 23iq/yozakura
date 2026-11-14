@@ -170,6 +170,7 @@ Item {
         // card in glass, a tile in tiles) with the one primary action.
         Group {
             objectName: "exclusiveConfirm"
+            labelRole: "group"
             visible: root.confirming !== ""
             width: parent.width
             divider: true

@@ -91,7 +91,9 @@ function small(entry) {
 // prompt switches beside the three prompts, Bar: the frame switches beside
 // the four edges). In a card `pairMin` px wide or more, short rows that
 // follow each other go two a line (a wide card of switches is two columns of
-// them, not one stretched across the page).
+// them, not one stretched across the page). The odd row left at the end of
+// such a run stays in the left column (`half: true`): the switches of the
+// card stand on two shared columns, never on a third x of a full-width row.
 function layout(entries, width, gap, min, max, sideMin, pairMin) {
     var base = lines(entries, width, gap, min);
     var out = [];
@@ -123,6 +125,12 @@ function layout(entries, width, gap, min, max, sideMin, pairMin) {
         else
             paired.push(it);
     });
+    // the odd one at the end of a run of pairs: half a line, left column
+    for (var k = 1; k < paired.length; k++) {
+        var p = paired[k - 1];
+        if (paired[k].rows.length === 1 && pairable(entries, paired[k]) && p.rows.length === 2 && p.side.length === 0)
+            paired[k].half = true;
+    }
     return paired;
 }
 

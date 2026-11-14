@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Palette role picker: one swatch per entry option ({value: role | "auto",
@@ -18,23 +19,18 @@ Item {
     readonly property var current: SettingsStore.get(entry ? entry.key : "")
     readonly property var options: entry ? (entry.options || []) : []
 
-    // balanced rows (9 -> 5 + 4, never 8 + an orphan), each swatch and its
-    // name flush left in its cell: the first ring on the row inset, the
-    // line of the label above it
-    readonly property real cellMin: Space.px(76)
-    readonly property int maxCols: Math.max(1, Math.floor((root.width + Space.m) / (root.cellMin + Space.m)))
-    readonly property int rows: Math.max(1, Math.ceil(root.options.length / root.maxCols))
-    readonly property int cols: Math.max(1, Math.ceil(root.options.length / root.rows))
-    readonly property real cellW: Math.max(root.cellMin, (root.width - Space.m * (root.cols - 1)) / root.cols)
+    // the picture grid's balanced rows (9 roles: 5 + 4, never 4 + 4 + 1),
+    // each swatch centred in an equal cell
+    readonly property int columns: PictureGrid.columns(root.width, Space.m, root.options.length, Space.px(76))
+    readonly property real cell: PictureGrid.cardWidth(root.width, Space.m, root.columns, Space.px(76))
 
     implicitHeight: flow.implicitHeight
 
     Grid {
         id: flow
         width: parent.width
-        columns: root.cols
-        columnSpacing: Space.m
-        rowSpacing: Space.m
+        columns: root.columns
+        spacing: Space.m
 
         Repeater {
             model: root.options
@@ -46,7 +42,7 @@ Item {
                 readonly property bool auto: modelData.value === "auto"
                 readonly property color fill: auto ? Colors.primaryFixed : (Colors[modelData.value] ?? Colors.outline)
                 objectName: "swatch:" + modelData.value
-                width: root.cellW
+                width: root.cell
                 height: ring.height + Space.s + nameText.height
                 activeFocusOnTab: true
                 Accessible.role: Accessible.RadioButton

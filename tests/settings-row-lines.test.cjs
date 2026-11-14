@@ -70,4 +70,8 @@ test('a wide card puts short rows two a line', () => {
     // a narrow card, or a row that folds: one a line
     assert.deepEqual(T([sw, sw], 500, 12, 96, 190, 280, 720), [{ rows: [0], side: [] }, { rows: [1], side: [] }]);
     assert.deepEqual(T([sw, fold], 1100, 12, 96, 190, 280, 720), [{ rows: [0], side: [] }, { rows: [1], side: [] }]);
+    // three switches: the third stays in the left column (half a line), so
+    // the card's switches stand on two shared x positions, not three
+    assert.deepEqual(T([sw, sw, sw], 1100, 12, 96, 190, 280, 720),
+        [{ rows: [0, 1], side: [] }, { rows: [2], side: [], half: true }]);
 });

@@ -18,7 +18,23 @@ Item {
     property var specialValues: []
     // Shown instead of the number when set (a macro's level name).
     property string valueLabel: ""
-    property real valueWidth: 0
+    // the value column: as wide as the widest value of the range, so the
+    // tracks of the sliders of a card end on one line whatever their values
+    property real valueWidth: {
+        if (root.valueLabel !== "")
+            return 0;
+        const samples = [root.from, root.to, root.value].concat((root.specialValues || []).map(s => s.value));
+        let w = 0;
+        for (const v of samples)
+            if (v !== undefined && isFinite(v))
+                w = Math.max(w, widest.advanceWidth(Ui.formatLevel(v, root.from, root.to, root.unit, root.specialValues, I18n.t)));
+        return Math.ceil(w);
+    }
+    FontMetrics {
+        id: widest
+        font.family: Type.family("secondary")
+        font.pixelSize: Type.size("secondary")
+    }
 
     signal moved(real value)
 
@@ -75,7 +91,7 @@ Item {
         showValue: true
         valueWidth: root.valueWidth
         highlighted: root.activeFocus
-        valueText: root.valueLabel !== "" ? root.valueLabel : Ui.formatValue(root.value, root.unit, root.specialValues, I18n.t, root.to)
+        valueText: root.valueLabel !== "" ? root.valueLabel : Ui.formatLevel(root.value, root.from, root.to, root.unit, root.specialValues, I18n.t)
         onMoved: v => {
             root.forceActiveFocus();
             root.emitValue(v);

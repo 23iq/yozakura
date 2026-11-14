@@ -9,6 +9,7 @@ import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
 import "CardGate.js" as CardGate
 import "RowLines.js" as RowLines
+import "ControlColumn.js" as ControlColumn
 
 // One schema section as a bento card (kit Card): a heading (the section
 // title) with the current value on the right when the card holds one
@@ -76,6 +77,17 @@ Card {
     onEntriesChanged: sectionRoot.regroup()
     onContentWidthChanged: sectionRoot.regroup()
     onFixedChanged: sectionRoot.regroup()
+    // One width for the inline segmented / dropdown / slider / field rows
+    // of the card (ControlColumn.js): their left edges line up row to row.
+    // Measured like SettingRow measures a label (the body font, +10 %).
+    readonly property real controlColumn: ControlColumn.column(sectionRoot.visibleEntries, t => columnMetrics.advanceWidth(t) * 1.1, sectionRoot.contentWidth - Look.rowInset * 2, Space.px, t => I18n.t(t))
+    // ... and one readout width for its steppers (their - / + line up)
+    readonly property real stepperReadout: ControlColumn.readout(sectionRoot.visibleEntries, (v, e) => columnMetrics.advanceWidth(Ui.formatValue(v, e.unit ?? "", e.specialValues ?? [], I18n.t)))
+    FontMetrics {
+        id: columnMetrics
+        font.family: Type.family("body")
+        font.pixelSize: Type.size("body")
+    }
     readonly property real stripHeight: sectionRoot.strip ? Math.max(0, rowsBox.room - (sectionRoot.visibleEntries.length - 1) * (Space.rowHeight + Space.xs) - Space.s * 2) : 0
     // Not built yet: the page fills its sections in a few per frame.
     property bool pending: false
@@ -119,9 +131,12 @@ Card {
     padding: Look.boxPadding + Space.s
     spacing: Space.s
 
+    // The heading sits at the row inset: the card title, the group labels,
+    // the row labels and the pictures share one left edge.
     Item {
         id: headerBox
-        width: sectionRoot.contentWidth
+        x: Look.rowInset
+        width: sectionRoot.contentWidth - Look.rowInset * 2
         height: heading.implicitHeight
         visible: heading.text !== ""
 
@@ -213,6 +228,9 @@ Card {
                         // a single picture / editor fills the card
                         fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : (sectionRoot.strip !== null && lineItem.eid === (sectionRoot.strip.id || sectionRoot.strip.key) ? sectionRoot.stripHeight : 0)
                         previousEntry: lineItem.modelData > 0 ? sectionRoot.entries[lineItem.modelData - 1] : null
+                        // a full-width row takes the card's control column
+                        column: lineItem.width >= rowsColumn.width - 1 ? sectionRoot.controlColumn : 0
+                        readout: sectionRoot.stepperReadout
                     }
                 }
 
@@ -235,6 +253,9 @@ Card {
                             return out;
                         }
                         function rowWidth(i) {
+                            // the odd row after a run of pairs: the left column
+                            if (lineRow.modelData.half === true)
+                                return RowLines.share(sectionRoot.entries, [i, i], 0, rowsColumn.width, Space.m);
                             return lineRow.side.length > 0 ? lineRow.picturesW : RowLines.share(sectionRoot.entries, lineRow.line, lineRow.line.indexOf(i), rowsColumn.width, Space.m);
                         }
                         spacing: Space.m * 2

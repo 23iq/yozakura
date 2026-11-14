@@ -25,6 +25,9 @@ Item {
 
     property string label: ""
     property string actionText: ""
+    // the label's type role: "label" (UPPERCASE, tracked) or "group" (sentence
+    // case: a group inside a settings card)
+    property string labelRole: "label"
     property bool divider: false
     property bool fill: false
     property bool bare: false
@@ -91,6 +94,7 @@ Item {
             SectionLabel {
                 id: labelItem
                 objectName: "groupLabel"
+                role: root.labelRole
                 width: parent.width
                 visible: root.label !== ""
                 text: root.label

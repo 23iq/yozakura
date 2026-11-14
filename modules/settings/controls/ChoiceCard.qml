@@ -167,7 +167,9 @@ Item {
         Icon {
             id: lead
             visible: card.icon !== ""
-            anchors.verticalCenter: titleCol.verticalCenter
+            // on the name's first line (a name on two lines keeps its
+            // glyph beside its start, not between the lines)
+            y: Math.round((titleText.implicitHeight / Math.max(1, titleText.lineCount) - lead.implicitHeight) / 2)
             icon: Icons[card.icon] ?? ""
             role: "secondary"
             tone: card.selected ? "accent" : "secondary"

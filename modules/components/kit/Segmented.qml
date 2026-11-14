@@ -23,6 +23,19 @@ Item {
     // tabs (a destination's pages), not a value: a neutral raised pill and
     // the text ink on the current one
     property bool navigation: false
+    // Room added to every segment (a segmented filling a given width: the
+    // settings card's control column); 0: each as wide as its content
+    property real segmentExtra: 0
+    // the width without `segmentExtra`: each segment as wide as its content
+    readonly property real naturalWidth: {
+        let w = Space.xs * 2;
+        for (let i = 0; i < segments.count; i++) {
+            const s = segments.itemAt(i);
+            if (s)
+                w += s.natural;
+        }
+        return Math.ceil(w);
+    }
     readonly property int count: Array.isArray(root.model) ? root.model.length : 0
     readonly property Item currentItem: segments.count > root.currentIndex && root.currentIndex >= 0 ? segments.itemAt(root.currentIndex) : null
 
@@ -134,7 +147,8 @@ Item {
 
                 objectName: seg.modelData.name || ""
                 // the label's room in its active weight, whichever is current
-                width: content.implicitWidth - label.implicitWidth + Math.max(label.implicitWidth, boldProbe.implicitWidth) + Space.l * 2
+                readonly property real natural: content.implicitWidth - label.implicitWidth + Math.max(label.implicitWidth, boldProbe.implicitWidth) + Space.l * 2
+                width: seg.natural + root.segmentExtra
                 height: row.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: seg.text

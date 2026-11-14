@@ -15,6 +15,9 @@ import qs.modules.components.kit
 Item {
     id: root
 
+    // full-width rows with their own inset (SettingRow.fullBleed)
+    readonly property bool rowInset: false
+
     property var rows: []
     property string current: ""
     property string empty: ""

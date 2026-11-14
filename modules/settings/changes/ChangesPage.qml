@@ -244,6 +244,7 @@ FittedFrame {
                         // the card is the one box: groups are bare
                         delegate: Group {
                             id: groupItem
+                            labelRole: "group"
                             required property var modelData
                             required property int index
                             bare: true

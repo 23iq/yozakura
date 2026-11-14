@@ -17,7 +17,28 @@ Item {
     property real stepSize: 1
     property string unit: ""
     property var specialValues: []
+    // a wider readout the steppers of a card share (SettingsSection)
+    property real readoutMin: 0
     signal changed(real value)
+
+    // the widest readout over the range (its ends, a three-digit middle
+    // value, the special values' names), never under three body glyphs
+    readonly property real readoutWidth: {
+        const samples = [root.from, root.to, root.value].concat((root.specialValues || []).map(s => s.value));
+        let w = Math.max(Type.size("body") * 3, root.readoutMin);
+        for (const v of samples)
+            if (v !== undefined && isFinite(v))
+                w = Math.max(w, widest.advanceWidth(Ui.formatValue(v, root.unit, root.specialValues, I18n.t)));
+        return Math.ceil(w);
+    }
+    FontMetrics {
+        id: widest
+        font.family: Type.family("body")
+        font.pixelSize: Type.size("body")
+        font.features: ({
+                "tnum": 1
+            })
+    }
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
@@ -51,7 +72,10 @@ Item {
                     id: readout
                     visible: slot.modelData === 0
                     anchors.centerIn: parent
-                    width: Math.max(implicitWidth, Type.size("body") * 3)
+                    // as wide as the widest value it can show (tabular
+                    // digits): the - / + buttons of the steppers of a card
+                    // line up row to row whatever the value
+                    width: Math.max(implicitWidth, root.readoutWidth)
                     horizontalAlignment: Text.AlignHCenter
                     role: "body"
                     tabular: true
