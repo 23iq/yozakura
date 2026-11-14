@@ -46,10 +46,15 @@ function firstBar(ctx) {
 function layout(ctx) {
     var panels = ctx.get("bar.panels") || [];
     var bars = panels.length > 1 ? ctx.tr("prefs.home.bars").replace("%1", panels.length) : ctx.tr("prefs.home.edge." + firstBar(ctx).edge);
+    // every part named, the ones that are off too ("dock off"): the line
+    // says what the miniature beside it shows
     var parts = [bars];
-    if (ctx.get("notch.enabled") !== false)
-        parts.push(ctx.tr("prefs.home.island"));
-    if (ctx.get("dock.enabled") !== false && ctx.get("dock.theme") !== "integrated")
+    parts.push(ctx.tr(ctx.get("notch.enabled") !== false ? "prefs.home.island" : "prefs.home.island_off"));
+    if (ctx.get("dock.enabled") === false)
+        parts.push(ctx.tr("prefs.home.dock_off"));
+    else if (ctx.get("dock.theme") === "integrated")
+        parts.push(ctx.tr("prefs.home.dock_in_bar"));
+    else
         parts.push(ctx.tr("prefs.home.dock"));
     return parts.join(" · ");
 }

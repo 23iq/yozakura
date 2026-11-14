@@ -111,7 +111,7 @@ Item {
     readonly property real dockGap: Math.round(screen.unit * (screen.dockFloating ? 0.5 : 0.2))
     // the shell's rounded screen corners (a tile that crops the screen sets false)
     property bool corners: screen.get("theme.enableCorners", true) !== false
-    // the island's edge: top / bottom, or a side (it stands upright there)
+    // the island's edge (on a side edge it stands upright, centred)
     readonly property string islandEdge: ["bottom", "left", "right"].indexOf(screen.get("notch.position", "top")) >= 0 ? screen.get("notch.position", "top") : "top"
     readonly property bool islandUpright: screen.islandEdge === "left" || screen.islandEdge === "right"
     // Room taken on an edge by the bars, the frame and the dock.
@@ -513,10 +513,9 @@ Item {
     Mark {
         id: island
         visible: screen.showIsland && screen.island
-        // along its edge: wide on top / bottom, upright on a side
         readonly property real along: Math.round(screen.width * 0.13)
         readonly property real across: Math.round(screen.unit * 1.2)
-        // from its edge: centred in a bar on that edge, else just inside
+        // its inset from its edge: centred in a bar on that edge, else close to it
         readonly property real inset: {
             const barOnEdge = screen.panels.some(p => p.edge === screen.islandEdge);
             return screen.frameWidth + (barOnEdge && screen.depths[screen.islandEdge] > 0 ? Math.max(0, (screen.depths[screen.islandEdge] - island.across) / 2) : Space.xs);
@@ -524,16 +523,15 @@ Item {
         width: screen.islandUpright ? island.across : island.along
         height: screen.islandUpright ? island.along : island.across
         x: screen.islandEdge === "left" ? island.inset : screen.islandEdge === "right" ? screen.width - width - island.inset : (screen.width - width) / 2
-        y: screen.islandEdge === "top" ? island.inset : screen.islandEdge === "bottom" ? screen.height - height - island.inset : (screen.height - height) / 2
+        y: screen.islandEdge === "bottom" ? screen.height - height - island.inset : screen.islandEdge === "top" ? island.inset : (screen.height - height) / 2
         color: Colors.surfaceContainerLowest
         border.width: Space.hairline
         border.color: Qt.alpha(Colors.outlineVariant, 0.7)
 
         Mark {
             anchors.centerIn: parent
-            readonly property real line: Math.max(2, Math.round(screen.unit * 0.14))
-            width: screen.islandUpright ? line : parent.width * 0.36
-            height: screen.islandUpright ? parent.height * 0.36 : line
+            width: screen.islandUpright ? Math.max(2, Math.round(screen.unit * 0.14)) : parent.width * 0.36
+            height: screen.islandUpright ? parent.height * 0.36 : Math.max(2, Math.round(screen.unit * 0.14))
             color: Qt.alpha(Colors.overBackground, 0.35)
         }
         StageSpot {

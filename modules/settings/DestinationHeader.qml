@@ -210,44 +210,8 @@ Item {
         Accessible.name: I18n.t("prefs.history")
         onClicked: historyMenu.opened ? historyMenu.close() : historyMenu.open()
 
-        PageMenu {
+        HistoryMenu {
             id: historyMenu
-            objectName: "historyMenu"
-            empty: I18n.t("prefs.history.empty")
-            items: {
-                const say = (s, kind) => {
-                    const what = s && s.label ? I18n.t(s.label) : I18n.t("prefs.undo.something");
-                    return kind === "changed" && String(s.label).startsWith("prefs.undo.") ? what : I18n.t("prefs.undo." + kind).arg(what);
-                };
-                const out = [];
-                const redo = SettingsStore.redoStack;
-                if (redo.length > 0)
-                    out.push({
-                        "name": "redo",
-                        "text": say(redo[redo.length - 1], "undone"),
-                        "subtitle": I18n.t("prefs.undo.redo")
-                    });
-                const undo = SettingsStore.undoStack;
-                for (let k = 0; k < Math.min(8, undo.length); k++)
-                    out.push({
-                        "name": "undo:" + (k + 1),
-                        "text": say(undo[undo.length - 1 - k], "changed"),
-                        "subtitle": k === 0 ? I18n.t("prefs.undo.undo") : I18n.t("prefs.history.undo_back")
-                    });
-                return out;
-            }
-            // a change below the newest undoes it and every newer one
-            onTriggered: name => {
-                if (name === "redo") {
-                    SettingsStore.redo();
-                    return;
-                }
-                const n = Number(name.split(":")[1]) || 0;
-                for (let i = 0; i < n; i++) {
-                    if (!SettingsStore.undo())
-                        break;
-                }
-            }
         }
     }
 }

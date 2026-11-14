@@ -356,10 +356,6 @@ Item {
             shell.morphItem = row || null;
             shell.navigate(r.categoryId, r.sectionId, r.entryId);
         }
-        onHistoryRequested: button => {
-            shell.morphItem = button || null;
-            shell.select("changes");
-        }
         onPresetAction: id => shell.presetAction(id)
         wantIndex: shell.changesOpen
     }
