@@ -67,14 +67,14 @@ func (s *Service) sweep() {
 	conv.TrackGroupsIn(groups)
 	if entries, err := os.ReadDir(s.workRoot()); err == nil {
 		for _, e := range entries {
-			if pid, ok := leadingPid(e.Name(), "-"); ok && !pidAlive(pid) {
+			if pid, ok := leadingPid(e.Name(), "-"); ok && !conv.PidAlive(pid) {
 				_ = os.RemoveAll(filepath.Join(s.workRoot(), e.Name()))
 			}
 		}
 	}
 	profiles, _ := filepath.Glob(filepath.Join(s.o.CacheDir, "office-profile-*"))
 	for _, p := range profiles {
-		if pid, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(p), "office-profile-")); err == nil && !pidAlive(pid) {
+		if pid, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(p), "office-profile-")); err == nil && !conv.PidAlive(pid) {
 			_ = os.RemoveAll(p)
 		}
 	}
@@ -89,17 +89,6 @@ func leadingPid(name, sep string) (int, bool) {
 	}
 	pid, err := strconv.Atoi(head)
 	return pid, err == nil
-}
-
-func pidAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	if pid == os.Getpid() {
-		return true
-	}
-	err := syscall.Kill(pid, 0)
-	return err == nil || err == syscall.EPERM
 }
 
 // Stop cancels every job, waits (bounded) for them to clean up and

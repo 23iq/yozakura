@@ -1,8 +1,8 @@
 package convert
 
 import (
+	"context"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"time"
 )
@@ -85,6 +85,8 @@ type Plan struct {
 	// Files are written before the first step when missing (a tool's
 	// policy or settings): a relative path is inside Work.
 	Files map[string]string
+	// probe reads the duration of the placed input when Duration is 0.
+	probe func(context.Context, string) float64
 }
 
 // PlanOptions: where LibreOffice keeps its profile (a private one, so a
@@ -148,6 +150,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 	timeout := stepTimeouts[tg.Engine]
 	switch tg.Engine {
 	case EngineFFmpeg:
+		p.probe = t.ProbeDuration
 		p.Steps = []Step{{Prog: prog, Args: ffmpegArgs(r, out), Progress: true, Out: out, Timeout: timeout}}
 	case EngineMagick:
 		p.Files = map[string]string{magickPolicyFile: magickPolicy(req.From, req.To, t.magickCoder(req.From), work)}
@@ -155,6 +158,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 	case EngineRsvg:
 		p.Steps = []Step{{Prog: prog, Args: []string{"-f", req.To, "-o", out, in}, Out: out, Timeout: timeout}}
 	case EngineSoffice:
+		p.Files = officeFiles(profile)
 		p.Steps = []Step{sofficeStep(prog, profile, req.From, req.To, in, out)}
 	case EnginePandoc:
 		p.Steps = pandocSteps(t, req.From, req.To, in, out, req.Src, work, o.MediaLink)
@@ -162,6 +166,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 			p.Media = filepath.Join(work, mediaDir)
 		}
 	case EngineDocPDF:
+		p.Files = officeFiles(profile)
 		p.Steps = append(pandocSteps(t, req.From, "odt", in, midODT, req.Src, work, ""),
 			sofficeStep(t.Prog(EngineSoffice), profile, "odt", "pdf", midODT, out))
 	case EnginePdftoppm:
@@ -234,7 +239,9 @@ func label(id string) string {
 
 // ffmpegArgs: quiet except errors, progress on stdout, never reads stdin.
 func ffmpegArgs(req Request, out string) []string {
-	args := []string{"-hide_banner", "-nostdin", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y", "-i", req.Src}
+	// only the local file: no nested protocols (HLS, concat, crypto ...)
+	args := []string{"-hide_banner", "-nostdin", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y",
+		"-protocol_whitelist", "file", "-i", req.Src}
 	q := req.Quality
 	to := byID[req.To]
 	switch {
@@ -299,33 +306,6 @@ func videoCodec(to string, q Quality) []string {
 		return []string{"-c:v", "mpeg4", "-q:v", pickQ(q, "8", "5", "2"), "-c:a", "libmp3lame", "-q:a", "4"}
 	}
 	return nil
-}
-
-// officeFilters: LibreOffice's --convert-to value per target.
-var officeFilters = map[string]string{
-	"pdf":  "pdf",
-	"docx": "docx:MS Word 2007 XML",
-	"doc":  "doc:MS Word 97",
-	"odt":  "odt",
-	"rtf":  "rtf",
-	"txt":  "txt:Text (encoded):UTF8",
-	"html": "html",
-	"xlsx": "xlsx:Calc MS Excel 2007 XML",
-	"ods":  "ods",
-	"csv":  "csv:Text - txt - csv (StarCalc):44,34,76,1",
-	"pptx": "pptx:Impress MS PowerPoint 2007 XML",
-	"odp":  "odp",
-}
-
-func sofficeStep(prog, profile, from, to, src, out string) Step {
-	profileURL := url.URL{Scheme: "file", Path: profile}
-	args := []string{"--headless", "--norestore", "--nolockcheck", "--nologo", "--nodefault",
-		"-env:UserInstallation=" + profileURL.String()}
-	if from == "pdf" {
-		args = append(args, "--infilter=writer_pdf_import")
-	}
-	args = append(args, "--convert-to", officeFilters[to], "--outdir", officeOut, src)
-	return Step{Prog: prog, Args: args, Collect: officeOut, Out: out, Timeout: stepTimeouts[EngineSoffice]}
 }
 
 // pandoc reader / writer names per format.

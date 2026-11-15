@@ -244,9 +244,6 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 			return "", ctx.Err()
 		}
 	}
-	if plan.Engine == conv.EngineFFmpeg {
-		plan.Duration = t.ProbeDuration(ctx, req.Src)
-	}
 	s.update(id, func(j *Job) { j.State, j.Engine, j.Progress = StateRunning, string(plan.Engine), -1 })
 	if err := plan.Run(ctx, func(f float64) {
 		s.update(id, func(j *Job) { j.Progress = f })
