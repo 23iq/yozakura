@@ -45,10 +45,10 @@ func Reserve(src, ext, dir string) (string, error) {
 			return path, nil
 		}
 		if !errors.Is(err, fs.ErrExist) {
-			return "", fmt.Errorf("cannot write to %s", dir)
+			return "", Errorf(CodeNoWrite, []string{dir}, "cannot write to %s", dir)
 		}
 	}
-	return "", fmt.Errorf("no free name for %s in %s", name, dir)
+	return "", Errorf(CodeExists, []string{name, dir}, "no free name for %s in %s", name, dir)
 }
 
 // ReserveDir claims a free folder name in dir like Reserve: "name",
@@ -65,10 +65,10 @@ func ReserveDir(name, dir string) (string, error) {
 			return path, nil
 		}
 		if !errors.Is(err, fs.ErrExist) {
-			return "", fmt.Errorf("cannot write to %s", dir)
+			return "", Errorf(CodeNoWrite, []string{dir}, "cannot write to %s", dir)
 		}
 	}
-	return "", fmt.Errorf("no free name for %s in %s", name, dir)
+	return "", Errorf(CodeExists, []string{name, dir}, "no free name for %s in %s", name, dir)
 }
 
 // MediaName is the folder of images shipped next to a text result of src:

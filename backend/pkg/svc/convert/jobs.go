@@ -3,7 +3,6 @@ package convert
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -39,7 +38,13 @@ type Job struct {
 	State    string  `json:"state"`
 	Output   string  `json:"output,omitempty"`
 	Error    string  `json:"error,omitempty"`
-	Engine   string  `json:"engine,omitempty"`
+	// Code is the error's stable cause (conv.Code*), ErrorArgs the
+	// arguments of its translation; Error stays the English message (a
+	// tool's own words for conv.DetailCodes). A cancelled job has code
+	// "cancelled".
+	Code      string   `json:"code,omitempty"`
+	ErrorArgs []string `json:"errorArgs,omitempty"`
+	Engine    string   `json:"engine,omitempty"`
 
 	outDir  string
 	quality conv.Quality
@@ -67,7 +72,7 @@ type StartParams struct {
 func (s *Service) start(params json.RawMessage) (any, error) {
 	var p StartParams
 	if err := json.Unmarshal(params, &p); err != nil || len(p.Items) == 0 {
-		return nil, errors.New("items is required")
+		return nil, conv.Errorf(conv.CodeBadRequest, nil, "items is required")
 	}
 	jobs, err := s.Start(p)
 	if err != nil {
@@ -87,7 +92,7 @@ func (s *Service) Start(p StartParams) ([]Job, error) {
 			outDir = abs
 		}
 		if st, err := os.Stat(outDir); err != nil || !st.IsDir() {
-			return nil, fmt.Errorf("output folder %s does not exist", outDir)
+			return nil, conv.Errorf(conv.CodeOutDir, []string{outDir}, "output folder %s does not exist", outDir)
 		}
 	}
 	q := conv.ParseQuality(p.Quality)
@@ -110,22 +115,23 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 	if abs, err := filepath.Abs(path); err == nil {
 		path = abs
 	}
-	state, msg, from, to := StateQueued, "", "", it.Target
+	state, msg, code, from, to := StateQueued, "", "", "", it.Target
+	var args []string
 	switch fm, ok := conv.Detect(path); {
 	case !conv.IsRegular(path):
-		state, msg = StateFailed, "not a regular file"
+		state, msg, code = StateFailed, "not a regular file", conv.CodeNotRegular
 		if _, err := os.Stat(path); err != nil {
-			msg = "not found"
+			msg, code = "not found", conv.CodeNotFound
 		}
 	case !ok:
-		state, msg = StateFailed, "unknown format"
+		state, msg, code = StateFailed, "unknown format", conv.CodeUnknownFormat
 	default:
 		from = fm.ID
 		// "jpeg", "JPG", ".png" name a format; the routes know its id
 		if f, ok := conv.Lookup(it.Target); ok {
 			to = f.ID
 		} else {
-			state, msg = StateFailed, "unknown target "+it.Target
+			state, msg, code, args = StateFailed, "unknown target "+it.Target, conv.CodeUnknownTarget, []string{it.Target}
 		}
 	}
 	if outDir == "" && s.isPasted(path) {
@@ -136,11 +142,11 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 	defer s.mu.Unlock()
 	if s.stopped {
 		cancel()
-		return Job{}, errors.New("the converter is shutting down")
+		return Job{}, conv.Errorf(conv.CodeStopping, nil, "the converter is shutting down")
 	}
 	s.seq++
 	j := &Job{ID: fmt.Sprintf("c%d", s.seq), Path: path, Name: filepath.Base(path), From: from, To: to,
-		State: state, Error: msg, Progress: -1, outDir: outDir, quality: q, ctx: ctx}
+		State: state, Error: msg, Code: code, ErrorArgs: args, Progress: -1, outDir: outDir, quality: q, ctx: ctx}
 	s.jobs[j.ID] = j
 	s.order = append(s.order, j.ID)
 	s.trim()
@@ -209,7 +215,7 @@ func (s *Service) run(id string) {
 	case s.sem <- struct{}{}:
 		defer func() { <-s.sem }()
 	case <-ctx.Done():
-		s.update(id, func(j *Job) { j.State = StateCancelled })
+		s.update(id, func(j *Job) { j.State, j.Code = StateCancelled, conv.CodeCancelled })
 		return
 	}
 	output, err := s.safeConvert(ctx, id, req, outDir)
@@ -219,11 +225,14 @@ func (s *Service) run(id string) {
 			// a result renamed into place is done, even if a cancel came late
 			j.State, j.Output, j.Progress, j.Error = StateDone, output, 1, ""
 		case ctx.Err() != nil:
-			j.State, j.Error = StateCancelled, ""
+			j.State, j.Error, j.Code = StateCancelled, "", conv.CodeCancelled
 		default:
+			// an uncoded error is a tool's (or the system's) own words
 			j.State, j.Error = StateFailed, err.Error()
+			j.Code, j.ErrorArgs = conv.CodeOf(err, conv.CodeToolFailed)
 		}
 	})
+	s.noticeIfUnwatched(id)
 }
 
 // safeConvert is convert with a panic turned into the job's error: the
@@ -232,7 +241,7 @@ func (s *Service) safeConvert(ctx context.Context, id string, req conv.Request, 
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Fprintf(os.Stderr, "convert: job %s panicked: %v\n%s", id, r, debug.Stack())
-			out, err = "", fmt.Errorf("the converter failed on this file (%v)", r)
+			out, err = "", conv.Errorf(conv.CodeCrashed, nil, "the converter failed on this file (%v)", r)
 		}
 	}()
 	return s.convert(ctx, id, req, outDir)
@@ -312,7 +321,7 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	}
 	if err := os.Rename(plan.Out, final); err != nil {
 		os.Remove(final)
-		return "", fmt.Errorf("cannot write to %s", dir)
+		return "", conv.Errorf(conv.CodeNoWrite, []string{dir}, "cannot write to %s", dir)
 	}
 	if media != "" && plan.Media != "" {
 		// onto the reserved empty folder: rename(2) replaces an empty one
@@ -329,14 +338,14 @@ func (s *Service) cancel(params json.RawMessage) (any, error) {
 		ID string `json:"id"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil || p.ID == "" {
-		return nil, errors.New("id is required")
+		return nil, conv.Errorf(conv.CodeBadRequest, nil, "id is required")
 	}
 	s.mu.Lock()
 	c, ok := s.cancels[p.ID]
 	j := s.jobs[p.ID]
 	s.mu.Unlock()
 	if j == nil {
-		return nil, errors.New("unknown job " + p.ID)
+		return nil, conv.Errorf(conv.CodeUnknownJob, []string{p.ID}, "unknown job %s", p.ID)
 	}
 	if ok {
 		c()

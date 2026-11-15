@@ -24,11 +24,11 @@ func convertData(src, from, dst, to string) error {
 	}
 	node, err := readData(raw, from)
 	if err != nil {
-		return err
+		return Wrap(CodeBadInput, err)
 	}
 	out, err := writeData(node, to)
 	if err != nil {
-		return err
+		return Wrap(CodeBadInput, err)
 	}
 	return os.WriteFile(dst, out, 0o644)
 }

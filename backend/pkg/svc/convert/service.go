@@ -21,7 +21,6 @@ package convert
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"sync"
@@ -29,6 +28,7 @@ import (
 
 	conv "yozakura/backend/pkg/convert"
 	"yozakura/backend/pkg/ipc"
+	notifysvc "yozakura/backend/pkg/svc/notify"
 )
 
 // toolsTTL: how long a detection of the installed engines is used before
@@ -42,6 +42,9 @@ type Options struct {
 	Home      string // where results of pasted images go
 	Clipboard Clipboard
 	Workers   int
+	// Notify announces a job that finished while no window listened
+	// (nil = never: the CLI reports on its own).
+	Notify func(notifysvc.SendParams)
 }
 
 // Service is the convert IPC service.
@@ -68,14 +71,16 @@ type Service struct {
 	stopped bool
 }
 
-// NewService returns the service with the real host.
-func NewService(cacheDir string) *Service {
+// NewService returns the service with the real host; notify (may be nil)
+// sends a desktop notification through the shell.
+func NewService(cacheDir string, notify func(notifysvc.SendParams)) *Service {
 	home, _ := os.UserHomeDir()
 	return New(Options{
 		Detect:    func() *conv.Tools { return conv.DetectTools(nil) },
 		CacheDir:  filepath.Join(cacheDir, "convert"),
 		Home:      home,
 		Clipboard: wlClipboard{},
+		Notify:    notify,
 	})
 }
 
@@ -167,6 +172,9 @@ type File struct {
 	Targets     []conv.Target `json:"targets"`
 	Default     string        `json:"default"`
 	Error       string        `json:"error,omitempty"`
+	// Code is the error's stable cause: not_found, folder, not_regular,
+	// unknown_format.
+	Code string `json:"code,omitempty"`
 }
 
 // Probe describes one file: its format, targets and the proposed one.
@@ -175,20 +183,20 @@ func Probe(path string, t *conv.Tools) File {
 	st, err := os.Stat(path)
 	switch {
 	case err != nil:
-		f.Error = "not found"
+		f.Error, f.Code = "not found", conv.CodeNotFound
 		return f
 	case st.IsDir():
-		f.Error = "a folder"
+		f.Error, f.Code = "a folder", conv.CodeFolder
 		return f
 	case !st.Mode().IsRegular():
 		// a FIFO or a device: never opened (reading could block)
-		f.Error = "not a regular file"
+		f.Error, f.Code = "not a regular file", conv.CodeNotRegular
 		return f
 	}
 	f.Size = st.Size()
 	fm, ok := conv.Detect(path)
 	if !ok {
-		f.Error = "unknown format"
+		f.Error, f.Code = "unknown format", conv.CodeUnknownFormat
 		return f
 	}
 	f.Kind, f.Format, f.FormatLabel = fm.Kind, fm.ID, fm.Label
@@ -202,7 +210,7 @@ func (s *Service) probe(params json.RawMessage) (any, error) {
 		Paths []string `json:"paths"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil || len(p.Paths) == 0 {
-		return nil, errors.New("paths is required")
+		return nil, conv.Errorf(conv.CodeBadRequest, nil, "paths is required")
 	}
 	t := s.Tools()
 	files := make([]File, 0, len(p.Paths))

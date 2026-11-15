@@ -237,16 +237,17 @@ func New() (*Daemon, error) {
 	ocrSvc := ocrsvc.NewService()
 	ocrSvc.Register(d.srv)
 
-	// File converter: probe, bounded conversion queue, clipboard paste/copy.
-	d.convert = convertsvc.NewService(d.paths.CacheDir)
-	d.convert.Register(d.srv)
-
 	// notify — exposes notify.send so CLIs (colorpicker, screen, …) can
 	// route their notifications through the running shell instead of
 	// shelling out to notify-send. See pkg/svc/notify for the rationale.
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
 	d.notify = notifySvc
+
+	// File converter: probe, bounded conversion queue, clipboard paste/copy;
+	// a job ending with no window open is announced as a notification.
+	d.convert = convertsvc.NewService(d.paths.CacheDir, func(sp notifysvc.SendParams) { _, _ = notifySvc.Send(sp) })
+	d.convert.Register(d.srv)
 
 	// Extras & apps catalog: detection, serial install queue, progress events.
 	// a catalog post "apphook:<id>" connects the app through the apphooks

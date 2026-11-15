@@ -45,7 +45,7 @@ type convertEnv struct {
 
 func defaultConvertEnv() convertEnv {
 	return convertEnv{open: func() convertEnv {
-		s := convertsvc.NewService(paths.New().CacheDir)
+		s := convertsvc.NewService(paths.New().CacheDir, nil)
 		// SIGHUP: the terminal closed; helpers must not outlive the command
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 		return convertEnv{svc: s, tick: 100 * time.Millisecond, tools: s.Tools, interrupted: ctx.Done()}

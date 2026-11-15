@@ -1,7 +1,6 @@
 package convert
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -29,11 +28,11 @@ func convertImage(src, dst, to string, q Quality) error {
 	cfg, _, err := image.DecodeConfig(f)
 	if err != nil {
 		f.Close()
-		return fmt.Errorf("cannot read the image: %v", err)
+		return Errorf(CodeBadInput, nil, "cannot read the image: %v", err)
 	}
 	if cfg.Width <= 0 || cfg.Height <= 0 || int64(cfg.Width)*int64(cfg.Height) > maxPixels {
 		f.Close()
-		return fmt.Errorf("the image is too large (%dx%d) to convert without ImageMagick", cfg.Width, cfg.Height)
+		return Errorf(CodeTooLarge, nil, "the image is too large (%dx%d) to convert without ImageMagick", cfg.Width, cfg.Height)
 	}
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		f.Close()
@@ -42,7 +41,7 @@ func convertImage(src, dst, to string, q Quality) error {
 	img, _, err := image.Decode(f)
 	f.Close()
 	if err != nil {
-		return fmt.Errorf("cannot read the image: %v", err)
+		return Errorf(CodeBadInput, nil, "cannot read the image: %v", err)
 	}
 	out, err := os.Create(dst)
 	if err != nil {
@@ -68,7 +67,7 @@ func encodeImage(w io.Writer, img image.Image, to string, q Quality) error {
 	case "tiff":
 		return tiff.Encode(w, img, &tiff.Options{Compression: tiff.Deflate})
 	}
-	return fmt.Errorf("cannot write %s without ImageMagick", label(to))
+	return Errorf(CodeToolMissing, []string{label(to), ToolName(EngineMagick)}, "cannot write %s without ImageMagick", label(to))
 }
 
 // onWhite flattens transparency onto white (formats without alpha).

@@ -3,6 +3,7 @@ package ipc
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -20,11 +21,36 @@ type Request struct {
 	Params json.RawMessage `json:"params"`
 }
 
-// Response is a JSON-RPC like response: {"id":..., "result":{...}} or {"id":..., "error":"..."}
+// Response is a JSON-RPC like response: {"id":..., "result":{...}} or
+// {"id":..., "error":"...", "code":"...", "errorArgs":[...]}. code (a
+// stable cause, e.g. "not_found") and errorArgs (the arguments of its
+// translation) are optional additions: a client reading only error keeps
+// working.
 type Response struct {
-	ID     json.RawMessage `json:"id"`
-	Result json.RawMessage `json:"result,omitempty"`
-	Error  string          `json:"error,omitempty"`
+	ID        json.RawMessage `json:"id"`
+	Result    json.RawMessage `json:"result,omitempty"`
+	Error     string          `json:"error,omitempty"`
+	Code      string          `json:"code,omitempty"`
+	ErrorArgs []string        `json:"errorArgs,omitempty"`
+}
+
+// CodedError is an error a handler returns with a stable code (and the
+// arguments of its translation), sent next to the message.
+type CodedError interface {
+	error
+	ErrorCode() string
+	ErrorArgs() []string
+}
+
+// CodeUnknownMethod is the code of a call to a method or service the
+// daemon does not have.
+const CodeUnknownMethod = "unknown_method"
+
+// errorReply is a failed call's message, code and arguments.
+type errorReply struct {
+	msg  string
+	code string
+	args []string
 }
 
 // ServiceEvent is a subscription push: {"service":"...", "data":{...}}
@@ -281,37 +307,37 @@ func (s *Server) handleOne(bw *bufio.Writer, wmu *sync.Mutex, req *Request) func
 	w := &lockedWriter{w: bw, mu: wmu}
 	svcName, method := splitMethod(req.Method)
 	if svcName == "" {
-		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
+		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method), Code: CodeUnknownMethod})
 		return nil
 	}
 	s.mu.RLock()
 	svc := s.services[svcName]
 	s.mu.RUnlock()
 	if svc == nil {
-		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown service: %s", svcName)})
+		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown service: %s", svcName), Code: CodeUnknownMethod})
 		return nil
 	}
 	hdl, ok := svc.Methods[method]
 	if !ok {
-		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method)})
+		w.write(Response{ID: req.ID, Error: fmt.Sprintf("unknown method: %s", req.Method), Code: CodeUnknownMethod})
 		return nil
 	}
 
-	raw, errMsg, later := invoke(req.Method, hdl, req.Params)
+	raw, reply, later := invoke(req.Method, hdl, req.Params)
 	if later != nil {
 		id, name := req.ID, req.Method
 		return func() {
-			raw, errMsg, _ := invoke(name, func(json.RawMessage) (any, error) { return later() }, nil)
-			w.respond(id, raw, errMsg)
+			raw, reply, _ := invoke(name, func(json.RawMessage) (any, error) { return later() }, nil)
+			w.respond(id, raw, reply)
 		}
 	}
-	w.respond(req.ID, raw, errMsg)
+	w.respond(req.ID, raw, reply)
 	return nil
 }
 
-func (l *lockedWriter) respond(id, raw json.RawMessage, errMsg string) {
-	if errMsg != "" {
-		l.write(Response{ID: id, Error: errMsg})
+func (l *lockedWriter) respond(id, raw json.RawMessage, reply errorReply) {
+	if reply.msg != "" {
+		l.write(Response{ID: id, Error: reply.msg, Code: reply.code, ErrorArgs: reply.args})
 		return
 	}
 	l.write(Response{ID: id, Result: raw})
@@ -335,23 +361,28 @@ func crashOnPanic(what string) {
 // invoke runs one handler and marshals its result. A Deferred result is
 // returned as later, unrun (its caller runs it through invoke again, so a
 // panic there crashes the daemon the same way).
-func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, errMsg string, later Deferred) {
+func invoke(method string, hdl HandlerFunc, params json.RawMessage) (raw json.RawMessage, reply errorReply, later Deferred) {
 	defer crashOnPanic(method)
 	result, err := hdl(params)
 	if err != nil {
-		return nil, err.Error(), nil
+		reply.msg = err.Error()
+		var coded CodedError
+		if errors.As(err, &coded) {
+			reply.code, reply.args = coded.ErrorCode(), coded.ErrorArgs()
+		}
+		return nil, reply, nil
 	}
 	if result == nil {
-		return nil, "", nil
+		return nil, reply, nil
 	}
 	if d, ok := result.(Deferred); ok {
-		return nil, "", d
+		return nil, reply, d
 	}
 	data, err := json.Marshal(result)
 	if err != nil {
-		return nil, "result marshal failed", nil
+		return nil, errorReply{msg: "result marshal failed"}, nil
 	}
-	return data, "", nil
+	return data, reply, nil
 }
 
 // runSubscribe registers a stream with one service.

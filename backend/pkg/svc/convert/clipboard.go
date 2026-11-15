@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -27,12 +28,22 @@ type Clipboard interface {
 // wlClipboard uses wl-paste / wl-copy.
 type wlClipboard struct{}
 
+// Types lists what the clipboard offers: clipboard_unavailable when
+// wl-paste cannot run, clipboard_empty when it says nothing is copied.
 func (wlClipboard) Types() ([]string, error) {
 	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: 3 * time.Second}, "wl-paste", "--list-types")
-	if err != nil {
-		return nil, errors.New("the clipboard is empty")
+	return clipboardTypes(out, err)
+}
+
+func clipboardTypes(out []byte, err error) ([]string, error) {
+	if errors.Is(err, exec.ErrNotFound) || errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission) {
+		return nil, conv.Errorf(conv.CodeClipboardUnavailable, nil, "cannot read the clipboard: wl-paste (wl-clipboard) is not installed")
 	}
-	return strings.Fields(string(out)), nil
+	types := strings.Fields(string(out))
+	if err != nil || len(types) == 0 {
+		return nil, conv.Errorf(conv.CodeClipboardEmpty, nil, "the clipboard is empty")
+	}
+	return types, nil
 }
 
 func (wlClipboard) Read(mime string) ([]byte, error) {
@@ -44,7 +55,13 @@ func (wlClipboard) Read(mime string) ([]byte, error) {
 func (wlClipboard) Write(mime string, data []byte) error {
 	cmd := proc.Command(context.Background(), "wl-copy", "--type", mime)
 	cmd.Stdin = bytes.NewReader(data)
-	return proc.StartReaped(cmd)
+	if err := proc.StartReaped(cmd); err != nil {
+		if errors.Is(err, exec.ErrNotFound) || errors.Is(err, os.ErrNotExist) {
+			return conv.Errorf(conv.CodeClipboardUnavailable, nil, "cannot write the clipboard: wl-copy (wl-clipboard) is not installed")
+		}
+		return conv.Wrap(conv.CodeToolFailed, err)
+	}
+	return nil
 }
 
 // pasteDir holds image data pasted without a file.
@@ -122,7 +139,7 @@ func (s *Service) Paste() ([]string, error) {
 			break
 		}
 	}
-	return nil, errors.New("no file on the clipboard")
+	return nil, conv.Errorf(conv.CodeClipboardNoFile, nil, "no file on the clipboard")
 }
 
 func (s *Service) savePasted(data []byte, mime string) (string, error) {
@@ -210,7 +227,7 @@ func (s *Service) copy(params json.RawMessage) (any, error) {
 		Path string `json:"path"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil || p.Path == "" {
-		return nil, errors.New("path is required")
+		return nil, conv.Errorf(conv.CodeBadRequest, nil, "path is required")
 	}
 	return map[string]any{}, s.Copy(p.Path)
 }
@@ -219,11 +236,11 @@ func (s *Service) copy(params json.RawMessage) (any, error) {
 // chats and editors), anything else as a file (file managers).
 func (s *Service) Copy(path string) error {
 	if !filepath.IsAbs(path) {
-		return errors.New("path must be absolute")
+		return conv.Errorf(conv.CodeBadRequest, nil, "path must be absolute")
 	}
 	st, err := os.Stat(path)
 	if err != nil || st.IsDir() {
-		return errors.New("not found")
+		return conv.Errorf(conv.CodeNotFound, nil, "not found")
 	}
 	if fm, ok := conv.Detect(path); ok && fm.Kind == conv.KindImage && fm.ID != "svg" && st.Size() < 64<<20 {
 		data, err := os.ReadFile(path)

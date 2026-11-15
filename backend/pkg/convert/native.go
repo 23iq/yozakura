@@ -2,7 +2,6 @@ package convert
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -29,7 +28,7 @@ func ConvertNative(src, from, dst, to string, q Quality) error {
 			return err
 		}
 		if st.Size() > maxNativeInput {
-			return fmt.Errorf("the file is too large to convert (over %d MB)", maxNativeInput>>20)
+			return Errorf(CodeTooLarge, nil, "the file is too large to convert (over %d MB)", maxNativeInput>>20)
 		}
 		return convertData(src, from, dst, to)
 	}
@@ -37,7 +36,7 @@ func ConvertNative(src, from, dst, to string, q Quality) error {
 }
 
 // errNativeTimeout: a native step ran past its timeout.
-var errNativeTimeout = errors.New("the conversion timed out")
+var errNativeTimeout = Errorf(CodeTimeout, []string{"converter"}, "the conversion timed out")
 
 // runNative runs a native step off the caller's goroutine: cancelling or
 // the timeout returns at once (the step's result is then dropped with the
@@ -48,7 +47,7 @@ func runNative(ctx context.Context, st Step) error {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Fprintf(os.Stderr, "convert: native step panicked: %v\n%s", r, debug.Stack())
-				done <- fmt.Errorf("the converter failed on this file (%v)", r)
+				done <- Errorf(CodeCrashed, nil, "the converter failed on this file (%v)", r)
 			}
 		}()
 		done <- st.Native()

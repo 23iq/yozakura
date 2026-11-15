@@ -1,7 +1,6 @@
 package convert
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,7 +50,7 @@ func (s *Service) workDir(dir string) (string, func(), error) {
 	}
 	w, err := os.MkdirTemp(dir, hiddenPrefix()+strconv.Itoa(os.Getpid())+"-")
 	if err != nil {
-		return "", nil, fmt.Errorf("cannot write to %s", dir)
+		return "", nil, conv.Errorf(conv.CodeNoWrite, []string{dir}, "cannot write to %s", dir)
 	}
 	record := ""
 	if s.o.CacheDir != "" && os.MkdirAll(s.outsideRoot(), 0o700) == nil {

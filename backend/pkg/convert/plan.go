@@ -2,7 +2,6 @@ package convert
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"time"
 )
@@ -131,10 +130,10 @@ var pandocContainers = map[string]bool{"docx": true, "odt": true, "epub": true}
 func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error) {
 	tg, ok := Route(req.From, req.To, t)
 	if !ok {
-		return nil, fmt.Errorf("%s cannot be converted to %s", label(req.From), label(req.To))
+		return nil, Errorf(CodeUnsupported, []string{label(req.From), label(req.To)}, "%s cannot be converted to %s", label(req.From), label(req.To))
 	}
 	if !tg.Available {
-		return nil, fmt.Errorf("converting to %s needs %s", tg.Label, tg.Needs)
+		return nil, Errorf(CodeToolMissing, []string{tg.Label, tg.Needs}, "converting to %s needs %s", tg.Label, tg.Needs)
 	}
 	from, to := byID[req.From], byID[req.To]
 	in := "in." + from.Ext()
@@ -182,7 +181,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 		src, dst, f, q := filepath.Join(work, in), p.Out, req.From, req.Quality
 		p.Steps = []Step{{Out: out, Native: func() error { return ConvertNative(src, f, dst, req.To, q) }}}
 	default:
-		return nil, fmt.Errorf("no engine for %s to %s", label(req.From), label(req.To))
+		return nil, Errorf(CodeUnsupported, []string{label(req.From), label(req.To)}, "no engine for %s to %s", label(req.From), label(req.To))
 	}
 	return p, nil
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -74,7 +73,7 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		}
 	}
 	if fi, err := os.Stat(p.Out); err != nil || fi.Size() == 0 {
-		return errors.New("the converter wrote no output")
+		return Errorf(CodeNoOutput, nil, "the converter wrote no output")
 	}
 	return nil
 }
@@ -117,12 +116,15 @@ func placeInput(ctx context.Context, src, dst string) error {
 	// opened non-blocking and checked: a path swapped for a FIFO since it
 	// was probed is never read (the open and every read would block)
 	in, err := os.OpenFile(src, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	if errors.Is(err, os.ErrNotExist) {
+		return Errorf(CodeNotFound, nil, "not found")
+	}
 	if err != nil {
 		return err
 	}
 	defer in.Close()
 	if st, err := in.Stat(); err != nil || !st.Mode().IsRegular() {
-		return errors.New("not a regular file")
+		return Errorf(CodeNotRegular, nil, "not a regular file")
 	}
 	// link the file that was checked, not whatever the path names now
 	if linkOpen(in, dst) == nil {
@@ -201,7 +203,7 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 	}
 	onProgress(-1)
 	if err := proc.StartTied(cmd); err != nil {
-		return fmt.Errorf("cannot start %s: %v", filepath.Base(st.Prog), err)
+		return Errorf(CodeToolFailed, nil, "cannot start %s: %v", filepath.Base(st.Prog), err)
 	}
 	pgid := cmd.Process.Pid
 	release := trackGroup(pgid, filepath.Base(st.Prog))
@@ -228,13 +230,13 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 		return ctx.Err()
 	}
 	if errors.Is(context.Cause(stepCtx), errTimeout) {
-		return fmt.Errorf("%s timed out after %s", filepath.Base(st.Prog), st.Timeout)
+		return Errorf(CodeTimeout, []string{filepath.Base(st.Prog)}, "%s timed out after %s", filepath.Base(st.Prog), st.Timeout)
 	}
 	if err != nil {
 		if msg := ErrorLine(tail.String()); msg != "" {
-			return errors.New(msg)
+			return Errorf(CodeToolFailed, nil, "%s", msg)
 		}
-		return fmt.Errorf("%s failed (%v)", filepath.Base(st.Prog), err)
+		return Errorf(CodeToolFailed, nil, "%s failed (%v)", filepath.Base(st.Prog), err)
 	}
 	return nil
 }
@@ -290,7 +292,7 @@ func collect(dir, out string) error {
 			return os.Rename(filepath.Join(dir, e.Name()), out)
 		}
 	}
-	return errors.New("the converter wrote no output")
+	return Errorf(CodeNoOutput, nil, "the converter wrote no output")
 }
 
 // ProbeDuration asks ffprobe for a media file's length in seconds (0 when
