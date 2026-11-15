@@ -1,8 +1,8 @@
 """theme.weatherFx (modules/theme/WeatherFx.qml): with mode "off" no weather
 overlay exists on any surface; with a mode on, a surface root (only roots of
 shell hosts) loads one overlay drawing what the weather asks for, its timers
-run only while motion is on, a WeatherFxScope forces a condition even while
-the mode is off, and petals / heat stay on the bar."""
+run only while motion is on, `previewCondition` forces a condition, and
+petals / heat stay on the bar."""
 import sys
 from pathlib import Path
 
@@ -19,7 +19,6 @@ import qs.modules.theme
 import qs.modules.components
 Window {
     width: 500; height: 400; visible: true
-    property alias scoped: scopeLoader.active
     function setFx(mode, extra) {
         Config.theme.weatherFx = Object.assign({}, Config.theme.weatherFx, { mode: mode }, extra || {});
     }
@@ -50,20 +49,6 @@ Window {
         x: 20; y: 200; width: 120; height: 80
         variant: "pane"
         glassSurface: "widgets"
-    }
-    Loader {
-        id: scopeLoader
-        active: false
-        sourceComponent: Item {
-            width: 300; height: 120
-            WeatherFxScope { condition: "snow" }
-            StyledRect {
-                objectName: "previewPanel"
-                anchors.fill: parent
-                variant: "popup"
-                glassSurface: "popups"
-            }
-        }
     }
 }
 """
@@ -162,23 +147,14 @@ QTest.qWait(30)
 assert effect("bar", "weatherHeat").property("active") is True
 assert effect("panel", "weatherHeat").property("active") is False
 
-# Preview scope: forces its condition while the mode is off
+# A forced condition (renders, tests) replaces the live weather
+h.eval(win, "WeatherFx.previewCondition = 'snow'")
+QTest.qWait(30)
+assert effect("panel", "weatherSnow").property("active") is True
+assert effect("bar", "weatherHeat").property("active") is False
+h.eval(win, "WeatherFx.previewCondition = ''")
 h.eval(win, "setFx('off')")
 QTest.qWait(30)
-assert not loaded("bar")
-win.setProperty("scoped", True)
-QTest.qWait(80)
-assert h.eval(win, "WeatherFx.scopes") == 1
-preview = h.find(win, "previewPanel")
-pfx = h.find(preview, "weatherFx")
-assert h.eval(pfx, "item !== null") is True
-assert h.find(preview, "weatherSnow").property("active") is True
-# Live surfaces load an overlay meanwhile but draw nothing
-assert all(h.find(bar, n).property("active") is False
-           for n in ("weatherRain", "weatherSnow", "weatherFrost", "weatherFog", "weatherHeat", "weatherSeasonal"))
-win.setProperty("scoped", False)
-QTest.qWait(80)
-assert h.eval(win, "WeatherFx.scopes") == 0
 assert not loaded("bar")
 
 print("weather-fx: ok")

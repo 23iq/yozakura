@@ -1,14 +1,15 @@
 .pragma library
 
 // Power: the battery and power profile (the stage), battery saver, what
-// happens while you are away (one idle timeline) and around sleep (two
-// switches). The raw idle listeners are in the More sheet; the lock and
-// sleep commands are out of the window (`yozakura config`). Entry format: see modules/settings/AGENTS.md.
+// happens while you are away (one idle timeline, the lock command) and
+// around sleep (two switches). The raw idle listeners are a card of their
+// own (IdleCommands); the sleep commands are advanced (the switches set
+// them). Entry format: see modules/settings/AGENTS.md.
 
-function command(key, label, description, placeholder, keywords) {
+function command(key, label, description, placeholder, keywords, advanced) {
     return {
         "key": key,
-        "advanced": true,
+        "advanced": advanced !== false,
         "type": "text",
         "monospace": true,
         "placeholder": placeholder,
@@ -51,7 +52,7 @@ var category = {
                     "keywords": "idle away timeout dim lock screen off sleep suspend minutes timeline hypridle"
                 },
                 toggle("performance.batterySaver", "system.performance.battery_saver", "system.performance.battery_saver_desc", "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"),
-                command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle")
+                command("system.idle.general.lock_cmd", "settings.system.lock_command", "prefs.sys.lock_cmd.desc", "idle.lock_cmd", "lock screen command idle", false)
             ]
         },
         {

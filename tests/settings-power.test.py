@@ -6,7 +6,8 @@ offscreen with the device fixtures (tests/lib/device_fixtures.py).
 * The idle timeline: dragging the Sleep knob changes its listener's timeout
   as ONE undo step on release (nothing is written mid-drag); dragging it
   into "never" removes the listener; the order dim -> lock -> off -> sleep
-  holds (Lock cannot pass Screen off).
+  holds (Lock cannot pass Screen off); the knobs work from the keyboard
+  (Left / Right, End = never, also for Dim while later steps are on).
 * The sleep switches write / clear the sleep commands.
 """
 import json
@@ -114,10 +115,37 @@ check(ev('w.findItem("idleTime:sleep").text') == "Never", "...and the legend say
 ev("SettingsStore.undo()")
 
 # Lock cannot pass Screen off
-drag("idleKnob:lock", 300)
+drag("idleKnob:lock", 120)
 lock = [t for c, t in __import__("json").loads(ev("w.timeouts()")) if "lock" in c][0]
 off = [t for c, t in __import__("json").loads(ev("w.timeouts()")) if "screen off" in c][0]
 check(lock <= off, f"Lock stays before Screen off ({lock} <= {off})")
+ev("SettingsStore.undo()")
+
+
+def timeout_of(word):
+    for cmd, t in __import__("json").loads(ev("w.timeouts()")):
+        if word in cmd:
+            return t
+    return None
+
+
+# the keyboard: a knob takes focus, Right / Left step it, End = never even
+# while the later steps stay on
+dim0 = timeout_of("brightness")
+h.eval(ev('w.findItem("idleStep:dim")'), "forceActiveFocus()")
+QTest.keyClick(win, Qt.Key_Right)
+QTest.qWait(50)
+dim1 = timeout_of("brightness")
+check(dim0 is not None and dim1 is not None and dim1 > dim0, f"Right moves Dim later ({dim0} -> {dim1})")
+QTest.keyClick(win, Qt.Key_Left)
+QTest.qWait(50)
+check(timeout_of("brightness") == dim0, "Left moves it back")
+QTest.keyClick(win, Qt.Key_End)
+QTest.qWait(50)
+check(timeout_of("brightness") is None and timeout_of("lock") is not None, "End turns dimming off, Lock stays")
+check(ev('w.findItem("idleTime:dim").text') == "Never", "...and the legend says Never")
+check(ev('w.findItem("idleStep:dim").activeFocus') is True, "the knob keeps the focus")
+ev("SettingsStore.undo()")
 
 # sleep switches
 h.eval(ev('w.findItem("sleepToggle:system.idle.general.before_sleep_cmd")'), "toggled(false)")

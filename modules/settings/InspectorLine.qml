@@ -3,8 +3,9 @@ import qs.modules.theme
 import qs.modules.components.kit
 
 // One quiet "name ... value" line of the page inspector (PageInspector):
-// the name muted on the left, the value on the right (elided, never over
-// the name); `strong`: the value in the text ink.
+// the name muted on the left, the value on the right; both wrap (translated
+// text is never cut), the name in at most a little over half the line.
+// `strong`: the value in the text ink.
 Item {
     id: line
 
@@ -19,7 +20,7 @@ Item {
         width: Math.min(implicitWidth, line.width * 0.55)
         role: "secondary"
         color: Type.muted
-        elide: Text.ElideRight
+        wrapMode: Text.WordWrap
         text: line.name
     }
     KitText {
@@ -29,7 +30,7 @@ Item {
         role: "secondary"
         color: line.strong ? Type.text : Type.secondary
         horizontalAlignment: Text.AlignRight
-        elide: Text.ElideRight
+        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         text: line.value
     }
 }

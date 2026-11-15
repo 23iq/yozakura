@@ -7,7 +7,7 @@
   "x-file": "config/system.json",
   "properties": {
     "disks": {
-      "title": "Monitored Disks",
+      "title": "Monitored disks",
       "type": "array",
       "default": [
         "/"
@@ -18,7 +18,7 @@
       },
       "description": "Mount points shown in the system metrics.",
       "x-settings": {
-        "category": "system",
+        "category": "dashboard",
         "section": "storage",
         "label": "system.resources.disks_title",
         "control": "list",
@@ -111,7 +111,7 @@
           "type": "object",
           "properties": {
             "lock_cmd": {
-              "title": "Lock Command",
+              "title": "Lock command",
               "type": "string",
               "default": "yozakura lock",
               "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
@@ -121,7 +121,7 @@
                 "label": "settings.system.lock_command",
                 "control": "text",
                 "keywords": "lock screen command idle",
-                "advanced": true
+                "advanced": false
               },
               "format": "command"
             },
@@ -706,7 +706,7 @@
           "default": false,
           "description": "Unpinned history lives in /tmp and is wiped on reboot. Pinned items always stay on disk.",
           "x-settings": {
-            "category": "system",
+            "category": "dashboard",
             "section": "storage",
             "label": "prefs.sys.clipboard_tmpfs",
             "control": "toggle",

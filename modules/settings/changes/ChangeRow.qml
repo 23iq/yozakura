@@ -37,10 +37,14 @@ ListRow {
                 onClicked: root.resetRequested()
                 Accessible.name: I18n.t("common.reset_default")
             }
+            // its slot is kept on every row (one reset column down the
+            // page): a row with nowhere to go shows an empty, inert slot
             IconButton {
                 objectName: "changeJump"
                 size: "s"
-                visible: root.canJump
+                opacity: root.canJump ? 1 : 0
+                enabled: root.canJump
+                Accessible.ignored: !root.canJump
                 icon: Icons.caretRight
                 onClicked: root.jumpRequested()
                 Accessible.name: I18n.t("prefs.changes.open")

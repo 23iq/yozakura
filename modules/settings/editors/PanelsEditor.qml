@@ -81,6 +81,7 @@ Item {
         Line {
             label: I18n.t("prefs.bar.panels.shown")
             ToggleControl {
+                Accessible.name: I18n.t("prefs.bar.panels.shown")
                 checked: root.panel ? root.panel.enabled : true
                 onToggled: v => root.setField("enabled", v)
             }
@@ -123,6 +124,7 @@ Item {
         Line {
             label: I18n.t("prefs.bar.panels.flat")
             ToggleControl {
+                Accessible.name: I18n.t("prefs.bar.panels.flat")
                 checked: root.panel ? root.panel.flat : false
                 onToggled: v => root.setField("flat", v)
             }
@@ -130,6 +132,7 @@ Item {
         Line {
             label: I18n.t("prefs.bar.panels.reserve")
             ToggleControl {
+                Accessible.name: I18n.t("prefs.bar.panels.reserve")
                 checked: root.panel ? root.panel.reserve : true
                 onToggled: v => root.setField("reserve", v)
             }

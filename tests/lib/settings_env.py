@@ -156,6 +156,9 @@ QtObject {
     property string currentProfile: "balanced"
     property bool isAvailable: true
     property var availableProfiles: ["power-saver", "balanced", "performance"]
+    // (the bar's battery popup in a live preview)
+    function getProfileIcon(name) { return "" }
+    function getProfileDisplayName(name) { return name || "" }
 }"""
 
 UPDATE_STUB = """pragma Singleton
@@ -234,6 +237,7 @@ MIRROR = [
     "modules/theme/Styling.qml",
     "modules/theme/TypeRoles.js",
     "modules/theme/VisualLanguage.js",
+    "modules/theme/InkContrast.js",  # (kit Type.muted, Ambient)
     "modules/theme/Metrics.qml",
     "modules/theme/DensityMetrics.js",
     "modules/theme/Motion.qml",
@@ -265,6 +269,7 @@ MIRROR = [
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
     "modules/services/timers/TimerFormat.js",  # the Timers stage formats like the island
+    "modules/services/ai/EffortPrefs.js",  # the AI agents editor
     # Presets page: the unified gallery's tabs, cards and stores
     "modules/widgets/presets",
     "config/defaults",
@@ -1000,6 +1005,13 @@ class SettingsEnv:
 
     def load(self, qml: str):
         return self.h.load(qml, auto_stub=False)
+
+    def end_undo_step(self, win) -> None:
+        """The next change starts a new undo step, as once the merge window
+        (UndoModel.COALESCE_MS) has passed, without waiting it out: the steps
+        are aged to time 0, as the store does with a redone step (`win`
+        imports qs.modules.settings.store)."""
+        self.h.eval(win, "SettingsStore.undoStack = SettingsStore.undoStack.map(s => Object.assign({}, s, { time: 0 }))")
 
     def wait_page(self, win, ms: int = 8000) -> bool:
         """Wait until the settings page has built all its sections (schema

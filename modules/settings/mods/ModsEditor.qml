@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
-import qs.config
 import qs.modules.settings
 import qs.modules.settings.stages
 import "ModsModel.js" as ModsModel
@@ -120,12 +119,17 @@ FittedFrame {
                 blur: Space.xxl
                 color: Qt.alpha(Colors.shadow, 0.45)
             }
+            // the state on the left, in the room the actions leave it
             Row {
+                id: bandState
+                objectName: "modsBandState"
                 x: Space.xl
+                width: actions.x - x - Space.l
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Space.l
 
                 Icon {
+                    id: bandIcon
                     anchors.verticalCenter: parent.verticalCenter
                     icon: Icons.puzzlePiece
                     size: Math.round(band.height * 0.36)
@@ -133,11 +137,14 @@ FittedFrame {
                 }
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
+                    width: bandState.width - bandIcon.width - bandState.spacing
                     spacing: Space.xs
                     Row {
                         spacing: Space.m
                         KitText {
                             anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, bandState.width - bandIcon.width - bandState.spacing)
+                            wrapMode: Text.WordWrap
                             role: "title"
                             text: page.empty ? I18n.t(page.category.title) : I18n.t("mods.band_count", page.onCount, page.mods.length)
                         }
@@ -150,31 +157,39 @@ FittedFrame {
                             onToggled: value => ModsService.setModsEnabled(value)
                         }
                     }
+                    // the generation: data (a version, a revision), so it
+                    // may elide, and it wraps to a second line first
                     KitText {
+                        width: parent.width
                         role: "caption"
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
                         text: (ModsService.busy ? I18n.t("mods.working") + " · " : "") + I18n.t("mods.base") + " " + (ModsService.baseVersion || I18n.t("mods.unknown")) + (ModsService.baseRevision ? " · " + ModsModel.shortRevision(ModsService.baseRevision) : "") + " · " + I18n.t("mods.active") + " " + (ModsService.activeGeneration || "base")
-                        font.family: Config.theme.monoFont
                         color: Type.secondary
-                        elide: Text.ElideMiddle
+                        elide: Text.ElideRight
                     }
                 }
             }
 
             Column {
+                id: actions
                 anchors.right: parent.right
                 anchors.rightMargin: Space.xl
                 anchors.verticalCenter: parent.verticalCenter
-                width: Space.px(300)
+                // half the band at most: a narrow window keeps room for the state
+                width: Math.min(Space.px(300), Math.round((band.width - Space.xl * 2) / 2))
                 spacing: Space.s
-                Row {
-                    anchors.right: parent.right
+                // the actions wrap (from the right) in a narrow window
+                Flow {
+                    width: parent.width
+                    layoutDirection: Qt.RightToLeft
                     spacing: Space.s
                     PillButton {
-                        visible: ModsService.previousGeneration !== ""
-                        kind: "ghost"
-                        text: I18n.t("mods.rollback")
+                        visible: !page.empty
+                        icon: "arrowsClockwise"
+                        text: I18n.t("mods.rebuild")
                         enabled: !ModsService.busy
-                        onClicked: ModsService.rollback()
+                        onClicked: ModsService.rebuild()
                     }
                     PillButton {
                         kind: "ghost"
@@ -184,11 +199,11 @@ FittedFrame {
                         onClicked: ModsService.refresh()
                     }
                     PillButton {
-                        visible: !page.empty
-                        icon: "arrowsClockwise"
-                        text: I18n.t("mods.rebuild")
+                        visible: ModsService.previousGeneration !== ""
+                        kind: "ghost"
+                        text: I18n.t("mods.rollback")
                         enabled: !ModsService.busy
-                        onClicked: ModsService.rebuild()
+                        onClicked: ModsService.rollback()
                     }
                 }
                 // a mod built for another base version: ask first, turning

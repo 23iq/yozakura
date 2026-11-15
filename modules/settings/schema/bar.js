@@ -5,8 +5,8 @@
 // Bar: its look and edge, modules, clock, workspaces and when it shows,
 // over a live stage of the bar (stages/BarStage.qml). The reference page of
 // the window (modules/settings/AGENTS.md, CONVERTING A PAGE): one control
-// per setting, picture cards for looks, expert knobs `advanced` (out of
-// the window, still in `yozakura config`). Entry format: see AGENTS.md.
+// per setting, picture cards for looks, expert knobs `advanced` (not rows
+// of the cards, still in `yozakura config`). Entry format: see AGENTS.md.
 
 // The shared pin (bar.pinnedOnStartup, the pin button) only drives panels
 // whose auto-hide is "auto" (BarContent.qml; a missing value is auto, the
@@ -271,8 +271,7 @@ var category = {
         },
         {
             "id": "media",
-            "title": "prefs.bar.section.media",
-            "advanced": true,
+            "title": "prefs.bar.section.modules",
             "entries": [
                 {
                     "key": "bar.moduleOptions.media.showTitle",
@@ -372,7 +371,6 @@ var category = {
                 },
                 {
                     "key": "workspaces.alwaysShowNumbers",
-                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "workspaces.showNumbers",

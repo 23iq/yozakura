@@ -10,7 +10,6 @@ import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.home
 import "schema/Categories.js" as Categories
-import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
 import "Registry.js" as Registry
 
@@ -49,11 +48,7 @@ Item {
     property Item morphItem: null
     property bool selecting: false
     // The active preset's changes sheet is open (home footer, toast).
-    property bool changesOpen: false
-    // The preset overlays (edit banner, trial pill, toast, changes sheet,
-    // name dialog) are loaded by URL once home has shown its first frame
-    // (or a page is open): none is on the first frame, their compile was.
-    readonly property bool overlaysReady: homeView.warm || !shell.atHome
+    property alias changesOpen: overlays.changesOpen
     readonly property alias home: homeView
     // Off until the first frame: a deep link opens straight on its page.
     property bool animated: false
@@ -218,21 +213,15 @@ Item {
 
     // The active preset's actions (home footer, changes sheet, toast).
     function presetAction(id) {
-        const toast = (ok, message, undo) => PresetStudio.notify(message, undo ? "save:" + undo : "");
-        if (id === "save")
-            PresetStudio.afterFlush(() => PresetStatusService.save(toast));
-        else if (id === "saveAs")
-            Ui.invoke(saveAsDialog.item, "ask", [I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast))]);
-        else if (id === "changes")
-            shell.changesOpen = true;
-        else if (id === "revert")
-            PresetStatusService.revert(toast);
+        overlays.presetAction(id);
     }
 
+    // Ctrl+Tab: the next tab in destination order; at home the first (or,
+    // backwards, the last), not the one after the page last shown.
     function step(delta) {
         const list = Categories.ordered();
-        let i = list.findIndex(c => c.id === currentCategory);
-        i = (i + delta + list.length) % list.length;
+        let i = shell.atHome ? (delta > 0 ? 0 : list.length - 1) : list.findIndex(c => c.id === currentCategory) + delta;
+        i = (i + list.length) % list.length;
         select(list[i].id);
     }
 
@@ -328,19 +317,10 @@ Item {
         onClicked: shell.goHome()
     }
 
-    Loader {
-        id: editBanner
-        width: parent.width
-        z: 5
-        active: shell.overlaysReady
-        asynchronous: true
-        source: Qt.resolvedUrl("presets/PresetEditBanner.qml")
-    }
-
     SettingsHome {
         id: homeView
         objectName: "settingsHome"
-        y: editBanner.height
+        y: overlays.bannerHeight
         width: parent.width
         height: parent.height - y
         // shown on the way back from its first frame (the tile's snapshot
@@ -374,7 +354,7 @@ Item {
         FocusScope {
             id: pageView
             objectName: "settingsPageView"
-            y: editBanner.height
+            y: overlays.bannerHeight
             width: parent.width
             height: parent.height - y
             visible: shell.reveal > 0
@@ -436,50 +416,16 @@ Item {
         z: 6
     }
 
-    Loader {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: editBanner.height + Space.l
-        z: 6
-        active: shell.overlaysReady
-        asynchronous: true
-        source: Qt.resolvedUrl("presets/PresetTrialPill.qml")
-    }
-
-    Loader {
-        anchors.left: parent.left
-        anchors.leftMargin: Space.xl
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Space.xl
-        z: 6
-        active: shell.overlaysReady
-        asynchronous: true
-        source: Qt.resolvedUrl("presets/PresetToast.qml")
-        onLoaded: Ui.on(item, "detailsRequested", () => shell.presetAction("changes"))
-    }
-
-    Loader {
-        id: changesSheet
+    // The preset overlays (edit banner, trial pill, toast, changes sheet,
+    // name dialog), by URL once home has shown its first frame (or a page is
+    // open): none is on the first frame, nor is their compile.
+    PresetOverlays {
+        id: overlays
         anchors.fill: parent
         z: 7
-        active: shell.overlaysReady || shell.changesOpen
-        asynchronous: !shell.changesOpen
-        source: Qt.resolvedUrl("presets/PresetChangesSheet.qml")
-        onLoaded: {
-            item.open = Qt.binding(() => shell.changesOpen);
-            item.index = Qt.binding(() => homeView.index);
-            Ui.on(item, "closed", () => shell.changesOpen = false);
-            Ui.on(item, "actionRequested", id => shell.presetAction(id));
-            Ui.on(item, "navigate", (c, sec, e) => shell.navigate(c, sec, e));
-        }
-    }
-
-    Loader {
-        id: saveAsDialog
-        anchors.fill: parent
-        z: 50
-        active: shell.overlaysReady
-        asynchronous: true
-        source: Qt.resolvedUrl("presets/PresetNameDialog.qml")
+        ready: homeView.warm || !shell.atHome
+        index: homeView.index
+        onNavigate: (c, sec, e) => shell.navigate(c, sec, e)
     }
 
     // Reveal after the page laid out.

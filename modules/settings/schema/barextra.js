@@ -13,7 +13,6 @@ var SINGLE_BAR = {
 var sections = [
     {
         "id": "launcher",
-        "advanced": true,
         "title": "prefs.bar.section.launcher",
         "entries": [
             {
@@ -60,7 +59,6 @@ var sections = [
             },
             {
                 "key": "bar.enableFirefoxPlayer",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.bar.firefox_player",
                 "description": "prefs.bar.firefox_player.desc",

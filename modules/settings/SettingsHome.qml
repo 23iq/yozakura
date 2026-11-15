@@ -21,7 +21,8 @@ import "Ui.js" as Ui
 // and one live status line; fewer columns in a narrow window, the rows
 // stretched so home fills it). Typing anywhere searches: the bento gives way
 // to the results (a cross-fade with a short glide), a command palette of
-// window rows with their breadcrumb and current value (HomeResults); Up /
+// every row of the window (the tabs' More cards too) with its breadcrumb
+// and current value (HomeResults); Up /
 // Down pick, Enter opens the picked one (it flashes), Esc clears. Arrows
 // move between tiles, Enter opens one. Cheap by design: no page is created
 // here, the tiles read config only.
@@ -29,7 +30,7 @@ FocusScope {
     id: home
 
     readonly property string query: search.text.trim()
-    // The search index of every window row: built on first need (the first
+    // The search index of every row of the window: built on first need (the first
     // query, or `wantIndex`), not at open (it walks every schema page).
     property bool wantIndex: false
     readonly property bool indexNeeded: home.wantIndex || home.query.length > 0
@@ -99,7 +100,8 @@ FocusScope {
     onQueryChanged: resultIndex = 0
 
     // "Screen › Bar › Clock": the destination, its tab (when it has several),
-    // then the section (the schema context is "page › section").
+    // then the section (the schema context is "page › section"); a row of
+    // the tab's More card says so ("Screen › Bar › More settings › Media").
     function contextOf(it) {
         const g = Categories.groupOf(it.categoryId);
         if (!g)
@@ -108,6 +110,8 @@ FocusScope {
         const cat = Categories.byId(it.categoryId);
         if (cat && g.categories.length > 1)
             parts.push(I18n.t(cat.title));
+        if (it.advanced === true)
+            parts.push(I18n.t("prefs.more.title"));
         return parts.concat(String(it.context || "").split(" › ").slice(1)).join(" › ");
     }
 
@@ -249,7 +253,13 @@ FocusScope {
                     hints: ["Ctrl F"]
                     clearOnEscape: true
                     focus: true
-                    onDownPressed: home.resultIndex = Math.min(home.resultIndex + 1, home.results.length - 1)
+                    // (no query: down to the tiles, the way Up came)
+                    onDownPressed: {
+                        if (home.query === "")
+                            home.focusTile(0);
+                        else
+                            home.resultIndex = Math.min(home.resultIndex + 1, home.results.length - 1);
+                    }
                     onUpPressed: home.resultIndex = Math.max(home.resultIndex - 1, 0)
                     onAccepted: home.activateResult(home.resultIndex)
                 }

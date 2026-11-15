@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
+import qs.modules.globals
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
@@ -27,7 +28,7 @@ Column {
             "key": "system.idle.general.after_sleep_cmd",
             "label": "prefs.power.wake_screen",
             "icon": Icons.monitor,
-            "command": "yozakura screen on"
+            "command": Brand.appId + " screen on"
         }
     ]
 
@@ -66,6 +67,7 @@ Column {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 checked: item.on
+                Accessible.name: I18n.t(item.modelData.label)
                 onToggled: v => SettingsStore.set(item.modelData.key, v ? item.modelData.command : "")
             }
         }

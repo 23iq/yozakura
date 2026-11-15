@@ -37,14 +37,15 @@
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The window opens on a home screen (SettingsHome): a 3x3 grid of equal
-// tiles, one per destination (HOME). A destination (`groups`) holds one or
-// more categories, shown as tabs at the top of its page (`categories`,
-// first = default tab). A category is one of:
+// The window opens on a home screen (SettingsHome): a bento of tiles, one
+// per destination, sized by weight (HOME, HOME_SIZES). A destination
+// (`groups`) holds one or more categories, shown as tabs at the top of its
+// page (`categories`, first = default tab). A category is one of:
 //   * schema-driven: has `sections` (see bar.js) - rendered by
-//     SettingsPage.qml as a hero (its `stage`, Registry.STAGES) over a
-//     bento of cards (one per section); entries flagged `advanced: true`
-//     are not in the window (SchemaUtil.inWindow);
+//     SettingsPage.qml: its stage (`stage`, Registry.STAGES) beside or over
+//     a bento of cards (one per section); entries flagged `advanced: true`
+//     are rows of the tab's folded More settings card (SchemaUtil.inCards /
+//     isAdvanced; search finds them too);
 //   * a page: has `page` - a hand-written page loaded by URL
 //     (Registry.PAGES).
 // Every category is listed in exactly one destination. `resolve(id)`
@@ -250,13 +251,20 @@ function withSections(cat, extra) {
     return out;
 }
 
+// sections of schema/system.js shown on other tabs (Power, Wallpapers, Dashboard)
+var SYSTEM_ELSEWHERE = ["performance", "video", "storage"];
+
+// sections of schema/ai.js shown on the Providers tab
+var PROVIDER_SECTIONS = ["picker", "usage_limits"];
+
 var categories = [
     // the theme (light or dark, the visual style) in one card beside the five
     // feel sliders in one card
     mergeInto(mergeInto(mergeInto(Appearance.category, "palette", ["accents"]), "mode", ["language"]), "tune", ["tune-surface"]),
     IconsType.category,
-    mergeInto(Wallpapers.category, "panorama", ["transition"]),
-    mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]),
+    withSections(mergeInto(Wallpapers.category, "panorama", ["transition"]), sectionsOf(System.category, ["video"])),
+    // the module options (media, sentence, launcher button): one card
+    mergeInto(mergeInto(withSections(Bar.category, [Layout.builderSection]), "autohide", ["screens"]), "media", ["sentence", "launcher"]),
     // the screen edge is a picture choice: a card of its own (its pictures say what "edge" means)
     mergeInto(Notch.category, "notch", ["behaviour", "idle"]),
     Dock.category,
@@ -269,24 +277,26 @@ var categories = [
     mergeInto(Lockscreen.category, "style", ["tone"]),
     mergeInto(Notifications.category, "behaviour", ["sound", "history"]),
     withSections(withEntries(Menus.category, "menus", [Layout.placed("layout.sheet.side", "prefs.layout.sheet_side"), Layout.placed("layout.backdrop", "prefs.layout.backdrop")], "layout.tools.style"), Osd.sections),
-    mergeInto(withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]), "home", ["memory"]),
+    // the monitored disks (its metrics) and the clipboard history's storage
+    withSections(mergeInto(withEntries(Dashboard.category, "", [Layout.placed("layout.dashboard.host", "prefs.layout.opens_in")]), "home", ["memory"]), sectionsOf(System.category, ["storage"])),
     Specials.category,
     mergeInto(mergeInto(mergeInto(Windows.category, "unfocused", ["dim"]), "borders", ["pulse"]), "blur", ["shadows"]),
     mergeInto(mergeInto(Terminal.category, "look", ["engine"]), "kitty", ["terminal"]),
     withEntries(Input.category, "", [Layout.placed("layout.cheatsheet.host", "prefs.layout.sheet_opens_in")]),
     // OCR languages are a language setting: Language & weather, not Updates
-    withSections(System.category, sectionsOf(Updates.category, ["ocr"])),
+    withoutSections(withSections(System.category, sectionsOf(Updates.category, ["ocr"])), SYSTEM_ELSEWHERE),
     Voice.category,
     withEntries(Timers.category, "notch", [Layout.placed("layout.panels.host", "prefs.layout.opens_in")]),
     Routines.category,
     withoutSections(Updates.category, ["ocr"]),
-    Power.category,
+    withSections(Power.category, sectionsOf(System.category, ["performance"])),
     Network.category,
     Bluetooth.category,
     Sound.category,
     Effects.category,
-    mergeInto(mergeInto(withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"), "center", ["model_effort", "context"]), "bar_behavior", ["sidebar"]),
-    AiProviders.category,
+    // the model picker and the usage and spending of providers: the Providers tab
+    withoutSections(mergeInto(mergeInto(withEntries(withSections(Ai.category, Sidebar.sections), "quickask", [Layout.placed("layout.aiquick.host", "prefs.layout.quickask_opens_in")], "ai.quickAsk.enabled"), "center", ["model_effort", "context"]), "bar_behavior", ["sidebar"]), PROVIDER_SECTIONS),
+    mergeInto(withSections(AiProviders.category, sectionsOf(Ai.category, PROVIDER_SECTIONS)), "defaults", ["picker"]),
     AiCode.category,
     Object.assign(page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"), {
         "form": "list",

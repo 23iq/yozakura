@@ -310,9 +310,9 @@ Singleton {
     // the Assistant any engine.
     function setDefaultModel(id) {
         if (space === "code" && id.startsWith("agent:"))
-            SettingsStore.set("ai.agents.defaultAgent", id.substring(6));
+            SettingsStore.setElsewhere("ai.agents.defaultAgent", id.substring(6));
         else
-            SettingsStore.set("ai.defaultModel", id);
+            SettingsStore.setElsewhere("ai.defaultModel", id);
     }
 
     // Picker child row "Claude › Haiku": the agent and its native model in

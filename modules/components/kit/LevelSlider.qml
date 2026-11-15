@@ -189,6 +189,9 @@ Item {
             root.setFraction((m.x - root.cap / 2) / root.span);
         }
         onPressed: m => {
+            // a pressed slider holds the focus (keys, and the wheel on a
+            // scrolling page: WheelGuard), as Knob does
+            root.forceActiveFocus();
             mouse.onCap = root.iconClickable && m.x < root.cap;
             if (!mouse.onCap)
                 mouse.track(m);

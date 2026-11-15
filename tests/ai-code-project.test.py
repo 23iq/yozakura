@@ -59,7 +59,7 @@ function showQuickAsk(kind) { quickAskKind=kind||""; }
 function hideQuickAsk() {}
 function toggleAssistant() { assistantVisible=!assistantVisible; }
 }''')
-h.singleton("qs.modules.settings.store", "SettingsStore", "QtObject { function set(key,value) {} }")
+h.singleton("qs.modules.settings.store", "SettingsStore", "QtObject { function set(key,value) {} function setElsewhere(key,value) {} }")
 h.singleton("qs.modules.services.activities", "ActivityService", "QtObject { property var transfers: [] }")
 for src in (repo / "modules/services/ai").glob("*"):
     if src.suffix in (".qml", ".js"):

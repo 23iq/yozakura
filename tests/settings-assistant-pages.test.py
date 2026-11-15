@@ -106,11 +106,13 @@ check(ev(f"{size_btn}.parent.size") == "compact" and ev(f"{size_btn}.parent.code
 ev("GlobalStates.assistantWide = false")
 ev("GlobalStates.aiSpace = 'assistant'")
 for e in ("ai.appearance.defaultSize", "ai.appearance.messageStyle", "ai.enabled", "ai.showThinking",
-          "ai.sidebarPosition", "ai.quickAsk.enabled", "layout.aiquick.host"):
+          "ai.sidebarPosition", "ai.quickAsk.enabled", "layout.aiquick.host", "ai.appearance.animations",
+          "ai.behavior.autoScroll"):
     check(row(e), f"assistant: {e} is on the page")
-for e in ("ai.appearance.animations", "ai.behavior.autoScroll", "ai.picker.showRecent", "ai.usage.sparklines",
-          "ai.strip.engine", "ai.providers.link"):
-    check(not row(e), f"assistant: {e} is not a row of the window")
+# the model picker and usage cards are on the Providers tab; the strip
+# chips are one editor
+for e in ("ai.picker.showRecent", "ai.usage.sparklines", "ai.strip.engine", "ai.providers.link"):
+    check(not row(e), f"assistant: {e} is not a row of Chat")
 # the status line's chips: one chip per item, on the page
 chip = ev('w.findItem("stripChip:limit")')
 check(chip is not None, "assistant: the status line's chips are on the page")
@@ -128,6 +130,7 @@ check(ev('w.findItem("providerState:ollama").border.color === w.findItem("provid
 check(ev('w.findItem("settingsConnectSheet") !== null'), "providers: the connect sheet is the row's list")
 check(ev('w.findItem("defaultModelChoice") !== null'), "providers: the default model beside it")
 check(not row("ai.providers.timeout"), "providers: request plumbing is out of the window")
+check(row("ai.picker.showRecent") and row("ai.usage.sparklines"), "providers: the model picker and usage rows are here")
 
 # ---- Code tasks: plain rows ---------------------------------------------------
 select("ai-code")

@@ -54,7 +54,7 @@ it shows in the launcher (`> id`), `<app> cmd id` and the MCP tools.
 and `prefix.launcher` (order, disabled, aiOnTab, filesInMixed, fileBackend,
 fileMaxResults, fileExcludes, currencyRefreshHours). Settings: category
 "launcher" (`modules/settings/schema/launcher.js`, editor
-`LauncherProvidersEditor`). Word prefixes need a space ("ff notes"), symbol
+`LauncherPrefixList`). Word prefixes need a space ("ff notes"), symbol
 prefixes do not ("?why").
 
 ## SETTINGS PREVIEW

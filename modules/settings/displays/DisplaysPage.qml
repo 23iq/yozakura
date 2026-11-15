@@ -29,7 +29,7 @@ FittedFrame {
     // the row grows to its tallest card: the resolutions (a long list
     // scrolls past about six rows), the scale strip or night light; never
     // to the window, so no card stretches what it holds
-    rowNeed: Math.max(resolutionCard.chrome + Math.min(resolutionList.needed, (Space.controlS + Space.xs) * 6.5), scaleCard.chrome + scaleSteps.implicitHeight, nightCard.chrome + nightLight.implicitHeight)
+    rowNeed: Math.max(resolutionCard.chrome + Math.min(resolutionList.needed, (Space.controlS + Space.xs) * 6.5), refreshCard.chrome + Math.min(refreshList.needed, (Space.controlS + Space.xs) * 6.5), scaleCard.chrome + scaleSteps.implicitHeight, nightCard.chrome + nightLight.implicitHeight)
     // The hero: the room the hint and the row leave (FittedFrame caps it on
     // a tall window). Stacked (narrow window, the page scrolls) it is half
     // as tall as wide, at least what the inspector needs.
@@ -270,8 +270,7 @@ FittedFrame {
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.resolution")
-            value: page.selectedConfig ? DisplayFormat.formatResolution(page.selectedConfig.width, page.selectedConfig.height) : ""
-            DisplayResolutionList {
+            DisplayChoiceList {
                 id: resolutionList
                 objectName: "resolutionSelector"
                 anchors.fill: parent
@@ -291,26 +290,24 @@ FittedFrame {
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.refresh")
-            value: page.selectedConfig ? DisplayFormat.formatHz(page.selectedConfig.refresh) : ""
             readonly property var draftOutput: page.selectedOutput && page.selectedConfig ? Object.assign({}, page.selectedOutput, page.selectedConfig) : null
-            Column {
-                width: parent.width
-                spacing: Space.m
+            // the same list as Resolution (one selection idiom a page):
+            // the best rate the monitor can do carries a lightning glyph
+            // while it runs slower (its tooltip says so): the hint is on
+            // that row, never a second button of the same rate
+            DisplayChoiceList {
+                id: refreshList
+                objectName: "refreshChips"
+                anchors.fill: parent
                 enabled: page.active
-                // the best rate the monitor can do carries a lightning glyph
-                // while it runs slower (its tooltip says so): the hint is
-                // on that chip, never a second button of the same rate
-                DisplayChips {
-                    objectName: "refreshChips"
-                    width: parent.width
-                    maxHint: page.upgrade > 0
-                    maxTip: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(page.upgrade))
-                    options: refreshCard.draftOutput ? DisplayFormat.refreshOptions(page.selectedOutput, page.selectedConfig) : []
-                    value: page.selectedConfig ? page.selectedConfig.refresh : 0
-                    onSelected: v => page.edit(page.selectedName, {
-                            "refresh": v
-                        })
-                }
+                itemPrefix: "refresh:"
+                hintIcon: page.upgrade > 0 ? "lightning" : ""
+                hintTip: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(page.upgrade))
+                options: refreshCard.draftOutput ? DisplayFormat.refreshOptions(page.selectedOutput, page.selectedConfig) : []
+                value: page.selectedConfig ? page.selectedConfig.refresh : 0
+                onSelected: v => page.edit(page.selectedName, {
+                        "refresh": v
+                    })
             }
         }
 
@@ -320,7 +317,6 @@ FittedFrame {
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.scale")
-            value: page.selectedConfig ? DisplayFormat.formatScale(page.selectedConfig.scale) : ""
             DisplayScaleSteps {
                 id: scaleSteps
                 objectName: "scaleChips"
@@ -340,7 +336,6 @@ FittedFrame {
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.night")
-            value: NightLightClient.active ? NightLightClient.temp + " K" : I18n.t("prefs.displays.night_off")
             DisplayNightLight {
                 id: nightLight
                 width: parent.width

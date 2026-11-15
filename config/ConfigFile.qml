@@ -139,10 +139,17 @@ FileView {
     // preset edit, a reverted trial). Written before the replacement lands,
     // the edit is simply replaced; left waiting, it would be merged into
     // the new contents (onFileChanged) and outlive the cancel.
+    // The write blocks until it is on disk: the reader starts right after.
     function flushPending() {
         if (saveTimer.running) {
             saveTimer.stop();
-            file.autoSave();
+            const was = file.blockWrites;
+            file.blockWrites = true;
+            try {
+                file.autoSave();
+            } finally {
+                file.blockWrites = was;
+            }
         }
     }
     onAdapterUpdated: {
@@ -202,9 +209,10 @@ FileView {
 
     // Writes only what this process changed since it last read or wrote
     // the file, laid over the file as it is now (re-read first). Used where
-    // a whole-domain write could drop another process's edits (a separate
-    // window's Apply with no main shell, StagedDomains.js). false: not
-    // loaded or the file is broken, nothing written.
+    // a whole-domain write could drop another process's edits: the setup
+    // wizard's staged values relayed to the main shell (PreviewSink, via
+    // StagedDomains.js). false: not loaded or the file is broken, nothing
+    // written.
     function writeMerged() {
         if (!file.ready || file.broken)
             return false;

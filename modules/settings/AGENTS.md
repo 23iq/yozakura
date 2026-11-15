@@ -19,17 +19,22 @@ shared element, home/MorphFrame). A destination page: a round back button,
 the title, the tabs, History and ⋯ (Reset page) stay on top (a hairline
 under them once the page scrolls); under them, on a wide window, the
 destination grid of two equal columns, the same in every tab: the **stage**
-alone holds the right one, sticky, while the cards scroll in the left one
-(the Screen tabs: one whole-screen canvas kept across the tabs, the tab's
-own stage as a loupe under it); a page without a stage fills both columns
-with cards (no "More" sheet). Search, modified / reset state, the CLI /
-MCP catalog and the audits are all generated from the same declarations.
+holds the right one, sticky, with the **inspector** under it where there
+is room (the pointed setting, else the tab's changes), while the cards
+scroll in the left one (the Screen tabs: one whole-screen canvas kept
+across the tabs, the tab's own stage as a loupe under it); a page without
+a stage fills both columns with cards. Every tab ends with its folded
+**More settings** card: the tab's advanced rows. Search, modified / reset
+state, the CLI / MCP catalog and the audits are all generated from the
+same declarations.
 
 Design rules (owner's brief, binding for every page; in this order: clear,
 then beautiful, then interactive):
-- Only the important options are rows of the window. Rare knobs stay in the
-  schema with `advanced: true` (reachable through `yozakura config`, MCP and
-  presets, never rendered, never found by the window's search).
+- Only the important options are rows of the tab's cards. Rare knobs and
+  plumbing are `advanced: true`: rows of the tab's More settings card at the
+  page's end, folded (PageMore; built on its first open), found by search
+  like any row (a jump opens the card). Every schema entry is reachable in
+  the window (tests/settings-window.test.cjs).
 - No text walls: a row is a short sentence-case label (two to four words)
   and its control. The description is the label's tooltip, never printed.
   A one-line `hint` (eight words at most) only where the effect cannot be
@@ -49,7 +54,9 @@ modules/settings/
 ├── SettingsWindowSeparate.qml   + SettingsShell by URL, async, behind SettingsLoading (settings-window.qml)
 ├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
 ├── SettingsShell.qml       the frame: home <-> destination (shared-element growth), shortcuts,
-│                           UndoPill, preset overlays; select / openDestination / goHome / navigate
+│                           UndoPill; select / openDestination / goHome / navigate
+├── PresetOverlays.qml      the preset overlays (edit banner, trial pill, toast, changes sheet, name
+│                           dialog: Loaders by URL after the first frame) + presetAction
 ├── SettingsHome.qml        brand, search (window rows, value shown), undo, the weighted tile bento, preset footer
 ├── HomeTile.qml            one destination tile (kit Card): a scene (home/<X>Scene.qml, by URL; beside the
 │                           name on a wide tile, above it on a squarer one) or, without one or room for it,
@@ -67,23 +74,35 @@ modules/settings/
 │                           neighbours (same test)
 ├── DestinationHeader.qml   back pill, title, tabs after it (kit Segmented `navigation`), History + ⋯ (PageMenu)
 ├── PageMenu.qml            the header's small menus (History steps, ⋯: Reset page, All changes)
+├── HistoryMenu.qml         the History menu (header and home): steps by id (`undo:<id>`, undoTo)
+├── PillButton.qml          a labelled text button (kit Chip; `kind`, `icon` = an Icons name)
+├── EdgeFade.qml            fades a scrolling strip's cut edges with a mask (header tabs, strips)
 ├── SettingsPageHost.qml    creates pages by URL on first visit, keeps the last 4 (PageCache.js); tab switches
 │                           as one two-page transition; the shared Screen canvas
 ├── SettingsPage.qml        a schema category on the destination grid (`wide`: two columns; `split`: the
-│                           stage alone in the right one, sticky), the stage-on-top bento in a narrow window
+│                           stage sticky in the right one, the inspector under it), the stage on top in a
+│                           narrow window or a list page; the stage, the hint, the reveal (search jumps)
+├── PageBento.qml           the page's cards: SettingsSection per section, masonry (BentoLayout.place)
+├── PageMore.qml            the tab's folded More settings card (SchemaUtil.moreGroups: advanced rows)
+├── PageInspector.qml       under the sticky stage: the pointed row (name, now / default, Reset) or the
+│                           tab's changes (counted while shown, after changes settle); InspectorLine
+├── HoverHint.qml           the stage's hint line (shows while the pointer is over the stage)
 ├── RectGlide.qml           glides an item to a rect on a discrete change, lands at once on a resize
 ├── FittedFrame.qml         measures of the hand-written one-screen pages (Displays, Keyboard, About)
 ├── BentoLayout.js          pure: page columns, card spans, masonry places / floor / widen / stretch (same test)
 ├── RowLines.js            pure: a card's rows in lines (picture rows side by side; settings-row-lines.test.cjs)
 ├── ControlColumn.js        pure: a card's control column and stepper readout (settings-control-column.test.cjs)
-├── SettingsSection.qml     one section as a kit Card of SettingRows (window entries only)
+├── SettingsSection.qml     one section as a kit Card of SettingRows (card rows; `more`: a group of the
+│                           More card, its advanced rows, unboxed)
 ├── SettingRow.qml          label (+ Tooltip, reset, caption) and the typed control; points the stage
+├── RowControls.qml         a row's typed controls, one Component per entry type (`forType`)
 ├── UndoPill.qml            "<what> changed · Undo" after every change (Redo after an undo)
 ├── PageHeader.qml          a hand-written page's action row (the window draws the title)
 ├── UndoModel.js            pure: undo steps, coalescing, labels (tests/settings-undo.test.cjs)
 ├── PageCache.js            pure: which pages stay alive (same test)
 ├── ConfigWrite.js          pure: one dotted key into Config (SettingsStore, PreviewSink)
-├── SchemaUtil.js           pure: keys, conditions, inWindow, validation, search index (node-tested)
+├── SchemaUtil.js           pure: keys, conditions, inCards / isAdvanced / moreGroups, validation, search
+│                           index (node-tested)
 ├── ResetModel.js           pure: which entries Reset page and the counters touch
 ├── DisabledReason.js       pure: the failing condition -> reason text / the one switch that fixes it
 ├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES; DESKTOP_STAGES (the
@@ -104,11 +123,15 @@ modules/settings/
 │                           grid, PictureGrid.js), CardSelector
 ├── editors/                rich `custom` editors (one file each, `property var entry`); PageCard +
 │                           CardScroll: a hand-written one-screen page's card and its scrolling body
+│                           ReorderList.qml: the one generic reorderable list (drag, keyboard Up / Down,
+│                           a moved row keeps its focus); list editors build on it, never their own
 ├── previews/               old under-row previews (`preview`), for pages not converted yet
 ├── schema/Categories.js    information architecture: destinations, tabs, HOME tiles, MOVED, resolve();
 │                           withSections / withEntries / withoutSections / sectionsOf compose tabs
 ├── schema/<category>.js    one file per category (a tab of a destination)
-├── store/SettingsStore.qml get / set (live + undo) / stageSet (wizard) / reset / focusKeys / navigate
+├── store/SettingsStore.qml get / set (live + undo) / setElsewhere / stageSet (wizard) / reset / focusKeys /
+│                           focusOwner / navigate
+├── store/UndoHistory.qml   the window's session history (steps, transactions, undo / redo / undoTo)
 ├── store/PresetStudio.qml  preset studio data + actions (`<app> preset ...`)
 ├── presets/, displays/, keyboard/, extras/, mods/, changes/, system/  hand-written pages
 ├── connect/                live device lists of the Network, Bluetooth and Sound tabs (ConnectModel.js)
@@ -186,14 +209,18 @@ branches on the language name (`Look`).
 - Page body (SettingsPage): with a content width of 900 px or more, the
   destination grid of two equal columns (`wide`), the same in every tab of
   a destination (switching tabs never changes the content width). With a
-  stage (`split`) the right column is the stage alone, sticky (it scrolls
-  only until its foot shows, then stays; nothing sits under it) and the
-  cards fill the left one in importance order (the `row` lead sections,
-  then the schema order: `BentoLayout.order(..., single)`); without one
-  the cards fill both columns. The hint under the stage shows while the
-  pointer is over it (and once, when the page first shows); its line is
-  kept so nothing moves. A stage in a column
-  is asked for its height (`preferredHeight`) or is 16:9; stages built as
+  stage (`split`) the right column is the stage, sticky (it scrolls only
+  until its foot shows, then stays), with the inspector under it while at
+  least 150 px are left (PageInspector), and the cards fill the left one
+  in importance order (the `row` lead sections, then the schema order:
+  `BentoLayout.order(..., single)`); without one the cards fill both
+  columns. A list page (`form: "list"`) keeps its band on top and its
+  cards share the band's whole width. After the cards, the tab's folded
+  More settings card (PageMore), as wide as the cards' area. The hint
+  under the stage shows while the pointer is over it; its line is kept so
+  nothing moves. A stage is asked for its height (`preferredHeight`: it
+  lays itself out at that height, so the page gives it that, up to the
+  view) or is 16:9 (on top: a third of the page at most); stages built as
   page-wide strips have a `narrow` layout (Notifications: the small screen
   over the toast; Menus & OSD: screen and OSD on a line, the menu under
   them; Power: the gauge over the profiles; Island: the state chips under
@@ -207,8 +234,9 @@ branches on the language name (`Look`).
   off; a vertical bar's loupe shows its ends side by side, BarWindows.js),
   or over it for Widgets & clock and Lock screen;
   each tab's stage is built once and cross-fades. A narrow
-  window keeps the stack: stage on top, a bento (`BentoLayout.js`, 1 to 3
-  columns) under it. A card (SettingsSection) has a
+  window keeps the stack: stage on top (under the cards, which slide over
+  it as it recedes on scroll), a bento (`BentoLayout.js`, 1 to 3 columns,
+  starting at the page's left edge) under it. A card (SettingsSection) has a
   heading (`title` role) with the current value on the right when it holds
   one setting; such a card's picture / editor row drops its own label
   (`SettingRow.bare`).
@@ -248,6 +276,22 @@ branches on the language name (`Look`).
   hairline edge, lifts on hover); selected = the accent ring drawn inside
   the edge (never clipped) + a check badge in the picture's corner + the
   title in the active weight; FocusRing on keyboard focus.
+- Inspector (PageInspector, two panes only): the pointed row's name, its
+  value now and its default (InspectorLine: name and value wrap), Reset
+  while they differ; the description stays the label's tooltip (never
+  printed). Moving onto the inspector, or Tab onto its Reset, keeps its
+  row (the row's own reset, Tab-reachable, is the keyboard path). With no
+  row: "N settings changed on this tab", up to five of them named (a
+  composite value says "Changed"), "+N more"; with none changed, the first
+  values of the tab. The summary is counted only while it shows, 250 ms
+  after the last change (never per frame of a drag, never in a hidden
+  kept page). It reads `SettingsStore.focusOwner`.
+- More settings (PageMore): a card after the tab's cards whose heading is
+  a button (caret, "More settings", how many rows it holds now; Enter /
+  Space / click, an `Accessible` button with its expanded state) that
+  folds the advanced rows open (Motion.glide) in one group per section
+  (SettingsSection `more`: the section title as a group label). Built on
+  the first open, kept. Hidden when no advanced row shows.
 - Accessibility: a row names its control (`SettingRow.nameControl`: the
   label; `Accessible.description` = the entry's description); direct
   manipulation targets on a stage (corners, edges) are `Accessible` radio
@@ -324,17 +368,25 @@ Ctrl+Shift+Z undo / redo; Ctrl+Tab steps through tabs.
   ends where it began disappears. `undo()` / `redo()` (Ctrl+Z, Ctrl+Shift+Z /
   Ctrl+Y, the pill) replay the values without recording. `lastStep` feeds
   the pill, and the pill undoes the step it names, by its id (never a
-  newer one). A key with no entry of its own is named by its parent entry.
-  A step whose keys no longer hold its "after" value (something outside
-  the window changed them) is dropped, never replayed over the newer value.
+  newer one); the History menu names its steps by id too and undoes back
+  to one (`undoTo(id)`: it and every newer step, never an older one). A
+  key with no entry of its own is named by its parent entry. A step whose
+  keys no longer hold its "after" value (something outside the window
+  changed them) is dropped, never replayed over the newer value; Ctrl+Z
+  then goes on to the step under it. The history is `store/UndoHistory.qml`
+  (SettingsStore forwards its API).
+- `SettingsStore.setElsewhere(key, value)`: a live change made outside the
+  window (the AI panel's model picker, a project's settings): never a step
+  of the window's history, so Ctrl+Z in Settings never takes it back.
   The history clears on preset apply / try / keep / revert, on a preset
   edit's save or cancel, on an external reload that changed a value the
   history expects, and when the window closes.
 - `SettingsStore.transaction(label, fn)`: every change `fn` makes is ONE step
   (Reset page, a reset of a multi-key entry, a macro slider, an editor that
   rewrites a whole object). Use it in any editor that writes several keys.
-- `reset(entry)`, `resetCategory(category)` (Reset page, window rows only,
-  `ResetModel.activeItems`): one step each; no confirmation (undo instead).
+- `reset(entry)`, `resetCategory(category)` (Reset page: every row of the
+  page, its More card included, `ResetModel.activeItems`): one step each;
+  no confirmation (undo instead).
 - `SettingsStore.stageSet(key, value)`: the setup wizard only
   (`OnboardingState.set`). Staged like the old Apply flow: the GlobalStates
   snapshot of the domain is taken and its auto-save paused; `apply()` writes
@@ -403,8 +455,8 @@ costs nothing until opened and gives all its memory back when closed.
 - SettingsPage builds its sections a few per frame and stays hidden until
   every bento column reaches below the viewport (`BentoLayout` floor: the
   cards still to come land out of sight), then enters; it relayouts the
-  bento synchronously each build frame so no card moves once shown. No row
-  object exists for an out-of-window entry.
+  bento synchronously each build frame so no card moves once shown. The
+  More card builds no row until it is first opened.
 - Heavy live previews become pictures: the lock screen gallery builds one
   LockView at a time, captures it (`grabToImage`) and destroys it; the Lock
   screen stage does the same with the chosen style at stage size (a change
@@ -424,8 +476,9 @@ costs nothing until opened and gives all its memory back when closed.
      "label": "prefs.bar.compact", "description": "prefs.bar.compact.desc",
      "keywords": "compact dense slim thin small height" }
    ```
-   Not important enough for the window? Add `"advanced": true` (it stays in
-   the catalog and the CLI). Most new knobs are.
+   Not important enough for the tab's cards? Add `"advanced": true` (a row
+   of the tab's More settings card; in the catalog and the CLI as any).
+   Most new knobs are.
 3. Label / description keys in `translations/{en,es,ru}.json`.
 4. `make schema` (catalog `assets/schema/*.schema.json`).
 
@@ -433,7 +486,7 @@ Entry fields: `key` (dotted, `domain.prop[.sub]`), `type` (`toggle | selector
 | slider | number | text | font | color-role | list | path | screens |
 multiselect | macro | custom`), `label`, `description` (tooltip + catalog),
 `hint` (i18n key: the one visible caption line, rare), `keywords`,
-`advanced` (not in the window), `placeholder`, `pattern`, `options`
+`advanced` (a row of the More card, not of the cards), `placeholder`, `pattern`, `options`
 (`[{value, label, icon}]`), `display: "cards"` + `thumb` (picture cards),
 `min/max/step/unit`, `specialValues`, `visibleWhen` / `enabledWhen`
 (declarative: `{key, equals|notEquals|in|truthy|empty}`, `{key, some: {field,
@@ -453,7 +506,7 @@ fields; exempt from the one-control check).
 Section fields: `id`, `title`, `entries`, `toggle` (the key of a switch of
 the section drawn in the card's heading, for a card that is the thing it
 turns on: Special workspaces), `advanced: true` (the whole section
-is out of the window), `compositor`, `span`. A section shows only while one
+is a group of the More card), `compositor`, `span`. A section shows only while one
 of its rows does. Category fields: `id`, `icon`, `title` (the tab label),
 `description`, `keywords`, `sections`, `stage` (Registry.STAGES name) or
 `page` (Registry.PAGES name), `hero` (`{left: [key|id], right: [key|id],
@@ -467,9 +520,14 @@ Control mapping (applied everywhere): on / off -> `toggle` (Switch);
 `number` (stepper); a font -> `font` (the picker; `sizeKey` adds the size).
 
 ## PAGE COMPOSITION (the template; the rules for every page)
-A page is one scrolling column: header (DestinationHeader, outside the
-scroll: always visible, undo included), then the stage, the hint and every
-card of the tab. Nothing hides in a sheet; the page scrolls.
+A page: the header (DestinationHeader, outside the scroll: always
+visible, History and ⋯ included), then the scrolling page (SettingsPage,
+see LOOK > Page body). Wide (content 900 px or more): two equal columns,
+the cards (PageBento) in the left one and the stage sticky in the right
+one with the inspector under it, or, without a stage, the cards in both.
+Narrow, or a list page: the stage (a list page's band) on top and the
+cards under it. Last, the tab's folded More settings card (its advanced
+rows). Nothing hides in a sheet; the page scrolls.
 
 - Previews are the thing itself, big and readable, never a shrunk desktop
   where the desktop is not the subject. Strip stages (`pageWide: true`,
@@ -594,7 +652,8 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
 1. Budget: about 8 to 15 rows a tab (the window ~280 in all). Count with
    `tests/settings-window.test.cjs` (add the page to its budget test).
 2. Curate: for every entry ask "would most people change this here?". If
-   not, `"advanced": true` (or the whole section). Plumbing never stays:
+   not, `"advanced": true` (or the whole section: the More card). Plumbing
+   never stays in the cards:
    raw shell commands, timeouts in seconds, mount points, endpoints,
    performance toggles, per-surface opacities, "match the shell" switches.
    A row that only refines another (sub-options of an effect) goes too.
@@ -945,15 +1004,19 @@ it writes only the keys that differ, as one undo step. Defaults must sit on
 a point. The keys a macro moves are not rows of their own.
 
 ## SEARCH / CHANGES PAGE
-The home search covers window rows only (`SchemaUtil.buildSearchIndex`
-skips out-of-window entries); typing anywhere on home starts it. A result
-names its destination (and tab, section) and shows the row's current value;
-Up / Down pick, Enter opens the highlighted one, Esc clears. It lands on the
-row (scroll, accent wash, keyboard focus). `Synonyms.js` (en + ru) maps
-words people type to the words the schema uses. The Changes tab (Presets)
-lists every shown setting that differs from its default or the preset:
-window rows with a jump to their row, out-of-window ones (advanced) without
-a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
+The home search (Ctrl+F from a page too) covers every row of the window,
+the More cards' too (`SchemaUtil.buildSearchIndex`: every labelled entry,
+`advanced` marked; an equal match ranks a card row first); typing
+anywhere on home starts it. A result names its destination (and tab,
+"More settings" for an advanced row, section) and shows the row's current
+value; Up / Down pick, Enter opens the highlighted one, Esc clears, Down
+in an empty field goes to the tiles. It lands on the row (scroll, accent
+wash, keyboard focus); an advanced row's jump opens the More card first
+(PageMore.rowFor, at once, no fold animation). `Synonyms.js` (en + ru)
+maps words people type to the words the schema uses. The Changes tab
+lists every shown setting that differs from its default or the preset,
+each with a jump to its row (a More card row too; ResetModel.changedItems
+lists a More entry whose keys a card row holds once, by that row).
 
 ## VERIFY
 - `make check`: the `settings-schema` audit (keys / defaults, translations,

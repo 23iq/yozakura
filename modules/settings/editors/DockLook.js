@@ -1,7 +1,7 @@
 .pragma library
 
 // The dock's look card (DockLookEditor.qml): its size steps and running
-// indicators. Pure (tests/settings-dock-look.test.cjs).
+// indicators. Pure (tests/settings-dock-osd.test.cjs).
 
 // dock.iconSize steps, a label each (the default, 24 px, is "Medium")
 var SIZES = [

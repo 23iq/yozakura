@@ -201,7 +201,6 @@ FittedFrame {
             width: page.stacked ? row.width : row.unitW * 1.2
             height: page.rowH
             title: I18n.t("prefs.keyboard.layouts")
-            value: KeyboardService.shortLabel
             CardScroll {
                 id: kbScroll1
                 anchors.fill: parent

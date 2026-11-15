@@ -131,7 +131,10 @@ check(h.eval(row("bar.containBar"), "dimmed") is True, "inside-the-frame waits, 
 ev("SettingsStore.set('bar.frameEnabled', true)")
 settle()
 check(h.eval(row("bar.containBar"), "dimmed") is False, "inside-the-frame live with frame")
-check(ev('w.findItem("settingRow:bar.frameThickness")') is None, "an out-of-window entry has no row")
+# an advanced entry is a row of the folded More card: no row until it opens
+adv_id = ev('(function() { var e = w.findItem("moreSettings", w.findItem("settingsPage").item).groups[0].entries[0]; return e.id || e.key; })()')
+check(bool(adv_id), f"the Bar tab has advanced entries (its More card): {adv_id!r}")
+check(ev(f'w.findItem("settingRow:{adv_id}", w.findItem("settingsPage").item)') is None, "an advanced entry has no row while the More card is folded")
 
 # Host/style pickers note where they show while the notch is off
 select("menus")
@@ -395,6 +398,7 @@ check(ev("Config.apps.theming.discord") is False, "app theming toggle writes app
 check(h.eval(row("apps.theming"), "modified") is True, "app theming entry modified")
 h.eval(ev('w.findItem("glassLink")'), "clicked()")
 until(lambda: ev("currentCategory") == "appearance", "glass link opens Appearance")
+until(lambda: ev('w.findItem("macro:glass") !== null'), "...on a row that is in the window (the Glass macro)")
 
 # Windows page: color-role control, nested pulse key, preview
 select("windows")

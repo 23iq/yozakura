@@ -7,22 +7,19 @@ import qs.modules.theme
 // Loader that exists only while the weather asks for it; the bar alone gets
 // the heat shimmer and the seasonal petal. Effects animate only while
 // `animate` (motion on, surface and window shown) and sit still otherwise.
-// A WeatherFxScope among the ancestors (the settings preview) replaces the
-// live weather with its own condition.
 Item {
     id: root
 
-    // The StyledRect surface root and the WeatherFxScope (typed loosely:
-    // both live in the parent directory)
+    // The StyledRect surface root (typed loosely: it lives in the parent
+    // directory)
     property var surface: null
-    property var scope: null
     // Corner radius of the surface (frost and flakes keep inside it)
     readonly property real radius: root.surface ? root.surface.radius : 0
 
     // Effects reach past their item (fog banks, a petal arriving): keep them
     // on the surface
     clip: true
-    readonly property var fx: root.scope ? root.scope.effects : WeatherFx.effects
+    readonly property var fx: WeatherFx.effects
     readonly property string host: root.surface ? root.surface.glassSurface : ""
     readonly property bool isBar: root.host === "bar"
     readonly property bool horizontal: root.width >= root.height
@@ -36,19 +33,6 @@ Item {
     readonly property bool animate: WeatherFx.motionOn && root.shown && !root.covered
     // Salt of this surface's random layout (stable per host)
     readonly property int salt: root.host.length * 131 + Math.round(root.width) % 97
-
-    function findScope(): QtObject {
-        for (let p = root.parent; p; p = p.parent) {
-            const data = p.data;
-            for (let i = 0; i < data.length; i++) {
-                if (data[i] && data[i].objectName === "weatherFxScope")
-                    return data[i];
-            }
-        }
-        return null;
-    }
-
-    Component.onCompleted: root.scope = root.findScope()
 
     Loader {
         objectName: "weatherFog"

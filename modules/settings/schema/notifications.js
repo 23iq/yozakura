@@ -214,7 +214,7 @@ var category = {
         },
         {
             // what shows now (and a test), where corner toasts show (the
-            // stage moves them too) and on which screens: in More
+            // stage moves them too) and on which screens
             "id": "where",
             "title": "prefs.notif.section.where",
             "entries": [

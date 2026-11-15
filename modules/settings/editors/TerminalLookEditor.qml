@@ -1,11 +1,11 @@
 import QtQuick
 
-// Settings > Apps > Terminal, "More": the full prompt view (live kitty
+// Settings, System, Terminal tab, its own card: the full prompt view (live kitty
 // preview, what keeps the prompt from showing and the action that fixes it:
 // install the engine or a Nerd Font, make fish the login shell, a foreign
 // prompt in config.fish; the prompt gallery with descriptions;
 // modules/terminal/TerminalLookSection, shared with onboarding). Created by
-// URL the first time the sheet shows it, so the page never pays for it.
+// URL the first time the card shows it, so the page never pays for it.
 Item {
     id: root
 

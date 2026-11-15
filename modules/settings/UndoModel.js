@@ -141,6 +141,18 @@ function push(stack, step, now, equal) {
     return pushResult(stack, step, now, equal).stack;
 }
 
+// How deep the step `id` lies in `stack` (0: the newest), -1: not there.
+// Ids grow with every new step (a merge keeps its step's id), so the steps
+// newer than it are exactly those above it.
+function depthOf(stack, id) {
+    var list = stack || [];
+    for (var i = list.length - 1; i >= 0; i--) {
+        if (list[i].id === id)
+            return list.length - 1 - i;
+    }
+    return -1;
+}
+
 // Every change of `step` still holds `field` ("after": the step can be
 // undone; "before": it can be redone) by `get(key)`. A key `skip(key)`
 // says to trust (its value is not known synchronously) is not checked.

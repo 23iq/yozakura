@@ -16,16 +16,25 @@ Card {
     padding: Look.boxPadding + Space.s
 
     Item {
+        id: room
         width: root.contentWidth
         height: root.height - root.padding * 2
+        // what must show: the words, the banner, the field; the plate only
+        // where the card holds it too (a short window)
+        readonly property real need: words.height + banner.height + field.height + stack.spacing * 2
+        readonly property bool platePlace: room.height >= room.need + plate.height + stack.spacing
 
         Column {
             id: stack
             width: Math.min(parent.width, Space.px(520))
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            // centred, but never above the card's top when it is short
+            y: Math.max(0, Math.round((room.height - height) / 2))
             spacing: Space.l
 
             Mark {
+                id: plate
+                visible: room.platePlace
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Space.controlL + Space.l
                 height: width
@@ -39,6 +48,7 @@ Card {
                 }
             }
             Column {
+                id: words
                 width: parent.width
                 spacing: Space.xs
                 KitText {
@@ -57,9 +67,11 @@ Card {
                 }
             }
             ModsStatusBanner {
+                id: banner
                 width: parent.width
             }
             ModsInstallSource {
+                id: field
                 objectName: "modsEmptySource"
                 width: parent.width
                 onInstallRequested: source => root.installRequested(source)

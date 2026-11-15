@@ -13,24 +13,26 @@ import "controls/PictureGrid.js" as PictureGrid
 import "ControlColumn.js" as ControlColumn
 
 // One schema section as a bento card (kit Card): a heading (the section
-// title) with the current value on the right when the card holds one
-// setting ("Shape ... Classic"), over one SettingRow per entry that is in
-// the window (SchemaUtil.inWindow: no row object exists for an
-// out-of-window entry) and not shown beside the stage (`exclude`). A card
-// of one picture / editor setting drops the row's own label (the heading
-// names it). The card shows only while one of its rows does
-// (SettingsStore.sectionShown: compositor gate, visibleWhen).
+// title) over one SettingRow per entry that is a card row
+// (SchemaUtil.inCards: no row object exists for an advanced entry) and not
+// shown beside the stage (`exclude`). A card of one picture / editor
+// setting drops the row's own label (the heading names it). The card shows
+// only while one of its rows does (SettingsStore.sectionShown: compositor
+// gate, visibleWhen). `more`: the section's advanced entries as a group of
+// the page's More card (PageMore): no box of its own, a group label.
 Card {
     id: sectionRoot
 
     required property var section
+    // a group of the More card: the section's advanced entries, unboxed
+    property bool more: false
     // entry keys / ids shown elsewhere (beside the stage)
     property var exclude: []
     readonly property string sectionId: section.id
     // `toggle`: the key of a switch of this section drawn in the card's
     // heading (the card is the thing it turns on: Special workspaces)
-    readonly property var headerToggle: section.toggle ? (section.entries || []).find(e => e.key === section.toggle) || null : null
-    readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0 && !(section.toggle && e.key === section.toggle))
+    readonly property var headerToggle: section.toggle && !sectionRoot.more ? (section.entries || []).find(e => e.key === section.toggle) || null : null
+    readonly property var entries: (section.entries || []).filter(e => (sectionRoot.more ? SchemaUtil.isAdvanced(e, section) : SchemaUtil.inCards(e, section)) && sectionRoot.exclude.indexOf(e.key || e.id) < 0 && !(section.toggle && e.key === section.toggle))
     // A card of the page row whose rows wait on one switch: they show
     // dimmed, with one "Turn on" for the card (CardGate.js).
     readonly property var gate: CardGate.gate(sectionRoot.entries, SettingsStore.get, k => SettingsStore.entryByKey[k] || null)
@@ -39,7 +41,7 @@ Card {
     // its waiting rows stay dimmed and a press on one flips that switch
     property var pageKeys: []
     readonly property bool offersTurnOn: sectionRoot.gate !== null && sectionRoot.pageKeys.indexOf(sectionRoot.gate.fix.key) < 0
-    readonly property bool shown: sectionRoot.entries.length > 0 && (SettingsStore.sectionShown(section) || sectionRoot.gate !== null)
+    readonly property bool shown: sectionRoot.entries.length > 0 && (SettingsStore.sectionShown(section, sectionRoot.more) || sectionRoot.gate !== null)
     // A row card whose rows all wait (the thing is turned off): it stays and
     // says so instead of vanishing from the row.
     readonly property bool waiting: false
@@ -129,6 +131,7 @@ Card {
     objectName: "settingsSection:" + sectionId
     // reached from a click on the stage: a brief accent wash
     background: Mark {
+        visible: !sectionRoot.more
         objectName: "sectionFlash"
         anchors.fill: parent
         radius: Look.radius("surface", height)
@@ -143,8 +146,10 @@ Card {
         }
     }
     visible: (sectionRoot.shown || sectionRoot.waiting) && !sectionRoot.pending && !sectionRoot.suppressed
-    padding: Look.boxPadding + Space.s
+    padding: sectionRoot.more ? 0 : Look.boxPadding + Space.s
     spacing: Space.s
+    fill: !sectionRoot.more
+    shadow: !sectionRoot.more
 
     // The heading sits at the row inset: the card title, the group labels,
     // the row labels and the pictures share one left edge.
@@ -160,9 +165,9 @@ Card {
             objectName: "sectionHeading"
             // (no value summary: the card's own control shows the value)
             width: parent.width - (gateChip.visible ? gateChip.width + Space.m : 0) - (headSwitch.visible ? headSwitch.width + Space.m : 0)
-            role: "title"
+            role: sectionRoot.more ? "group" : "title"
             text: sectionRoot.section.title ? I18n.t(sectionRoot.section.title) : ""
-            elide: Text.ElideRight
+            wrapMode: Text.WordWrap
         }
         Switch {
             id: headSwitch

@@ -15,18 +15,20 @@ import "Registry.js" as Registry
 // A schema-driven tab, one scrolling page on the destination's grid: in a
 // wide window two equal columns, the same in every tab of a destination
 // (switching tabs never changes the content width). A tab with a stage
-// (`stage`: the live picture of what the tab places or styles; only tabs
-// about something on the desktop have one, see Registry.DESKTOP_STAGES)
-// keeps the right column for it, sticky (it stays in view while the cards
-// scroll in the left column; nothing sits under it); a tab without one
-// fills both columns with its cards. The Screen tabs share one canvas the
-// page host keeps across them (`sharedCanvas`, stages/ScreenCanvas.qml).
-// The tab's hint (`hero.hint`) shows quietly while the pointer is over the
-// stage (and once, the first time the page shows); the Wallpaper library is
-// a strip along the stage's foot (`hero.foot`). A narrow window stacks the
-// stage over one or two columns of cards. Cards are a masonry
-// (BentoLayout.js, cards as tall as their rows); `row` names the cards
-// that come first, in that order. Nothing here is category specific.
+// (`stage`: the live picture of what the tab places or styles, see
+// Registry.DESKTOP_STAGES / PLAIN_STAGES) keeps the right column for it,
+// sticky (it stays in view while the cards scroll in the left column), with
+// the inspector under it where there is room (PageInspector: the pointed
+// setting, else the tab's changes); a tab without one fills both columns
+// with its cards. The Screen tabs share one canvas the page host keeps
+// across them (`sharedCanvas`, stages/ScreenCanvas.qml). The tab's hint
+// (`hero.hint`) shows quietly while the pointer is over the stage; the
+// Wallpaper library is a strip along the stage's foot (`hero.foot`). A
+// narrow window (or a list page: its band) stacks the stage over the cards,
+// which slide over it as the page scrolls. The cards are PageBento (a
+// masonry, `row` naming the cards that come first); after them the folded
+// More settings card (PageMore: the tab's advanced rows). Nothing here is
+// category specific.
 Flickable {
     id: page
 
@@ -45,7 +47,7 @@ Flickable {
     readonly property var leadIds: (page.category.row || []).map(r => typeof r === "string" ? r : r.id)
     // the sections in page order: the lead ones first, then cards of plain
     // rows, then cards of big controls (BentoLayout.order)
-    readonly property var order: BentoLayout.order(page.category.sections || [], page.leadIds, SchemaUtil.inWindow, page.importanceOrder)
+    readonly property var order: BentoLayout.order(page.category.sections || [], page.leadIds, SchemaUtil.inCards, page.importanceOrder)
     // rank of a section in the page order (built in this order too)
     readonly property var rank: {
         const out = [];
@@ -55,9 +57,9 @@ Flickable {
     readonly property bool listForm: page.category.form === "list"
     // a stage that is not the desktop: no wallpaper (Stage `calm`)
     readonly property bool plainStage: !Registry.DESKTOP_STAGES[page.category.id]
-    // every key a window row of this page edits (a card offers no "Turn on"
+    // every key a card row of this page edits (a card offers no "Turn on"
     // for a switch that is a row of the page)
-    readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inWindow(e, sec)).map(e => e.key)), [])
+    readonly property var pageKeys: (page.category.sections || []).reduce((all, sec) => all.concat((sec.entries || []).filter(e => e.key && SchemaUtil.inCards(e, sec)).map(e => e.key)), [])
     readonly property real margin: Space.xl
     readonly property real gap: Look.screenGap
     // room kept under the last card: the undo pill floats there
@@ -169,8 +171,8 @@ Flickable {
         bento.relayout();
         bento.relayout();
         let target = null;
-        for (let i = 0; i < sections.count; i++) {
-            const s = sections.itemAt(i) as SettingsSection;
+        for (let i = 0; i < bento.count; i++) {
+            const s = bento.itemAt(i) as SettingsSection;
             if (!s)
                 continue;
             if (entryId) {
@@ -179,13 +181,42 @@ Flickable {
                     target = r;
                     break;
                 }
-            } else if (s.sectionId === sectionId) {
+            } else if (s.sectionId === sectionId && s.visible) {
                 target = s;
                 break;
             }
         }
-        if (!target)
+        // an advanced row (or a section of them): the More card opens at
+        // once; its rows are laid out on the next polish, so the scroll
+        // waits a moment for them
+        if (!target) {
+            target = entryId ? moreCard.rowFor(entryId) : moreCard.sectionFor(sectionId);
+            if (!target)
+                return;
+            moreReveal.target = target;
+            moreReveal.entry = entryId || "";
+            moreReveal.section = entryId ? "" : sectionId;
+            moreReveal.restart();
             return;
+        }
+        page.scrollAndFlash(target, entryId, sectionId);
+    }
+
+    // the row of an opened More card, once it is laid out
+    Timer {
+        id: moreReveal
+        property Item target: null
+        property string entry: ""
+        property string section: ""
+        interval: 40
+        onTriggered: {
+            if (moreReveal.target)
+                page.scrollAndFlash(moreReveal.target, moreReveal.entry, moreReveal.section);
+            moreReveal.target = null;
+        }
+    }
+
+    function scrollAndFlash(target, entryId, sectionId) {
         const y = target.mapToItem(page.contentItem, 0, 0).y;
         scroller.to = Math.max(0, Math.min(y - (page.height - target.height) / 3, contentHeight - height));
         scroller.restart();
@@ -233,7 +264,9 @@ Flickable {
         readonly property real recede: page.split ? 0 : Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
         x: page.split ? page.margin + page.colW + page.gap : page.margin
         y: page.split ? Space.s + Math.max(0, page.contentY - page.stickAfter) : Space.s + page.contentY * 0.35
-        z: 2
+        // in two panes over the cards column; on top, under the cards (they
+        // slide over the receding stage as the page scrolls)
+        z: page.split ? 2 : 0
         width: page.split ? page.cardsW - page.colW - page.gap : page.cardsW
         height: page.usesShared ? Math.round(page.sharedCanvas.preferredHeight) : (stageLoader.shown ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0)
         visible: page.stageUrl !== ""
@@ -252,10 +285,11 @@ Flickable {
             readonly property var stage: stageLoader.item
             readonly property bool shown: page.ownStage && stageLoader.status === Loader.Ready
             readonly property real asked: stageLoader.stage && stageLoader.stage.preferredHeight > 0 ? stageLoader.stage.preferredHeight : 0
-            // two panes: the column's width, as tall as it asks (a 16:9
-            // screen by default); on top: a third of the page at most, a
-            // list page's band short
-            height: page.split ? Math.round(stageLoader.asked > 0 ? Math.min(stageLoader.asked, page.height - page.margin * 2) : heroArea.width * 9 / 16) : Math.round(Math.min(page.height / 3, stageLoader.asked > 0 ? stageLoader.asked : page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
+            // as tall as it asks (a stage lays itself out at that height:
+            // less would cut it), never taller than the view; else in two
+            // panes a 16:9 screen as wide as the column, on top a third of
+            // the page at most (a list page's band short)
+            height: Math.round(stageLoader.asked > 0 ? Math.min(stageLoader.asked, page.height - page.margin * 2) : page.split ? heroArea.width * 9 / 16 : Math.min(page.height / 3, page.listForm ? Math.max(Space.px(110), Math.min(page.height * 0.2, Space.px(150))) : Math.max(Space.px(150), Math.min(page.height * 0.32, heroArea.width * 9 / 16, Space.px(300)))))
             // a desktop stage is a 16:9 screen; a plain one (a band, the
             // battery, a terminal) is a wide strip of the thing itself;
             // a strip stage (`pageWide: true`) takes the page's width
@@ -314,7 +348,7 @@ Flickable {
         // about something not there)
         shown: heroArea.visible && !!page.hero.hint && !(page.stageItem && page.stageItem.offNote === true) && page.previewHovered
         visible: !!page.hero.hint && heroArea.visible
-        z: 2
+        z: page.split ? 2 : 0
         x: page.split ? heroArea.x : page.footSide ? page.margin + stageLoader.x : page.margin
         y: heroArea.y + heroArea.height * heroArea.scale + Space.m
         width: page.split ? heroArea.width : page.footSide ? stageLoader.width : page.cardsW
@@ -341,7 +375,8 @@ Flickable {
         clip: true
     }
 
-    // The cards.
+    // The cards, then the tab's More settings card (its advanced rows,
+    // folded), then the compositor note.
     Item {
         id: body
         z: 1
@@ -349,227 +384,40 @@ Flickable {
         width: page.split ? page.colW : page.cardsW
         x: page.margin
         y: heroArea.visible && !page.split ? page.heroBlockH + page.gap + Space.s : Space.s
-        height: bento.height + (note.visible ? note.height + page.gap : 0)
+        height: bento.height + (moreCard.visible ? moreCard.height + page.gap : 0) + (note.visible ? note.height + page.gap : 0)
 
-        Item {
+        PageBento {
             id: bento
-            objectName: "pageBento"
-            readonly property real gap: page.gap
-            // columns with hysteresis: a resize near a breakpoint never makes
-            // the cards flip back and forth
-            property int fullCols: 1
-            function pickCols() {
-                if (page.split || page.wide) {
-                    // the destination grid: the left column of two panes,
-                    // or both columns
-                    bento.fullCols = page.split ? 1 : 2;
-                    return;
-                }
-                const w = body.width;
-                const n = BentoLayout.columns(w, Space.px(340));
-                // fewer columns only once the width is clearly under the
-                // switch point
-                bento.fullCols = n < bento.fullCols && BentoLayout.columns(w + Space.px(24), Space.px(340)) >= bento.fullCols ? bento.fullCols : n;
-            }
-            Connections {
-                target: body
-                function onWidthChanged() {
-                    bento.pickCols();
-                }
-            }
-            Component.onCompleted: bento.pickCols()
-            readonly property bool wide: page.wide
-            onWideChanged: bento.pickCols()
-            readonly property bool split: page.split
-            onSplitChanged: bento.pickCols()
-            readonly property var spans: (page.category.sections || []).map(s => BentoLayout.spanOf(s, SchemaUtil.inWindow))
-            // the cards that show (a section without a window row is no card)
-            readonly property int cols: page.split ? 1 : BentoLayout.fit(fullCols, bento.spans.filter((sp, i) => ((page.category.sections || [])[i].entries || []).some(e => SchemaUtil.inWindow(e, page.category.sections[i]))))
-            // the grid's column: a lone card keeps a column's width, at the
-            // grid's start (the grid never moves between tabs)
-            readonly property real colW: page.split ? body.width : (body.width - gap * (fullCols - 1)) / fullCols
-            // card places {x, y, w} (in page order), re-run when a card's
-            // height or visibility changes
-            property var places: []
-            // the columns of the cards once the page is whole (see relayout)
-            property var assigned: null
-            property bool frozen: false
-            Connections {
-                target: page.visible ? SettingsStore : null
-                function onValueSet(key, value) {
-                    bento.frozen = true;
-                }
-            }
-            property int assignedCols: 0
-            // cards that took the free columns beside them keep that span
-            // while the column count holds: a widened card is shorter, and
-            // placing it narrow again would widen it again (no relayout loop)
-            property var grown: ({})
-            property int grownCols: 0
-            property real floor: 0
-            width: colW * cols + gap * (cols - 1)
-            x: page.wide ? 0 : (parent.width - width) / 2
-            height: 0
+            width: body.width
+            height: implicitHeight
+            category: page.category
+            order: page.order
+            rank: page.rank
+            builtSections: page.builtSections
+            complete: page.complete
+            settled: page.settled
+            split: page.split
+            wide: page.wide
+            listForm: page.listForm
+            exclude: page.heroIds
+            pageKeys: page.pageKeys
+            active: page.visible
+        }
 
-            // `eased`: a discrete relayout (a card shown or hidden, a new
-            // column count): the cards glide to their places. Otherwise (a
-            // card folding rows open or shut, content wrapping, a resize)
-            // they follow in the same frame, in lockstep with the fold.
-            function relayout(eased) {
-                const items = [];
-                for (const i of page.order) {
-                    const s = sections.itemAt(i);
-                    items.push({
-                        "span": page.split ? 1 : Math.max(bento.spans[i] || 1, bento.grownCols === bento.cols ? (bento.grown[i] || 1) : 1),
-                        "height": s && s.visible ? s.implicitHeight : 0
-                    });
-                }
-                // after the first change made on the page, cards keep their
-                // columns (a toggle never reshuffles them); until then, and
-                // for a new column count, they are placed afresh (content
-                // that loads late still balances the columns)
-                const keep = bento.frozen && bento.assigned !== null && bento.assignedCols === bento.cols;
-                const r = BentoLayout.place(items, bento.cols, bento.gap, keep ? page.order.map(i => bento.assigned[i]) : null, null);
-                if (!keep) {
-                    const a = [];
-                    page.order.forEach((i, k) => a[i] = r.places[k]);
-                    bento.assigned = a;
-                    // (recorded once every card is built: a neighbour still
-                    // to come is no free column)
-                    const g = bento.grownCols === bento.cols ? Object.assign({}, bento.grown) : {};
-                    if (page.complete)
-                        page.order.forEach((i, k) => {
-                            if (r.places[k].span > (bento.spans[i] || 1))
-                                g[i] = Math.max(g[i] || 1, r.places[k].span);
-                        });
-                    bento.grown = g;
-                    bento.grownCols = bento.cols;
-                    bento.assignedCols = bento.cols;
-                }
-                const out = [];
-                page.order.forEach((i, k) => {
-                    const pl = r.places[k];
-                    out[i] = {
-                        "x": pl.col * (bento.colW + bento.gap),
-                        "y": pl.y,
-                        "w": pl.span * bento.colW + (pl.span - 1) * bento.gap,
-                        // the last card of a column reaches the tallest one's end
-                        "extra": r.extra[k] || 0
-                    };
-                });
-                bento.places = out;
-                // (only after a change made on the page: a page that builds or
-                // loads content late never moves by itself once shown)
-                const glide = eased === true && page.settled && bento.frozen && Motion.glide.duration > 0;
-                for (let i = 0; i < sections.count; i++) {
-                    const s = sections.itemAt(i);
-                    if (s && out[i])
-                        s.moveTo(out[i], glide);
-                }
-                bento.height = r.height;
-                bento.floor = r.floor;
-            }
-            function relayoutEased() {
-                bento.relayout(true);
-            }
-            onColsChanged: Qt.callLater(bento.relayoutEased)
-            onColWChanged: Qt.callLater(bento.relayout)
-
-            Repeater {
-                id: sections
-                model: page.category.sections
-
-                delegate: SettingsSection {
-                    id: card
-                    required property var modelData
-                    required property int index
-                    readonly property var place: bento.places[index] || ({
-                            "x": 0,
-                            "y": 0,
-                            "w": bento.width
-                        })
-                    section: modelData
-                    exclude: page.heroIds
-                    pageKeys: page.pageKeys
-                    pending: page.rank[index] >= page.builtSections
-                    height: implicitHeight + (card.place.extra || 0)
-
-                    // To a place: gliding (a discrete relayout) or at once.
-                    // A placement at once leaves alone a glide already
-                    // heading there (a fold under a gliding card).
-                    function moveTo(pl, glide) {
-                        const props = [["x", pl.x, ax], ["y", pl.y, ay], ["width", pl.w, aw]];
-                        props.forEach(p => {
-                            const a = p[2];
-                            if (glide && Math.abs(card[p[0]] - p[1]) > 0.5) {
-                                a.stop();
-                                a.to = p[1];
-                                a.start();
-                            } else if (!(a.running && a.to === p[1])) {
-                                a.stop();
-                                card[p[0]] = p[1];
-                            }
-                        });
-                    }
-                    NumberAnimation {
-                        id: ax
-                        target: card
-                        property: "x"
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                    NumberAnimation {
-                        id: ay
-                        target: card
-                        property: "y"
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                    NumberAnimation {
-                        id: aw
-                        target: card
-                        property: "width"
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                    // a card that shows on a shown page fades in (built late,
-                    // or brought back by a setting)
-                    NumberAnimation {
-                        id: fadeIn
-                        target: card
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Motion.glide.duration
-                        easing.type: Motion.glide.easing
-                    }
-                    // at once, in the same frame: a card that grows never
-                    // paints over the card under it
-                    onImplicitHeightChanged: bento.relayout()
-                    // just built (not brought back by a setting): built
-                    // cards land out of sight, they need no fade
-                    property bool fresh: false
-                    onPendingChanged: if (!card.pending) {
-                        card.fresh = true;
-                        Qt.callLater(() => card.fresh = false);
-                    }
-                    onVisibleChanged: {
-                        if (card.visible && page.settled && page.complete && !card.fresh && Motion.glide.duration > 0)
-                            fadeIn.restart();
-                        Qt.callLater(bento.relayoutEased);
-                    }
-                    Component.onCompleted: {
-                        card.moveTo(card.place, false);
-                        Qt.callLater(bento.relayout);
-                    }
-                }
-            }
+        PageMore {
+            id: moreCard
+            y: bento.height + page.gap
+            width: body.width
+            category: page.category
+            pageKeys: page.pageKeys
+            // (once the page's own cards are all there: it is the last card)
+            opacity: page.complete ? 1 : 0
         }
 
         KitText {
             id: note
             objectName: "compositorOnlyNote"
-            y: bento.height + page.gap
+            y: bento.height + page.gap + (moreCard.visible ? moreCard.height + page.gap : 0)
             width: parent.width
             visible: page.gated.count > 0
             role: "caption"

@@ -9,10 +9,10 @@
 // compositor than the running one is skipped, and so is every entry that
 // only holds `compositor.*` keys (the Hyprland appearance domain) unless
 // Hyprland is the running compositor: schema defaults are never applied to a
-// compositor that is not active. Reset page and the counters also skip what
-// is not a row of the window (SchemaUtil.inWindow): a page reset never
-// touches settings the user cannot see on the page. The Changes page lists
-// those too (changedItems), without a jump to a row that does not exist.
+// compositor that is not active. Every entry of a page is a row of the
+// window (its cards or its folded More card, SchemaUtil.inWindow), so Reset
+// page and the counters cover the More card's rows too; the Changes page
+// jumps to any of them (the More card opens).
 
 var HYPRLAND_DOMAIN = "compositor";
 
@@ -48,9 +48,9 @@ function activeItems(category, ctx) {
 }
 
 // [{entry, section, category, inWindow}] of a category the Changes page may
-// list: its window rows and its out-of-window entries. An out-of-window
-// entry whose every key a window row of the category already holds is left
-// to that row (listed once).
+// list (every one jumps to its row: `inWindow`). A More card entry whose
+// every key a card row of the category already holds is left to that row
+// (listed once).
 function changedItems(category, ctx) {
     var all = SchemaUtil.flatten([category]).filter(function (it) {
         return entryApplies(it.entry, it.section, ctx);
@@ -58,13 +58,13 @@ function changedItems(category, ctx) {
     var covered = {};
     all.forEach(function (it) {
         it.inWindow = SchemaUtil.inWindow(it.entry, it.section);
-        if (it.inWindow)
+        if (SchemaUtil.inCards(it.entry, it.section))
             SchemaUtil.entryKeys(it.entry).forEach(function (k) {
                 covered[k] = true;
             });
     });
     return all.filter(function (it) {
-        return it.inWindow || !SchemaUtil.entryKeys(it.entry).every(function (k) {
+        return SchemaUtil.inCards(it.entry, it.section) || !SchemaUtil.entryKeys(it.entry).every(function (k) {
             return covered[k];
         });
     });
