@@ -2768,7 +2768,7 @@
   "prefs.ai.keep_turns.desc": "Cuántos de tus últimos mensajes (con sus respuestas) se conservan tal cual al compactar.",
   "prefs.ai.compact_model": "Modelo de compactación",
   "prefs.ai.compact_model.desc": "Modelo que escribe el resumen, p. ej. uno más barato; vacío usa el modelo del chat.",
-  "prefs.ai.compact_model.placeholder": "Mismo modelo (p. ej. openai:gpt-5-mini)",
+  "prefs.ai.compact_model.placeholder": "Mismo modelo",
   "prefs.ai.ollama_num_ctx": "Longitud de contexto de Ollama",
   "prefs.ai.ollama_num_ctx.desc": "Tokens a reservar (num_ctx), limitados al máximo del modelo. Más necesita más memoria; el valor por defecto de Ollama descarta el inicio de los chats largos.",
   "prefs.ai.ollama_num_ctx.model_max": "Máximo del modelo",

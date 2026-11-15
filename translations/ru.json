@@ -2776,7 +2776,7 @@
   "prefs.ai.keep_turns.desc": "Сколько ваших последних сообщений (с ответами) остаются без изменений при сжатии.",
   "prefs.ai.compact_model": "Модель для сжатия",
   "prefs.ai.compact_model.desc": "Модель, которая пишет пересказ, например более дешёвая; пусто — модель чата.",
-  "prefs.ai.compact_model.placeholder": "Та же модель (напр. openai:gpt-5-mini)",
+  "prefs.ai.compact_model.placeholder": "Та же модель",
   "prefs.ai.ollama_num_ctx": "Длина контекста Ollama",
   "prefs.ai.ollama_num_ctx.desc": "Сколько токенов выделять (num_ctx), не больше максимума модели. Больше — больше памяти; стандартное значение Ollama обрезает начало длинных чатов.",
   "prefs.ai.ollama_num_ctx.model_max": "Максимум модели",

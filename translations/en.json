@@ -2768,7 +2768,7 @@
   "prefs.ai.keep_turns.desc": "How many of your last messages (with their answers) stay verbatim when compacting.",
   "prefs.ai.compact_model": "Compaction model",
   "prefs.ai.compact_model.desc": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
-  "prefs.ai.compact_model.placeholder": "Same model (e.g. openai:gpt-5-mini)",
+  "prefs.ai.compact_model.placeholder": "Same model",
   "prefs.ai.ollama_num_ctx": "Ollama context length",
   "prefs.ai.ollama_num_ctx.desc": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
   "prefs.ai.ollama_num_ctx.model_max": "Model maximum",
