@@ -25,9 +25,12 @@ MiniScreen {
         anchors.fill: parent
         anchors.margins: Math.round(root.u * 2)
         surface: "launcher"
-        // a picture: the whole launcher, centred, whatever its host
+        // a picture: the launcher's top-left corner (its search and first
+        // results in the style), at a size where it reads
         host: "spotlight"
         margin: 0
+        minZoom: 0.55
+        cutSides: true
         source: Qt.resolvedUrl("../../widgets/launcher/LauncherView.qml")
         snapshot: true
         refreshKey: root.look

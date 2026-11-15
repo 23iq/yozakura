@@ -37,6 +37,9 @@ MiniScreen {
         nativeWidth: root.size.w
         nativeHeight: root.size.h
         properties: LiveSamples.osd()
+        // its text at a size it reads; a long one shows its two ends
+        readableGlyph: 10
+        cut: "ends"
     }
 
     // (live: a just-built panel can picture blank offscreen, LIVE PREVIEWS)
@@ -46,6 +49,8 @@ MiniScreen {
         active: root.inline
         nativeWidth: 640
         frame: "modules"
+        readableGlyph: 10
+        cut: "ends"
         patch: LivePatch.only(["controls"])
         samples: ({
                 "osd": LiveSamples.osd()

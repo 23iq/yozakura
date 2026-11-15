@@ -64,8 +64,15 @@ EXTRA_TYPES = {
     "modules/widgets/dashboard": ["LauncherButton"],
     "modules/widgets/powermenu": ["PowerButton"],
 }
-# The screen previews are laid out on (LiveTarget): one 1920x1080 monitor.
-SCREEN = ("DP-1", 1920, 1080)
+# The screen previews are laid out on (LiveTarget): one monitor, 2560x1440
+# by default (a big screen: previews must stay readable there), or
+# YOZAKURA_TEST_SCREEN=WxH (settings_render --screen).
+def screen() -> tuple[str, int, int]:
+    import os
+
+    raw = os.environ.get("YOZAKURA_TEST_SCREEN", "2560x1440")
+    w, _, h = raw.partition("x")
+    return ("DP-1", int(w), int(h))
 
 
 def mirror(root: Path) -> None:
@@ -339,7 +346,7 @@ def quickshell(own: dict) -> dict:
                                                            "RehomedTray": "Item { property real iconSize }"})
     mods.setdefault("Quickshell.Services.Notifications", {}).update({
         "NotificationUrgency": "QtObject { enum Urgency { Low, Normal, Critical } }"})
-    name, w, h = SCREEN
+    name, w, h = screen()
     qs = mods["Quickshell"]
     single = qs["Quickshell"].replace("property var screens: []; ", "")
     assert single.rstrip().endswith("}"), "Quickshell stub ends with its closing brace"

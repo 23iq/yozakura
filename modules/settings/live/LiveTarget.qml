@@ -25,4 +25,22 @@ Singleton {
     readonly property real width: root.screen && root.screen.width > 0 ? root.screen.width : 1920
     readonly property real height: root.screen && root.screen.height > 0 ? root.screen.height : 1080
     readonly property string name: root.screen ? root.screen.name : ""
+
+    // The screen whole-screen overviews (ScreenMini: the Screen canvas, the
+    // home tile, the desktop / wallpaper / windows stages) lay the real parts
+    // out on: your screen's shape at most OVERVIEW px wide. On a big monitor
+    // the bars, island and dock keep their real pixel sizes on a smaller
+    // screen, so in a ~550 px canvas they read (a 2560 px screen would draw
+    // a 44 px rail 9 px wide; on 1280 it is 19 px). Only the empty space
+    // between the parts shrinks; a picture of one part uses the real size.
+    readonly property int overviewMax: 1280
+    readonly property real overviewWidth: Math.min(root.width, root.overviewMax)
+    readonly property real overviewHeight: Math.round(root.overviewWidth * root.height / root.width)
+    // {name, width, height}: for parts that place themselves on a screen
+    // (the island: NotchPreview)
+    readonly property var overview: ({
+            "name": root.name,
+            "width": root.overviewWidth,
+            "height": root.overviewHeight
+        })
 }

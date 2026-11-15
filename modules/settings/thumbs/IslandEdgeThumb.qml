@@ -22,8 +22,9 @@ MiniScreen {
         anchors.fill: parent
         snapshot: true
         refreshKey: root.look
-        // a quarter of the screen's width in the picture
-        zoom: root.width / (LiveTarget.width * 0.26)
+        // a quarter of the overview screen's width in the picture (the
+        // overview: at most 1280 px wide, so a big monitor does not shrink it)
+        zoom: root.width / (LiveTarget.overviewWidth * 0.3)
         overrides: ({
                 "notch.position": String(root.value)
             })

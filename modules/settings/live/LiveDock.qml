@@ -20,6 +20,11 @@ Item {
     property real margin: 10
     property real maxZoom: 1.6
     property real zoom: 0
+    // readable (LivePart): at least this zoom / this text size, and what
+    // shows when that is larger than the picture ("ends": both ends)
+    property real minZoom: 0
+    property real readableGlyph: 0
+    property string cut: "center"
     // "surface" | "app"
     property string frame: "surface"
     property bool snapshot: false
@@ -71,6 +76,9 @@ Item {
         nativeHeight: root.nativeHeight
         maxZoom: root.maxZoom
         zoom: root.zoom
+        minZoom: root.minZoom
+        readableGlyph: root.readableGlyph
+        cut: root.cut
         snapshot: root.snapshot
         active: root.active
         refreshKey: root.refreshKey

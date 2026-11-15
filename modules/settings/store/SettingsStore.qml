@@ -59,6 +59,17 @@ Singleton {
         const shown = path && m.getDisplaySource ? m.getDisplaySource(path) : path;
         return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
     }
+    // The same wallpaper as sharp as it is: the picture itself (a video:
+    // its frame), not the small thumbnail; for what shows it big (the
+    // stages' screens). Decode it at the size shown (sourceSize).
+    readonly property string wallpaperSharp: {
+        const m = GlobalStates.wallpaperManager;
+        if (!m)
+            return "";
+        const path = m.effectiveWallpaper ?? m.currentWallpaper ?? "";
+        const shown = path && m.getColorSource ? m.getColorSource(path) : path;
+        return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
+    }
     property var _focusOwner: null
 
     // A row is pointed at (hovered / focused) or no longer: the last one

@@ -51,6 +51,8 @@ Item {
     // panel index -> BarContent (Repeater items are not reactive)
     property var bars: ({})
     readonly property bool complete: root.entries.length === 0 || Object.keys(root.bars).length === root.entries.length
+    // every panel built (a LivePart measures and pictures it only then)
+    readonly property bool ready: root.complete
     function _collect() {
         const out = {};
         for (let i = 0; i < repeater.count; i++) {

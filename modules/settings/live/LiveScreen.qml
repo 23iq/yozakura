@@ -18,6 +18,9 @@ Item {
     id: root
 
     property var screen: LiveTarget.screen
+    // the screen the island places itself on ({name, width, height}: the
+    // overview's when this item is laid out smaller than the real screen)
+    property var islandScreen: root.screen
     property var preview: PreviewContext {}
     property bool showDock: true
     property bool showIsland: true
@@ -84,7 +87,7 @@ Item {
         active: root.showIsland && !!root.screen && Config.notch.enabled !== false
         visible: root.islandOn
         Component.onCompleted: LiveGate.ask(islandLoader, () => islandLoader.setSource(Qt.resolvedUrl("../../shell/NotchPreview.qml"), {
-                "screen": root.screen,
+                "screen": root.islandScreen,
                 "preview": islandContext
             }))
         Component.onDestruction: LiveGate.forget(islandLoader)

@@ -25,9 +25,12 @@ MiniScreen {
         anchors.fill: parent
         snapshot: true
         refreshKey: root.look
-        // the island at rest across most of the picture (a pill's capsule
-        // at the scale of a header that long, so the shapes compare)
-        zoom: root.width * 0.92 / Math.max(380, live.targetRect.width)
+        anchors.margins: Math.round(root.u * 4)
+        // the island and its edge, at a size where its text reads; a long
+        // island shows its two ends (the fillets, the float, the capsule)
+        frame: "island"
+        readableGlyph: 10
+        cut: "ends"
         overrides: ({
                 "notch.style": String(root.value),
                 "notch.position": root.edge,

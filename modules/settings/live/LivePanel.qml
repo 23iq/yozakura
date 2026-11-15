@@ -27,9 +27,17 @@ Item {
     property var samples: ({})
     property real nativeWidth: 960
     property real nativeHeight: 160
-    // what is framed: "panel" (its whole body) or "modules" (the piece of
-    // the body around its modules)
+    // what is framed: "panel" (its whole body), "modules" (the piece of the
+    // body around its modules) or "edge" (the screen's band along the
+    // panel's edge, from the edge to past the panel: its gap to the edge
+    // and to the corners, its ends; with `cut: "ends"` both corners show)
     property string frame: "panel"
+    // readable (LivePart): at least this zoom / this text size, and what
+    // shows when that is larger than the picture
+    property real minZoom: 0
+    // (a picture card reads: its text 10 px at least)
+    property real readableGlyph: 10
+    property string cut: "ends"
     // room around it in the picture (native px)
     property real margin: 6
     property real maxZoom: 1.6
@@ -76,6 +84,9 @@ Item {
         nativeWidth: root.nativeWidth
         nativeHeight: root.nativeHeight
         maxZoom: root.maxZoom
+        minZoom: root.minZoom
+        readableGlyph: root.readableGlyph
+        cut: root.cut
         fit: root.fit
         snapshot: root.snapshot
         active: root.active
@@ -87,6 +98,39 @@ Item {
             const r = bars.panelRect(0);
             if (r.width <= 0)
                 return r;
+            if (root.frame === "edge") {
+                const b = bars.bars[0];
+                const edge = b ? b.barPosition : "top";
+                const m = root.margin;
+                // along the edge: to the screen's corners, or around the
+                // panel when it stands apart from them (a dock, a pill)
+                // (a style may fill the edge with an invisible body: the
+                // modules say where the panel really is)
+                const W = root.nativeWidth, H = root.nativeHeight;
+                let u = r;
+                const mods = bars.modules();
+                if (mods.length > 0) {
+                    let a = 1e9, b2 = 1e9, c = -1e9, d = -1e9;
+                    for (let i = 0; i < mods.length; i++) {
+                        const p = mods[i].item.mapToItem(bars, 0, 0);
+                        a = Math.min(a, p.x);
+                        b2 = Math.min(b2, p.y);
+                        c = Math.max(c, p.x + mods[i].item.width);
+                        d = Math.max(d, p.y + mods[i].item.height);
+                    }
+                    u = Qt.rect(a, b2, c - a, d - b2);
+                }
+                const pad = m * 4;
+                const x0 = u.x > pad * 4 ? u.x - pad : 0, x1 = W - (u.x + u.width) > pad * 4 ? u.x + u.width + pad : W;
+                const y0 = u.y > pad * 4 ? u.y - pad : 0, y1 = H - (u.y + u.height) > pad * 4 ? u.y + u.height + pad : H;
+                if (edge === "top")
+                    return Qt.rect(x0, 0, x1 - x0, r.y + r.height + m);
+                if (edge === "bottom")
+                    return Qt.rect(x0, r.y - m, x1 - x0, H - r.y + m);
+                if (edge === "left")
+                    return Qt.rect(0, y0, r.x + r.width + m, y1 - y0);
+                return Qt.rect(r.x - m, y0, W - r.x + m, y1 - y0);
+            }
             let x0 = r.x, x1 = r.x + r.width;
             if (root.frame === "modules") {
                 const mods = bars.modules();

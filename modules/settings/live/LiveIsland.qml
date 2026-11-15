@@ -12,7 +12,10 @@ import "LiveSamples.js" as LiveSamples
 // Framing: a window of this item's size at `zoom` (native px -> item px)
 // on the island's edge, centred on it along the edge (a stage, a picture
 // card: the island hangs from the item's edge as from the screen's); or
-// `frame: "screen"`: the whole screen.
+// `frame: "screen"`: the whole screen; `frame: "island"`: the island
+// itself and the band from the screen's edge to it (what hangs from the
+// edge, its gap and fillets), fitted, but readable (`readableGlyph`, `cut`
+// as LivePart: a long island shows its two ends).
 // `snapshot` pictures it once and frees it (galleries).
 Item {
     id: root
@@ -20,8 +23,12 @@ Item {
     property string state: "rest"
     property var overrides: ({})
     property real zoom: 1
-    // "edge" | "screen"
+    // "edge" | "screen" | "island"
     property string frame: "edge"
+    // readable (frame "island"): its smallest text at least this size
+    property real readableGlyph: 0
+    property string cut: "center"
+    property real margin: 12
     property bool snapshot: false
     property bool active: true
     property var refreshKey: null
@@ -67,6 +74,23 @@ Item {
         }
     }
 
+    // the island and the band to its edge, native px
+    function around(it) {
+        const t = it.targetRect, m = root.margin;
+        if (t.width <= 0)
+            return Qt.rect(0, 0, 0, 0);
+        switch (it.position) {
+        case "bottom":
+            return Qt.rect(t.x - m, t.y - m, t.width + m * 2, it.height - t.y + m);
+        case "left":
+            return Qt.rect(0, t.y - m, t.x + t.width + m, t.height + m * 2);
+        case "right":
+            return Qt.rect(t.x - m, t.y - m, it.width - t.x + m, t.height + m * 2);
+        default:
+            return Qt.rect(t.x - m, 0, t.width + m * 2, t.y + t.height + m);
+        }
+    }
+
     LivePart {
         id: part
         anchors.fill: parent
@@ -78,11 +102,13 @@ Item {
         nativeWidth: LiveTarget.width
         nativeHeight: LiveTarget.height
         zoom: root.frame === "edge" ? root.zoom : 0
-        maxZoom: 4
+        maxZoom: root.frame === "island" ? 1.25 : 4
+        readableGlyph: root.frame === "island" ? root.readableGlyph : 0
+        cut: root.cut
         snapshot: root.snapshot
         active: root.active
         refreshKey: root.refreshKey
         settleMs: root.settleMs
-        cropOf: root.frame === "edge" ? (it => root.window(it)) : null
+        cropOf: root.frame === "edge" ? (it => root.window(it)) : (root.frame === "island" ? (it => root.around(it)) : null)
     }
 }

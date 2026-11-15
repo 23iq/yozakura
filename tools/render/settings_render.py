@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -235,6 +236,8 @@ def main() -> int:
                     help="evaluate EXPR on every item of that name after the page loads (e.g. open a popup)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
+    ap.add_argument("--screen", default="", help="the screen live previews are laid out on, WxH "
+                    "(default 2560x1440, tests/lib/live_previews.py)")
     ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
     ap.add_argument("--hover", default="", metavar="ENTRY", help="hover the row of this entry id")
     ap.add_argument("--undo", action="store_true", help="show the undo pill (as after a change)")
@@ -243,6 +246,8 @@ def main() -> int:
     ap.add_argument("--palette", default="wallpaper", choices=["wallpaper", "default"],
                     help="colours from the wallpaper (default) or the fixed rose palette")
     args = ap.parse_args()
+    if args.screen:
+        os.environ["YOZAKURA_TEST_SCREEN"] = args.screen
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)

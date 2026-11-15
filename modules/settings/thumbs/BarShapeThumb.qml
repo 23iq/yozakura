@@ -6,10 +6,14 @@ import "../../bar/panels/PanelStyles.js" as PanelStyles
 import "../live/LivePatch.js" as LivePatch
 
 // Picture of a bar style (the Shape cards): your bar (its modules, icons,
-// workspaces, clock: a few of its modules) drawn live by the shell's own
-// panel in style `style` (live/LivePanel) on a narrow screen, so the whole
-// silhouette fits. A style that cannot sit on the top edge is shown on its
-// own first edge; "none" (no bar) is an outline where the bar would be.
+// workspaces, clock) drawn live by the shell's own panel in style `style`
+// (live/LivePanel) on your screen's real size, framed on the screen's band
+// along the bar's edge and cut to its two ends side by side (the gap to
+// the edge, the radius, the islands / segments, the first and last
+// modules), at the zoom where its smallest text is 10 px: the styles
+// differ at a glance and the modules read. A style that cannot sit on the
+// top edge is shown on its own first edge (a rail: its top and bottom);
+// "none" (no bar) is an outline where the bar would be.
 MiniScreen {
     id: root
 
@@ -24,10 +28,16 @@ MiniScreen {
         anchors.fill: parent
         anchors.margins: Math.round(root.u * 4)
         visible: !root.hidden
-        nativeWidth: root.shownEdge === "top" ? 520 : 160
-        nativeHeight: root.shownEdge === "top" ? 140 : 420
+        // your screen's real size: the gaps, radii and ends are the real
+        // ones; the screen's band along the edge, its two ends side by
+        // side at a size where the modules read
+        nativeWidth: LiveTarget.width
+        nativeHeight: LiveTarget.height
+        frame: "edge"
+        cut: "ends"
+        readableGlyph: 10
         maxZoom: 1
-        patch: Object.assign(LivePatch.style(root.style), LivePatch.sample(panel.base.groups), {
+        patch: Object.assign(LivePatch.style(root.style), {
             "edge": root.shownEdge
         })
     }

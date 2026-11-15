@@ -682,7 +682,13 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
   gallery holds pictures, not objects) + `refreshKey` (a change pictures it
   again); `mapFromPart(item, rect)` for a page's own overlays; `settleMs`
   (time to settle before it is measured / pictured; a part whose root has
-  a `ready` property is waited for until it is true). Built through
+  a `ready` property is waited for until it is true). Readable:
+  `minZoom` and `readableGlyph` (the zoom that draws its smallest text,
+  measured once settled, at that many px; both under `maxZoom`); when that
+  no longer fits, `cut` says what shows: "center", "start", or "ends" (a
+  long thing, twice as long as it is deep, shows its start and its end
+  side by side with a small break: the second view is a ShaderEffectSource
+  of the same part, no second instance). Built through
   `LiveGate`, asynchronously. Torn down, its frame stops following the
   part (`leaving`: an owner's `cropOf` never runs in a dying context).
 - `LiveGate` (singleton): the build queue. A page shows first (no live part
@@ -695,7 +701,15 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
 
 Settings side (`modules/settings/live/`):
 - `LiveTarget` (singleton): the screen previews are laid out on (the
-  focused one, else the first); its logical size is the native size.
+  focused one, else the first); its logical size is the native size of a
+  picture of one part. `overviewWidth/Height` / `overview`: the screen
+  whole-screen miniatures (ScreenMini: the canvas, the home tile, the
+  desktop / wallpaper / windows stages) lay the real parts out on: your
+  screen's shape, at most 1280 px wide (`overviewMax`). Why: on a 2560 or
+  3840 px monitor a whole screen at true proportion in a ~550 px canvas
+  draws a 44 px rail 9 px wide (the owner's "hairline with dots"); on the
+  overview screen the parts keep their real pixel sizes and only the empty
+  space between them shrinks, so they read (a module ~16 px in the canvas).
 - `LiveBars`: every bar panel of a bar config (`bar`, default the live
   `Config.bar`; `only: index`) as real BarContents with a context.
   Geometry in native px: `bars`, `depth(edge)`, `panelRect(i)`, `modules()`
@@ -710,7 +724,13 @@ Settings side (`modules/settings/live/`):
   after each change and when the pointer arrives).
 - `LivePanel`: one real panel in a picture: your primary panel's spec with
   `patch` over it (`LivePatch.only(ids)`, `sample(groups)`, `style(id)`),
-  `overrides`, `frame: "panel" | "modules"`, `snapshot`, `refreshKey`.
+  `overrides`, `frame: "panel" | "modules" | "edge"` ("edge": the screen's
+  band along the panel's edge, from the edge to past the panel, to the
+  screen's corners or around the modules when the panel stands apart: the
+  bar Shape cards, laid out on your real screen size with `cut: "ends"`:
+  both corners, the gap, the radius, the islands, the first and last
+  modules), `snapshot`, `refreshKey`. Readable by default
+  (`readableGlyph: 10`, `cut: "ends"`).
 - `LiveDock`: the real dock framed on its surface (`overrides`, e.g.
   `dock.theme`, `dock.iconSize`, `dock.indicator`), `surfaceRect` in the
   item; `frame: "app"` frames one running app (the indicator cards), `zoom`
@@ -722,7 +742,9 @@ Settings side (`modules/settings/live/`):
   `zoom` on the island's edge, centred on it (the island hangs from the
   item's edge as from the screen's), or `frame: "screen"`; `targetRect`
   (native, not animated: size a stage once per state, the island morphs
-  into it), `islandRect` (in the item). Island stage, shape / edge cards,
+  into it), `islandRect` (in the item); `frame: "island"`: the island and
+  its band from the edge, readable (`readableGlyph`, `cut`: the shape cards).
+  Island stage, shape / edge cards,
   the Notifications stage's island.
 - `LiveToast`: the real corner toast (notifications/CornerToast.qml) with
   the sample message, `grouped` (the app's stack behind it), `stackUp`, at
@@ -744,6 +766,9 @@ Settings side (`modules/settings/live/`):
   hangs from its edge, the spotlight is centred, the sheet / sidebar stand
   on their `side`). Scaled to fit up to `maxZoom`; below `minZoom` it stays
   readable and the item's edge cuts it (the sidebar shows its end).
+  `cutSides`: below `minZoom` its side edges may cut it too (the result
+  style cards: the launcher's top-left corner, its search and first
+  results, at a size where they read).
   `snapshot` / `refreshKey` / `settleMs` as LivePart; `ready`, `view`,
   `frameRect`, `find(objectName)`, `mapFromView(item)` for overlays. The
   view stays enabled (a disabled kit row reads greyed out) and a cover
@@ -792,10 +817,18 @@ step with AiCenterPanel's.
 Showing a part in a stage: a LivePart (or LiveBars / LiveDock / LivePanel)
 in the stage, interaction drawn on top from mapped rects. A picture card:
 the thumb renders the part with its option as an override; galleries of
-the dock styles use `snapshot` with a `refreshKey` of what they show. The
-bar Shape cards stay live (a few modules each): their snapshots came out
-blank offscreen for some styles (grabToImage of a just-rebuilt panel;
+the OSD and island styles use `snapshot` with a `refreshKey` of what they
+show. The bar Shape and dock style cards stay live: their snapshots came
+out blank offscreen for some styles (grabToImage of a just-rebuilt panel;
 investigate before using `snapshot` for panels).
+Readable, whatever the monitor (the owner's is 2560 px wide): a picture is
+never the whole part shrunk to the card; it frames what tells the options
+apart at a zoom where the text reads (`readableGlyph`), cutting the rest
+(`cut`), and a whole-screen miniature uses the overview screen. A new card:
+give its Live* `readableGlyph: 10` and the `cut` that keeps the telling
+part. The stages' wallpaper is the picture itself
+(`SettingsStore.wallpaperSharp`: not the small thumbnail the window's
+ambient uses), decoded at the stage's size in device pixels.
 Why live parts and not a look object threaded through every component:
 the shell reads its config in many places; only the keys a picture varies
 need a seam, and a preview of the current value needs none (the part reads
@@ -807,11 +840,15 @@ the stage at up to its true size (`laneWidth`, taken after layout: the page
 sizes stages from their height), measured once at the real width after each
 change (`need`: its groups' natural length): wider bars are shown smaller.
 Test env: `tests/lib/live_previews.py` merges panels_env's import tree and
-fixture desktop into SettingsEnv (one 1920x1080 screen), so every settings
+fixture desktop into SettingsEnv (one 2560x1440 screen, or
+`YOZAKURA_TEST_SCREEN=WxH`; `settings_render.py --screen 3840x2160`), so every settings
 test and render shows the real bar (it also leaves through
 `clean_exit`: the live modules crash PySide's teardown pass), plus the
 island's and the notifications' trees with idle services (a stage's samples
-are what it shows). `tests/settings-live-parts.test.py` checks the island
+are what it shows). `tests/settings-live-legible.test.py` (at 2560x1440
+and 3840x2160): every readable part's smallest text >= 10 px in the window
+(8 at its maxZoom cap, 6 for a hosted window's corner), the canvas on the
+overview screen with modules ~16 px tall. `tests/settings-live-parts.test.py` checks the island
 states, the canvas island, the three notification presentations, the inline
 OSD and a dock indicator override, and that no preview registers anything.
 Render a state: `settings_render.py notch --eval 'islandStage:showing =

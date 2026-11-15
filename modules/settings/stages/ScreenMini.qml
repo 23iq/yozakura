@@ -69,8 +69,9 @@ Item {
     readonly property bool frame: screen.get("bar.frameEnabled", false) === true
     readonly property bool island: screen.get("notch.enabled", true) !== false
 
-    // Native px -> miniature px: the real screen's width onto this one.
-    readonly property real k: screen.width > 0 ? screen.width / LiveTarget.width : 1
+    // Native px -> miniature px: the overview screen's width (LiveTarget:
+    // your screen's shape, at most 1280 px wide, so the parts read) onto this.
+    readonly property real k: screen.width > 0 ? screen.width / LiveTarget.overviewWidth : 1
     // A readable unit for what pages draw in the overlay (toasts, widgets):
     // about a module of a bar at the scale of the stage.
     property real minUnit: Space.px(16)
@@ -272,7 +273,7 @@ Item {
     // The bars and the dock: the shell's own, at the screen's size, scaled.
     Item {
         id: sandbox
-        width: LiveTarget.width
+        width: LiveTarget.overviewWidth
         height: screen.k > 0 ? screen.height / screen.k : 0
         scale: screen.k
         transformOrigin: Item.TopLeft
@@ -284,6 +285,7 @@ Item {
             anchors.fill: parent
             showDock: screen.showDock
             showIsland: screen.showIsland
+            islandScreen: LiveTarget.overview
         }
     }
 
@@ -429,7 +431,7 @@ Item {
 
     // Rounded screen corners (theme.enableCorners): the shell's own.
     Item {
-        width: LiveTarget.width
+        width: LiveTarget.overviewWidth
         height: sandbox.height
         scale: screen.k
         transformOrigin: Item.TopLeft

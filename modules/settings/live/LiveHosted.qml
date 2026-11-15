@@ -39,6 +39,9 @@ Item {
     })
     property real maxZoom: 1
     property real minZoom: 0
+    // the item's side edge may cut it too (a picture card: its top-left
+    // corner, readable, rather than all of it unreadably small)
+    property bool cutSides: false
     // air around a centred (spotlight) or side (sheet) frame, in this item
     property real margin: Space.m
     property bool snapshot: false
@@ -66,7 +69,7 @@ Item {
         const h = root.host === "notch" || root.host === "sidebar" ? root.height - root.margin : root.height - root.margin * 2;
         return Math.min(root.maxZoom, (root.width - root.margin * 2) / root.nativeWidth, Math.max(1, h) / root.nativeHeight);
     }
-    readonly property real zoom: root.fitZoom < root.minZoom ? Math.min(root.minZoom, root.maxZoom, (root.width - root.margin * 2) / Math.max(1, root.nativeWidth)) : root.fitZoom
+    readonly property real zoom: root.fitZoom < root.minZoom ? Math.min(root.minZoom, root.maxZoom, root.cutSides ? root.minZoom : (root.width - root.margin * 2) / Math.max(1, root.nativeWidth)) : root.fitZoom
     // the frame in this item
     readonly property rect frameRect: Qt.rect(part.x, part.y, part.width, part.height)
 
@@ -114,7 +117,7 @@ Item {
         zoom: root.zoom
         width: Math.round(root.nativeWidth * root.zoom)
         height: Math.round(root.nativeHeight * root.zoom)
-        x: root.host === "sheet" || root.host === "sidebar" ? (root.side === "left" ? root.margin : root.width - width - root.margin) : Math.round((root.width - width) / 2)
+        x: root.cutSides && width > root.width ? root.margin : (root.host === "sheet" || root.host === "sidebar" ? (root.side === "left" ? root.margin : root.width - width - root.margin) : Math.round((root.width - width) / 2))
         y: {
             if (root.host === "notch")
                 return root.edge === "bottom" ? root.height - height : 0;

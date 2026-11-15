@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Window
 import qs.modules.theme
 import qs.modules.globals
 import qs.modules.components.kit
@@ -32,8 +33,10 @@ Item {
     property bool framed: true
     default property alias content: area.data
     property real radius: Look.radius("surface", stage.height)
-    // The wallpaper as a file URL ("" while there is none).
-    readonly property string wallpaper: SettingsStore.wallpaper
+    // The wallpaper as a file URL ("" while there is none): the picture
+    // itself, decoded at the stage's size in device pixels (a thumbnail
+    // upscaled reads blurry and blocky on a big stage).
+    readonly property string wallpaper: SettingsStore.wallpaperSharp || SettingsStore.wallpaper
 
     implicitHeight: stage.stageHeight
 
@@ -81,7 +84,7 @@ Item {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                sourceSize.width: Math.max(1, stage.width * 1.5)
+                sourceSize.width: Math.max(1, Math.ceil(stage.width * Math.max(1, Screen.devicePixelRatio) * Math.max(1, stage.imageScale)))
                 scale: stage.imageScale
                 transform: Translate {
                     x: stage.imageShift.x
