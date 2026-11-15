@@ -23,6 +23,11 @@ FittedFrame {
     id: root
 
     required property var category
+    // a narrow window: the hero keeps the height its actions need and the
+    // strip card a height of its own under it; the page scrolls (never a
+    // card drawn over the stage)
+    stackable: true
+    stackedHeight: row.y + row.height + root.pad
     // the preset on the stage ("" = the active one, else the first)
     property string highlighted: ""
     readonly property var presets: PresetStudio.presets || []
@@ -53,13 +58,13 @@ FittedFrame {
         x: root.margin
         y: Space.s
         width: root.width - root.margin * 2
-        height: root.layoutH - y - hint.height - Space.s - root.gap - root.rowH - Space.l
+        height: root.stacked ? Math.max(side.y + side.height, stage.height) : root.layoutH - y - hint.height - Space.s - root.gap - root.rowH - Space.l
 
         Stage {
             id: stage
             objectName: "pageStage"
             readonly property real room: hero.width - root.actionsW - root.gap
-            height: Math.round(Math.max(Space.px(160), Math.min(hero.height, room * 9 / 16, Space.px(560))))
+            height: Math.round(Math.max(Space.px(160), Math.min(root.stacked ? Space.px(560) : hero.height, room * 9 / 16, Space.px(560))))
             width: Math.round(Math.min(room, height * 16 / 9))
             x: (hero.width - (width + root.gap + root.actionsW)) / 2
             backdrop: false
@@ -119,9 +124,9 @@ FittedFrame {
     Item {
         id: row
         x: root.margin
-        y: root.layoutH - root.rowH - Space.l
+        y: root.stacked ? hint.y + hint.height + root.gap : root.layoutH - root.rowH - Space.l
         width: root.width - root.margin * 2
-        height: root.rowH
+        height: root.stacked ? Look.cardRowHeight : root.rowH
 
         Card {
             id: stripCard
