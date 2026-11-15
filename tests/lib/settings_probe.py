@@ -75,6 +75,53 @@ Window {
             if (String(x.objectName).indexOf("settingsSection:") === 0 || x.fittedCard === true) return x;
         return null;
     }
+    // Painted: a text, a picture or a filled shape (what hides what is under it).
+    function paints(x) {
+        if (!x.visible || x.opacity < 0.05 || x.width <= 0 || x.height <= 0) return false;
+        if (typeof x.text === "string" && x.font !== undefined) return x.text !== "";
+        if (x.source !== undefined && x.status !== undefined && x.sourceSize !== undefined) return String(x.source) !== "";
+        return x.color !== undefined && x.color.a !== undefined && x.color.a > 0.05 && x.gradient === null;
+    }
+    // Texts of `root` (a stage, a band, the about scene) that a sibling drawn
+    // after them covers: an item laid over a label (a tile over a band's
+    // line, a badge over a name). Each painted item of a later sibling
+    // subtree (higher z, or the same z and later) is checked against the
+    // text; a third of the text's area under it counts.
+    function covered(root, label, out) {
+        if (!root) return;
+        walk(root, t => {
+            if (!t.visible || t.opacity < 0.05) return false;
+            if (typeof t.text !== "string" || t.font === undefined || t.text === "" || t.width <= 0) return;
+            // (a glyph or two: icon layers stacked on purpose)
+            if (t.text.trim().length <= 2) return;
+            var tr = rect(t);
+            if (!onScreen(tr)) return;
+            for (var c = t; c && c !== root; c = c.parent) {
+                var p = c.parent;
+                if (!p) break;
+                var kids = p.children || [], i = kids.indexOf(c);
+                for (var j = 0; j < kids.length; j++) {
+                    var sib = kids[j];
+                    if (sib === c || !(sib.z > c.z || (sib.z === c.z && j > i))) continue;
+                    var hit = null;
+                    walk(sib, y => {
+                        if (hit || !y.visible || y.opacity < 0.05) return false;
+                        // a lit StageSpot / focus ring: a glow by design
+                        if (y.spread !== undefined && y.keys !== undefined) return false;
+                        if (!paints(y)) return;
+                        var r = rect(y);
+                        var ix = Math.min(tr[0] + tr[2], r[0] + r[2]) - Math.max(tr[0], r[0]);
+                        var iy = Math.min(tr[1] + tr[3], r[1] + r[3]) - Math.max(tr[1], r[1]);
+                        if (ix > 1 && iy > 1 && ix * iy * 3 >= tr[2] * tr[3]) hit = [String(y.objectName || y), r];
+                    });
+                    if (hit) {
+                        out.overlaps.push([label + " text covered", String(t.text).slice(0, 40), hit[0], tr, hit[1]]);
+                        return false;
+                    }
+                }
+            }
+        });
+    }
     function texts(root, out) {
         walk(root, x => {
             if (!x.visible || x.opacity < 0.01) return false;
@@ -239,9 +286,14 @@ Window {
                 var px = (x.font.pixelSize > 0 ? x.font.pixelSize : x.font.pointSize * 1.33) * (r[3] / x.height);
                 glyph = Math.min(glyph, px);
             });
-            out.stage = { "h": stage.height, "pageH": page.height, "desktop": page.plainStage === false, "split": page.split === true, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
+            out.stage = { "h": stage.height, "pageH": page.height, "asked": stage.asked || 0, "desktop": page.plainStage === false, "split": page.split === true, "glyph": glyph === 1e9 ? 0 : Math.round(glyph * 10) / 10 };
         }
         if (hint && shown(hint) && hint.text !== "") band.push(["hint", rect(hint)]);
+        // nothing drawn over the stage's own text (a band's tile over its
+        // lines), nor over the about scene's
+        if (stage && stage.active && shown(stage) && stage.item) covered(stage.item, "stage", out);
+        var about = find("aboutScene", page);
+        if (about && shown(about)) covered(about, "about", out);
         // the stage and its hint against every card (on top of the cards or
         // beside them in the first column)
         band.forEach(b => cards.forEach(c => {
@@ -306,9 +358,11 @@ def problems(m: dict | None, label: str) -> list[str]:
     for k, y, _run in (col or {}).get("holes", []):
         out.append(f"{label}: a blank wider than a column beside cards (columns {k}-{k + 1}, from y {y}, over 120 px)")
     st = m.get("stage")
-    # stacked (stage over the cards): a third of the page at most; two panes
-    # (stage beside the cards, held in view): it fits the view
-    if st and not st.get("split") and st["h"] > st["pageH"] / 3 + 2:
+    # stacked (stage over the cards): a third of the page at most, unless the
+    # stage asks for more (it lays itself out at that height: less would cut
+    # it), and never more than the view; two panes (stage beside the cards,
+    # held in view): it fits the view
+    if st and not st.get("split") and st["h"] > max(st["pageH"] / 3, min(st.get("asked", 0), st["pageH"])) + 2:
         out.append(f"{label}: the stage takes more than a third of the page ({st['h']} of {st['pageH']})")
     if st and st.get("split") and st["h"] > st["pageH"]:
         out.append(f"{label}: the stage beside the cards is taller than the view ({st['h']} of {st['pageH']})")
