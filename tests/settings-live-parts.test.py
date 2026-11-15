@@ -14,6 +14,11 @@ offscreen.
   controls button holding the level, and a bar in a preview never registers
   an inline OSD host.
 * The dock's indicator follows a preview's override (DockIndicator pick).
+* A preview bar claims nothing session-wide: no PomodoroSync, and a
+  fullscreen window covers no weather (WeatherFx.setCovered).
+* A hidden preview is inactive: the cards are pictures; Settings hidden or
+  a page cached hidden keeps no live part (LivePart / LiveBars / LiveScreen,
+  LiveHold), shown again it is built again.
 """
 import sys
 from pathlib import Path
@@ -26,7 +31,7 @@ headless.ensure(gl=True)
 import live_previews  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from settings_env import SettingsEnv  # noqa: E402
-from waits import wait_until  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 env = SettingsEnv("settings-live-parts")
 h = env.h
@@ -47,6 +52,8 @@ import qs.modules.services
 import qs.modules.settings
 import qs.modules.settings.store
 import qs.modules.settings.live
+import qs.modules.theme
+import qs.modules.bar.workspaces
 Window {
     id: w
     width: 1400; height: 1000; visible: true
@@ -73,6 +80,42 @@ Window {
             for (var i = 0; i < it.children.length; i++) walk(it.children[i]);
         })(w.contentItem);
         return found;
+    }
+    // the Loaders holding an object of that type
+    function loaded(type, from) {
+        var n = 0;
+        (function walk(it) {
+            if (!it) return;
+            if (it.item !== undefined && it.status !== undefined && it.item && String(it.item).indexOf(type) === 0) n++;
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(from || w.contentItem);
+        return n;
+    }
+    // the bars that see a fullscreen window
+    function barsFullscreen() {
+        var n = 0;
+        (function walk(it) {
+            if (!it) return;
+            if (it.activeWindowFullscreen === true && it.styleItem !== undefined) n++;
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(w.contentItem);
+        return n;
+    }
+    // every live preview under `from`: [{snapshot, live, shown}] (LivePart:
+    // its part exists; LiveBars: its panels; LiveScreen: its parts)
+    function liveParts(from) {
+        var out = [];
+        (function walk(it) {
+            if (!it) return;
+            if (it.wanted !== undefined && it.pictured !== undefined)
+                out.push({ "snapshot": it.snapshot, "live": it.item !== null, "shown": it.visible });
+            else if (it.specsJson !== undefined && it.bars !== undefined)
+                out.push({ "snapshot": false, "live": Object.keys(it.bars).length > 0, "shown": it.visible });
+            else if (it.islandScreen !== undefined && it.live !== undefined)
+                out.push({ "snapshot": false, "live": it.dock !== null || it.island !== null, "shown": it.visible });
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(from || w.contentItem);
+        return out;
     }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
     // a real dock with an indicator style the config does not have
@@ -174,6 +217,36 @@ src = ev("""(function() {
 })()""").split("\n")
 src = [s for s in src if s]
 check(len(src) > 0 and all("LineIndicator" in s for s in src), f"its indicators are the override's style ({src[:1]})")
+
+# ---- a preview bar claims nothing session-wide --------------------------------
+select("bar")
+check(wait_until(lambda: ev('w.count("barSlot:clock")') > 0), "the Bar page shows real bars with their clock")
+check(ev("w.loaded('PomodoroSync')") == 0, "a preview clock has no PomodoroSync (owns no pomodoro target)")
+ev("CompositorData.anyFullscreen = true")
+pump(300)
+check(ev("w.barsFullscreen()") > 0, "a fullscreen window reaches the preview bars")
+check(ev("Object.keys(WeatherFx.coveredScreens).filter(k => WeatherFx.coveredScreens[k]).length") == 0,
+      "...and none of them covers the weather of a screen")
+ev("CompositorData.anyFullscreen = false")
+
+# ---- a hidden preview is inactive ------------------------------------------------
+# the Bar page holds live bars (its stage, the canvas) and pictures (the
+# shape / workspace / clock cards: their live parts gone once pictured)
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.snapshot && p.live).length") == 0, timeout_ms=20000),
+      "the cards of the Bar page are pictures (no live part left)")
+check(ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") > 0, "the Bar page's stage and canvas are live")
+# Settings hidden (the kept-alive window, KeepAliveLoader): every part goes
+ev("w.findItem('shell').visible = false")
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") == 0, timeout_ms=6000),
+      "Settings hidden: no live preview left")
+ev("w.findItem('shell').visible = true")
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") > 0, timeout_ms=10000),
+      "...shown again: the stage is built again")
+# another page: the Bar page is kept (PageCache), hidden: its parts go
+select("windows")
+pump(2500)
+hidden_live = ev("w.liveParts(w.findItem('shell')).filter(p => p.live && !p.shown).length")
+check(hidden_live == 0, f"a cached hidden page keeps no live preview ({hidden_live})")
 
 if failures:
     print(f"settings-live-parts: {len(failures)} failure(s)")

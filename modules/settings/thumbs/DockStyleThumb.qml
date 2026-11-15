@@ -5,9 +5,9 @@ import "../live/LivePatch.js" as LivePatch
 // Card picture of a dock style (dock.theme): your real dock (live/LiveDock:
 // your apps, size and indicators) in style `value`: "default" standing on
 // the edge, "floating" above it; "integrated" is your bar hosting it
-// (live/LivePanel, a classic bar). Live (they follow every change): at a
-// size where the icons read,
-// the dock's two ends when it is longer than the card.
+// (live/LivePanel, a classic bar). Pictures (taken again when the dock or
+// the look changes): at a size where the icons read, the dock's two ends
+// when it is longer than the card.
 MiniScreen {
     id: root
 
@@ -20,6 +20,7 @@ MiniScreen {
         anchors.fill: parent
         anchors.margins: Math.round(root.u * 5)
         active: !root.integrated
+        snapshot: true
         // the icons at a size they read, the dock's two ends when it is
         // longer than the card (its shoulders, its pill, its end buttons)
         minZoom: 0.55
@@ -33,6 +34,7 @@ MiniScreen {
         anchors.fill: parent
         anchors.margins: Math.round(root.u * 5)
         active: root.integrated
+        snapshot: true
         // your bar (classic: the style that hosts it) on your screen, its
         // middle where the dock sits, at a size where it reads
         nativeWidth: LiveTarget.width

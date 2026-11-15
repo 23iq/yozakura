@@ -17,6 +17,8 @@ MiniScreen {
         anchors.margins: Math.round(root.u * 6)
         patch: LivePatch.only("workspaces")
         frame: "modules"
+        // a picture (taken again when the bar or the look changes)
+        snapshot: true
         overrides: ({
                 "workspaces.numeralStyle": String(root.value),
                 "workspaces.showNumbers": true

@@ -82,11 +82,15 @@ Window {
             if (!it || it.visible === false)
                 return;
             const hosted = it.objectName === "liveHosted";
-            if (it.readableGlyph !== undefined && it.shownScale !== undefined && (it.readableGlyph > 0 || hosted) && it.settled) {
+            // (a picture: its part is gone, its smallest text was measured
+            // before it was pictured, native px, shown at its scale)
+            const pictured = it.snapshot === true && it.ready === true && !it.item;
+            if (it.readableGlyph !== undefined && it.shownScale !== undefined && (it.readableGlyph > 0 || hosted) && (it.settled || pictured)) {
                 const r = it.mapToItem(null, 0, 0, it.width, it.height);
                 if (r.y + r.height > 0 && r.y < w.height)
                     out.push({ "name": String(it.source).split("/").pop() + "@" + Math.round(r.x) + "," + Math.round(r.y),
-                               "glyph": glyphOf(it), "capped": it.shownScale >= it.maxZoom - 0.001, "hosted": hosted });
+                               "glyph": pictured ? it.smallestGlyph * it.shownScale * (it.height > 0 ? r.height / it.height : 1) : glyphOf(it),
+                               "capped": it.shownScale >= it.maxZoom - 0.001, "hosted": hosted });
             }
             for (let i = 0; i < (it.children || []).length; i++)
                 find(it.children[i]);

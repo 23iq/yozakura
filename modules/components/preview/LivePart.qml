@@ -27,7 +27,12 @@ import qs.modules.components.kit
 // end side by side, a small break between: a whole bar's two corners).
 // `snapshot`: the part is built, pictured once (grabToImage) and destroyed
 // (a gallery of options: one picture each, no live objects); a change of
-// `refreshKey` pictures it again (the old picture stays until then).
+// `refreshKey` pictures it again (the old picture stays until then; a burst
+// of changes, a slider dragged, pictures it once, `refreshDelay` after the
+// last). A grab that fails (the window hid meanwhile) is tried again.
+// Off screen nothing lives: hidden (`shown`: an ancestor hides it, a cached
+// page, the kept-alive Settings window, another tab) for `holdMs`, the live
+// part is destroyed (a picture stays) and built again when it shows.
 // A part whose root has a `ready` property (it builds more of itself by
 // URL) is measured and pictured once `ready` is true.
 Item {
@@ -48,10 +53,17 @@ Item {
     property string fit: "contain"
     // false: the part takes no input at all
     property bool interactive: false
-    // false: nothing is built (a hidden page's part costs nothing)
+    // false: nothing is built
     property bool active: true
+    // on screen (false: an ancestor hides it); a part hidden `holdMs` is
+    // torn down, so a hidden page or window costs nothing (a quick switch
+    // of tabs keeps it)
+    property bool shown: root.visible
+    property int holdMs: 1500
     property bool snapshot: false
     property var refreshKey: null
+    // a refresh waits this long for the next change (one picture per burst)
+    property int refreshDelay: 250
     // the native rect framed (empty: the whole part); `cropOf(item)`
     // measures it after the part settled
     property rect crop: Qt.rect(0, 0, 0, 0)
@@ -61,6 +73,42 @@ Item {
     property int settleMs: 150
 
     readonly property Item item: loader.item as Item
+    // shown, or hidden for less than `holdMs`
+    readonly property bool awake: hold.awake
+    // a snapshot whose picture is taken: its live part is gone
+    property bool pictured: false
+    // the live part should exist now
+    readonly property bool wanted: root.active && root.awake && !root.pictured
+    LiveHold {
+        id: hold
+        shown: root.shown
+        holdMs: root.holdMs
+    }
+    onWantedChanged: {
+        if (root.wanted)
+            LiveGate.ask(root, root.wake);
+        else
+            root.sleep();
+    }
+    Component.onDestruction: {
+        root.leaving = true;
+        root.crop = Qt.rect(0, 0, 0, 0);
+        LiveGate.forget(root);
+    }
+    // built in its turn (LiveGate), unless it already is
+    function wake() {
+        if (root.wanted && loader.status === Loader.Null)
+            root.reload();
+    }
+    // the live part goes (a picture stays)
+    function sleep() {
+        LiveGate.forget(root);
+        settle.stop();
+        regrab.stop();
+        root.settled = false;
+        if (loader.source.toString() !== "")
+            loader.source = "";
+    }
     readonly property bool ready: root.snapshot ? shot.status === Image.Ready : (loader.status === Loader.Ready && root.settled)
     property bool settled: false
     // the native size of the part when it was pictured (it is gone since)
@@ -135,26 +183,34 @@ Item {
         root.generation++;
         loader.setSource(root.source, root.properties || {});
     }
-    // build and settle again (a snapshot pictures it again)
+    // build and settle again (a snapshot pictures it again); hidden, it is
+    // built when it shows
     function retake() {
         settle.stop();
-        if (!loader.active)
-            loader.active = true;
-        root.reload();
+        refresh.stop();
+        root.pictured = false;
+        if (root.wanted)
+            root.reload();
+    }
+    // the same, once a burst of changes is over
+    function refreshSoon() {
+        if (root.built)
+            refresh.restart();
+    }
+    Timer {
+        id: refresh
+        interval: root.refreshDelay
+        onTriggered: root.retake()
     }
 
-    onSourceChanged: if (loader.active)
+    onSourceChanged: if (root.built && root.wanted)
         root.reload()
     // torn down: the frame stops following the part (its owner's cropOf
     // must not run in a context that is going away)
     property bool leaving: false
-    Component.onDestruction: {
-        root.leaving = true;
-        root.crop = Qt.rect(0, 0, 0, 0);
-    }
     // (before the first build the gate builds it anyway)
-    onRefreshKeyChanged: if (root.active && root.built && root.refreshKey !== null)
-        root.retake()
+    onRefreshKeyChanged: if (root.refreshKey !== null)
+        root.refreshSoon()
 
     clip: root.cropped || root.overflows
 
@@ -177,19 +233,14 @@ Item {
             // a snapshot's live part is only there to be pictured
             opacity: root.snapshot ? 0.0001 : 1
 
+            // (built after the page shows, LiveGate, never in its frames;
+            // emptied while the part sleeps)
             Loader {
                 id: loader
                 width: root.nativeWidth > 0 ? root.nativeWidth : undefined
                 height: root.nativeHeight > 0 ? root.nativeHeight : undefined
-                active: root.active
                 // built over a few frames: a page of pictures never stalls
                 asynchronous: true
-                // built after the page shows (LiveGate), never in its frames
-                Component.onCompleted: if (root.active)
-                    LiveGate.ask(root, root.reload)
-                onActiveChanged: if (active && status === Loader.Null)
-                    LiveGate.ask(root, root.reload)
-                Component.onDestruction: LiveGate.forget(root)
                 onLoaded: settle.restart()
             }
         }
@@ -237,10 +288,26 @@ Item {
                     root.grab = result;
                     shot.source = result.url;
                     sandbox.opacity = 0.0001;
-                    loader.active = false;
+                    regrab.tries = 0;
+                    root.pictured = true;
                 }, Qt.size(w, h));
-                if (!ok)
+                if (!ok) {
+                    // (no window to render in now: tried again shortly)
                     sandbox.opacity = 0.0001;
+                    regrab.restart();
+                }
+            }
+        }
+        // a failed grab, tried again while the part is wanted (a few times)
+        Timer {
+            id: regrab
+            property int tries: 0
+            interval: 400
+            onTriggered: {
+                if (!root.wanted || !root.item || regrab.tries >= 20)
+                    return;
+                regrab.tries++;
+                settle.restart();
             }
         }
 
