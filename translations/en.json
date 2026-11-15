@@ -2372,7 +2372,7 @@
   "prefs.term.glass.off": "Glass is off: the opacity above is used as is.",
   "prefs.term.glass.inherit": "Terminal surface follows the master glass amount.",
   "prefs.term.glass.amount": "Terminal surface glass: %1",
-  "prefs.term.glass.open": "Glass per surface",
+  "prefs.term.glass.open": "Glass on Look",
   "prefs.term.section.theming": "App theming",
   "prefs.term.theming": "Theme these apps",
   "prefs.term.theming.desc": "The palette is written to each app when the wallpaper or colors change. Switch off the ones you theme yourself.",

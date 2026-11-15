@@ -5,8 +5,8 @@ import qs.modules.settings.store
 import qs.modules.theme
 
 // Kitty's background opacity is the glass "terminal" surface: shows the
-// effective value written to kitty.conf and jumps to the per-surface glass
-// settings (Appearance > Glass per surface).
+// effective value written to kitty.conf and jumps to the glass amount (the
+// Glass macro on Look > Theme; the per-surface amounts are advanced).
 Item {
     id: root
 
@@ -31,7 +31,7 @@ Item {
             kind: "ghost"
             icon: "arrowSquareOut"
             text: I18n.t("prefs.term.glass.open")
-            onClicked: SettingsStore.navigate("appearance", "glassSurfaces", "theme.glass.surfaces")
+            onClicked: SettingsStore.navigate("appearance", "tune", "macro.glass")
         }
     }
 }

@@ -2372,7 +2372,7 @@
   "prefs.term.glass.off": "El cristal está apagado: se usa la opacidad tal cual.",
   "prefs.term.glass.inherit": "La superficie del terminal sigue la cantidad general de cristal.",
   "prefs.term.glass.amount": "Cristal del terminal: %1",
-  "prefs.term.glass.open": "Cristal por superficie",
+  "prefs.term.glass.open": "Cristal en Aspecto",
   "prefs.term.section.theming": "Temas de aplicaciones",
   "prefs.term.theming": "Aplicar tema a estas apps",
   "prefs.term.theming.desc": "La paleta se escribe en cada app al cambiar fondo o colores. Apaga las que personalizas tú.",

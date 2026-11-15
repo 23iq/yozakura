@@ -2380,7 +2380,7 @@
   "prefs.term.glass.off": "Стекло выключено: используется прозрачность выше.",
   "prefs.term.glass.inherit": "Поверхность терминала следует общей степени стекла.",
   "prefs.term.glass.amount": "Стекло терминала: %1",
-  "prefs.term.glass.open": "Стекло по поверхностям",
+  "prefs.term.glass.open": "Стекло в «Оформлении»",
   "prefs.term.section.theming": "Темы приложений",
   "prefs.term.theming": "Оформлять приложения",
   "prefs.term.theming.desc": "Палитра записывается в приложения при смене обоев или цветов. Выключите те, что оформляете сами.",
