@@ -6,14 +6,18 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "../controls/ColorRoleModel.js" as ColorModel
+import "StepPick.js" as StepPick
 
 // The focused window's border: its width as strokes of growing weight
 // (compositor.borderSize) over the palette colours it can take
 // (compositor.activeBorderColor). Picking either stops following the
 // shell's own border (syncBorderWidth / syncBorderColor) in the same undo
-// step. Left / Right change the width.
+// step. Left / Right change the width from the value it has (a width
+// between the steps chooses no tile); a colour replaces the first stop of
+// a gradient and keeps the others. The swatches are Tab stops too.
 FocusScope {
     id: root
+    objectName: "windowBorderEditor"
 
     property var entry
     property real fillHeight: 0
@@ -26,26 +30,26 @@ FocusScope {
         const stops = ColorModel.toStops(SettingsStore.get("compositor.activeBorderColor"));
         return stops.length > 0 ? ColorModel.roleOf(stops[0]) : "primary";
     }
-    readonly property int current: root.syncWidth ? -1 : root.widths.indexOf(root.size)
+    readonly property int current: root.syncWidth ? -1 : StepPick.exactIndex(root.widths, root.size)
 
-    function pickWidth(i) {
-        const v = root.widths[Math.max(0, Math.min(root.widths.length - 1, i))];
+    function pickWidth(v) {
         SettingsStore.transaction("prefs.undo.window_border", () => {
             SettingsStore.set("compositor.syncBorderWidth", false);
             SettingsStore.set("compositor.borderSize", v);
         });
     }
     function pickColor(r) {
+        const stops = ColorModel.toStops(SettingsStore.get("compositor.activeBorderColor"));
         SettingsStore.transaction("prefs.undo.window_border", () => {
             SettingsStore.set("compositor.syncBorderColor", false);
-            SettingsStore.set("compositor.activeBorderColor", [r]);
+            SettingsStore.set("compositor.activeBorderColor", stops.length > 0 ? ColorModel.setRole(stops, 0, r) : [r]);
         });
     }
 
     implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 2
     activeFocusOnTab: true
-    Keys.onLeftPressed: root.pickWidth(root.current - 1)
-    Keys.onRightPressed: root.pickWidth(root.current + 1)
+    Keys.onLeftPressed: root.pickWidth(StepPick.stepFrom(root.widths, root.size, -1))
+    Keys.onRightPressed: root.pickWidth(StepPick.stepFrom(root.widths, root.size, 1))
 
     Row {
         id: strip
@@ -64,7 +68,7 @@ FocusScope {
                 height: strip.height
                 chosen: index === root.current
                 caption: String(modelData)
-                onClicked: root.pickWidth(index)
+                onClicked: root.pickWidth(modelData)
 
                 // a stroke of this width in the border colour (none: a faint dash)
                 Mark {
@@ -91,29 +95,47 @@ FocusScope {
 
         Repeater {
             model: root.roles
-            delegate: Mark {
+            delegate: Item {
                 id: swatch
                 required property string modelData
                 readonly property bool chosen: !root.syncColor && root.role === modelData
                 objectName: "borderColour:" + modelData
                 width: Space.controlXS
                 height: Space.controlXS
-                color: swatches.colorOf(modelData)
-                border.width: swatch.chosen ? Space.stroke : Space.hairline
-                border.color: swatch.chosen ? Type.text : Type.hairline
-                scale: swatchArea.containsMouse ? 1.1 : 1
-                Behavior on scale {
-                    enabled: Motion.micro.duration > 0
-                    NumberAnimation {
-                        duration: Motion.micro.duration
+                activeFocusOnTab: true
+                Accessible.role: Accessible.RadioButton
+                Accessible.name: I18n.t("prefs.windows.border_role." + modelData)
+                Accessible.checked: swatch.chosen
+                Accessible.onPressAction: root.pickColor(swatch.modelData)
+                Keys.onSpacePressed: root.pickColor(swatch.modelData)
+                Keys.onReturnPressed: root.pickColor(swatch.modelData)
+
+                Mark {
+                    anchors.fill: parent
+                    color: swatches.colorOf(swatch.modelData)
+                    border.width: swatch.chosen ? Space.stroke : Space.hairline
+                    border.color: swatch.chosen ? Type.text : Type.hairline
+                    scale: swatchArea.containsMouse ? 1.1 : 1
+                    Behavior on scale {
+                        enabled: Motion.micro.duration > 0
+                        NumberAnimation {
+                            duration: Motion.micro.duration
+                        }
                     }
+                }
+                FocusRing {
+                    shown: swatch.activeFocus
+                    radius: width / 2
                 }
                 MouseArea {
                     id: swatchArea
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.pickColor(swatch.modelData)
+                    onClicked: {
+                        swatch.forceActiveFocus(Qt.MouseFocusReason);
+                        root.pickColor(swatch.modelData);
+                    }
                 }
             }
         }

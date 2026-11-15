@@ -1418,7 +1418,7 @@
   "prefs.windows.border.desc": "Толщина и цвет рамки активного окна.",
   "prefs.windows.corners": "Углы окон",
   "prefs.windows.corners.desc": "Насколько скруглены углы окон, или как у оболочки.",
-  "prefs.windows.corners_shell": "Как у оболочки %1",
+  "prefs.windows.corners_shell": "Как у оболочки",
   "prefs.windows.stage.gaps": "Между · %1 px",
   "prefs.windows.stage.edges": "Края · %1 px",
   "prefs.windows.stage.corners": "Углы · %1 px",
@@ -4803,5 +4803,11 @@
   "prefs.ai.tasks.notify_me": "Уведомлять меня",
   "prefs.desktop.arrange_on_desktop": "Расставить на рабочем столе",
   "prefs.bar.section.modules": "Модули",
-  "prefs.wall.section.video": "Видеообои"
+  "prefs.wall.section.video": "Видеообои",
+  "prefs.windows.border_role.primary": "Основной",
+  "prefs.windows.border_role.secondary": "Вторичный",
+  "prefs.windows.border_role.tertiary": "Третичный",
+  "prefs.windows.border_role.error": "Красный",
+  "prefs.windows.border_role.outline": "Контур",
+  "prefs.windows.border_role.overBackground": "Текст"
 }

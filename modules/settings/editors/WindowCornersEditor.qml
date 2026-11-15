@@ -6,11 +6,13 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "../stages/WindowTiles.js" as Tiles
+import "StepPick.js" as StepPick
 
 // Window corners as a strip of window shapes from square to round
 // (compositor.rounding) and "Like the shell" (compositor.syncRoundness:
-// the windows follow the shell's roundness). One click = one undo step;
-// Left / Right step through them. The stage's corner knob gives any value.
+// the windows follow the shell's roundness, its value beside it). One click
+// = one undo step; Left / Right step from the value it has. The stage's
+// corner knob gives any value: one between the steps chooses no tile.
 FocusScope {
     id: root
 
@@ -19,19 +21,11 @@ FocusScope {
     readonly property var steps: [0, 8, 16, 24, 32]
     readonly property bool sync: SettingsStore.get("compositor.syncRoundness") !== false
     readonly property int value: Tiles.rounding(root.sync, SettingsStore.get("compositor.rounding"), SettingsStore.get("theme.roundness"))
-    // the step nearest the current rounding (-1 while following the shell)
-    readonly property int current: {
-        if (root.sync)
-            return -1;
-        let best = 0;
-        for (let i = 1; i < root.steps.length; i++)
-            if (Math.abs(root.steps[i] - root.value) < Math.abs(root.steps[best] - root.value))
-                best = i;
-        return best;
-    }
+    // the step equal to the current rounding (-1 while following the shell
+    // or between two steps)
+    readonly property int current: root.sync ? -1 : StepPick.exactIndex(root.steps, root.value)
 
-    function pick(i) {
-        const v = root.steps[Math.max(0, Math.min(root.steps.length - 1, i))];
+    function pick(v) {
         SettingsStore.transaction("prefs.undo.window_corners", () => {
             SettingsStore.set("compositor.syncRoundness", false);
             SettingsStore.set("compositor.rounding", v);
@@ -43,8 +37,8 @@ FocusScope {
 
     implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 2
     activeFocusOnTab: true
-    Keys.onLeftPressed: root.pick(root.current < 0 ? 0 : root.current - 1)
-    Keys.onRightPressed: root.pick(root.current < 0 ? root.steps.length - 1 : root.current + 1)
+    Keys.onLeftPressed: root.pick(StepPick.stepFrom(root.steps, root.value, -1))
+    Keys.onRightPressed: root.pick(StepPick.stepFrom(root.steps, root.value, 1))
 
     Row {
         id: strip
@@ -63,7 +57,7 @@ FocusScope {
                 height: strip.height
                 chosen: index === root.current
                 caption: String(modelData)
-                onClicked: root.pick(index)
+                onClicked: root.pick(modelData)
 
                 // a window's top-left corner at this rounding (scaled to the tile)
                 Mark {
@@ -88,8 +82,19 @@ FocusScope {
         dense: true
         icon: Icons.link
         active: root.sync
-        text: I18n.t("prefs.windows.corners_shell").replace("%1", root.sync ? root.value : "")
+        text: I18n.t("prefs.windows.corners_shell")
         onClicked: root.follow()
+    }
+    // the rounding the shell gives the windows now
+    KitText {
+        objectName: "cornersShellValue"
+        visible: root.sync
+        anchors.left: shell.right
+        anchors.leftMargin: Space.s
+        anchors.verticalCenter: shell.verticalCenter
+        role: "secondary"
+        color: Type.secondary
+        text: String(root.value)
     }
 
     FocusRing {

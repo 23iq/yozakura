@@ -120,6 +120,30 @@ h.eval(ev('w.findItem("borderWidth:5")'), "clicked()")
 check(ev("Config.compositor.borderSize") == 5, "a border width tile sets the width")
 check(ev("SettingsStore.undoStack.length") == steps + 1, "...as one undo step")
 
+# a value between the steps chooses no tile; the keys step from it
+ev('SettingsStore.set("compositor.borderSize", 4)')
+QTest.qWait(30)
+check(not any(ev(f'w.findItem("borderWidth:{n}").chosen') for n in (0, 1, 2, 3, 5)), "a border of 4 chooses no width tile")
+h.eval(ev('w.findItem("windowBorderEditor")'), "forceActiveFocus()")
+QTest.keyClick(win, Qt.Key_Right)
+check(ev("Config.compositor.borderSize") == 5, f"Right from 4 goes to 5, not to 0 ({ev('Config.compositor.borderSize')})")
+QTest.keyClick(win, Qt.Key_Left)
+check(ev("Config.compositor.borderSize") == 3, "Left from 5 goes to 3")
+ev('SettingsStore.set("compositor.syncRoundness", false)')
+ev('SettingsStore.set("compositor.rounding", 12)')
+QTest.qWait(30)
+check(not any(ev(f'w.findItem("cornerStep:{n}").chosen') for n in (0, 8, 16, 24, 32)), "a rounding of 12 chooses no corner tile")
+h.eval(ev('w.findItem("cornersFollowShell")'), "clicked()")
+check(ev('w.findItem("cornersFollowShell").text') == "Like the shell", "the chip says Like the shell, no number glued to it")
+check(ev('w.findItem("cornersShellValue").visible') is True, "...the value beside it")
+
+# a colour replaces the first stop of a gradient and keeps the others
+ev('SettingsStore.set("compositor.activeBorderColor", ["primary", "tertiary"])')
+h.eval(ev('w.findItem("borderColour:secondary")'), "forceActiveFocus()")
+QTest.keyClick(win, Qt.Key_Space)
+check(ev("JSON.stringify(Config.compositor.activeBorderColor)") == '["secondary","tertiary"]', f"the gradient keeps its second stop ({ev('JSON.stringify(Config.compositor.activeBorderColor)')})")
+check(ev('w.findItem("borderColour:secondary").Accessible.name') != "", "a swatch has a name")
+
 if failures:
     print(f"settings-windows-stage: {len(failures)} failure(s)")
     h.exit(1)

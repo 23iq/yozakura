@@ -1414,7 +1414,7 @@
   "prefs.windows.border.desc": "Grosor y color del borde de la ventana activa.",
   "prefs.windows.corners": "Esquinas de ventana",
   "prefs.windows.corners.desc": "Cuán redondas son las esquinas, o igual que el shell.",
-  "prefs.windows.corners_shell": "Como el shell %1",
+  "prefs.windows.corners_shell": "Como el shell",
   "prefs.windows.stage.gaps": "Entre · %1 px",
   "prefs.windows.stage.edges": "Bordes · %1 px",
   "prefs.windows.stage.corners": "Esquinas · %1 px",
@@ -4763,5 +4763,11 @@
   "prefs.ai.tasks.notify_me": "Avisarme",
   "prefs.desktop.arrange_on_desktop": "Organizar en el escritorio",
   "prefs.bar.section.modules": "Módulos",
-  "prefs.wall.section.video": "Fondos de vídeo"
+  "prefs.wall.section.video": "Fondos de vídeo",
+  "prefs.windows.border_role.primary": "Primario",
+  "prefs.windows.border_role.secondary": "Secundario",
+  "prefs.windows.border_role.tertiary": "Terciario",
+  "prefs.windows.border_role.error": "Rojo",
+  "prefs.windows.border_role.outline": "Contorno",
+  "prefs.windows.border_role.overBackground": "Texto"
 }

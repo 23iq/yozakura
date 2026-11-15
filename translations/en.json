@@ -1414,7 +1414,7 @@
   "prefs.windows.border.desc": "Width and color of the focused window's border.",
   "prefs.windows.corners": "Window corners",
   "prefs.windows.corners.desc": "How round window corners are, or the same as the shell.",
-  "prefs.windows.corners_shell": "Like the shell %1",
+  "prefs.windows.corners_shell": "Like the shell",
   "prefs.windows.stage.gaps": "Between · %1 px",
   "prefs.windows.stage.edges": "Edges · %1 px",
   "prefs.windows.stage.corners": "Corners · %1 px",
@@ -4763,5 +4763,11 @@
   "prefs.ai.tasks.notify_me": "Notify me",
   "prefs.desktop.arrange_on_desktop": "Arrange on desktop",
   "prefs.bar.section.modules": "Modules",
-  "prefs.wall.section.video": "Video wallpapers"
+  "prefs.wall.section.video": "Video wallpapers",
+  "prefs.windows.border_role.primary": "Primary",
+  "prefs.windows.border_role.secondary": "Secondary",
+  "prefs.windows.border_role.tertiary": "Tertiary",
+  "prefs.windows.border_role.error": "Red",
+  "prefs.windows.border_role.outline": "Outline",
+  "prefs.windows.border_role.overBackground": "Text"
 }
