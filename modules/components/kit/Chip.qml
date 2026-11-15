@@ -77,7 +77,10 @@ StyledRect {
     Accessible.checkable: !root.isButton
     Accessible.checked: root.active
     Accessible.focusable: root.focusable
-    Accessible.onPressAction: root.clicked()
+    Accessible.onPressAction: {
+        if (root.enabled)
+            root.clicked();
+    }
 
     ControlBox {
         shown: root.boxed

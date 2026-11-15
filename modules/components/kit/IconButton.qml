@@ -67,7 +67,10 @@ StyledRect {
     // the tooltip says what it does; the glyph is a private-use code point
     Accessible.name: root.tooltip
     Accessible.focusable: root.focusable
-    Accessible.onPressAction: root.clicked()
+    Accessible.onPressAction: {
+        if (root.enabled)
+            root.clicked();
+    }
 
     Behavior on opacity {
         enabled: Motion.micro.duration > 0
