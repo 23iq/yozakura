@@ -116,6 +116,8 @@ for cat in ("bar", "dock", "notch", "menus", "launcher"):
     h.eval(shell, f'select("{cat}")')
     env.wait_page(win)
     live_previews.wait_built(env, settle_ms=1200)
+    # (pictures are taken one after another: a busy machine takes longer)
+    wait_until(lambda: len(json.loads(h.eval(win, "parts()"))) > 0, timeout_ms=20000)
     parts = json.loads(h.eval(win, "parts()"))
     check(len(parts) > 0, f"{cat}: readable live parts shown ({len(parts)})")
     for p in parts:
