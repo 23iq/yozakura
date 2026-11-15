@@ -3,11 +3,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
+import qs.modules.settings.store
+import qs.modules.settings.live
 
 // Card picture of where corner toasts stack (notifications.position): a
-// small screen with two toasts at that place (top / bottom, left / centre
-// / right), the newest one marked with the accent. Auto: the toasts drawn
-// faintly at the top right with a wand (the bar's side decides).
+// small screen with the real toast (live/LiveToast: the shell's own card
+// with the sample message, its stack when grouped by app) at that place
+// (top / bottom, left / centre / right). Auto: the toast faint at the top
+// right with a wand (the bar's side decides).
 ThumbGround {
     id: root
 
@@ -18,44 +21,21 @@ ThumbGround {
     readonly property bool atBottom: root.place.indexOf("bottom") === 0
     readonly property string side: root.place.indexOf("left") >= 0 ? "left" : (root.place.indexOf("right") >= 0 ? "right" : "center")
     readonly property real unit: Math.min(root.width, root.height) / 10
-    readonly property real toastW: Math.round(root.width * 0.36)
-    readonly property real toastH: Math.round(root.unit * 1.7)
+    readonly property real toastW: Math.round(root.width * 0.42)
+    // the toast's height at that width (its own proportions)
+    readonly property real toastH: toast.part.partWidth > 0 ? Math.round(root.toastW * toast.part.partHeight / toast.part.partWidth) : Math.round(root.unit * 3)
 
-    Column {
-        id: stack
+    LiveToast {
+        id: toast
         opacity: root.auto ? 0.45 : 1
-        spacing: Math.round(root.unit * 0.5)
+        grouped: SettingsStore.get("notifications.groupByApp") === true
+        stackUp: root.atBottom
+        snapshot: true
+        refreshKey: [String(Colors.primary), String(Colors.background), SettingsStore.get("theme.font")]
+        width: root.toastW
+        height: root.toastH
         x: root.side === "left" ? root.unit : root.side === "right" ? root.width - width - root.unit : Math.round((root.width - width) / 2)
         y: root.atBottom ? root.height - height - root.unit : root.unit
-
-        Repeater {
-            // the newest toast nearest the edge
-            model: root.atBottom ? [false, true] : [true, false]
-            delegate: Mark {
-                id: toast
-                required property bool modelData
-                width: root.toastW
-                height: root.toastH
-                radius: Look.radius("small", height)
-                color: Colors.surfaceContainerHighest
-                border.width: Space.hairline
-                border.color: Qt.alpha(Colors.overBackground, 0.2)
-                Mark {
-                    x: Math.round(root.unit * 0.45)
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Math.round(toast.height * 0.45)
-                    height: width
-                    color: toast.modelData ? Colors.primary : Qt.alpha(Colors.overSurface, 0.35)
-                }
-                Mark {
-                    x: Math.round(root.unit * 0.45 + toast.height * 0.45 + root.unit * 0.4)
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Math.round(toast.width * 0.5)
-                    height: Math.max(Space.hairline * 2, Math.round(root.unit * 0.35))
-                    color: Qt.alpha(Colors.overSurface, toast.modelData ? 0.7 : 0.4)
-                }
-            }
-        }
     }
 
     Icon {

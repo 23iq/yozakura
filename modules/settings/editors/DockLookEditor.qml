@@ -6,12 +6,14 @@ import qs.modules.components.kit
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import qs.modules.settings.thumbs
+import qs.modules.settings.live
 import "DockLook.js" as DockLook
 
-// The dock's look in one card: its size as small docks of growing icons
-// (dock.iconSize, the nearest step chosen) over the running indicator
-// drawn under an app (none / dot / line / glow / brush:
-// dock.showRunningIndicators + dock.indicator). Two picture grids of the
+// The dock's look in one card: its size as your real dock at each step
+// (dock.iconSize, the nearest step chosen; live/LiveDock with the size as
+// an override, one scale for all) over the running indicator under one of
+// your running apps (none / dot / line / glow / brush:
+// dock.showRunningIndicators + dock.indicator, the dock's own indicator). Two picture grids of the
 // window's one pattern (ChoiceGrid: the name under the picture, the chosen
 // one ringed with a check badge). A click is one change; the stage's dock
 // follows.
@@ -23,6 +25,8 @@ Item {
     readonly property int iconSize: Number(SettingsStore.get("dock.iconSize") ?? 24)
     readonly property int sizeIndex: DockLook.nearestSize(root.iconSize)
     readonly property string indicator: DockLook.indicatorOf(SettingsStore.get("dock.showRunningIndicators"), SettingsStore.get("dock.indicator"))
+    // the pictures are taken again when the dock or the colours change
+    readonly property string look: JSON.stringify([root.iconSize, root.indicator, SettingsStore.get("dock.theme"), SettingsStore.get("dock.height"), SettingsStore.get("dock.spacing"), SettingsStore.get("dock.position"), String(Colors.primary), String(Colors.background)])
     // in a card of fixed height: both grids share it, their pictures as
     // tall as the names under them leave
     readonly property real captionHeight: Math.ceil(Type.size("secondary") * 1.5) + Space.s
@@ -49,33 +53,24 @@ Item {
         value: DockLook.SIZES[root.sizeIndex].px
         aspect: 0.5
         previewHeight: root.pictureHeight
+        // your real dock at each size, all at one scale (the largest
+        // fits the picture's height), so the steps compare; a long dock
+        // is cut by the picture
         picture: Component {
             ThumbGround {
                 id: size
                 property var option: null
-                // to scale with the largest size, which fits the picture
-                // both ways (a narrow card never draws past it)
-                readonly property real icon: size.option ? Math.round(Math.min(size.height * 0.42, (size.width - Space.xs * 8) / 3) * size.option.value / DockLook.SIZES[DockLook.SIZES.length - 1].px) : 0
                 anchors.fill: parent
-                Mark {
-                    anchors.centerIn: parent
-                    width: size.icon * 3 + Space.xs * 4
-                    height: size.icon + Space.xs * 2
-                    radius: Look.radius("small", height)
-                    color: Colors.surfaceContainerHighest
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: Space.xs
-                        Repeater {
-                            model: 3
-                            delegate: Mark {
-                                width: size.icon
-                                height: size.icon
-                                radius: Look.radius("small", height)
-                                color: Type.secondary
-                            }
-                        }
-                    }
+                LiveDock {
+                    anchors.fill: parent
+                    active: !!size.option
+                    snapshot: true
+                    refreshKey: root.look
+                    zoom: size.height * 0.62 / (DockLook.SIZES[DockLook.SIZES.length - 1].px + Space.controlM)
+                    margin: 0
+                    overrides: ({
+                            "dock.iconSize": size.option ? size.option.value : 24
+                        })
                 }
             }
         }
@@ -95,44 +90,21 @@ Item {
         value: root.indicator
         aspect: 0.5
         previewHeight: root.pictureHeight
+        // your real dock, framed on a running app, with the indicator
         picture: Component {
             ThumbGround {
                 id: ind
                 property var option: null
-                readonly property string kind: ind.option ? ind.option.value : ""
-                readonly property real s: Math.round(Math.min(ind.height, ind.width) * 0.4)
                 anchors.fill: parent
-                Item {
-                    id: app
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: Math.round((ind.height - height) / 2)
-                    width: ind.s
-                    height: ind.s + Space.s
-                    // the glow sits behind the app
-                    Mark {
-                        visible: ind.kind === "glow"
-                        anchors.centerIn: appIcon
-                        width: appIcon.width * 1.5
-                        height: width
-                        color: Qt.alpha(Type.accent, 0.35)
-                    }
-                    Mark {
-                        id: appIcon
-                        width: ind.s
-                        height: ind.s
-                        radius: Look.radius("small", height)
-                        color: Colors.surfaceContainerHighest
-                    }
-                    Mark {
-                        visible: ind.kind === "dot" || ind.kind === "line" || ind.kind === "brush"
-                        anchors.horizontalCenter: appIcon.horizontalCenter
-                        y: appIcon.height + Space.xs
-                        width: ind.kind === "dot" ? Space.xs + 1 : (ind.kind === "line" ? ind.s * 0.6 : ind.s * 0.9)
-                        height: ind.kind === "brush" ? Space.xs : Space.xs - 1
-                        radius: ind.kind === "brush" ? Space.xs / 4 : height / 2
-                        rotation: ind.kind === "brush" ? -4 : 0
-                        color: Type.accent
-                    }
+                LiveDock {
+                    anchors.fill: parent
+                    anchors.margins: Space.xs
+                    active: !!ind.option
+                    snapshot: true
+                    refreshKey: root.look
+                    frame: "app"
+                    maxZoom: 2
+                    overrides: ind.option ? DockLook.indicatorWrites(ind.option.value) : ({})
                 }
             }
         }

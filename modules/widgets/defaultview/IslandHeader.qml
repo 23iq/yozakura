@@ -10,6 +10,7 @@ import qs.modules.widgets.defaultview.activities
 import qs.config
 import qs.modules.shell.rehome
 import "activities/ActivityRegistry.js" as Registry
+import "../../components/preview/Preview.js" as Preview
 
 Item {
     id: root
@@ -20,10 +21,13 @@ Item {
     property bool panelOpen: false
     property bool revealed: true
     property string screenName: ""
+    // A settings preview (DefaultView.preview): notch.style, the sample
+    // "activities"; null live
+    property var preview: null
     // Upright header of a side-edge notch: segments and the rail
     // (IslandRail) stack along the edge; the summary row is not used
     property bool vertical: false
-    readonly property real thickness: Config.notchTheme === "island" ? BarMetrics.notchIslandHeight : BarMetrics.notchRestHeight
+    readonly property real thickness: Preview.pick(root.preview, "notch.style", Config.notchStyle) === "attached" ? BarMetrics.notchRestHeight : BarMetrics.notchIslandHeight
     readonly property real railPadding: Math.round(Styling.fontSize(-4))
     readonly property IslandRail rail: railLoader.item as IslandRail
     readonly property bool selectorOpen: summaryLoader.item?.selectorOpen ?? false
@@ -36,9 +40,10 @@ Item {
     // trailing privacy segment. Each segment opens its own panel. Order,
     // side and on/off come from notch.activities (ActivityRegistry.js).
     readonly property bool activitiesOn: ActivityService.presentation === "notch"
-    readonly property bool hasActivities: root.activitiesOn && ActivityService.count > 0
+    readonly property var activities: Preview.sample(root.preview, "activities", ActivityService.activities)
+    readonly property bool hasActivities: root.activitiesOn && root.activities.length > 0
     readonly property var registry: Registry.resolve(Config.notch ? Config.notch.activities : [])
-    readonly property var sides: Registry.sides(ActivityService.activities, root.registry)
+    readonly property var sides: Registry.sides(root.activities, root.registry)
     readonly property var timerTasks: root.sides.leading.filter(a => Registry.triggerOf(a, root.registry) === "timers")
     readonly property var otherTasks: root.sides.leading.filter(a => Registry.triggerOf(a, root.registry) !== "timers")
     readonly property var trailingItems: root.sides.trailing
@@ -251,6 +256,7 @@ Item {
     Component {
         id: simpleSummary
         MediaSummary {
+            preview: root.preview
             player: root.player
             mediaExpanded: root.mediaExpanded
             revealed: root.revealed
@@ -259,6 +265,7 @@ Item {
     Component {
         id: legacySummary
         CompactPlayer {
+            preview: root.preview
             player: root.player
             notchHovered: root.mediaHovered || root.selectorOpen
         }

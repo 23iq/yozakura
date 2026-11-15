@@ -23,6 +23,13 @@ function latest(notifications) {
     });
 }
 
+// Width of a toast card: the base width (Metrics.toastW) grown with the
+// body font past 14 px, so larger text keeps its line length (corner
+// toasts, open strips, their settings previews).
+function toastWidth(base, fontPx) {
+    return Math.round(base * Math.max(1, (fontPx || 14) / 14));
+}
+
 // Sheets drawn behind the card for the rest of the group (0..MAX_STACK).
 function stackDepth(count) {
     return Math.max(0, Math.min(MAX_STACK, (count | 0) - 1));

@@ -98,6 +98,13 @@ Item {
 
     onSourceChanged: if (loader.active)
         root.reload()
+    // torn down: the frame stops following the part (its owner's cropOf
+    // must not run in a context that is going away)
+    property bool leaving: false
+    Component.onDestruction: {
+        root.leaving = true;
+        root.crop = Qt.rect(0, 0, 0, 0);
+    }
     // (before the first build the gate builds it anyway)
     onRefreshKeyChanged: if (root.active && root.built && root.refreshKey !== null)
         root.retake()
@@ -141,7 +148,7 @@ Item {
                 return;
             // live: the frame follows the part (what cropOf reads is bound)
             if (root.cropOf && !root.snapshot) {
-                root.crop = Qt.binding(() => root.item ? root.cropOf(root.item) : Qt.rect(0, 0, 0, 0));
+                root.crop = Qt.binding(() => root.item && !root.leaving ? root.cropOf(root.item) : Qt.rect(0, 0, 0, 0));
             } else if (root.cropOf) {
                 const r = root.cropOf(root.item);
                 if (r && r.width > 0 && r.height > 0)

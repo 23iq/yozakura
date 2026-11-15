@@ -13,12 +13,16 @@ import qs.modules.services
 import qs.modules.components
 import qs.config
 import qs.modules.bar.panels
+import "../../components/preview/Preview.js" as Preview
 
 Item {
     id: compactPlayer
 
     required property var player
     required property bool notchHovered
+    // A settings preview (IslandHeader.preview): the sample "focusedTitle"
+    // ("" at rest: notch.noMediaDisplay shows) instead of the session's
+    property var preview: null
 
     property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
     property real position: player?.position ?? 0.0
@@ -32,6 +36,8 @@ Item {
     }
 
     readonly property string focusedTitle: {
+        if (Preview.on(compactPlayer.preview))
+            return Preview.sample(compactPlayer.preview, "focusedTitle", "");
         const activeWsId = YozdService.focusedMonitor?.activeWorkspace?.id;
         if (!activeWsId) return "";
         const windows = CompositorData.workspaceWindowsMap[activeWsId] || [];

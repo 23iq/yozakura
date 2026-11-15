@@ -53,6 +53,8 @@ BarContent and DockContent take `preview` (a PreviewContext, null live),
 modules see it as `bar.preview`; keys a picture card varies are read with
 `Preview.pick(preview, "key", Config...)` (components/preview/Preview.js).
 BarModuleSlot names each slot `barSlot:<id>` so previews find modules.
+ControlsButton passes it to its inline OSD (OsdBarInline): a preview
+registers no host, takes no OSD event and shows the `osd` sample.
 A new module or style needs nothing more; a new look key a card varies
 needs one `Preview.pick`.
 

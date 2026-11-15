@@ -8,7 +8,11 @@ import QtQuick
 // session-wide (IPC targets, Pomodoro ownership, weather covers, edge
 // reservations). `overrides` shows config keys with another value than the
 // live config (the picture card of an option not chosen): {"dotted.key":
-// value}; every other key follows the live config.
+// value}; every other key follows the live config. `samples`: data shown
+// instead of a live service's (Preview.sample): {"player": track,
+// "notifications": [...], "activities": [...]}; a part showing a state
+// (the island playing a song) gets it here, never from the session.
 QtObject {
     property var overrides: ({})
+    property var samples: ({})
 }

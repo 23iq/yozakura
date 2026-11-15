@@ -6,6 +6,7 @@ import Quickshell
 import qs.config
 import qs.modules.services
 import qs.modules.components.kit
+import "../components/preview/Preview.js" as Preview
 
 // The dock's row (or column, `vertical`) of items: the pin toggle, the app
 // buttons (TaskbarApps) and the overview button, the two buttons set off
@@ -18,7 +19,10 @@ GridLayout {
     // The edge the app buttons face (their running indicators).
     property string position: "bottom"
     property bool pinned: false
-    readonly property real dividerLength: (Config.dock?.iconSize ?? 40) * 0.6
+    // A settings preview (DockContent.preview): its looks, null live
+    property var preview: null
+    readonly property real iconSize: Preview.pick(root.preview, "dock.iconSize", Config.dock?.iconSize ?? 40)
+    readonly property real dividerLength: root.iconSize * 0.6
 
     signal pinToggled
 
@@ -60,6 +64,8 @@ GridLayout {
             appToplevel: modelData
             Layout.alignment: Qt.AlignCenter
             dockPosition: root.position
+            preview: root.preview
+            iconSize: root.iconSize
         }
     }
 

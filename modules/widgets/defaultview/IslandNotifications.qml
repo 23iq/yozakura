@@ -3,6 +3,8 @@ import qs.modules.notch
 import qs.config
 import qs.modules.theme
 import qs.modules.components.kit
+import qs.modules.services
+import "../../components/preview/Preview.js" as Preview
 
 // Notification toasts inside the resting notch (notifications.presentation
 // "notch"). The notch silhouette itself grows to hold them; the content is
@@ -14,10 +16,13 @@ import qs.modules.components.kit
 Item {
     id: root
     property bool hovered: false
+    // A settings preview (DefaultView.preview): the sample "notifications",
+    // born at once; null live
+    property var preview: null
     readonly property bool navigating: notificationView.isNavigating
     readonly property int padding: Look.surfacePadding
     readonly property int topPadding: Space.s
-    readonly property bool fromBottom: Config.notchPosition === "bottom"
+    readonly property bool fromBottom: Preview.pick(root.preview, "notch.position", Config.notchPosition) === "bottom"
     implicitHeight: root.topPadding + group.implicitHeight + root.padding
 
     // 0 = still inside the notch edge, 1 = fully born
@@ -25,7 +30,7 @@ Item {
     onVisibleChanged: {
         if (!visible)
             return;
-        if (Config.animDuration > 0) {
+        if (Config.animDuration > 0 && !Preview.on(root.preview)) {
             root.birth = 0;
             bornAnimation.restart();
         } else {
@@ -66,6 +71,7 @@ Item {
         NotchNotificationView {
             id: notificationView
             width: parent.width
+            popups: Preview.sample(root.preview, "notifications", Notifications.notchPopupList)
             notchHovered: root.hovered
         }
     }

@@ -1,8 +1,10 @@
 """The real shell parts the settings stages preview (modules/settings/live:
-the bar panels, the dock), for SettingsEnv: panels_env's import tree and
-fixture desktop (workspaces, windows, tray, battery...) merged into the
-settings harness, so a stage renders the shell's own bar exactly as
-tools/render/panels_render.py does.
+the bar panels, the dock, the island, the notification toasts), for
+SettingsEnv: panels_env's import tree and fixture desktop (workspaces,
+windows, tray, battery...) merged into the settings harness, so a stage
+renders the shell's own bar exactly as tools/render/panels_render.py does,
+and the island's tree (island_env) with idle services: a stage's samples
+(PreviewContext.samples) are what it shows.
 
     live_previews.mirror(root)                  # after SettingsEnv._mirror
     services = live_previews.services(own)      # own stubs win, except YozdService
@@ -17,9 +19,14 @@ from qmlharness import REPO
 
 # Directories whose every QML gets a qmldir (the real bar and dock trees).
 FULL_QMLDIRS = ["modules/bar", "modules/dock", "modules/corners", "modules/frame", "modules/components/preview",
-                "modules/settings/live"]
-# Trees the stages show beyond the bar's (the whole dock: DockContent).
-EXTRA_DIRS = ["modules/dock"]
+                "modules/settings/live", "modules/notch", "modules/widgets/defaultview", "modules/notifications",
+                "modules/shell/hosts"]
+# Trees the stages show beyond the bar's (the whole dock: DockContent; the
+# island: NotchPreview, its resting view and notifications).
+EXTRA_DIRS = ["modules/dock", "modules/notch", "modules/widgets/defaultview", "modules/notifications"]
+# Files the island needs beyond those trees (its preview host, island_env.JS).
+EXTRA_FILES = ["modules/shell/NotchPreview.qml", "modules/services/activities/TransferModel.js", "modules/services/activities/NotificationProgress.js",
+               "modules/services/voice/VoiceModel.js"]
 # Directories the settings harness already declares with a restricted type
 # list: the bar's buttons are added to it.
 EXTRA_TYPES = {
@@ -40,7 +47,7 @@ def mirror(root: Path) -> None:
         src = REPO / rel
         if src.is_dir():
             shutil.copytree(src, qs / rel, dirs_exist_ok=True)
-    for rel in panels_env.MIRROR_FILES:
+    for rel in panels_env.MIRROR_FILES + EXTRA_FILES:
         src, dst = REPO / rel, qs / rel
         if src.is_file() and not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -155,16 +162,41 @@ def services(own: dict) -> dict:
     import panels_env
     import panels_stubs
 
-    out = {**panels_stubs.services(panels_env.icon_path), **own}
+    out = {**panels_stubs.services(panels_env.icon_path), **ISLAND_SERVICES, **own}
     out["YozdService"] = panels_stubs.services(panels_env.icon_path)["YozdService"]
     return out
+
+
+# What the island reads beyond the bar's services: idle (nothing recording,
+# no voice input); the island's content comes from a stage's samples.
+ISLAND_SERVICES = {
+    "MicrophoneStatus": "pragma Singleton\nQtObject { property bool muted: false; property bool available: true; "
+                        "property bool noticeVisible: false; property string noticeScreen: ''; function toggleMute() {} }",
+    "VoiceService": "pragma Singleton\nQtObject { property bool panelOpen: false; property string panelScreen: ''; "
+                    "property string state: 'idle'; function dismiss() {} function stop() {} }",
+}
+
+# A timer as the shell's provider shapes it (TimerActivity.timerActivity),
+# for the Island stage's "timer" sample
+TIMER_ACTIVITY = """pragma Singleton
+import QtQuick
+import qs.modules.theme
+QtObject {
+    function attach(t) {} function detach(t) {}
+    function timerActivity(t) {
+        const s = Math.round(t.leftMs / 1000);
+        return { id: "timer:" + t.id, category: "task", priority: 50, icon: Icons.countdown, indicator: "ring",
+                 label: Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"), detail: t.name,
+                 progress: t.leftMs / Math.max(1, t.totalMs), color: "primary", startedAt: t.createdAt,
+                 action: { kind: "timer", id: t.id, ringing: false } }
+    }
+}"""
 
 
 def activities() -> dict:
     import panels_stubs
 
-    return {"ActivityService": panels_stubs.ACTIVITY_SERVICE,
-            "TimerActivity": "pragma Singleton\nQtObject { function attach(t) {} function detach(t) {} }"}
+    return {"ActivityService": panels_stubs.ACTIVITY_SERVICE, "TimerActivity": TIMER_ACTIVITY}
 
 
 def quickshell(own: dict) -> dict:
@@ -176,6 +208,11 @@ def quickshell(own: dict) -> dict:
     mods = {k: dict(v) for k, v in panels_stubs.quickshell_modules(panels_env.icon_path).items()}
     for module, types in own.items():
         mods.setdefault(module, {}).update(types)
+    # the island's header shows the bar's clock / tray when the bar is off
+    mods.setdefault("qs.modules.shell.rehome", {}).update({"RehomedClock": "Text { property real size }",
+                                                           "RehomedTray": "Item { property real iconSize }"})
+    mods.setdefault("Quickshell.Services.Notifications", {}).update({
+        "NotificationUrgency": "QtObject { enum Urgency { Low, Normal, Critical } }"})
     name, w, h = SCREEN
     qs = mods["Quickshell"]
     single = qs["Quickshell"].replace("property var screens: []; ", "")

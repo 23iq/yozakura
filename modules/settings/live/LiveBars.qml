@@ -107,11 +107,20 @@ Item {
         return out;
     }
 
+    // collected on the next turn of the event loop; a timer (not
+    // Qt.callLater) goes away with this item, so a panel removed while the
+    // page is torn down never calls into a destroyed context
+    Timer {
+        id: collect
+        interval: 0
+        onTriggered: root._collect()
+    }
+
     Repeater {
         id: repeater
         model: root.screen ? root.entries : []
-        onItemAdded: Qt.callLater(root._collect)
-        onItemRemoved: Qt.callLater(root._collect)
+        onItemAdded: collect.restart()
+        onItemRemoved: collect.restart()
 
         delegate: Loader {
             id: slot
@@ -130,7 +139,7 @@ Item {
             }
             Component.onCompleted: LiveGate.ask(slot, slot.build)
             Component.onDestruction: LiveGate.forget(slot)
-            onLoaded: Qt.callLater(root._collect)
+            onLoaded: collect.restart()
         }
     }
 }

@@ -33,7 +33,8 @@ Item {
     // Concave screen corner size; 0 for the island
     property int cornerSize: 0
 
-    readonly property bool attached: Config.notchTheme === "default"
+    // attached style (Notch sets it: a preview may show another style)
+    property bool attached: Config.notchTheme === "default"
     readonly property int smallRadius: Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property int outerRadius: Config.roundness > 0 ? (open ? Config.roundness + 20 : Config.roundness + 4) : 0
     readonly property var radii: NotchShape.radii(position, attached ? 0 : (tightEdge ? smallRadius : outerRadius), outerRadius)

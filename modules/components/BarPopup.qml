@@ -19,7 +19,7 @@ PopupWindow {
     required property var bar
 
     // Content to display inside the popup
-    default property alias contentData: contentContainer.data
+    default property alias contentData: motion.contentData
 
     // Visual configuration
     property int popupPadding: Metrics.spacing
@@ -148,7 +148,7 @@ PopupWindow {
 
     Region {
         id: contentInputMask
-        item: background
+        item: motion.box
     }
 
     // Closing keeps the surface mapped for the exit motion, but it must
@@ -180,8 +180,9 @@ PopupWindow {
         }
     }
 
-    // theme.popup entry motion toward/away from the anchor + optional tail
-    PopupMotion {
+    // theme.popup entry motion toward/away from the anchor + optional tail,
+    // the box (PopupSurface: also the settings' preview of a menu)
+    PopupSurface {
         id: motion
         objectName: "popupMotion"
         anchors.fill: parent
@@ -190,29 +191,11 @@ PopupWindow {
         anchorAlong: root.anchorAlong
         tail: root.showTail
         tailSize: root.tailSize
-        tailVariant: root.variant
+        variant: root.variant
+        padding: root.popupPadding
         onHidden: {
             if (!root.isOpen)
                 root.visible = false;
-        }
-
-        // Pointer of the cursor lantern for the popup's surface
-        LanternScope {}
-
-        StyledRect {
-            id: background
-            anchors.fill: parent
-            variant: root.variant
-            glassSurface: "popups"
-            enableShadow: true
-            radius: Styling.radius(0) // the kit surface radius (Space.surfaceRadius)
-            anchorEdge: motion.anchorEdge
-
-            Item {
-                id: contentContainer
-                anchors.fill: parent
-                anchors.margins: root.popupPadding
-            }
         }
     }
 

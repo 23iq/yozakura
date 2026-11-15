@@ -4,12 +4,18 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components.preview
+import qs.modules.settings.store
+import qs.modules.settings.live
+import "../live/LivePatch.js" as LivePatch
+import "../live/LiveSamples.js" as LiveSamples
 import "../../shell/osd/OsdStyles.js" as OsdStyles
 
 // Card picture of an OSD style (layout.osd.style): the real style
-// component (loaded by URL, like the stage's) showing a volume level over
-// your wallpaper; "in the bar" draws a bar with the level inside its
-// controls.
+// component (by URL, live/LivePart: inert, built after the page) showing a
+// volume level; "in the bar" is your bar (live/LivePanel) whose controls
+// button holds the level, as the shell grows it there. The styles are
+// pictured once, again when the look changes.
 MiniScreen {
     id: root
 
@@ -18,47 +24,31 @@ MiniScreen {
     readonly property string style: OsdStyles.normalize(root.value)
     readonly property bool inline: root.style === "bar-inline"
     readonly property var size: OsdStyles.sizeFor(root.style, false, Metrics.osdW)
+    // pictured again when the colours or the type change
+    readonly property var look: [String(Colors.primary), String(Colors.background), SettingsStore.get("theme.font"), SettingsStore.get("theme.roundness")]
 
-    Item {
-        visible: !root.inline
-        width: parent.width
-        height: Math.round(parent.height * 0.7)
-        Loader {
-            id: real
-            anchors.centerIn: parent
-            width: root.size.w
-            height: root.size.h
-            scale: Math.min(parent.width * 0.82 / Math.max(1, root.size.w), parent.height * 0.8 / Math.max(1, root.size.h))
-            source: root.inline ? "" : "../../shell/osd/" + OsdStyles.fileFor(root.style)
-            onLoaded: {
-                item.kind = "volume";
-                item.value = 0.62;
-                item.shown = true;
-            }
-        }
+    LivePart {
+        anchors.fill: parent
+        anchors.margins: Math.round(root.u * 9)
+        active: !root.inline
+        snapshot: true
+        refreshKey: JSON.stringify(root.look)
+        source: Qt.resolvedUrl("../../shell/osd/" + OsdStyles.fileFor(root.style))
+        nativeWidth: root.size.w
+        nativeHeight: root.size.h
+        properties: LiveSamples.osd()
     }
 
-    // in the bar: the bar along the top, the level inside its controls
-    Mark {
-        visible: root.inline
-        width: parent.width
-        height: Math.round(parent.height * 0.22)
-        radius: 0
-        color: Colors.surfaceContainer
-        border.width: Space.hairline
-        border.color: Qt.alpha(Colors.overBackground, 0.28)
-        Mark {
-            anchors.right: parent.right
-            anchors.rightMargin: parent.height * 0.4
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width * 0.42
-            height: parent.height * 0.5
-            color: Colors.surfaceContainerHighest
-            Mark {
-                width: parent.width * 0.62
-                height: parent.height
-                color: Type.progress
-            }
-        }
+    // (live: a just-built panel can picture blank offscreen, LIVE PREVIEWS)
+    LivePanel {
+        anchors.fill: parent
+        anchors.margins: Math.round(root.u * 5)
+        active: root.inline
+        nativeWidth: 640
+        frame: "modules"
+        patch: LivePatch.only(["controls"])
+        samples: ({
+                "osd": LiveSamples.osd()
+            })
     }
 }

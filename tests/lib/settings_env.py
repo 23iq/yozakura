@@ -176,6 +176,7 @@ QtObject {
     // (the bar's notification chip in a live preview reads these)
     property var popupList: []
     property var notchPopupList: []
+    property var list: []
     property var appNameList: []
     property var groupsByAppName: ({})
     function showsOnScreen(name) { return true }
@@ -321,6 +322,9 @@ DESKTOP_STUBS = {
                       "property QtObject items: QtObject { property int count: 0 } }",
     "MprisController": "pragma Singleton\nQtObject { property var activePlayer: null; property bool isPlaying: false; "
                        "property bool canTogglePlaying: false; property bool canGoPrevious: false; property bool canGoNext: false; "
+                       "property var filteredPlayers: []; property bool hasShuffle: false; property bool shuffleSupported: false; "
+                       "property bool loopSupported: false; property int loopState: 0; function setShuffle(s) {} function setLoopState(s) {} "
+                       "function setActivePlayer(p) {} function cyclePlayer() {} "
                        "function togglePlaying() {} function previous() {} function next() {} }",
     "CavaService": "pragma Singleton\nQtObject { property bool available: false; property var consumers: ({}); "
                    "function setConsumer(k, a) { consumers[k] = a } function levels(n) { return [] } }",
@@ -538,6 +542,7 @@ QtObject {{
             return 'image';
         }}
         function getDisplaySource(p) {{ return thumbs[p] || p }}
+        function getLockscreenFramePath(p) {{ return "" }}
         function getColorSource(p) {{ return getFileType(p) === 'video' ? getDisplaySource(p) : p }}
         function setMatugenScheme(s) {{ currentMatugenScheme = s; activeColorPreset = "" }}
         function setColorPreset(n) {{ activeColorPreset = n }}
@@ -939,7 +944,6 @@ class SettingsEnv:
         # Legacy panel components reused by editors (heavy service deps).
         self.h.module("qs.modules.widgets.dashboard.controls", {
             "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120; property var write: null }"})
-        self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
         self._qmldir(qs / "modules/widgets/presets", "qs.modules.widgets.presets",
                      only=["TryNewLookCard", "CurrentLookRow", "GalleryTabRow", "PresetGalleryCard", "PresetsButton"])
@@ -947,7 +951,6 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
-        self._qmldir(qs / "modules/notifications", "qs.modules.notifications", only=["ToastCard", "ToastGroup"])
         self._qmldir(qs / "modules/notifications/strips", "qs.modules.notifications.strips")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",

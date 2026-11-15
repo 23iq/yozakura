@@ -47,3 +47,12 @@ test('the hover strip lies on the notch edge', () => {
     same(N.hoverStrip('top', { x: 800, y: 0, w: 300, h: 40 }, screen, 8, 10), { x: 790, y: 0, w: 320, h: 8 });
     same(N.hoverStrip('bottom', { x: 800, y: 1040, w: 300, h: 40 }, screen, 8, 10), { x: 790, y: 1072, w: 320, h: 8 });
 });
+
+test('edge gap: a floating island keeps off the edge; the frame only along a top or bottom edge', () => {
+    assert.equal(N.edgeGap('default', 'top', 0), 0);
+    assert.equal(N.edgeGap('island', 'top', 0), 4);
+    assert.equal(N.edgeGap('island', 'bottom', 6), 10);
+    assert.equal(N.edgeGap('default', 'top', 6), 6);
+    assert.equal(N.edgeGap('island', 'left', 6), 4);
+    assert.equal(N.edgeGap('default', 'right', 6), 0);
+});
