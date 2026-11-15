@@ -1,7 +1,8 @@
 .pragma library
 
-// AI > model picker, reasoning effort and context window (spliced into
-// schema/ai.js after the status strip section). Entry format: see
+// AI > reasoning effort, model picker and context window (spliced into
+// schema/ai.js after the status strip section; the picker card goes to the
+// Providers tab, Categories.js). Entry format: see
 // modules/settings/AGENTS.md.
 
 function level(value) {
@@ -20,10 +21,17 @@ var sections = [
                 "description": "prefs.ai.effort_default.desc",
                 "keywords": "reasoning effort thinking default level budget",
                 "options": [{ "value": "auto", "label": "prefs.ai.effort_auto" }, level("off"), level("low"), level("medium"), level("high"), level("max")]
-            },
+            }
+        ]
+    },
+    {
+        // how the AI bar's model picker lists models: joins the Providers
+        // tab's models card (Categories.js)
+        "id": "picker",
+        "title": "prefs.ai.providers.defaults",
+        "entries": [
             {
                 "key": "ai.picker.showCapabilities",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_capabilities",
                 "description": "prefs.ai.picker_capabilities.desc",
@@ -31,7 +39,6 @@ var sections = [
             },
             {
                 "key": "ai.picker.groupByProvider",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_group",
                 "description": "prefs.ai.picker_group.desc",
@@ -39,7 +46,6 @@ var sections = [
             },
             {
                 "key": "ai.picker.showRecent",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_recent",
                 "description": "prefs.ai.picker_recent.desc",
@@ -47,7 +53,6 @@ var sections = [
             },
             {
                 "key": "ai.picker.showUnconnected",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_unconnected",
                 "description": "prefs.ai.picker_unconnected.desc",
@@ -115,7 +120,6 @@ var sections = [
             },
             {
                 "key": "ai.context.compactModel",
-                "advanced": true,
                 "type": "text",
                 "label": "prefs.ai.compact_model",
                 "description": "prefs.ai.compact_model.desc",

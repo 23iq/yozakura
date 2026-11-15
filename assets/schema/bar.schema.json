@@ -42,7 +42,7 @@
       "description": "Icon name or image file for the launcher button; empty uses the app logo.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon",
         "control": "path",
         "keywords": "launcher icon logo symbol image path start menu button"
@@ -56,7 +56,7 @@
       "description": "Recolor the launcher icon with the theme palette.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon_tint",
         "control": "toggle",
         "keywords": "launcher icon tint color palette recolor"
@@ -69,7 +69,7 @@
       "description": "Size of the icon on the launcher button.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon_size",
         "control": "slider",
         "step": 1,
@@ -113,8 +113,7 @@
         "section": "autohide",
         "label": "prefs.bar.firefox_player",
         "control": "toggle",
-        "keywords": "firefox browser media player mpris music video youtube",
-        "advanced": true
+        "keywords": "firefox browser media player mpris music video youtube"
       }
     },
     "frameEnabled": {
@@ -695,7 +694,7 @@
               }
             },
             "visualizer": {
-              "title": "Visualizer",
+              "title": "Media visualizer",
               "type": "boolean",
               "default": true,
               "description": "Small audio bars while something plays.",
@@ -963,7 +962,7 @@
               "description": "What the line says, in this order. Empty ones (no battery, nothing playing) stay out; a window followed by its workspace reads as one.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_fragments",
                 "control": "custom",
                 "component": "OrderedListEditor",
@@ -1002,7 +1001,7 @@
               "description": "On a narrow bar the fragments at the bottom of this list drop out first. Nothing is cut mid-word.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_priority",
                 "control": "custom",
                 "component": "OrderedListEditor",
@@ -1018,7 +1017,7 @@
               "description": "What stands between fragments.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_separator",
                 "control": "selector",
                 "preview": "SentencePreview",
@@ -1039,13 +1038,13 @@
               }
             },
             "verbosity": {
-              "title": "Wording",
+              "title": "Sentence wording",
               "type": "string",
               "default": "full",
               "description": "Short shows just the values; full reads as phrases.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_verbosity",
                 "control": "selector",
                 "keywords": "sentence wording short full phrases words"
@@ -1066,7 +1065,7 @@
               "description": "The bar text font, or the editorial serif from Icons & type.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_typeface",
                 "control": "selector",
                 "keywords": "sentence font typeface serif editorial",
@@ -1088,7 +1087,7 @@
               "description": "0 uses up to half the bar.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_max_width",
                 "control": "slider",
                 "step": 20,

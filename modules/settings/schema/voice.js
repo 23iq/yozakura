@@ -163,7 +163,7 @@ var category = {
             ]
         },
         {
-            // rare: the engine and how text is typed, in More
+            // rare: the engine and how text is typed
             "id": "engine",
             "title": "prefs.voice.section.engine",
             "entries": [

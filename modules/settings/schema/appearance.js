@@ -139,7 +139,6 @@ var category = {
                 },
                 {
                     "key": "theme.shape.popupCorners",
-                    "advanced": true,
                     "type": "selector",
                     "label": "prefs.appearance.popup_corners",
                     "description": "prefs.appearance.popup_corners.desc",

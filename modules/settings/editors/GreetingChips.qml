@@ -14,7 +14,7 @@ import "../../terminal/FetchModel.js" as FetchModel
 // fetchPresets) drawn from its rendered preview, the current one ringed. A
 // look turns the greeting on with it (one undo step) and queues fastfetch
 // when it is missing; the stage's terminal shows it. The logo and the
-// shells it runs in are in the full editor ("More").
+// shells it runs in are in the full prompt editor (TerminalLookEditor).
 Item {
     id: root
 

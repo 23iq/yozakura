@@ -395,6 +395,7 @@ check(ev("Config.apps.theming.discord") is False, "app theming toggle writes app
 check(h.eval(row("apps.theming"), "modified") is True, "app theming entry modified")
 h.eval(ev('w.findItem("glassLink")'), "clicked()")
 until(lambda: ev("currentCategory") == "appearance", "glass link opens Appearance")
+until(lambda: ev('w.findItem("macro:glass") !== null'), "...on a row that is in the window (the Glass macro)")
 
 # Windows page: color-role control, nested pulse key, preview
 select("windows")

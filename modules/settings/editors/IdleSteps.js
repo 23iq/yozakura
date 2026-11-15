@@ -1,10 +1,14 @@
 .pragma library
+.import "../../globals/BrandActions.js" as BrandActions
 
 // Pure model of the idle timeline (editors/IdleTimeline.qml): the idle
 // listeners (system.idle.listeners: [{timeout, onTimeout, onResume}]) read
 // as four steps - dim the screen, lock, turn the screen off, sleep - each at
 // a time or never. Listeners that are none of these are kept as they are.
 // Node-tested (tests/settings-power.test.cjs).
+
+// the app's CLI (never a literal name: the brand)
+var APP = BrandActions.appId;
 
 // The steps in timeline order, how a listener's command is recognised, and
 // the listener a step gets when it is turned on again.
@@ -13,8 +17,8 @@ var STEPS = [
         "id": "dim",
         "match": /brightness/,
         "listener": {
-            "onTimeout": "yozakura brightness 10 -s",
-            "onResume": "yozakura brightness -r"
+            "onTimeout": APP + " brightness 10 -s",
+            "onResume": APP + " brightness -r"
         }
     },
     {
@@ -26,17 +30,18 @@ var STEPS = [
     },
     {
         "id": "off",
-        "match": /screen off|dpms off|dpms,? ?off/,
+        // niri: `niri msg action power-off-monitors`
+        "match": /screen off|dpms off|dpms,? ?off|power-off-monitors/,
         "listener": {
-            "onTimeout": "yozakura screen off",
-            "onResume": "yozakura screen on"
+            "onTimeout": APP + " screen off",
+            "onResume": APP + " screen on"
         }
     },
     {
         "id": "sleep",
         "match": /suspend|hibernate|sleep/,
         "listener": {
-            "onTimeout": "yozakura suspend"
+            "onTimeout": APP + " suspend"
         }
     }
 ];
@@ -80,23 +85,33 @@ function copy(v) {
     return JSON.parse(JSON.stringify(v));
 }
 
-// `listeners` with step `id` at `seconds` (null: never - its listeners are
-// removed). A step turned on again gets its default listener. Sorted by
-// time; other listeners keep their place in that order.
+// `listeners` with step `id` at `seconds`. The step's first listener is
+// the one the timeline shows; more listeners of the same step (a keyboard
+// backlight off ten seconds after the screen dims) move with it by the same
+// amount. Never (null) removes that first listener only: the next one of
+// the step, if any, shows next, nothing is lost silently. A step turned on
+// again gets its default listener. Sorted by time; other listeners keep
+// their place in that order.
 function withStep(listeners, id, seconds) {
     var list = copy(listeners || []);
     var out = [];
-    var done = false;
+    var delta = null;
     list.forEach(function (l) {
-        if (stepOf(l) !== id)
+        if (stepOf(l) !== id) {
             out.push(l);
-        else if (seconds !== null && !done) {
-            l.timeout = seconds;
+        } else if (delta === null) {
+            delta = seconds === null ? 0 : seconds - Number(l.timeout);
+            if (seconds !== null) {
+                l.timeout = seconds;
+                out.push(l);
+            }
+        } else {
+            if (seconds !== null && isFinite(Number(l.timeout)))
+                l.timeout = Math.max(MIN, Number(l.timeout) + delta);
             out.push(l);
-            done = true;
         }
     });
-    if (seconds !== null && !done) {
+    if (seconds !== null && delta === null) {
         var def = null;
         STEPS.forEach(function (s) {
             if (s.id === id)
@@ -161,14 +176,44 @@ function range(steps, id) {
     };
 }
 
-// A dragged time kept inside its range (null = never: only when no later
-// step is on).
+// A dragged time kept inside its range; never (null) is always allowed
+// (the steps around it keep their times).
 function clampTo(steps, id, seconds) {
-    var r = range(steps, id);
     if (seconds === null)
-        return r.max === null ? null : r.max;
+        return null;
+    var r = range(steps, id);
     var t = Math.max(r.min, seconds);
     return r.max === null ? t : Math.min(r.max, t);
+}
+
+// The time one keyboard step from the step's current one (`dir` -1 / +1):
+// the next snapped time (NICE) inside its range; past the last one, never;
+// from never, back to the latest time it may have.
+function nudge(steps, id, dir) {
+    var r = range(steps, id);
+    var hi = r.max === null ? MAX : r.max;
+    var cur = steps[id];
+    if (cur === null || cur === undefined)
+        return dir < 0 ? hi : null;
+    if (dir > 0 && cur >= hi)
+        return r.max === null ? null : cur;
+    var next = cur;
+    if (dir > 0) {
+        for (var i = 0; i < NICE.length; i++) {
+            if (NICE[i] > cur) {
+                next = NICE[i];
+                break;
+            }
+        }
+    } else {
+        for (var j = NICE.length - 1; j >= 0; j--) {
+            if (NICE[j] < cur) {
+                next = NICE[j];
+                break;
+            }
+        }
+    }
+    return clampTo(steps, id, next);
 }
 
 // Pixel centres `xs` (in timeline order) pushed apart to at least `gap`
@@ -186,6 +231,41 @@ function spread(xs, gap, lo, hi) {
         for (var k = 1; k < out.length; k++)
             out[k] = Math.max(out[k], out[k - 1] + gap);
     }
+    return out;
+}
+
+// The knob centres {id: x} on a track from `x0`, `width` wide: the steps
+// that are on at their times (in time order, pushed apart by `gap` inside
+// the time span), the steps that are off together in the never zone at the
+// end (as far apart as it has room for).
+function centres(steps, x0, width, gap) {
+    var out = {};
+    var on = STEPS.filter(function (s) {
+        return steps[s.id] !== null && steps[s.id] !== undefined;
+    }).map(function (s) {
+        return {
+            "id": s.id,
+            "x": x0 + toPos(steps[s.id]) * width
+        };
+    }).sort(function (a, b) {
+        return a.x - b.x;
+    });
+    var spanEnd = x0 + width * TIME_SPAN;
+    var xs = spread(on.map(function (o) {
+        return o.x;
+    }), gap, x0, spanEnd);
+    on.forEach(function (o, i) {
+        out[o.id] = xs[i];
+    });
+    var off = STEPS.filter(function (s) {
+        return steps[s.id] === null || steps[s.id] === undefined;
+    });
+    var end = x0 + width;
+    var room = end - spanEnd;
+    var g = off.length > 1 ? Math.min(gap, room / (off.length - 1)) : 0;
+    off.forEach(function (s, i) {
+        out[s.id] = end - (off.length - 1 - i) * g;
+    });
     return out;
 }
 

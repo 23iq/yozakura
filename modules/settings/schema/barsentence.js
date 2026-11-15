@@ -23,7 +23,6 @@ function _options(key, values) {
 var sections = [
     {
         "id": "sentence",
-        "advanced": true,
         "title": "prefs.bar.section.sentence",
         "entries": [
             {

@@ -3,9 +3,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 
 // The full desktop widgets editor (DesktopWidgetsEditor: arrange on the
-// desktop, each widget's options and screen) as it sits in the page's
-// "More" sheet: created by URL the first time it is shown, off the frame,
-// so opening the Widgets page never pays for it.
+// desktop, each widget's options and screen) in the Widgets card of the
+// Desktop tab: created by URL the first time it is shown, off the frame,
+// so opening the page never pays for its compile.
 Item {
     id: root
 

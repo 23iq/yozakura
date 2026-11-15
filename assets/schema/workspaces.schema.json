@@ -51,8 +51,7 @@
         "visibleWhen": {
           "key": "workspaces.showNumbers",
           "equals": true
-        },
-        "advanced": true
+        }
       }
     },
     "showNumbers": {

@@ -5,10 +5,11 @@
 // Assistant: a composed page. The stage is the Assistant on your screen
 // (AssistantStage); beside it: on, thinking, suggestions; the row: its
 // size, how messages look, what the status strip shows (also a click on
-// the stage's strip). In More: its look
-// and behaviour details, the prompt, the model and context, usage, quick
-// ask, selection actions, automations, MCP servers and CLI agents. Entry
-// format: see modules/settings/AGENTS.md.
+// the stage's strip); then cards of its look and behaviour, the prompt,
+// effort and context, quick ask, selection actions, automations, MCP
+// servers and CLI agents (the model picker and usage cards show on the
+// Providers tab, Categories.js). Entry format: see
+// modules/settings/AGENTS.md.
 
 var category = {
     "id": "ai",
@@ -295,7 +296,6 @@ var category = {
                 },
                 {
                     "key": "ai.appearance.animations",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.animations",
                     "description": "prefs.ai.animations.desc",
@@ -303,7 +303,6 @@ var category = {
                 },
                 {
                     "key": "ai.appearance.glass",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.glass",
                     "description": "prefs.ai.glass.desc",
@@ -394,7 +393,6 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.suggestionKinds",
-                    "advanced": true,
                     "type": "multiselect",
                     "label": "prefs.ai.suggestion_kinds",
                     "description": "prefs.ai.suggestion_kinds.desc",
@@ -453,7 +451,6 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.autoScroll",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.auto_scroll",
                     "description": "prefs.ai.auto_scroll.desc",
@@ -461,7 +458,6 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.thinkingExpanded",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.thinking_expanded",
                     "description": "prefs.ai.thinking_expanded.desc",
@@ -473,7 +469,6 @@ var category = {
                 },
                 {
                     "key": "ai.behavior.collapseTools",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.collapse_tools",
                     "description": "prefs.ai.collapse_tools.desc",
@@ -494,7 +489,6 @@ var category = {
                 },
                 {
                     "key": "ai.quickAsk.model",
-                    "advanced": true,
                     "type": "text",
                     "label": "ai.quick_model",
                     "description": "ai.quick_model_hint",
@@ -558,7 +552,6 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importClaude",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_claude",
                     "description": "prefs.ai.mcp_import.desc",
@@ -566,7 +559,6 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importCodex",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_codex",
                     "description": "prefs.ai.mcp_import.desc",
@@ -574,7 +566,6 @@ var category = {
                 },
                 {
                     "key": "ai.mcp.importOpencode",
-                    "advanced": true,
                     "type": "toggle",
                     "label": "ai.mcp_import_opencode",
                     "description": "prefs.ai.mcp_import.desc",
@@ -606,7 +597,6 @@ var category = {
                 },
                 {
                     "key": "ai.selection.language",
-                    "advanced": true,
                     "type": "text",
                     "label": "ai.translate_to",
                     "description": "prefs.ai.translate_to.desc",

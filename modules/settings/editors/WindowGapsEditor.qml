@@ -62,6 +62,9 @@ Column {
             }
             LineSlider {
                 id: line
+                Accessible.role: Accessible.Slider
+                Accessible.name: I18n.t(gap.modelData.label)
+                Accessible.description: line.valueText
                 Layout.preferredWidth: Math.round(root.width * 0.6)
                 from: 0
                 to: gap.modelData.to
