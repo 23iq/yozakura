@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.modules.shell.osd
 import qs.modules.components.kit
 import "../OsdStyles.js" as OsdStyles
+import "../../../components/preview/Preview.js" as Preview
 
 // Lives inside the bar's controls button: on an OSD event the button grows
 // by `reveal` (the host adds it to its length along the bar) and turns into
@@ -25,12 +26,17 @@ Item {
     property var screen: null
     // Set by the bar host, independently of this item's shown/visible state.
     property bool available: true
+    // A settings preview (the bar's `preview`): never registers nor takes
+    // OSD events; shows the sample "osd" ({kind, value}) when given, else
+    // nothing; null live
+    property var preview: null
+    readonly property var sampleOsd: Preview.sample(root.preview, "osd", null)
     property bool _mounted: false
     property bool _registered: false
     property string _registeredScreen: ""
 
     function syncRegistration(): void {
-        if (!root._mounted)
+        if (!root._mounted || Preview.on(root.preview))
             return;
         if (root._registered)
             OsdService.registerInline(false, root._registeredScreen);
@@ -136,7 +142,7 @@ Item {
         target: OsdService
 
         function onInlineRequest(kind) {
-            if (!root.accepts(kind))
+            if (!root.accepts(kind) || Preview.on(root.preview))
                 return;
             root.kind = kind;
             root.value = OsdService.lastValue;
@@ -157,6 +163,11 @@ Item {
     }
 
     Component.onCompleted: {
+        if (root.sampleOsd) {
+            root.kind = root.sampleOsd.kind || "volume";
+            root.value = root.sampleOsd.value ?? 0;
+            root.shown = true;
+        }
         root._mounted = true;
         root.syncRegistration();
     }

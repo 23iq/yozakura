@@ -19,8 +19,10 @@ import "modules/settings/SettingsScreen.js" as SettingsScreen
 // content is loaded by URL, SettingsWindowSeparate.qml): the frame maps at
 // once, then the pages compile and build. A later open asks this process
 // to raise itself (windows.command); closing the window ends the process.
-// Staged changes are one staging shared with the main shell and the wizard
-// through the daemon's `preview` relay (SettingsStore, PreviewSink).
+// Changes apply live: this process writes the config files (coalesced, a
+// few writes per second at most while a slider moves) and the main shell
+// follows them through its file watchers (modules/settings/AGENTS.md,
+// SEPARATE PROCESS).
 ShellRoot {
     id: root
 
@@ -56,9 +58,9 @@ ShellRoot {
 
     // The window is shown: tell the daemon (the main shell drops its
     // "Opening..." pill) and run what was asked while it started (a close
-    // from the main shell's toggle, another page); closed (after the
-    // unsaved-changes question): report hiding and quit, the daemon reaps
-    // us. An open meanwhile raises it again (command).
+    // from the main shell's toggle, another page); closed (nothing to ask:
+    // every change is already saved): report hiding and quit, the daemon
+    // reaps us. An open meanwhile raises it again (command).
     Connections {
         target: root.win
         ignoreUnknownSignals: true
@@ -81,7 +83,6 @@ ShellRoot {
                 quitTimer.stop();
             } else {
                 quitTimer.restart();
-                // a close with unsaved changes reopens at once to ask
                 Qt.callLater(root.reportHiding);
             }
         }
@@ -94,8 +95,8 @@ ShellRoot {
             "kind": ProcessRole.role
         });
     }
-    // A moment after closing (it may reopen to ask about unsaved changes),
-    // so the last config writes (Apply, an unstaged setting) reach the disk.
+    // A moment after closing (an open meanwhile cancels it),
+    // so the last coalesced config writes reach the disk.
     Timer {
         id: quitTimer
         interval: 1000

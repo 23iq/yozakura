@@ -97,7 +97,7 @@ func TestConfigCommands(t *testing.T) {
 	code, out, _ = run(t, cfg, "describe", "bar.layout.style")
 	assert.Equal(t, 0, code)
 	assert.Contains(t, out, "allowed:   classic, islands")
-	assert.Contains(t, out, "settings:  Bar & Islands")
+	assert.Contains(t, out, "settings:  Bar > ")
 	code, out, _ = run(t, cfg, "describe", "bar.position", "--json")
 	assert.Equal(t, 0, code)
 	assert.Contains(t, out, `"current": "left"`)

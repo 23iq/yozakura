@@ -4,59 +4,90 @@ import QtQuick
 import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
-import qs.modules.settings.previews
+import qs.modules.settings.thumbs
+import "../controls/Strip.js" as Strip
 import qs.modules.settings.store
 import "../../bar/panels/PanelStyles.js" as PanelStyles
-import "../../bar/panels/PanelLayout.js" as PanelLayout
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
-// The bar's look (bar.layout.style): full, floating, islands, pills,
-// dock-like or none, each previewed with your modules on your bar's edge.
+// The bar's shape (bar.layout.style): full, floating, islands, pills,
+// dock-like or none, each pictured as a close crop of your bar's edge over
+// your wallpaper (thumbs/BarShapeThumb.qml).
 Item {
     id: root
 
     property var entry
     readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
-    readonly property int columns: width < 520 ? 2 : 3
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures, scrolling sideways with an edge
+    // fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: PanelStyles.barStyles().length
+    // landscape pictures (16:10) with the title under them: as tall as the
+    // card allows, three whole ones and a peek when they do not all fit
+    readonly property real stripWidth: Strip.landscapeWidth(root.width, root.fillHeight, root.stripCount, Space.m, Space.s + Type.size("secondary") * 1.4, Space.px(96))
+    readonly property int columns: root.strip ? root.stripCount : PictureGrid.columns(width, grid.columnSpacing, root.stripCount, Space.px(96))
+    readonly property real cardWidth: PictureGrid.cardWidth(grid.width, grid.columnSpacing, root.columns, Space.px(190))
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
-    function previewOf(style) {
-        const p = JSON.parse(JSON.stringify(PanelLayout.fromLegacy(Config.bar)));
-        p.style = style;
-        p.align = PanelStyles.get(style).floating ? "center" : "fill";
-        p.autohide = "never";
-        return [p];
+    readonly property int currentIndex: PanelStyles.BAR_STYLES.indexOf(root.current)
+    // the chosen picture scrolled into view
+    function reveal() {
+        if (root.strip)
+            stripFlick.contentX = Strip.revealX(stripFlick.contentX, stripFlick.width, stripFlick.contentWidth, root.currentIndex, root.stripWidth, Space.m);
     }
+    onCurrentIndexChanged: Qt.callLater(root.reveal)
+    onStripWidthChanged: Qt.callLater(root.reveal)
+    Component.onCompleted: Qt.callLater(root.reveal)
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        spacing: Space.m
+        height: root.strip ? root.fillHeight : grid.height
+        contentWidth: grid.width + (root.strip ? Space.m * 2 : 0)
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: PanelStyles.barStyles()
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            // inset: the ring, glow and lift of a picture never clip
+            x: root.strip ? Space.m : 0
+            y: root.strip ? Math.max(Space.m, (root.fillHeight - grid.height) / 2) : 0
+            columns: root.columns
+            rowSpacing: Space.l
+            columnSpacing: Space.m
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round(width * 9 / 16) - 8
-                selected: root.current === modelData.id
-                icon: modelData.icon
-                title: I18n.t(modelData.label)
-                subtitle: I18n.t(modelData.desc)
-                onClicked: SettingsStore.set("bar.layout.style", modelData.id)
+            Repeater {
+                model: PanelStyles.barStyles()
 
-                PanelsSchematic {
-                    anchors.fill: parent
-                    panels: root.previewOf(card.modelData.id)
-                    showWindows: false
-                    selected: -1
-                    unit: Math.max(8, Math.round(width * 0.075))
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    objectName: "card:" + modelData.id
+                    width: root.strip ? root.stripWidth : root.cardWidth
+                    previewHeight: root.strip ? Math.round(width * 10 / 16) : Math.round(width * 0.5)
+                    selected: root.current === modelData.id
+                    title: I18n.t(modelData.label)
+                    onClicked: SettingsStore.set("bar.layout.style", modelData.id)
+
+                    BarShapeThumb {
+                        anchors.fill: parent
+                        style: card.modelData.id
+                        edge: Config.bar.position || "top"
+                    }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

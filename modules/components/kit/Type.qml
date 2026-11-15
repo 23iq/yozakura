@@ -4,6 +4,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components.kit
 import "../../theme/TypeRoles.js" as TypeRoles
+import "../../theme/InkContrast.js" as InkContrast
 
 // Type roles and ink colors of the shared kit (modules/components/kit).
 // Every text in the shell is one of six roles, sized from theme.fontSize:
@@ -14,6 +15,8 @@ import "../../theme/TypeRoles.js" as TypeRoles
 //   caption    0.86x, outline (muted)
 //   label      0.78x, semibold, UPPERCASE, tracked, muted: the section label
 //              (the mono font where the language says so: Look.monoLabels)
+//   group      0.86x, semibold, muted, sentence case: a group of rows inside
+//              a card (card title > group > row label; the settings window)
 // plus one optional voice, `editorial`: 1.1x, regular, the serif display
 // face (theme.type.editorial, else the system serif) for text that reads
 // as prose (the sentence bar); never for controls or labels.
@@ -23,7 +26,7 @@ import "../../theme/TypeRoles.js" as TypeRoles
 QtObject {
     id: root
 
-    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label", "editorial"]
+    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label", "group", "editorial"]
     readonly property real base: Config.theme.fontSize
     readonly property var scale: ({
             "display": 3,
@@ -32,6 +35,7 @@ QtObject {
             "secondary": 0.93,
             "caption": 0.86,
             "label": 0.78,
+            "group": 0.86,
             "editorial": 1.1
         })
 
@@ -43,7 +47,26 @@ QtObject {
     // Colors
     readonly property color text: Colors.overBackground
     readonly property color secondary: Colors.overSurfaceVariant
-    readonly property color muted: Colors.outline
+    // captions and hints: the outline role pulled 40 % toward the
+    // secondary ink, and further (toward the secondary ink, then the text)
+    // as far as WCAG AA (>= 4.5:1) needs on the shell's surfaces and on the
+    // language's card over the ambient wallpaper (theme/InkContrast.js: the
+    // translucent languages turn grey in a light scheme)
+    readonly property color muted: {
+        const ink = InkContrast.mutedInk({
+            "outline": Colors.outline,
+            "overSurfaceVariant": Colors.overSurfaceVariant,
+            "overBackground": Colors.overBackground,
+            "background": Colors.background,
+            "surface": Colors.surface,
+            "surfaceContainerLow": Colors.surfaceContainerLow,
+            "surfaceContainer": Colors.surfaceContainer,
+            "surfaceContainerHigh": Colors.surfaceContainerHigh,
+            "shadow": Colors.shadow,
+            "card": Qt.color(Config.resolveColor(Look.card.fill || "surface"))
+        }, Look.card, Colors.background.hslLightness > 0.5);
+        return Qt.rgba(ink.r, ink.g, ink.b, 1);
+    }
     readonly property color hairline: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.08)
     readonly property color track: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.14)
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)
@@ -88,7 +111,7 @@ QtObject {
     function weight(role: string): int {
         if (role === "display")
             return Font.Light;
-        if (role === "title" || role === "label")
+        if (role === "title" || role === "label" || role === "group")
             return Font.DemiBold;
         return Font.Normal;
     }
@@ -104,7 +127,7 @@ QtObject {
     function color(role: string): color {
         if (role === "secondary")
             return root.secondary;
-        if (role === "caption" || role === "label")
+        if (role === "caption" || role === "label" || role === "group")
             return root.muted;
         return root.text;
     }

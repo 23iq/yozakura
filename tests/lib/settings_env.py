@@ -46,6 +46,14 @@ QtObject {
     property var agents: QtObject {
         property var agents: [{ id: "claude", label: "Claude Code", available: true, version: "2.1" },
                               { id: "codex", label: "Codex", available: false, version: "" }]
+        // AgentModels: each agent's model catalog (none loaded here)
+        property var modelCatalogs: QtObject {
+            property var catalogs: ({})
+            function has(agent, cwd) { return true; }
+            function get(agent, cwd) { return { models: [], manualModel: false, loading: false }; }
+        }
+        function settingsFor(agent, cwd) { return modelCatalogs.get(agent, cwd); }
+        function refreshModels(agent, cwd) {}
     }
     property var mcp: QtObject {
         property var servers: [{ name: "yozakura", source: "yozakura", transport: "stdio", command: "yozakura", args: ["mcp"] }]
@@ -142,6 +150,25 @@ QtObject {
     function test(r, cb) { calls = calls.concat([["test", r]]); if (cb) cb(nextReport, "") }
 }"""
 
+# Home status tiles read the network and the power profile.
+NETWORK_STUB = """pragma Singleton
+QtObject {
+    property string networkName: "Sakura 5G"
+    property int networkStrength: 80
+    property bool ethernet: false
+    property bool wifiEnabled: true
+}"""
+
+POWER_PROFILE_STUB = """pragma Singleton
+QtObject {
+    property string currentProfile: "balanced"
+    property bool isAvailable: true
+    property var availableProfiles: ["power-saver", "balanced", "performance"]
+    // (the bar's battery popup in a live preview)
+    function getProfileIcon(name) { return "" }
+    function getProfileDisplayName(name) { return name || "" }
+}"""
+
 UPDATE_STUB = """pragma Singleton
 QtObject {
     property string currentVersion: "1.3.9"
@@ -157,6 +184,13 @@ QtObject {
 
 NOTIFICATIONS_STUB = """pragma Singleton
 QtObject {
+    // (the bar's notification chip in a live preview reads these)
+    property var popupList: []
+    property var notchPopupList: []
+    property var list: []
+    property var appNameList: []
+    property var groupsByAppName: ({})
+    function showsOnScreen(name) { return true }
     property string presentation: "notch"
     property string cornerPosition: "top-right"
     property bool silent: false
@@ -211,6 +245,7 @@ MIRROR = [
     "modules/theme/Styling.qml",
     "modules/theme/TypeRoles.js",
     "modules/theme/VisualLanguage.js",
+    "modules/theme/InkContrast.js",  # (kit Type.muted, Ambient)
     "modules/theme/Metrics.qml",
     "modules/theme/DensityMetrics.js",
     "modules/theme/Motion.qml",
@@ -241,6 +276,8 @@ MIRROR = [
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
+    "modules/services/timers/TimerFormat.js",  # the Timers stage formats like the island
+    "modules/services/ai/EffortPrefs.js",  # the AI agents editor
     # Presets page: the unified gallery's tabs, cards and stores
     "modules/widgets/presets",
     "config/defaults",
@@ -259,9 +296,14 @@ MIRROR = [
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/panels/PanelEdit.js",
     "modules/bar/workspaces/WorkspaceNumerals.js",
+    "modules/bar/clock/ClockFace.qml",  # the bar stage draws the real clock faces
+    "modules/bar/clock/ClockFaces.js",
+    "modules/bar/clock/faces",
     "modules/bar/workspaces/indicators",
+    "modules/dock/indicators",  # the dock stage draws the real indicator styles
     "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
+    "modules/widgets/dashboard/DashboardTabs.js",
     "modules/widgets/dashboard/wallpapers/WallpaperDefaults.js",
     "modules/widgets/launcher/Providers.js",
     "modules/specials/Specials.js",
@@ -293,6 +335,9 @@ DESKTOP_STUBS = {
                       "property QtObject items: QtObject { property int count: 0 } }",
     "MprisController": "pragma Singleton\nQtObject { property var activePlayer: null; property bool isPlaying: false; "
                        "property bool canTogglePlaying: false; property bool canGoPrevious: false; property bool canGoNext: false; "
+                       "property var filteredPlayers: []; property bool hasShuffle: false; property bool shuffleSupported: false; "
+                       "property bool loopSupported: false; property int loopState: 0; function setShuffle(s) {} function setLoopState(s) {} "
+                       "function setActivePlayer(p) {} function cyclePlayer() {} "
                        "function togglePlaying() {} function previous() {} function next() {} }",
     "CavaService": "pragma Singleton\nQtObject { property bool available: false; property var consumers: ({}); "
                    "function setConsumer(k, a) { consumers[k] = a } function levels(n) { return [] } }",
@@ -470,6 +515,10 @@ QtObject {{
     property bool themeHasChanges: false
     property bool shellHasChanges: false
     property bool compositorHasChanges: false
+    // (read by the bar buttons of a live preview)
+    property bool launcherOpen: false
+    property bool presetsOpen: false
+    signal barPinToggled()
     // Config.pauseAutoSave follows the staged changes (as the real Config does).
     function _sync() {{ Config.stagedPause = themeHasChanges || shellHasChanges || compositorHasChanges }}
     onThemeHasChangesChanged: _sync()
@@ -480,7 +529,6 @@ QtObject {{
     property string compositorLayout: "dwindle"
     property string settingsCategory: "appearance"
     property bool settingsWindowVisible: true
-    property bool settingsCloseConfirm: false
     readonly property var _shellSections: {sections}
     function markThemeChanged() {{ themeHasChanges = true }}
     function markShellChanged() {{ shellHasChanges = true }}
@@ -507,6 +555,7 @@ QtObject {{
             return 'image';
         }}
         function getDisplaySource(p) {{ return thumbs[p] || p }}
+        function getLockscreenFramePath(p) {{ return "" }}
         function getColorSource(p) {{ return getFileType(p) === 'video' ? getDisplaySource(p) : p }}
         function setMatugenScheme(s) {{ currentMatugenScheme = s; activeColorPreset = "" }}
         function setColorPreset(n) {{ activeColorPreset = n }}
@@ -525,7 +574,8 @@ QUICKSHELL = {
                   "property var detached: []; function execDetached(a) { detached.push(a) } "
                   "function iconPath(n, f) { return '' } }",
     # Installed apps (special workspaces app picker): looked up by id.
-    "DesktopEntries": "pragma Singleton\nQtObject { function byId(id) { return null } }",
+    "DesktopEntries": "pragma Singleton\nQtObject { function byId(id) { return null } function heuristicLookup(a) { return null } "
+                      "property var applications: ({ values: [] }) }",
     "FloatingWindow": "import QtQuick.Window\nWindow {}",
 }
 QUICKSHELL_IO = {
@@ -564,8 +614,8 @@ APP_SEARCH_STUB = """pragma Singleton
 import QtQuick
 QtObject {
     property var apps: [
-        {"id": "org.telegram.desktop", "name": "Telegram", "icon": "telegram", "execString": "Telegram -- %u"},
-        {"id": "discord", "name": "Discord", "icon": "discord", "execString": "/usr/bin/discord --url -- %u"}
+        {"id": "org.telegram.desktop", "name": "Telegram", "icon": "telegram", "execString": "Telegram -- %u", "comment": "Official desktop client"},
+        {"id": "discord", "name": "Discord", "icon": "discord", "execString": "/usr/bin/discord --url -- %u", "comment": "All-in-one voice and text chat"}
     ]
     property var list: apps
     function fuzzyQuery(q) {
@@ -573,6 +623,48 @@ QtObject {
         return apps.filter(a => a.name.toLowerCase().indexOf(l) !== -1);
     }
     function getAllApps() { return apps }
+    // (the bar's taskbar and workspace icons in a live preview)
+    function guessIcon(appId) { return appId }
+    function getCachedIcon(appId) { return appId }
+    function launchApp(e) {}
+}"""
+# Night light (Displays page): idle stand-in; tests/lib/device_fixtures.py has a live one.
+NIGHT_LIGHT_STUB = """pragma Singleton
+QtObject {
+    property bool active: false
+    property int temp: 4500
+    function toggle() {}
+    function setEnabled(v) {}
+    function setTemperature(v) {}
+}"""
+# Bluetooth page: idle stand-in (adapter off); tests/lib/device_fixtures.py has a live one.
+BLUETOOTH_STUB = """pragma Singleton
+QtObject {
+    property bool enabled: false
+    property bool discovering: false
+    property var friendlyDeviceList: []
+    function setEnabled(v) {}
+    function initialize() {}
+    function startDiscovery() {}
+    function stopDiscovery() {}
+    function connectDevice(a) {}
+    function disconnectDevice(a) {}
+    function pairDevice(a) {}
+    function removeDevice(a) {}
+}"""
+# Effects page: EasyEffects not running; tests/lib/device_fixtures.py has a live one.
+EASY_EFFECTS_STUB = """pragma Singleton
+QtObject {
+    property bool available: false
+    property bool bypassed: false
+    property var outputPresets: []
+    property var inputPresets: []
+    property string activeOutputPreset: ""
+    property string activeInputPreset: ""
+    function setConsumer(k, on) {}
+    function setBypass(v) {}
+    function loadOutputPreset(n) {}
+    function loadInputPreset(n) {}
 }"""
 # Keyboard page (modules/settings/keyboard): idle stand-in; tests/lib/keyboard_env.py swaps in the real one.
 KEYBOARD_STUB = """pragma Singleton
@@ -658,6 +750,7 @@ QtObject {
     property string engine: "starship"
     property string prompt: "sakura-powerline"
     property bool fishInstalled: true
+    property bool nerdFontAvailable: true
     property string fontFamily: "monospace"
     property real fontPixelSize: 15
     property var fetchPresets: []
@@ -751,6 +844,7 @@ STATE_STUB = """pragma Singleton
 import QtQuick
 QtObject {
     property var state: ({})
+    property var systrayHidden: []
     function get(key, d) { return state[key] !== undefined ? state[key] : d }
     function set(key, value) { const s = Object.assign({}, state); s[key] = value; state = s }
 }"""
@@ -782,7 +876,16 @@ QtObject {
 
 class SettingsEnv:
     def __init__(self, name: str = "settings", *, palette: dict | None = None, user_config: bool = False,
-                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None):
+                 overrides: dict | None = None, wallpaper: dict | None = None, binds: dict | None = None,
+                 devices: bool = False, text_wider: float = 0, pin_fonts: bool = False):
+        """`devices`: believable live services (tests/lib/device_fixtures.py)
+        instead of the idle stand-ins, for the device pages. `text_wider`:
+        every kit text (KitText) set that much wider (0.08 = about 8 %, by
+        letter spacing), so a layout test catches a fit that another
+        machine's fonts would elide. `pin_fonts`: the bundled UI fonts
+        (assets/fonts/ui) registered and set as the theme's body and mono
+        fonts, so a layout test measures the same glyphs on every machine
+        (the default family may be missing, and its fallback differs)."""
         self.h = Harness(name)
         self.root = self.h.root
         domains = load_defaults()
@@ -795,8 +898,22 @@ class SettingsEnv:
                         pass
         for dom, values in (overrides or {}).items():
             domains[dom] = _merge(domains[dom], values)
+        if pin_fonts:
+            import bundled_fonts
+            bundled_fonts.register()
+            domains["theme"] = _merge(domains["theme"], {"font": "Inter", "monoFont": "IBM Plex Mono"})
         self.domains = domains
         self._mirror()
+        import live_previews  # the real bar / dock the stages preview
+        live_previews.mirror(self.root)
+        live_previews.clean_exit(self.h)
+        if text_wider:
+            kit_text = self.root / "qs/modules/components/kit/KitText.qml"
+            src = kit_text.read_text()
+            line = "    font.letterSpacing: Type.letterSpacing(root.role)\n"
+            assert line in src, "KitText letter spacing line"
+            # an average glyph is about half an em wide
+            kit_text.write_text(src.replace(line, f"    font.letterSpacing: Type.letterSpacing(root.role) + Type.size(root.role) * {text_wider / 2}\n"))
         qs = self.root / "qs"
         if binds is None:
             binds = default_binds()
@@ -806,44 +923,49 @@ class SettingsEnv:
                 except (ValueError, OSError):
                     pass
         self.binds = binds
-        (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
+        (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds) + live_previews.CONFIG_EXTRA))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
         self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Lighting", "WeatherFx", "Metrics", "Motion", "BarMetrics"])
-        self._qmldir(qs / "modules/shell", "qs.modules.shell", only=["EdgeService"])
-        # DepthClock (clock style gallery) reads the bar edge
-        self.h.module("qs.modules.bar.panels", {
-            "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
+        self._qmldir(qs / "modules/shell", "qs.modules.shell", only=["EdgeService", "PanelShadows"])
         from lockscreen_env import SERVICES as LOCK_SERVICES  # (lockscreen_env imports this module)
         from osd_env import AUDIO_STUB, OSD_SERVICE_STUB  # (same)
-        self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
+        from device_fixtures import SERVICES as DEVICE_SERVICES
+        own_services = {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
-                                              "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "Notifications": NOTIFICATIONS_STUB, "AppSearch": live_previews.app_icons(APP_SEARCH_STUB, self.root),
+                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "BluetoothService": BLUETOOTH_STUB, "EasyEffectsService": EASY_EFFECTS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
                                               "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
-                                              **LOCK_SERVICES, **DESKTOP_STUBS})
+                                              "NetworkService": NETWORK_STUB, "PowerProfileClient": POWER_PROFILE_STUB,
+                                              **LOCK_SERVICES, **DESKTOP_STUBS,
+                                              **(DEVICE_SERVICES if devices else {})}
+        import timers_stubs
+        timers_stubs.copy_js(self.root)
+        self.h.module("qs.modules.services", live_previews.services({**timers_stubs.services(), **own_services}))
+        self.h.module("qs.modules.services.activities", live_previews.activities())
+        self.h.engine.addImageProvider("icon", live_previews.icon_provider())
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
-        self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
+        self.h.module("qs.modules.globals", {"GlobalStates": live_previews.global_states(global_states_qml(wallpaper or {})),
                                              "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})
-        self.h.module("Quickshell", QUICKSHELL)
-        self.h.module("Quickshell.Io", QUICKSHELL_IO)
-        self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)
+        for module, types in live_previews.quickshell({"Quickshell": QUICKSHELL, "Quickshell.Io": QUICKSHELL_IO,
+                                                         "Quickshell.Widgets": QUICKSHELL_WIDGETS}).items():
+            self.h.module(module, types)
+        # the Sound page tracks app streams (PwObjectTracker)
+        self.h.module("Quickshell.Services.Pipewire", {"PwObjectTracker": "import QtQuick\nQtObject { property var objects: [] }"})
         # Legacy panel components reused by editors (heavy service deps).
         self.h.module("qs.modules.widgets.dashboard.controls", {
-            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
-        self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
+            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120; property var write: null }"})
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
         self._qmldir(qs / "modules/widgets/presets", "qs.modules.widgets.presets",
-                     only=["TryNewLookCard", "CurrentLookRow", "GalleryTabRow", "PresetGalleryCard"])
+                     only=["TryNewLookCard", "CurrentLookRow", "GalleryTabRow", "PresetGalleryCard", "PresetsButton"])
         self._qmldir(qs / "modules/widgets/presets/store", "qs.modules.widgets.presets.store")
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
-        self._qmldir(qs / "modules/notifications", "qs.modules.notifications", only=["ToastCard", "ToastGroup"])
         self._qmldir(qs / "modules/notifications/strips", "qs.modules.notifications.strips")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
@@ -858,9 +980,11 @@ class SettingsEnv:
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
                   "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
-                  "modules/settings/changes", "modules/settings/thumbs",
+                  "modules/settings/changes", "modules/settings/thumbs", "modules/settings/stages", "modules/settings/home",
                   "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
+        # the hosted views the stages show (launcher, dashboard, chat)
+        live_previews.finish(self)
 
         # Modules first imported by a URL Loader (lock screen styles) load on
         # the QML loader thread, whose warnings wait for the GIL: preload.
@@ -890,6 +1014,12 @@ class SettingsEnv:
 
     def load(self, qml: str):
         return self.h.load(qml, auto_stub=False)
+
+    def end_undo_step(self, win) -> None:
+        """The next change starts a new undo step, as once the merge window
+        (UndoModel.COALESCE_MS) has passed, without waiting it out
+        (SettingsStore.sealSteps; `win` imports qs.modules.settings.store)."""
+        self.h.eval(win, "SettingsStore.sealSteps()")
 
     def wait_page(self, win, ms: int = 8000) -> bool:
         """Wait until the settings page has built all its sections (schema

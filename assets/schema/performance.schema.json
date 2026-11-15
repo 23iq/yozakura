@@ -7,12 +7,12 @@
   "x-file": "config/performance.json",
   "properties": {
     "blurTransition": {
-      "title": "Blur Transition",
+      "title": "Blur transition",
       "type": "boolean",
       "default": false,
       "description": "Animated blur when opening panels",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "performance.blur_transition",
         "control": "toggle",
@@ -20,12 +20,12 @@
       }
     },
     "windowPreview": {
-      "title": "Window Preview",
+      "title": "Window previews",
       "type": "boolean",
       "default": true,
       "description": "Show window thumbnails in overview",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "performance.window_preview",
         "control": "toggle",
@@ -33,12 +33,12 @@
       }
     },
     "wavyLine": {
-      "title": "Wavy Line",
+      "title": "Wavy line",
       "type": "boolean",
       "default": true,
       "description": "Animated wavy line effect",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "performance.wavy_line",
         "control": "toggle",
@@ -46,52 +46,52 @@
       }
     },
     "pauseWallpaperOnFullscreen": {
-      "title": "Pause Wallpaper on Fullscreen",
+      "title": "Pause on fullscreen",
       "type": "boolean",
       "default": true,
       "description": "Pause video wallpapers while a fullscreen window covers the monitor",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.pause_wallpaper_fullscreen",
         "control": "toggle",
         "keywords": "video wallpaper fullscreen game pause"
       }
     },
     "pauseWallpaperWhenCovered": {
-      "title": "Pause Wallpaper When Covered",
+      "title": "Pause when covered",
       "type": "boolean",
       "default": true,
       "description": "Pause video wallpapers while windows cover every pixel of the monitor (no gaps, e.g. monocle)",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.pause_wallpaper_covered",
         "control": "toggle",
         "keywords": "video wallpaper covered tiled windows gaps monocle pause"
       }
     },
     "pauseWallpaperOnIdle": {
-      "title": "Pause Wallpaper When Idle",
+      "title": "Pause when idle",
       "type": "boolean",
       "default": true,
       "description": "Pause video wallpapers while you are away (no input and nothing inhibiting idle)",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.pause_wallpaper_idle",
         "control": "toggle",
         "keywords": "video wallpaper idle away afk inactive pause"
       }
     },
     "pauseWallpaperIdleDelay": {
-      "title": "Idle Pause Delay",
+      "title": "Idle pause delay",
       "type": "number",
       "default": 60,
       "description": "Seconds without input before the video wallpaper pauses",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.pause_wallpaper_idle_delay",
         "control": "number",
         "step": 5,
@@ -108,39 +108,39 @@
       "maximum": 3600
     },
     "pauseWallpaperOnBattery": {
-      "title": "Pause Wallpaper on Battery",
+      "title": "Pause on battery",
       "type": "boolean",
       "default": false,
       "description": "Pause video wallpapers while the laptop runs on battery",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.pause_wallpaper_battery",
         "control": "toggle",
         "keywords": "video wallpaper battery power laptop unplugged pause"
       }
     },
     "videoWallpaperDownscale": {
-      "title": "Downscale Video Wallpapers",
+      "title": "Downscale video wallpapers",
       "type": "boolean",
       "default": true,
       "description": "Play a cached copy scaled to the screen at up to 30 fps when the video is larger (made once with ffmpeg)",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "wallpapers",
+        "section": "video",
         "label": "system.performance.video_downscale",
         "control": "toggle",
         "keywords": "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"
       }
     },
     "dashboardPersistTabs": {
-      "title": "Persist Dashboard Tabs",
+      "title": "Keep dashboard tabs loaded",
       "type": "boolean",
       "default": false,
       "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "performance.dashboard_persist",
         "control": "toggle",
         "keywords": "dashboard tabs keep loaded memory"
@@ -153,7 +153,7 @@
       "description": "Most dashboard tabs kept in memory at once.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.dashboard_max_tabs",
         "control": "number",
         "keywords": "dashboard tabs memory limit",
@@ -175,7 +175,7 @@
       "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
       "x-settings": {
         "category": "dashboard",
-        "section": "memory",
+        "section": "home",
         "label": "prefs.sys.unload_idle_views",
         "control": "toggle",
         "keywords": "dashboard tabs memory unload idle release",
@@ -192,7 +192,7 @@
       "default": 5,
       "description": "Minutes the closed Settings window stays loaded so it reopens at once; 0 releases it on close.",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "prefs.sys.settings_keep_alive",
         "control": "number",
@@ -210,12 +210,12 @@
       "maximum": 120
     },
     "separateWindows": {
-      "title": "Settings in Its Own Process",
+      "title": "Settings in its own process",
       "type": "boolean",
       "default": false,
       "description": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.separate_windows",
         "control": "toggle",
@@ -224,12 +224,12 @@
       }
     },
     "visualizerFps": {
-      "title": "Visualizer Frame Rate",
+      "title": "Visualizer frame rate",
       "type": "number",
       "default": 30,
       "description": "Frames per second of the audio visualizer; lower uses less CPU",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.visualizer_fps",
         "control": "number",
@@ -244,25 +244,25 @@
       "maximum": 60
     },
     "batterySaver": {
-      "title": "Battery Saver",
+      "title": "Battery saver",
       "type": "boolean",
       "default": false,
       "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "power",
+        "section": "idle",
         "label": "system.performance.battery_saver",
         "control": "toggle",
         "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
       }
     },
     "warmViews": {
-      "title": "Prepare Launcher in Background",
+      "title": "Prepare launcher in background",
       "type": "boolean",
       "default": true,
       "description": "Create the launcher a few seconds after startup so it opens instantly the first time. Turn off to save the memory it holds until you first open it",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.warm_views",
         "control": "toggle",
@@ -271,12 +271,12 @@
       }
     },
     "hidePanelInFullscreen": {
-      "title": "Hide the Panel Under Fullscreen Windows",
+      "title": "Hide the panel under fullscreen windows",
       "type": "boolean",
       "default": false,
       "description": "Unmap a screen's panel while a fullscreen window covers it and nothing there has to show, so games and videos can be shown directly. It comes back at once for a notification or an opened view. No effect while the bar or dock reveals on hover in fullscreen. Experimental",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.hide_panel_fullscreen",
         "control": "toggle",
@@ -285,12 +285,12 @@
       }
     },
     "compactOsd": {
-      "title": "Compact Volume and Brightness Window",
+      "title": "Compact volume and brightness window",
       "type": "boolean",
       "default": false,
       "description": "Size the volume and brightness display's window to the display itself instead of the whole screen. Looks and works the same; a layout change applies from its next showing",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.compact_osd",
         "control": "toggle",
@@ -299,12 +299,12 @@
       }
     },
     "splitFrame": {
-      "title": "Screen Frame in Its Own Window",
+      "title": "Screen frame in its own window",
       "type": "boolean",
       "default": false,
       "description": "Draw the screen frame in a separate window so bar, notch and dock animations do not redraw it. Shadows stop at the frame's edge, which shows only on a translucent frame",
       "x-settings": {
-        "category": "system",
+        "category": "power",
         "section": "performance",
         "label": "system.performance.split_frame",
         "control": "toggle",

@@ -1,6 +1,6 @@
 .pragma library
 
-// Search synonyms of the settings sidebar (SchemaUtil.search): the words
+// Search synonyms of the settings search (SchemaUtil.search): the words
 // people type for a setting that the schema names differently. A query word
 // that starts with one of `words` (or a query holding one of the phrases)
 // is also searched as each of `means`, which are words of the schema's

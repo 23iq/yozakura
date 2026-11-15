@@ -72,6 +72,8 @@ QtObject {
     "FileViewError": "QtObject { enum Value { Success, Unknown, FileNotFound, PermissionDenied, NotAFile } }",
     "FileView": """QtObject {
     property string path
+    property bool blockWrites
+    property bool wroteBlocking
     property bool atomicWrites
     property bool watchChanges
     property QtObject adapter
@@ -86,7 +88,7 @@ QtObject {
     function text() { return content; }
     function setText(t) { content = t; exists = true; }
     function reload() { reloads++; }
-    function writeAdapter() { writes++; }
+    function writeAdapter() { writes++; wroteBlocking = blockWrites; }
 }""",
 })
 

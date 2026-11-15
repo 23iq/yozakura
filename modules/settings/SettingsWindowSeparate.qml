@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // The Settings window of a separate Settings process (settings-window.qml,
 // performance.separateWindows): the frame maps at once with the window
@@ -21,8 +22,17 @@ SettingsWindow {
         visible: settingsWindow.visible
     }
 
+    // fades away over the content once it is there (a cross-fade, not a cut)
     SettingsLoading {
         anchors.fill: parent
-        visible: !settingsWindow.contentReady
+        opacity: settingsWindow.contentReady ? 0 : 1
+        visible: opacity > 0
+        Behavior on opacity {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
     }
 }

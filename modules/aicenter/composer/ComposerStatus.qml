@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 import "../../services/ai/Providers.js" as Providers
+import "../../components/preview/Preview.js" as Preview
 
 // Strip above the composer: `◆ engine · model ▾` (opens the model picker),
 // `· effort ▾` (EffortChip, inline selector), agent status, the context
@@ -15,8 +16,13 @@ import "../../services/ai/Providers.js" as Providers
 // the subscription limit (limitFraction 0..1 + limitText, limitLevel); both
 // usage items open the Usage screen (usageRequested). Each item can be
 // hidden in the settings (ai.strip.*).
+// Preview (`preview`): the model is the sample "ai.model" ({name, provider,
+// kind}), no agent status; the Ai service is never read.
 RowLayout {
     id: root
+
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
 
     property int contextUsed: 0
     property int contextWindow: 0
@@ -35,14 +41,14 @@ RowLayout {
     signal compactRequested
     signal usageRequested
 
-    readonly property var model: Ai.currentModel
+    readonly property var model: root.inPreview ? Preview.sample(root.preview, "ai.model", null) : Ai.currentModel
     readonly property bool isAgent: model !== null && model.kind === "agent"
-    readonly property var settings: Ai.agentSettings || ({})
+    readonly property var settings: root.inPreview ? ({}) : (Ai.agentSettings || ({}))
     readonly property string engineLabel: !model ? I18n.t("ai.choose_model") : (isAgent ? model.name : (Providers.provider(model.provider).label || model.provider))
     // The concrete model before the first message: agents resolve their
     // catalog default ("Codex · GPT-5.5"), "…" while the catalog loads.
     readonly property var parts: !model ? [] : (isAgent ? [(Ai.effort && Ai.effort.modelLabel) || settings.model || I18n.t("ai.model_default")] : [model.name])
-    readonly property string agentStatus: Ai.activeAgent ? Ai.activeAgent.status : ""
+    readonly property string agentStatus: !root.inPreview && Ai.activeAgent ? Ai.activeAgent.status : ""
 
     spacing: Space.s
 
@@ -52,6 +58,8 @@ RowLayout {
         // Shrinks (eliding the label) before the right-hand items.
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
+        // (it elides, never vanishes: the glyph and a few letters stay)
+        Layout.minimumWidth: Math.min(implicitWidth, Space.px(96))
         implicitWidth: engineRow.implicitWidth + 2 * Space.s
         implicitHeight: engineRow.implicitHeight + 2 * Space.xs
         radius: Look.radius("control")
@@ -91,6 +99,7 @@ RowLayout {
     }
 
     EffortChip {
+        preview: root.preview
         Layout.leftMargin: -Space.s
     }
 

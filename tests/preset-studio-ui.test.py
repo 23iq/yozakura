@@ -109,6 +109,8 @@ ev("PresetStudio.trialSeconds = 1")
 ev('select("presets")')
 check(wait_for("PresetStudio.loaded"), "the studio loads the preset list through the CLI")
 listed = sb.json("list", "--json")
+# the full gallery (every set and part, search, filters) is "Browse" from the showcase
+w('pg().show("browse")')
 wait_for(f'countPrefix("presetCard:") === {len(listed)}', obj=win)
 check(w('countPrefix("presetCard:")') == len(listed), f"one card per preset ({len(listed)})")
 check(ev("PresetStudio.aspects.length") == 6, "aspects come from `preset aspects`")

@@ -285,8 +285,6 @@ Singleton {
 
     // Settings Window state
     property bool settingsWindowVisible: false
-    // Closing the settings window with unsaved changes: ask Apply / Discard / Keep.
-    property bool settingsCloseConfirm: false
     property int settingsTargetWorkspaceId: 0
     property string settingsTargetScreenName: ""
 
@@ -777,5 +775,5 @@ Singleton {
     // Legacy numeric tab (old SettingsTab order); the settings window maps
     // it to a category and resets it to 0.
     // Category shown by the settings window (modules/settings/schema/Categories.js)
-    property string settingsCategory: "appearance"
+    property string settingsCategory: ""
 }

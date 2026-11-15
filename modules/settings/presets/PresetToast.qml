@@ -27,7 +27,8 @@ Item {
     }
 
     objectName: "presetToast"
-    implicitWidth: Math.min(row.implicitWidth + 32, parent ? parent.width - 32 : 560)
+    // the window bounds it (its host is a Loader that takes its size)
+    implicitWidth: Math.min(row.implicitWidth + 32, toast.Window.width > 0 ? toast.Window.width - 32 : 560)
     implicitHeight: 48
     opacity: shown ? 1 : 0
     visible: opacity > 0
@@ -60,7 +61,7 @@ Item {
         KitText {
             role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, toast.parent ? toast.parent.width - 200 : 420)
+            width: Math.min(implicitWidth, toast.Window.width > 0 ? toast.Window.width - 200 : 420)
             text: toast.notice ? toast.notice.text : ""
             elide: Text.ElideRight
             color: Colors.inverseOnSurface

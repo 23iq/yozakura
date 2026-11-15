@@ -106,11 +106,15 @@ check(cards_before > 0, "the grid has cards")
 kit = KitEnv("extras-scroll-kit", overrides={"theme": {"language": "glass"}})
 kwin = kit.load("""import QtQuick
 import QtQuick.Window
+import qs.config
 import qs.modules.theme
 import qs.modules.components
 Window {
     width: 600; height: 400; visible: true
-    WeatherFxScope { condition: "snow" }
+    Component.onCompleted: {
+        Config.theme.weatherFx = Object.assign({}, Config.theme.weatherFx, { mode: "subtle" });
+        WeatherFx.previewCondition = "snow";
+    }
     Grid {
         objectName: "grid"
         columns: 2
@@ -136,7 +140,7 @@ Window {
 kh = kit.h
 kgrid = kh.find(kwin, "grid")
 free = kh.find(kwin, "free")
-check(wait_until(lambda: kh.eval(kh.find(free, "weatherFx"), "item !== null") is True), "the weather overlay loads under the scope")
+check(wait_until(lambda: kh.eval(kh.find(free, "weatherFx"), "item !== null") is True), "the weather overlay loads for a forced condition")
 check(kh.eval(kgrid, "height") == 60, "a Grid of shadowed surfaces keeps one row: height %s" % kh.eval(kgrid, "height"))
 check(kh.eval(kgrid, "children.filter(c => c.objectName === 'weatherFx').length") == 0,
       "the overlay of a surface in a positioner stays inside it")

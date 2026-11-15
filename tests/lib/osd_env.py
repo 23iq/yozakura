@@ -30,6 +30,7 @@ import QtQuick
 QtObject {
     signal level(string kind, real value, bool muted, string device)
     signal inlineRequest(string kind)
+    signal controlsRequested(string screenName)
     property int timeout: 2500
     property real lastValue: 0
     property string lastScreen: ""

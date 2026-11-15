@@ -7,15 +7,35 @@ import qs.modules.components.kit
 
 // A segmented pill group (tabs, a few exclusive choices): segments of icon +
 // label on one raised track (Look.raisedFill); the current one sits on a
-// solid accent pill that slides between segments, with the brush
-// signature behind it (theme.signatures.brushHighlight). `model`: an array
-// of {name, icon, text}; each segment is named `name` (objectName) and has
-// `text` / `active` / `clicked()`. `activated(index)` on click.
+// solid accent pill that glides between segments, with the brush
+// signature behind it (theme.signatures.brushHighlight). As `navigation`
+// (a destination's tabs) the pill is neutral and raised: the accent marks
+// values, not where you are. Segments are as wide as their label in the
+// active weight, so nothing but the pill moves when the current one
+// changes. `model`: an array of {name, icon, text}; each segment is named
+// `name` (objectName) and has `text` / `active` / `clicked()`.
+// `activated(index)` on click.
 Item {
     id: root
 
     property var model: []
     property int currentIndex: 0
+    // tabs (a destination's pages), not a value: a neutral raised pill and
+    // the text ink on the current one
+    property bool navigation: false
+    // Room added to every segment (a segmented filling a given width: the
+    // settings card's control column); 0: each as wide as its content
+    property real segmentExtra: 0
+    // the width without `segmentExtra`: each segment as wide as its content
+    readonly property real naturalWidth: {
+        let w = Space.xs * 2;
+        for (let i = 0; i < segments.count; i++) {
+            const s = segments.itemAt(i);
+            if (s)
+                w += s.implicitWidth;
+        }
+        return Math.ceil(w);
+    }
     readonly property int count: Array.isArray(root.model) ? root.model.length : 0
     readonly property Item currentItem: segments.count > root.currentIndex && root.currentIndex >= 0 ? segments.itemAt(root.currentIndex) : null
 
@@ -24,6 +44,15 @@ Item {
     implicitWidth: row.implicitWidth + Space.xs * 2
     implicitHeight: Space.controlM
 
+    // Keyboard: `focusable` takes Tab focus (ring around the track) and
+    // Left / Right move to the neighbouring segment.
+    property bool focusable: false
+    activeFocusOnTab: root.focusable
+    Keys.onLeftPressed: if (root.currentIndex > 0)
+        root.activated(root.currentIndex - 1)
+    Keys.onRightPressed: if (root.currentIndex < root.count - 1)
+        root.activated(root.currentIndex + 1)
+
     Rectangle {
         objectName: "segmentTrack"
         anchors.fill: parent
@@ -31,40 +60,68 @@ Item {
         color: Look.raisedFill(false)
         border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
         border.color: Look.controlEdge
+
+        FocusRing {
+            shown: root.activeFocus
+            radius: parent.radius + Space.stroke
+        }
     }
 
-    StyledRect {
+    // Where the current segment is: the pill glides there (off until the
+    // first layout, so nothing slides in from the start).
+    Item {
         id: pill
         objectName: "segmentPill"
+        property bool ready: false
+        Timer {
+            running: true
+            interval: 0
+            onTriggered: pill.ready = true
+        }
         visible: root.currentItem !== null
-        variant: "primary"
-        backgroundOpacity: 1
-        enableBorder: false
         x: row.x + (root.currentItem ? root.currentItem.x : 0)
         y: Space.xs
         width: root.currentItem ? root.currentItem.width : 0
         height: root.height - Space.xs * 2
-        radius: Look.bigRadius(height)
-
-        BrushHighlight {
-            spread: Space.xs
-            strength: 0.45
-        }
 
         Behavior on x {
-            enabled: Motion.morph.duration > 0
+            enabled: pill.ready && Motion.glide.duration > 0
             NumberAnimation {
-                duration: Motion.exit.duration
-                easing.type: Motion.morph.easing
-                easing.overshoot: Motion.morph.overshoot
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
             }
         }
         Behavior on width {
-            enabled: Motion.morph.duration > 0
+            enabled: pill.ready && Motion.glide.duration > 0
             NumberAnimation {
-                duration: Motion.exit.duration
-                easing.type: Motion.morph.easing
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
             }
+        }
+
+        // a value: the solid accent pill with the brush signature
+        StyledRect {
+            anchors.fill: parent
+            visible: !root.navigation
+            variant: "primary"
+            backgroundOpacity: 1
+            enableBorder: false
+            radius: Look.bigRadius(height)
+
+            BrushHighlight {
+                spread: Space.xs
+                strength: 0.45
+            }
+        }
+        // navigation: neutral and raised
+        Rectangle {
+            objectName: "segmentNavPill"
+            anchors.fill: parent
+            visible: root.navigation
+            radius: Look.bigRadius(height)
+            color: Qt.tint(Look.raisedFill(true), Qt.alpha(Type.text, 0.1))
+            border.width: Space.hairline
+            border.color: Type.hairline
         }
     }
 
@@ -84,12 +141,14 @@ Item {
                 required property int index
                 readonly property bool active: seg.index === root.currentIndex
                 readonly property string text: seg.modelData.text || ""
-                readonly property color ink: seg.active ? Type.accentInk : (hover.containsMouse ? Type.text : Type.secondary)
+                readonly property color ink: seg.active ? (root.navigation ? Type.text : Type.accentInk) : (hover.containsMouse ? Type.text : Type.secondary)
 
                 signal clicked
 
                 objectName: seg.modelData.name || ""
-                width: content.implicitWidth + Space.l * 2
+                // the label's room in its active weight, whichever is current
+                implicitWidth: content.implicitWidth - label.implicitWidth + Math.max(label.implicitWidth, boldProbe.implicitWidth) + Space.l * 2
+                width: seg.implicitWidth + root.segmentExtra
                 height: row.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: seg.text
@@ -108,15 +167,37 @@ Item {
                         font.family: Icons.font
                         font.pixelSize: Type.iconSize("secondary")
                         color: seg.ink
+                        Behavior on color {
+                            enabled: Motion.micro.duration > 0
+                            ColorAnimation {
+                                duration: Motion.micro.duration
+                            }
+                        }
                     }
 
                     KitText {
+                        id: label
                         anchors.verticalCenter: parent.verticalCenter
                         role: "secondary"
                         text: seg.text
                         color: seg.ink
                         font.weight: seg.active ? Font.DemiBold : Look.labelWeight
+                        Behavior on color {
+                            enabled: Motion.micro.duration > 0
+                            ColorAnimation {
+                                duration: Motion.micro.duration
+                            }
+                        }
                     }
+                }
+
+                // the label in the active weight, measured, never drawn
+                KitText {
+                    id: boldProbe
+                    visible: false
+                    role: "secondary"
+                    text: seg.text
+                    font.weight: Font.DemiBold
                 }
 
                 MouseArea {

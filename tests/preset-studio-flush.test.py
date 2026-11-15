@@ -60,6 +60,8 @@ QtObject {
             PreviewSink.applying = true;
     }
     function discard() { hasChanges = false }
+    property int flushes: 0
+    function flush() { flushes++ }
 }""",
 })
 
@@ -85,6 +87,7 @@ def ran():
 # nothing staged: at once
 ev("flush('clean')")
 check(ran() == ["clean"], f"nothing staged: the command runs at once, got {ran()}")
+check(ev("SettingsStore.flushes") == 1, "a live edit still waiting for its write is written first")
 
 # in-process: Apply writes at once, the command follows after the delay
 ev("SettingsStore.hasChanges = true")

@@ -58,13 +58,23 @@ StyledRect {
         hovered: root.look === "hover"
     }
 
-    // A ghost language (ink: no box at rest) underlines the field.
-    Rectangle {
+    // A ghost language (ink: no box at rest): the raised fill of the big
+    // controls (Segmented's track), never a bare underline: a dropdown, a
+    // field and a segmented read as one family of boxes.
+    Mark {
         visible: root.boxed && Look.controlFill(false).a === 0 && Look.controlEdge.a === 0
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: Space.hairline
-        color: popup.opened ? Type.accent : Type.track
+        anchors.fill: parent
+        z: -1
+        radius: root.radius
+        color: Look.raisedFill(root.look === "hover")
+        border.width: popup.opened ? Space.hairline : 0
+        border.color: Type.accent
+        Behavior on color {
+            enabled: Motion.micro.duration > 0
+            ColorAnimation {
+                duration: Motion.micro.duration
+            }
+        }
     }
 
     Row {

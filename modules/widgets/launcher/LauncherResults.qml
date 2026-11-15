@@ -1,6 +1,7 @@
 import QtQuick
 import qs.config
 import "Providers.js" as Providers
+import "../../components/preview/Preview.js" as Preview
 // Makes providers/ reachable for Quickshell's scanner (loaded by URL).
 import "providers"
 
@@ -9,8 +10,18 @@ import "providers"
 // `items` is the flat list the view shows: each result gets `provider`
 // (id) added. Providers answer synchronously or later (files); every change
 // re-merges on the next tick.
+//
+// Preview (`preview`, a PreviewContext; Settings' launcher stage): only the
+// providers named in the sample "launcher.live" are created and searched
+// (the apps: in memory, so the stage lists your real apps); every other
+// provider shows its sample rows, "launcher.rows" ({providerId: [rows]}),
+// in the configured order. Nothing runs (activate is inert).
 QtObject {
     id: host
+
+    property var preview: null
+    readonly property var liveIds: Preview.sample(host.preview, "launcher.live", [])
+    readonly property var sampleRows: Preview.sample(host.preview, "launcher.rows", ({}))
 
     property string text: ""
     property string mode: "empty"
@@ -67,6 +78,8 @@ QtObject {
         Providers.PROVIDERS.forEach(p => {
             if (p.kind !== "inline")
                 return;
+            if (Preview.on(host.preview) && host.liveIds.indexOf(p.id) === -1)
+                return;
             const comp = Qt.createComponent(Qt.resolvedUrl(p.file));
             if (comp.status !== Component.Ready) {
                 console.warn("launcher: provider", p.id, comp.errorString());
@@ -118,10 +131,11 @@ QtObject {
         const mixed = host.mode === "mixed";
         host._route.providers.forEach(r => {
             const p = host.providers[r.id];
-            if (!p)
+            const sample = Preview.on(host.preview) ? host.sampleRows[r.id] : null;
+            if (!p && !sample)
                 return;
-            let rows = p.results || [];
-            if (mixed && p.mixedLimit > 0)
+            let rows = p ? (p.results || []) : sample;
+            if (mixed && p && p.mixedLimit > 0)
                 rows = rows.slice(0, p.mixedLimit);
             rows.forEach(row => out.push(Object.assign({
                     "provider": r.id
@@ -132,6 +146,8 @@ QtObject {
 
     // The provider of an item and the action for it.
     function activate(item, option) {
+        if (Preview.on(host.preview))
+            return false;
         const p = item ? host.providers[item.provider] : null;
         return p ? p.activate(item, option || "") : false;
     }
@@ -148,6 +164,8 @@ QtObject {
 
     // Tab / "?": hand the raw query to the AI provider.
     function askAi() {
+        if (Preview.on(host.preview))
+            return false;
         const p = host.providers["ai"];
         if (!p || !Providers.isEnabled("ai", host.disabled))
             return false;
@@ -158,5 +176,7 @@ QtObject {
 
     onOrderChanged: refresh()
     onDisabledChanged: refresh()
+    onSampleRowsChanged: if (Preview.on(host.preview))
+        host._schedule()
     Component.onCompleted: _create()
 }

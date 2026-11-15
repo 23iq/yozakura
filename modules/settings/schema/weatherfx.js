@@ -24,7 +24,6 @@ var entries = [
     {
         "key": "theme.weatherFx.mode",
         "type": "selector",
-        "preview": "WeatherFxPreview",
         "label": "prefs.weatherfx.mode",
         "description": "prefs.weatherfx.mode.desc",
         "options": [

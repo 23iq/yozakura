@@ -12,16 +12,15 @@
       "description": "Launcher placement and look.",
       "properties": {
         "host": {
-          "title": "Launcher opens in",
+          "title": "Opens in",
           "type": "string",
           "default": "auto",
-          "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+          "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
-            "label": "prefs.layout.launcher_host",
+            "category": "launcher",
+            "section": "appearance",
+            "label": "prefs.layout.opens_in",
             "control": "selector",
-            "preview": "LayoutPreview",
             "keywords": "launcher host spotlight sheet notch centered search"
           },
           "enum": [
@@ -32,7 +31,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "spotlight": "Spotlight",
             "sheet": "Sheet"
           }
@@ -93,7 +92,7 @@
           "description": "Show only the search field until you start typing.",
           "x-settings": {
             "category": "launcher",
-            "section": "appearance",
+            "section": "behavior",
             "label": "prefs.launcher.compact_when_empty",
             "control": "toggle",
             "keywords": "compact empty search field minimal small collapse"
@@ -108,14 +107,14 @@
       "description": "Dashboard placement, tabs and widget grid.",
       "properties": {
         "host": {
-          "title": "Dashboard opens in",
+          "title": "Opens in",
           "type": "string",
           "default": "auto",
-          "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+          "description": "Island: grows out of the island. Spotlight: centred over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
-            "label": "prefs.layout.dashboard_host",
+            "category": "dashboard",
+            "section": "home",
+            "label": "prefs.layout.opens_in",
             "control": "selector",
             "keywords": "dashboard host spotlight sheet notch side panel"
           },
@@ -127,7 +126,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "spotlight": "Spotlight",
             "sheet": "Sheet"
           }
@@ -156,7 +155,7 @@
           }
         },
         "showMetrics": {
-          "title": "Metrics strip",
+          "title": "Metrics row",
           "type": "boolean",
           "default": true,
           "description": "A thin line with CPU, RAM, GPU and network at the bottom; click it to open the metrics tab.",
@@ -173,10 +172,10 @@
           }
         },
         "heroTint": {
-          "title": "Tint the player with the art",
+          "title": "Tint the player",
           "type": "boolean",
           "default": true,
-          "description": "The player block takes the colour of the album art, held back so the text stays readable.",
+          "description": "The player block takes the color of the album art, held back so the text stays readable.",
           "x-settings": {
             "category": "dashboard",
             "section": "home",
@@ -209,13 +208,13 @@
           "items": {
             "type": "object"
           },
-          "description": "Order and visibility of the dashboard tabs. Drag the grip or use the arrows; widgets are arranged from the dashboard itself with the pencil button.",
+          "description": "Order and visibility of the dashboard tabs. Widgets are arranged from the dashboard itself with the pencil button.",
           "x-settings": {
             "category": "dashboard",
             "section": "tabs",
             "label": "prefs.dashboard.tabs",
             "control": "custom",
-            "component": "DashboardTabsEditor",
+            "component": "DashboardTabsList",
             "keywords": "dashboard tabs order hide show reorder widgets wallpapers metrics rail"
           }
         },
@@ -294,8 +293,8 @@
           "default": "auto",
           "description": "Auto uses the right edge, or the left one when the bar is on the right.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
+            "category": "menus",
+            "section": "menus",
             "label": "prefs.layout.sheet_side",
             "control": "selector",
             "keywords": "sheet side left right edge vertical bar",
@@ -352,13 +351,13 @@
       "additionalProperties": false
     },
     "backdrop": {
-      "title": "Dim the screen behind",
+      "title": "Dim behind",
       "type": "boolean",
       "default": false,
       "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
       "x-settings": {
-        "category": "layout",
-        "section": "hosts",
+        "category": "menus",
+        "section": "menus",
         "label": "prefs.layout.backdrop",
         "control": "toggle",
         "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
@@ -489,14 +488,14 @@
       "description": "AI quick ask placement.",
       "properties": {
         "host": {
-          "title": "AI quick ask opens in",
+          "title": "Quick ask opens in",
           "type": "string",
           "default": "auto",
-          "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
+          "description": "Island: inside the island. Card: a small floating card beside the bar. Spotlight: centred over the screen.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
-            "label": "prefs.layout.aiquick_host",
+            "category": "ai",
+            "section": "quickask",
+            "label": "prefs.layout.quickask_opens_in",
             "control": "selector",
             "keywords": "ai quick ask host card floating spotlight notch island"
           },
@@ -508,7 +507,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "card": "Card",
             "spotlight": "Spotlight"
           }
@@ -522,14 +521,14 @@
       "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
       "properties": {
         "host": {
-          "title": "Voice, timers and alarm open in",
+          "title": "Opens in",
           "type": "string",
           "default": "auto",
-          "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
+          "description": "Island: the island grows to show them. Card: a small floating card beside the bar.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
-            "label": "prefs.layout.panels_host",
+            "category": "timers",
+            "section": "notch",
+            "label": "prefs.layout.opens_in",
             "control": "selector",
             "keywords": "voice dictation timer hub alarm panels host card floating notch island"
           },
@@ -540,7 +539,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "card": "Card"
           }
         }
@@ -553,14 +552,14 @@
       "description": "Keybind cheatsheet placement.",
       "properties": {
         "host": {
-          "title": "Keybind cheatsheet",
+          "title": "Shortcut sheet opens in",
           "type": "string",
           "default": "fullscreen",
           "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
           "x-settings": {
-            "category": "layout",
-            "section": "hosts",
-            "label": "prefs.layout.cheatsheet_host",
+            "category": "input",
+            "section": "shortcuts",
+            "label": "prefs.layout.sheet_opens_in",
             "control": "selector",
             "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
           },
@@ -587,10 +586,10 @@
           "title": "Edge",
           "type": "string",
           "default": "auto",
-          "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
+          "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the island's edge).",
           "x-settings": {
-            "category": "osd",
-            "section": "osd",
+            "category": "menus",
+            "section": "place",
             "label": "prefs.osd.position",
             "control": "selector",
             "keywords": "osd position edge side top bottom left right",
@@ -620,11 +619,10 @@
           "default": "pill",
           "description": "How the volume and brightness indicator looks and where it lives.",
           "x-settings": {
-            "category": "osd",
+            "category": "menus",
             "section": "osd",
             "label": "prefs.label.osd_style",
             "control": "selector",
-            "preview": "OsdPreview",
             "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
           },
           "enum": [
@@ -648,14 +646,13 @@
           "default": 2500,
           "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
           "x-settings": {
-            "category": "osd",
-            "section": "osd",
+            "category": "menus",
+            "section": "place",
             "label": "prefs.osd.timeout",
             "control": "slider",
             "step": 100,
             "unit": "ms",
             "keywords": "osd duration timeout how long hide",
-            "advanced": true,
             "min": 800,
             "max": 8000
           },

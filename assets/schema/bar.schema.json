@@ -7,16 +7,15 @@
   "x-file": "config/bar.json",
   "properties": {
     "position": {
-      "title": "Bar edge",
+      "title": "Edge",
       "type": "string",
       "default": "top",
       "description": "The screen edge the bar sits on.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.label.bar_edge",
-        "control": "custom",
-        "component": "BarPositionPicker",
+        "control": "selector",
         "keywords": "position edge top bottom left right vertical horizontal",
         "visibleWhen": {
           "key": "bar.panels",
@@ -28,7 +27,13 @@
         "bottom",
         "left",
         "right"
-      ]
+      ],
+      "x-enumLabels": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      }
     },
     "launcherIcon": {
       "title": "Launcher icon",
@@ -37,7 +42,7 @@
       "description": "Icon name or image file for the launcher button; empty uses the app logo.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon",
         "control": "path",
         "keywords": "launcher icon logo symbol image path start menu button"
@@ -51,7 +56,7 @@
       "description": "Recolor the launcher icon with the theme palette.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon_tint",
         "control": "toggle",
         "keywords": "launcher icon tint color palette recolor"
@@ -64,7 +69,7 @@
       "description": "Size of the icon on the launcher button.",
       "x-settings": {
         "category": "bar",
-        "section": "launcher",
+        "section": "media",
         "label": "prefs.bar.launcher_icon_size",
         "control": "slider",
         "step": 1,
@@ -85,7 +90,7 @@
       "description": "Monitors that show the bar; none selected shows it on every monitor.",
       "x-settings": {
         "category": "bar",
-        "section": "screens",
+        "section": "autohide",
         "label": "prefs.bar.screens",
         "control": "screens",
         "keywords": "bar monitor screen display multi-monitor where",
@@ -105,7 +110,7 @@
       "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
       "x-settings": {
         "category": "bar",
-        "section": "screens",
+        "section": "autohide",
         "label": "prefs.bar.firefox_player",
         "control": "toggle",
         "keywords": "firefox browser media player mpris music video youtube"
@@ -118,7 +123,7 @@
       "description": "A border around the whole screen, joined to the bar.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.frame",
         "control": "toggle",
         "keywords": "frame border screen edge outline"
@@ -131,7 +136,7 @@
       "description": "Width of the frame on the other edges.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.frame_thickness",
         "control": "slider",
         "step": 1,
@@ -150,7 +155,7 @@
       "x-unit": "px"
     },
     "pinnedOnStartup": {
-      "title": "Visible at startup",
+      "title": "Shown at start",
       "type": "boolean",
       "default": true,
       "description": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
@@ -183,10 +188,10 @@
       }
     },
     "hoverRegionHeight": {
-      "title": "Bar reveal strip",
+      "title": "Edge that reveals the bar",
       "type": "number",
       "default": 8,
-      "description": "Size of the invisible edge strip that reveals the hidden bar.",
+      "description": "How wide the invisible edge is that brings the hidden bar back.",
       "x-settings": {
         "category": "bar",
         "section": "expert",
@@ -237,7 +242,7 @@
       }
     },
     "availableOnFullscreen": {
-      "title": "Over fullscreen apps",
+      "title": "Over full-screen apps",
       "type": "boolean",
       "default": false,
       "description": "Keep the bar reachable when a window is fullscreen.",
@@ -263,13 +268,13 @@
       }
     },
     "containBar": {
-      "title": "Bar inside the frame",
+      "title": "Inside the frame",
       "type": "boolean",
       "default": false,
       "description": "Draw the bar inside the frame instead of over it. Applies to the classic, menubar, statusline, ribbon and rail styles.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.contain_bar",
         "control": "toggle",
         "keywords": "frame contain inside bar",
@@ -341,7 +346,6 @@
         "section": "clock",
         "label": "prefs.bar.clock_date",
         "control": "toggle",
-        "preview": "ClockPreview",
         "keywords": "clock date day month time"
       }
     },
@@ -352,10 +356,10 @@
       "description": "A slimmer notch and island tabs. Styles with a fixed size (menubar, statusline, ribbon, rail) keep their own size.",
       "x-settings": {
         "category": "bar",
-        "section": "style",
+        "section": "shape",
         "label": "prefs.bar.compact",
         "control": "toggle",
-        "keywords": "compact dense slim thin small height"
+        "keywords": "compact dense slim thin small height size"
       }
     },
     "layout": {
@@ -364,13 +368,13 @@
       "description": "Bar layout: style and the ordered module ids of each group.",
       "properties": {
         "style": {
-          "title": "Bar style",
+          "title": "Shape",
           "type": "string",
           "default": "classic",
-          "description": "One continuous bar, or floating islands around the notch.",
+          "description": "One continuous bar, or floating islands around the island.",
           "x-settings": {
             "category": "bar",
-            "section": "style",
+            "section": "shape",
             "label": "prefs.bar.style",
             "control": "custom",
             "component": "BarStyleCards",
@@ -439,7 +443,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the start (left/top), in order.",
@@ -493,7 +497,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the end (right/bottom), in order.",
@@ -508,7 +512,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules tucked into the overflow drawer.",
@@ -553,11 +557,11 @@
       "default": [],
       "x-settings": {
         "category": "bar",
-        "section": "panels",
-        "label": "prefs.bar.panels",
-        "entry": "bar.panels.editor",
-        "entryTitle": "Panel layout",
-        "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
+        "section": "layout",
+        "label": "prefs.label.bar_modules",
+        "entry": "bar.panels.modules",
+        "entryTitle": "Arrange",
+        "keywords": "panel modules widgets order arrange drag drop"
       },
       "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock|floating|pills|dock-like|none, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
       "items": {
@@ -690,7 +694,7 @@
               }
             },
             "visualizer": {
-              "title": "Visualizer",
+              "title": "Media visualizer",
               "type": "boolean",
               "default": true,
               "description": "Small audio bars while something plays.",
@@ -710,7 +714,7 @@
           "type": "object",
           "properties": {
             "showWeather": {
-              "title": "Weather on the clock",
+              "title": "Weather symbol",
               "type": "boolean",
               "default": true,
               "description": "Lead the clock with the weather symbol instead of the day name.",
@@ -958,7 +962,7 @@
               "description": "What the line says, in this order. Empty ones (no battery, nothing playing) stay out; a window followed by its workspace reads as one.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_fragments",
                 "control": "custom",
                 "component": "OrderedListEditor",
@@ -997,7 +1001,7 @@
               "description": "On a narrow bar the fragments at the bottom of this list drop out first. Nothing is cut mid-word.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_priority",
                 "control": "custom",
                 "component": "OrderedListEditor",
@@ -1013,7 +1017,7 @@
               "description": "What stands between fragments.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_separator",
                 "control": "selector",
                 "preview": "SentencePreview",
@@ -1034,13 +1038,13 @@
               }
             },
             "verbosity": {
-              "title": "Wording",
+              "title": "Sentence wording",
               "type": "string",
               "default": "full",
               "description": "Short shows just the values; full reads as phrases.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_verbosity",
                 "control": "selector",
                 "keywords": "sentence wording short full phrases words"
@@ -1061,7 +1065,7 @@
               "description": "The bar text font, or the editorial serif from Icons & type.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_typeface",
                 "control": "selector",
                 "keywords": "sentence font typeface serif editorial",
@@ -1083,7 +1087,7 @@
               "description": "0 uses up to half the bar.",
               "x-settings": {
                 "category": "bar",
-                "section": "sentence",
+                "section": "media",
                 "label": "prefs.bar.sentence_max_width",
                 "control": "slider",
                 "step": 20,

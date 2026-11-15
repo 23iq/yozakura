@@ -35,8 +35,7 @@ env = KitEnv("overview-click", overrides={"theme": {"animDuration": 0}})
 h = env.h
 h.module("qs.modules.globals", {"GlobalStates": global_states_qml({})
          .replace("property bool themeHasChanges", "property bool overviewOpen: true\n    property bool themeHasChanges")
-         .replace("function nextWallpaper() {}", "function nextWallpaper() {}\n        property bool tintEnabled: false\n"
-                  "        function getLockscreenFramePath(p) { return '' }")})
+         .replace("function nextWallpaper() {}", "function nextWallpaper() {}\n        property bool tintEnabled: false")})
 h.module("Quickshell.Wayland", {
     "ScreencopyView": "Item { property var captureSource: null; property bool live: false; property bool hasContent: false }",
     "ToplevelManager": "pragma Singleton\nQtObject { property QtObject toplevels: QtObject { property var values: [] } }",

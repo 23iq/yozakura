@@ -15,11 +15,22 @@ import qs.modules.bar.look
 import qs.modules.components.kit
 import "../../specials/Specials.js" as Specials
 import "indicators/IndicatorStyles.js" as IndicatorStyles
+import "../../components/preview/Preview.js" as Preview
 
 Item {
     id: workspacesWidget
     required property var bar
     required property string orientation
+    // The look a settings preview may show with another value (Preview.js)
+    readonly property var preview: bar ? (bar.preview ?? null) : null
+    readonly property string indicatorStyle: Preview.pick(preview, "workspaces.indicatorStyle", Config.workspaces.indicatorStyle)
+    readonly property string numeralStyle: Preview.pick(preview, "workspaces.numeralStyle", Config.workspaces.numeralStyle)
+    // what each slot shows (WorkspaceSlot.js), overridable the same way
+    readonly property var slotConfig: preview ? ({
+            "showNumbers": Preview.pick(preview, "workspaces.showNumbers", Config.workspaces.showNumbers),
+            "alwaysShowNumbers": Preview.pick(preview, "workspaces.alwaysShowNumbers", Config.workspaces.alwaysShowNumbers),
+            "showAppIcons": Preview.pick(preview, "workspaces.showAppIcons", Config.workspaces.showAppIcons)
+        }) : Config.workspaces
     readonly property var monitor: (bar && bar.screen ? YozdService.monitorFor(bar.screen) : null)
     readonly property string specialWorkspaceName: Config.workspaces.showSpecialWorkspace ? (CompositorData.specialWorkspaceNames[bar && bar.screen ? bar.screen.name : ""] || "") : ""
     readonly property bool specialWorkspaceActive: specialWorkspaceName.length > 0
@@ -259,7 +270,7 @@ Item {
     }
 
     // Strip styles (the branch) draw every slot instead of the active box.
-    readonly property string stripStyle: IndicatorStyles.strip(Config.workspaces.indicatorStyle)
+    readonly property string stripStyle: IndicatorStyles.strip(workspacesWidget.indicatorStyle)
 
     OccupiedRanges {
         parent: regularWorkspaces
@@ -288,6 +299,7 @@ Item {
         occupied: !!CompositorData.workspaceOccupationMap[workspacesWidget.activeWorkspaceId]
         baseRadius: workspacesWidget.radius
         workspaceId: workspacesWidget.activeWorkspaceId
+        styleId: workspacesWidget.indicatorStyle
     }
 
     Loader {
@@ -317,6 +329,9 @@ Item {
         iconSizeShrinked: workspacesWidget.workspaceIconSizeShrinked
         iconOpacityShrinked: workspacesWidget.workspaceIconOpacityShrinked
         iconMarginShrinked: workspacesWidget.workspaceIconMarginShrinked
+        indicatorStyle: workspacesWidget.indicatorStyle
+        numeralStyle: workspacesWidget.numeralStyle
+        slotConfig: workspacesWidget.slotConfig
     }
 
     RowLayout {

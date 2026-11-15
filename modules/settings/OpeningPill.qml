@@ -30,14 +30,18 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("window-opening")
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-    visible: !root.expired
+    // gives up after a while: fades out, then goes
+    visible: !root.expired || pill.opacity > 0
 
     Component.onCompleted: Qt.callLater(() => root.shown = true)
 
     Timer {
         interval: 20000
         running: true
-        onTriggered: root.expired = true
+        onTriggered: {
+            root.expired = true;
+            root.shown = false;
+        }
     }
 
     Surface {
@@ -51,8 +55,8 @@ PanelWindow {
         Behavior on opacity {
             enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Motion.enter.duration
-                easing.type: Motion.enter.easing
+                duration: root.shown ? Motion.enter.duration : Motion.exit.duration
+                easing.type: root.shown ? Motion.enter.easing : Motion.exit.easing
             }
         }
 
@@ -67,12 +71,14 @@ PanelWindow {
                 icon: Icons.circleNotch
                 role: "body"
                 tone: "accent"
+                // turns only while motion is on (animations off: a still
+                // glyph) and the pill shows
                 RotationAnimation on rotation {
                     from: 0
                     to: 360
                     duration: 1000
                     loops: Animation.Infinite
-                    running: root.visible
+                    running: root.visible && root.shown && Motion.base > 0
                 }
             }
             KitText {

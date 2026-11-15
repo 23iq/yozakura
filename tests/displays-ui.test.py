@@ -61,13 +61,13 @@ check(ev("count", tiles) == 2 and ev("itemAt(0).config.name", tiles) == "DP-1" a
 check(ev("page.selectedName") == "DP-1", "first monitor selected")
 check(ev("page.dirty") is False, "nothing to apply at first")
 check(h.find(win, "applyButton").property("enabled") is False, "Apply is disabled until something changed")
-check(h.find(win, "upgradeHint").property("visible") is True, "upgrade hint: 240 Hz available at 2560x1440")
+check(ev("page.upgrade") == 240, "upgrade hint: 240 Hz available at 2560x1440 (the lightning on the 240 Hz chip)")
 
 # Pick 240 Hz, then Apply -> displays.apply with the candidate
 ev("page.edit('DP-1', {refresh: 240})")
 check(ev("page.dirty") is True, "a refresh change makes the draft dirty")
 check(h.find(win, "applyButton").property("enabled") is True, "Apply enables")
-check(h.find(win, "upgradeHint").property("visible") is False, "hint disappears at the maximum")
+check(ev("page.upgrade") == 0, "hint disappears at the maximum")
 ev("page.applyDraft()")
 applied = calls("displays.apply")
 check(len(applied) == 1, "Apply calls displays.apply")

@@ -6,7 +6,7 @@ import qs.modules.settings
 import qs.modules.settings.store
 
 // A button that opens another settings page (entry.target) at a section
-// (entry.targetSection), labelled entry.linkText.
+// (entry.targetSection) and row (entry.targetEntry), labelled entry.linkText.
 Item {
     id: root
 
@@ -18,6 +18,6 @@ Item {
         icon: "arrowSquareOut"
         kind: "ghost"
         text: I18n.t(root.entry && root.entry.linkText ? root.entry.linkText : "prefs.common.open_classic")
-        onClicked: SettingsStore.navigate(root.entry ? root.entry.target : "", root.entry ? (root.entry.targetSection || "") : "", "")
+        onClicked: SettingsStore.navigate(root.entry ? root.entry.target : "", root.entry ? (root.entry.targetSection || "") : "", root.entry ? (root.entry.targetEntry || "") : "")
     }
 }

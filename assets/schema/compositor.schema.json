@@ -62,7 +62,7 @@
       "description": "Palette colors of the other windows' borders.",
       "x-settings": {
         "category": "windows",
-        "section": "borders",
+        "section": "unfocused",
         "label": "prefs.windows.inactive_border",
         "control": "color-role",
         "keywords": "inactive unfocused border color gradient role palette alpha"
@@ -121,7 +121,7 @@
       "description": "Radius of window corners.",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "prefs.windows.rounding",
         "control": "slider",
         "step": 1,
@@ -146,7 +146,7 @@
       "description": "Round window corners like the rest of the shell (Appearance › Shape).",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "prefs.windows.sync_rounding",
         "control": "toggle",
         "keywords": "sync rounding roundness corners shell theme",
@@ -188,7 +188,7 @@
       "description": "Use the shell's shadow opacity for windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.sync_shadow_opacity",
         "control": "toggle",
         "keywords": "sync shadow opacity theme",
@@ -206,7 +206,7 @@
       "description": "Use the shell's shadow color for windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.sync_shadow_color",
         "control": "toggle",
         "keywords": "sync shadow color theme",
@@ -218,18 +218,19 @@
       }
     },
     "gapsIn": {
-      "title": "Gaps between windows",
+      "title": "Between windows",
       "type": "number",
       "default": 2,
       "description": "Space around each window toward its neighbours (applied on both sides).",
       "x-settings": {
         "category": "windows",
-        "section": "layout",
+        "section": "gaps",
         "label": "prefs.windows.gaps_in",
         "control": "slider",
         "step": 1,
         "unit": "px",
         "keywords": "gaps inner spacing between windows padding",
+        "advanced": true,
         "min": 0,
         "max": 50
       },
@@ -238,18 +239,19 @@
       "x-unit": "px"
     },
     "gapsOut": {
-      "title": "Gaps to screen edges",
+      "title": "Screen edges",
       "type": "number",
       "default": 4,
       "description": "Space between windows and the edges of the screen.",
       "x-settings": {
         "category": "windows",
-        "section": "layout",
+        "section": "gaps",
         "label": "prefs.windows.gaps_out",
         "control": "slider",
         "step": 1,
         "unit": "px",
         "keywords": "gaps outer margin screen edges padding",
+        "advanced": true,
         "min": 0,
         "max": 100
       },
@@ -258,26 +260,26 @@
       "x-unit": "px"
     },
     "smartGaps": {
-      "title": "Smart gaps",
+      "title": "No gaps when alone",
       "type": "boolean",
       "default": false,
       "description": "No gaps when a workspace shows a single tiled window.",
       "x-settings": {
         "category": "windows",
-        "section": "layout",
+        "section": "gaps",
         "label": "prefs.windows.smart_gaps",
         "control": "toggle",
         "keywords": "smart gaps single window no gaps lone fullscreen-like"
       }
     },
     "dimInactive": {
-      "title": "Dim unfocused windows",
+      "title": "Dim unfocused",
       "type": "boolean",
       "default": false,
       "description": "Darken every window except the focused one.",
       "x-settings": {
         "category": "windows",
-        "section": "dim",
+        "section": "unfocused",
         "label": "prefs.windows.dim_inactive",
         "control": "toggle",
         "keywords": "dim inactive unfocused darken focus"
@@ -290,7 +292,7 @@
       "description": "How dark unfocused windows get.",
       "x-settings": {
         "category": "windows",
-        "section": "dim",
+        "section": "unfocused",
         "label": "prefs.windows.dim_strength",
         "control": "slider",
         "step": 0.01,
@@ -316,7 +318,6 @@
         "section": "layout",
         "label": "prefs.windows.layout",
         "control": "selector",
-        "preview": "WindowsPreview",
         "keywords": "layout tiling dwindle master scrolling preview windows"
       },
       "enum": [
@@ -331,13 +332,13 @@
       }
     },
     "shadowEnabled": {
-      "title": "Window shadows",
+      "title": "Shadows",
       "type": "boolean",
       "default": true,
       "description": "Soft shadows under windows.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadows",
         "control": "toggle",
         "keywords": "shadow drop shadows glow"
@@ -350,7 +351,7 @@
       "description": "How far the shadow spreads.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_range",
         "control": "slider",
         "step": 1,
@@ -422,7 +423,7 @@
       "description": "Palette color of the focused window's shadow (a bright role makes a glow).",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_color",
         "control": "color-role",
         "keywords": "shadow color glow focused role palette",
@@ -468,7 +469,7 @@
       "description": "How strong window shadows are.",
       "x-settings": {
         "category": "windows",
-        "section": "shadows",
+        "section": "blur",
         "label": "prefs.windows.shadow_opacity",
         "control": "slider",
         "step": 0.05,
@@ -1008,7 +1009,8 @@
         "label": "prefs.motion.profile",
         "control": "custom",
         "component": "MotionProfileCards",
-        "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed"
+        "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed",
+        "advanced": true
       },
       "enum": [
         "smooth",
@@ -1037,6 +1039,7 @@
           "key": "compositor.motionProfile",
           "notEquals": "off"
         },
+        "advanced": true,
         "min": 0.25,
         "max": 3
       },

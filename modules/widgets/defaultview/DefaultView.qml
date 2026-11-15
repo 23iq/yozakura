@@ -7,6 +7,7 @@ import qs.modules.widgets.defaultview.panels
 import qs.config
 import "activities/ActivityRegistry.js" as Registry
 import qs.modules.theme
+import "../../components/preview/Preview.js" as Preview
 
 // Resting notch: the header (user/media/segments) plus, at most one at a
 // time, the panel of the segment the pointer rests on (notch.expandOn
@@ -21,6 +22,9 @@ Item {
     width: implicitWidth
     height: implicitHeight
     property string screenName: ""
+    // A settings preview (NotchPreview): the island's looks and its samples
+    // ("player", "notifications", "activities", ...); null live
+    property var preview: null
     property bool notchHovered: false
     property bool parentHoverActive: false
     // Set by NotchContent; false while the island is auto-hidden off screen.
@@ -30,9 +34,9 @@ Item {
     // Stack transitions freeze idle interaction so closing a launcher cannot
     // simultaneously trigger a second panel.
     property bool interactionSuspended: false
-    readonly property var activePlayer: MprisController.activePlayer
-    readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(root.screenName)
-    readonly property string edge: Config.notchPosition ?? "top"
+    readonly property var activePlayer: Preview.sample(root.preview, "player", MprisController.activePlayer)
+    readonly property bool hasActiveNotifications: Preview.sample(root.preview, "notifications", Notifications.notchPopupList).length > 0 && (Preview.on(root.preview) || Notifications.showsOnScreen(root.screenName))
+    readonly property string edge: Preview.pick(root.preview, "notch.position", Config.notchPosition ?? "top")
     readonly property bool isBottom: edge === "bottom"
     readonly property bool vertical: edge === "left" || edge === "right"
     // The media summary is the "media" activity (notch.activities)
@@ -172,6 +176,7 @@ Item {
     IslandHeader {
         id: header
         objectName: "islandHeader"
+        preview: root.preview
         vertical: root.vertical
         width: root.vertical ? contentWidth : parent.width
         height: implicitHeight
@@ -303,6 +308,7 @@ Item {
             IslandNotifications {
                 id: notifications
                 objectName: "islandNotifications"
+                preview: root.preview
                 anchors.fill: parent
                 visible: root.hasActiveNotifications
                 hovered: root.expandedState

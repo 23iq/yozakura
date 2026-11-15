@@ -29,6 +29,7 @@ Column {
         spacing: Space.m
 
         SectionLabel {
+            role: "group"
             width: parent.width - allButton.width - parent.spacing
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t("prefs.wall.per_screen")
@@ -55,6 +56,8 @@ Column {
                 IconButton {
                     icon: Icons.cancel
                     size: "s"
+                    tooltip: I18n.t("prefs.wall.use_main")
+                    Accessible.name: I18n.t("prefs.wall.use_main")
                     onClicked: root.manager.clearPerScreenWallpaper(row.modelData)
                 }
             }

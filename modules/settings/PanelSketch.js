@@ -2,30 +2,47 @@
 .import "../bar/panels/PanelStyles.js" as PanelStyles
 .import "../bar/BarModuleRegistry.js" as Modules
 
-// Geometry of the panels schematic (previews/PanelsSchematic.qml): each
+// Geometry of the panels miniatures (stages/ScreenMini.qml,
+// presets/MiniPanels.qml): each
 // panel as shapes (bands, tabs, a floating dock) and module icon slots, in
 // the coordinates of a W x H screen mockup. Pure, tested in
 // tests/panels-model.test.cjs.
 //
-// sketch(panel, W, H, unit) -> {shapes: [{x, y, w, h, r, kind}],
-//                              icons: [{x, y, size, icon}], depth}
+// sketch(panel, W, H, unit, spans) -> {shapes: [{x, y, w, h, r, kind}],
+//                              icons: [{x, y, size, icon, id, span}], depth}
 // kind: "band" | "tab" | "dock"; depth = space taken from the edge.
+// spans (optional): {moduleId: slots} for modules wider than one slot (the
+// settings stage draws the clock and the workspaces at their real width);
+// `span` is the module's length along the panel.
 
 function iconOf(id) {
     var m = Modules.get(id);
     return m ? m.icon : "puzzlePiece";
 }
 
-// Lay out a run of ids along x starting at `from` (or centered on `center`).
-function run(ids, from, cross, slot, size) {
+// Length of a run of ids (wide modules take `spans[id]` slots).
+function length(ids, slot, spans) {
+    var n = 0;
+    for (var i = 0; i < ids.length; i++)
+        n += slot * ((spans && spans[ids[i]]) || 1);
+    return n;
+}
+
+// Lay out a run of ids along x starting at `from`.
+function run(ids, from, cross, slot, size, spans) {
     var out = [];
+    var x = from;
     for (var i = 0; i < ids.length; i++) {
+        var w = slot * ((spans && spans[ids[i]]) || 1);
         out.push({
-            "x": from + i * slot + (slot - size) / 2,
+            "x": x + (w - size) / 2,
             "y": cross - size / 2,
             "size": size,
-            "icon": iconOf(ids[i])
+            "icon": iconOf(ids[i]),
+            "id": ids[i],
+            "span": w
         });
+        x += w;
     }
     return out;
 }
@@ -59,7 +76,7 @@ function place(item, edge, W, H) {
     return o;
 }
 
-function sketch(panel, W, H, unit) {
+function sketch(panel, W, H, unit, spans) {
     var style = PanelStyles.get(panel.style);
     var vertical = panel.edge === "left" || panel.edge === "right";
     var len = vertical ? H : W;
@@ -68,7 +85,12 @@ function sketch(panel, W, H, unit) {
     var center = g.center || [];
     var end = (g.end || []);
     var slot = unit * (style.flat ? 0.95 : 1.05);
-    var size = unit * 0.62;
+    // a short edge (a vertical bar of a small miniature): every module
+    // shrinks along the panel so the groups never run into each other
+    var need = length(start.concat(center, end), slot, spans) + unit * (center.length > 0 ? 2.4 : 1.6);
+    var fit = need > len ? Math.max(0.4, len / need) : 1;
+    slot *= fit;
+    var size = unit * 0.62 * fit;
     var shapes = [];
     var icons = [];
     var depth = 0;
@@ -95,7 +117,7 @@ function sketch(panel, W, H, unit) {
             return x.length > 0;
         }).length - 1;
         var dslot = style.id === "dock" ? unit * 1.15 : slot;
-        var w = all.length * dslot + Math.max(0, gaps) * unit * 0.4 + unit * 0.5;
+        var w = length(all, dslot, spans) + Math.max(0, gaps) * unit * 0.4 + unit * 0.5;
         var margin = Math.round(unit * 0.35);
         var dt = style.id === "dock" ? Math.round(unit * 1.5) : t;
         var x0 = panel.align === "start" ? unit : (panel.align === "end" ? len - w - unit : (len - w) / 2);
@@ -111,8 +133,8 @@ function sketch(panel, W, H, unit) {
         [start, center, end].forEach(function (grp) {
             if (grp.length === 0)
                 return;
-            icons = icons.concat(run(grp, x, margin + dt / 2, dslot, unit * 0.9));
-            x += grp.length * dslot + unit * 0.4;
+            icons = icons.concat(run(grp, x, margin + dt / 2, dslot, unit * 0.9, spans));
+            x += length(grp, dslot, spans) + unit * 0.4;
         });
         depth = margin + dt;
     } else if (style.id === "islands" || style.id === "corners" || style.id === "pills") {
@@ -126,7 +148,7 @@ function sketch(panel, W, H, unit) {
             var ids = pair[1];
             if (ids.length === 0)
                 return;
-            var tw = ids.length * slot + unit * 0.5;
+            var tw = length(ids, slot, spans) + unit * 0.5;
             var tx = pair[0] === "start" ? off : (pair[0] === "end" ? len - tw - off : (len - tw) / 2);
             shapes.push({
                 "x": tx,
@@ -136,7 +158,7 @@ function sketch(panel, W, H, unit) {
                 "r": pills ? t / 2 : t * 0.45,
                 "kind": pills ? "dock" : "tab"
             });
-            icons = icons.concat(run(ids, tx + unit * 0.25, cross, slot, size));
+            icons = icons.concat(run(ids, tx + unit * 0.25, cross, slot, size, spans));
         });
         depth = off + t;
     } else {
@@ -152,9 +174,9 @@ function sketch(panel, W, H, unit) {
         });
         cross = inset + t / 2;
         var pad = unit * 0.4 + inset;
-        icons = icons.concat(run(start, pad, cross, slot, size));
-        icons = icons.concat(run(center, (len - center.length * slot) / 2, cross, slot, size));
-        icons = icons.concat(run(end, len - pad - end.length * slot, cross, slot, size));
+        icons = icons.concat(run(start, pad, cross, slot, size, spans));
+        icons = icons.concat(run(center, (len - length(center, slot, spans)) / 2, cross, slot, size, spans));
+        icons = icons.concat(run(end, len - pad - length(end, slot, spans), cross, slot, size, spans));
         depth = inset + t;
     }
 
@@ -163,7 +185,9 @@ function sketch(panel, W, H, unit) {
             return place(s, panel.edge, W, H);
         }),
         "icons": icons.map(function (i) {
-            return place(i, panel.edge, W, H);
+            var o = place(i, panel.edge, W, H);
+            o.fit = fit;
+            return o;
         }),
         "depth": panel.reserve === false || panel.autohide === "always" ? 0 : depth
     };

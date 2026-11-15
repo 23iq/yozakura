@@ -46,6 +46,15 @@ test('scale options keep a custom value and mark the suggestion', () => {
     assert.equal(plain(F.scaleOptions(2, 1)).length, 6);
 });
 
+test('scaleSteps keeps the steps up to 200 % plus a custom, bigger or suggested one', () => {
+    const values = (cur, sug) => plain(F.scaleSteps(F.scaleOptions(cur, sug), cur)).map(o => o.value);
+    assert.deepEqual(values(1, 1.5), [1, 1.25, 1.5, 1.75, 2]);
+    assert.deepEqual(values(1.33, 1), [1, 1.25, 1.33, 1.5, 1.75, 2]);
+    assert.deepEqual(values(3, 1), [1, 1.25, 1.5, 1.75, 2, 3]);
+    assert.deepEqual(values(1, 3), [1, 1.25, 1.5, 1.75, 2, 3]);
+    assert.deepEqual(plain(F.scaleSteps(null, 1)), []);
+});
+
 test('numbering orders by x then y, skipping disabled outputs', () => {
     const n = plain(F.numbering([cfg('R', { x: 1920 }), cfg('X', { x: 0, enabled: false }), cfg('L', { x: 0 })]));
     assert.deepEqual(n, { L: 1, R: 2 });

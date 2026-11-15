@@ -18,6 +18,8 @@ StyledRect {
     objectName: "connectSheet"
 
     property bool embedded: false
+    // in the Settings window (its changes are steps of its history)
+    property bool inSettings: false
     property bool opened: embedded
     property string provider: ""
 
@@ -92,6 +94,9 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
+            // embedded (a settings card titled Providers): only a picked
+            // provider's form names itself, the grid needs no header
+            visible: !root.embedded || root.provider !== ""
             spacing: Space.s
             IconButton {
                 size: "xs"
@@ -159,6 +164,7 @@ StyledRect {
         id: formC
         ProviderForm {
             provider: root.provider
+            inSettings: root.inSettings
             interactive: !root.embedded
             Behavior on opacity {
                 enabled: BarLook.animDuration > 0

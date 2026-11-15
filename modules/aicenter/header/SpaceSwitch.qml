@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.aicenter.common
+import "../../components/preview/Preview.js" as Preview
 
 // Segmented [Assistant | Code] control; the highlight slides between them.
 StyledRect {
@@ -25,7 +26,9 @@ StyledRect {
             label: I18n.t("ai.space_code")
         }
     ]
-    readonly property int current: GlobalStates.aiSpace === "code" ? 1 : 0
+    // a Settings picture (CenterHeader.preview): its "ai.space" sample
+    property var preview: null
+    readonly property int current: Preview.sample(root.preview, "ai.space", GlobalStates.aiSpace) === "code" ? 1 : 0
     property bool iconsOnly: false
 
     variant: "common"
@@ -95,7 +98,8 @@ StyledRect {
                     objectName: "space_" + segment.modelData.id
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Ai.setSpace(segment.modelData.id)
+                    onClicked: if (!Preview.on(root.preview))
+                        Ai.setSpace(segment.modelData.id)
                 }
                 StyledToolTip {
                     tooltipText: segment.modelData.label + " (Ctrl+" + (segment.index + 1) + ")"

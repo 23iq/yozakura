@@ -18,6 +18,9 @@ Flickable {
     id: root
 
     property string provider: ""
+    // the Settings window holds it: its changes are steps of that
+    // window's history (else made elsewhere: SettingsStore.setElsewhere)
+    property bool inSettings: false
     signal saved
     signal disconnected
 
@@ -93,7 +96,7 @@ Flickable {
                 fail(I18n.t("ai.connect.save_failed") + " " + err);
             else
                 root.saved();
-        });
+        }, root.inSettings);
         if (!started)
             fail(I18n.t("ai.connect.save_failed"));
     }
@@ -235,7 +238,7 @@ Flickable {
                 text: root.local ? I18n.t("ai.connect.hide_local") : I18n.t("ai.connect.disconnect")
                 danger: !root.local
                 onClicked: {
-                    Ai.providers.disconnect(root.provider);
+                    Ai.providers.disconnect(root.provider, root.inSettings);
                     root.disconnected();
                 }
             }

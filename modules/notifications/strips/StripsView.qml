@@ -6,6 +6,8 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.config
 import "StripLayout.js" as StripLayout
+import "../ToastModel.js" as ToastModel
+import "../../components/preview/Preview.js" as Preview
 
 // Notifications as tanzaku (notifications.presentation "strips"): narrow
 // strips hanging on threads from a screen edge (notifications.strips.edge;
@@ -19,15 +21,20 @@ Item {
     // The UnifiedShellPanel (panel zones, dock, frame)
     property var panel: null
     property string screenName: ""
+    // A settings preview (PreviewContext, components/preview): always on,
+    // hanging the sample "popupGroups" ({app: group}) and "popupAppNames";
+    // null live
+    property var preview: null
+    readonly property var groups: Preview.sample(root.preview, "popupGroups", Notifications.popupGroupsByAppName)
 
-    readonly property bool active: Notifications.presentation === "strips" && Notifications.showsOnScreen(root.screenName)
+    readonly property bool active: Preview.on(root.preview) || (Notifications.presentation === "strips" && Notifications.showsOnScreen(root.screenName))
     readonly property var options: Config.notifications ? Config.notifications.strips : null
     readonly property string edge: StripLayout.resolveEdge(root.options ? root.options.edge : "auto")
     readonly property bool row: StripLayout.isRow(root.edge)
 
     readonly property int stripShort: Space.controlM + Space.xs
     readonly property int stripLong: 2 * Space.controlXL
-    readonly property int cardWidth: Math.round(Math.min(root.width / 2, Metrics.toastW * Math.max(1, Styling.fontSize(0) / 14)))
+    readonly property int cardWidth: Math.round(Math.min(root.width / 2, ToastModel.toastWidth(Metrics.toastW, Styling.fontSize(0))))
     // Strips open at the moment (the panel takes keyboard focus for them)
     property int openCount: 0
     readonly property bool wantsKeyboard: root.active && root.openCount > 0
@@ -41,8 +48,8 @@ Item {
     readonly property var orderedKeys: {
         if (!root.active)
             return [];
-        const groups = Notifications.popupGroupsByAppName;
-        return Notifications.popupAppNameList.slice().sort((a, b) => (groups[b]?.time ?? 0) - (groups[a]?.time ?? 0));
+        const groups = root.groups;
+        return Preview.sample(root.preview, "popupAppNames", Notifications.popupAppNameList).slice().sort((a, b) => (groups[b]?.time ?? 0) - (groups[a]?.time ?? 0));
     }
     readonly property var placed: StripLayout.slots(root.orderedKeys, root.options ? root.options.maxVisible : 5)
     property string head: ""

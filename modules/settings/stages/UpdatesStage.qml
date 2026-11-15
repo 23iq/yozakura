@@ -1,0 +1,194 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import qs.modules.theme
+import qs.modules.globals
+import qs.modules.services
+import qs.modules.components.kit
+import qs.modules.settings.store
+
+// Stage of Updates: one clear state and one action. Up to date: a check
+// mark, the installed version, when it last looked and "Check now"; a
+// newer release: its version and "What's new". Under it the three
+// channels as lanes (stable releases, pre-releases, every commit), the
+// one followed lit with your version on it: a picture of the Channel row
+// beside it (that row is the control; a setting is never two controls on a
+// page). With checks off the state says so; never checked, it
+// does not claim you are up to date. A short stage (a small window) drops
+// the big mark and the lanes' captions: everything stays in view.
+Stage {
+    id: stage
+
+    readonly property real u: Math.max(Space.px(10), stage.height * 0.045)
+    readonly property string current: UpdateService.currentVersion ?? ""
+    readonly property string latest: UpdateService.lastDetectedVersion ?? ""
+    readonly property bool newer: stage.latest !== "" && UpdateService.updateAvailable === true
+    readonly property bool checking: UpdateService.checking === true
+    readonly property real lastCheck: UpdateService.lastCheckTime ?? 0
+    readonly property bool service: SettingsStore.get("system.updateServiceEnabled") !== false
+    readonly property string channel: String(SettingsStore.get("system.updateChannel") || "stable")
+    readonly property var lanes: [
+        {
+            "id": "stable",
+            "icon": "shieldCheck",
+            "label": "prefs.updates.channel_stable",
+            "tag": "prefs.updates.stage.stable"
+        },
+        {
+            "id": "beta",
+            "icon": "lightning",
+            "label": "prefs.updates.channel_beta",
+            "tag": "prefs.updates.stage.beta"
+        },
+        {
+            "id": "git",
+            "icon": "gitBranch",
+            "label": "prefs.updates.channel_git",
+            "tag": "prefs.updates.stage.git"
+        }
+    ]
+
+    readonly property real preferredHeight: Space.px(280)
+    stageHeight: stage.preferredHeight
+    // a short stage: the state on the left, the lanes stacked on the right
+    // (stacked under each other they would run over the action)
+    readonly property bool tight: stage.height > 0 && stage.height < Space.px(150)
+    readonly property real laneHeight: Math.round(stage.u * (stage.tight ? 2.4 : 3.4))
+    readonly property bool checked: stage.lastCheck > 0
+    readonly property bool sideBySide: summary.implicitHeight + stage.laneHeight + stage.u * 1.2 + stage.height * 0.12 + Space.m > stage.height
+
+    // the state and its one action
+    Column {
+        id: summary
+        objectName: "updatesState"
+        x: stage.sideBySide ? Math.round(stage.width * 0.3 - width / 2) : Math.round((stage.width - width) / 2)
+        y: stage.sideBySide ? Math.round((stage.height - height) / 2) : Math.round(stage.height * 0.12)
+        spacing: Math.round(stage.u * 0.5)
+
+        Mark {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !stage.tight
+            width: Math.round(stage.u * 3.6)
+            height: width
+            color: stage.newer ? Type.accent : Qt.alpha(Type.accent, 0.16)
+            border.width: stage.newer ? 0 : Math.max(2, Math.round(stage.u * 0.12))
+            border.color: Type.accent
+            Icon {
+                anchors.centerIn: parent
+                icon: stage.newer ? Icons.downloadSimple : (stage.checking ? Icons.arrowsClockwise : Icons.check)
+                size: Math.round(stage.u * 1.9)
+                tone: stage.newer ? "accentInk" : "accent"
+            }
+        }
+        KitText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            role: "display"
+            font.pixelSize: Math.round(stage.u * 1.25)
+            text: stage.newer ? I18n.t("prefs.updates.available", stage.latest) : I18n.t(stage.checked || !stage.service ? "prefs.updates.stage.up_to_date" : "prefs.updates.never_checked")
+        }
+        KitText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            role: "secondary"
+            text: {
+                if (!stage.service)
+                    return I18n.t("prefs.updates.stage.off").replace("%1", stage.current);
+                if (stage.checking)
+                    return I18n.t("prefs.updates.checking");
+                // (never checked: the title says so already)
+                if (!stage.checked)
+                    return I18n.t("prefs.updates.current", stage.current);
+                return I18n.t("prefs.updates.current", stage.current) + " · " + I18n.t("prefs.updates.last_check", Qt.formatDateTime(new Date(stage.lastCheck), "d MMM, HH:mm"));
+            }
+        }
+        Chip {
+            objectName: "updatesAction"
+            anchors.horizontalCenter: parent.horizontalCenter
+            primary: true
+            icon: stage.newer ? Icons.fileText : Icons.arrowsClockwise
+            text: I18n.t(stage.newer ? "prefs.updates.stage.whats_new" : "prefs.updates.check_now")
+            enabled: !stage.checking
+            onClicked: stage.newer ? Quickshell.execDetached(ProcessRole.detached(["xdg-open", UpdateService.changelogUrl ?? Brand.repoUrl])) : UpdateService.checkUpdates()
+        }
+    }
+    StageSpot {
+        anchors.fill: summary
+        anchors.margins: -Space.s
+        keys: ["system.updateServiceEnabled"]
+    }
+
+    // the channels as lanes (display only: the Channel row picks)
+    Grid {
+        id: lanesRow
+        objectName: "updatesLanes"
+        columns: stage.sideBySide ? 1 : 3
+        x: stage.sideBySide ? Math.round(stage.width * 0.56) : Math.round((stage.width - width) / 2)
+        y: stage.sideBySide ? Math.round((stage.height - height) / 2) : stage.height - height - Math.round(stage.u * 1.2)
+        spacing: Math.round(stage.u * 0.6)
+        Repeater {
+            model: stage.lanes
+            delegate: Mark {
+                id: lane
+                required property var modelData
+                readonly property bool on: stage.channel === lane.modelData.id
+                objectName: "updatesLane:" + lane.modelData.id
+                width: Math.round(stage.width * (stage.sideBySide ? 0.36 : 0.26))
+                height: stage.laneHeight
+                radius: Look.radius("box", height)
+                color: lane.on ? Qt.alpha(Type.accent, 0.16) : Qt.alpha(Colors.surfaceContainer, 0.8)
+                border.width: lane.on ? Math.max(2, Math.round(stage.u * 0.1)) : Space.hairline
+                border.color: lane.on ? Type.accent : Qt.alpha(Colors.outlineVariant, 0.7)
+                Row {
+                    x: Math.round(stage.u * 0.7)
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Math.round(stage.u * 0.5)
+                    Icon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: Icons[lane.modelData.icon] ?? ""
+                        size: Math.round(stage.u * 1.1)
+                        tone: lane.on ? "accent" : "secondary"
+                    }
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        KitText {
+                            role: "body"
+                            font.weight: lane.on ? Font.DemiBold : Font.Normal
+                            text: I18n.t(lane.modelData.label)
+                        }
+                        KitText {
+                            visible: !stage.tight
+                            role: "caption"
+                            color: Type.muted
+                            text: I18n.t(lane.modelData.tag)
+                        }
+                    }
+                }
+                // your version, on the lane you follow (inside it: never over
+                // the lane above)
+                Mark {
+                    visible: lane.on
+                    anchors.right: parent.right
+                    anchors.rightMargin: Math.round(stage.u * 0.6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: versionText.implicitWidth + stage.u * 0.8
+                    height: Math.round(stage.u * 1.2)
+                    radius: Look.radius("chip", height)
+                    color: Type.accent
+                    KitText {
+                        id: versionText
+                        anchors.centerIn: parent
+                        role: "caption"
+                        font.weight: Font.Medium
+                        color: Type.accentInk
+                        text: stage.current
+                    }
+                }
+            }
+        }
+    }
+    StageSpot {
+        anchors.fill: lanesRow
+        anchors.margins: -Space.s
+        keys: ["system.updateChannel"]
+    }
+}

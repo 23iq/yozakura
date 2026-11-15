@@ -6,11 +6,14 @@ import qs.modules.services
 import qs.modules.theme
 import qs.config
 import qs.modules.components.kit
+import "../../components/preview/Preview.js" as Preview
 
 // The player badge keeps a stable place in the capsule; hover only changes tint.
 Item {
     id: root
     required property var player
+    // A settings preview (IslandHeader.preview): a still visualizer
+    property var preview: null
     property bool mediaExpanded: false
     // False while the island is slid off screen; stops the visualizer.
     property bool revealed: true
@@ -40,7 +43,7 @@ Item {
     // clips the bars, so their motion never changes the capsule size.
     Item {
         id: visualizerSlot
-        readonly property bool open: (Config.notch.visualizer ?? true) && (root.player?.isPlaying ?? false) && CavaService.available
+        readonly property bool open: (Config.notch.visualizer ?? true) && (root.player?.isPlaying ?? false) && (Preview.on(root.preview) || CavaService.available)
         anchors.right: playerBadge.left
         anchors.rightMargin: open ? 6 : 0
         anchors.verticalCenter: parent.verticalCenter
@@ -55,6 +58,7 @@ Item {
         }
         NotchVisualizer {
             id: miniVisualizer
+            preview: root.preview
             anchors.right: parent.right
             width: implicitWidth
             height: 14

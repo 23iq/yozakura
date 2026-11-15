@@ -94,3 +94,16 @@ test('toSingleBar folds a panel back into the legacy keys and empties bar.panels
     assert.equal(w[w.length - 1].key, 'bar.panels');
     assert.deepEqual(w[w.length - 1].value, []);
 });
+
+test('adding a bar never stacks two on one edge; with every edge taken it refuses', () => {
+    let panels = [];
+    const seen = [];
+    for (let i = 0; i < 6; i++) {
+        panels = Model.addPanel(panels, 'classic');
+        seen.push(panels.map(p => p.edge).join(','));
+    }
+    const edges = panels.map(p => p.edge);
+    assert.equal(new Set(edges).size, edges.length, `no edge twice: ${edges}`);
+    assert.equal(edges.length, 4, 'four bars, one per edge');
+    assert.equal(Model.freeEdges(panels, 'classic').length, 0);
+});

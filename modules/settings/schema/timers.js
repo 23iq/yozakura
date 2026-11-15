@@ -39,17 +39,77 @@ var SOUND_ON = {
     "equals": true
 };
 
+var ADVANCED = {
+    "advanced": true
+};
+
 var category = {
     "id": "timers",
     "icon": "timer",
     "title": "prefs.cat.timers",
     "description": "prefs.cat.timers.desc",
     "keywords": "timers timer alarm reminder stopwatch pomodoro focus mode do not disturb quick note clock notch countdown",
+    "row": ["pomodoro", "alarm", "focus"],
     "sections": [
+        {
+            "id": "pomodoro",
+            "title": "prefs.timers.section.pomodoro",
+            "entries": [
+                {
+                    "id": "system.pomodoro.plan",
+                    "type": "custom",
+                    "component": "PomodoroEditor",
+                    "keys": ["system.pomodoro.workTime", "system.pomodoro.restTime", "system.pomodoro.autoStart"],
+                    "label": "prefs.timers.pomodoro",
+                    "description": "prefs.timers.pomodoro.desc",
+                    "keywords": "pomodoro work focus break rest length minutes auto start next phase continue"
+                },
+                number("system.pomodoro.workTime", "prefs.timers.pomo_work", "prefs.timers.pomo_work.desc", 60, 14400, 60, "s", "pomodoro work focus length", ADVANCED),
+                number("system.pomodoro.restTime", "prefs.timers.pomo_rest", "prefs.timers.pomo_rest.desc", 60, 7200, 60, "s", "pomodoro break rest length", ADVANCED),
+                toggle("system.pomodoro.autoStart", "prefs.timers.pomo_auto", "prefs.timers.pomo_auto.desc", "pomodoro auto start next phase continue", ADVANCED)
+            ]
+        },
+        {
+            "id": "alarm",
+            "title": "prefs.timers.section.alarm",
+            "entries": [
+                toggle("system.timers.sound", "prefs.timers.sound", "prefs.timers.sound.desc", "sound alarm tone ring audio"),
+                toggle("system.timers.pulseOnFinish", "prefs.timers.pulse", "prefs.timers.pulse.desc", "pulse blink alarm finished notch"),
+                toggle("system.timers.alarmPanel", "prefs.timers.alarm_panel", "prefs.timers.alarm_panel.desc", "alarm panel notch stop snooze finished")
+            ]
+        },
+        {
+            "id": "focus",
+            "title": "prefs.timers.section.focus",
+            "entries": [
+                number("system.focus.minutes", "prefs.timers.focus_minutes", "prefs.timers.focus_minutes.desc", 5, 480, 5, "min", "focus mode length minutes default"),
+                toggle("system.focus.dnd", "prefs.timers.focus_dnd", "prefs.timers.focus_dnd.desc", "focus do not disturb dnd notifications silence"),
+                toggle("system.focus.hideBadges", "prefs.timers.focus_badges", "prefs.timers.focus_badges.desc", "focus badges unread bell notifications hide")
+            ]
+        },
         {
             "id": "notch",
             "title": "prefs.timers.section.display",
             "entries": [
+                {
+                    "key": "system.timers.notchStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "ring",
+                            "label": "prefs.timers.style.ring",
+                            "icon": "circleNotch"
+                        },
+                        {
+                            "value": "text",
+                            "label": "prefs.timers.style.text",
+                            "icon": "textT"
+                        }
+                    ],
+                    "label": "prefs.timers.style",
+                    "description": "prefs.timers.style.desc",
+                    "keywords": "notch ring progress text countdown display"
+                },
                 toggle("system.timers.showSeconds", "prefs.timers.seconds", "prefs.timers.seconds.desc", "seconds countdown format mm:ss"),
                 toggle("system.timers.showStopwatch", "prefs.timers.stopwatch", "prefs.timers.stopwatch.desc", "stopwatch notch elapsed"),
                 number("system.timers.reminderLead", "prefs.timers.reminder_lead", "prefs.timers.reminder_lead.desc", 0, 1440, 5, "min", "reminder alarm upcoming notch soon", {
@@ -82,12 +142,9 @@ var category = {
             ]
         },
         {
-            "id": "alarm",
-            "title": "prefs.timers.section.alarm",
+            "id": "ringing",
+            "title": "prefs.timers.section.ringing",
             "entries": [
-                toggle("system.timers.pulseOnFinish", "prefs.timers.pulse", "prefs.timers.pulse.desc", "pulse blink alarm finished notch"),
-                toggle("system.timers.alarmPanel", "prefs.timers.alarm_panel", "prefs.timers.alarm_panel.desc", "alarm panel notch stop snooze finished"),
-                toggle("system.timers.sound", "prefs.timers.sound", "prefs.timers.sound.desc", "sound alarm tone ring audio"),
                 {
                     "key": "system.timers.soundFile",
                     "type": "path",
@@ -117,29 +174,11 @@ var category = {
             ]
         },
         {
-            "id": "pomodoro",
-            "title": "prefs.timers.section.pomodoro",
+            "id": "extras",
+            "title": "prefs.timers.section.extras",
             "entries": [
-                number("system.pomodoro.workTime", "prefs.timers.pomo_work", "prefs.timers.pomo_work.desc", 60, 14400, 60, "s", "pomodoro work focus length"),
-                number("system.pomodoro.restTime", "prefs.timers.pomo_rest", "prefs.timers.pomo_rest.desc", 60, 7200, 60, "s", "pomodoro break rest length"),
-                toggle("system.pomodoro.autoStart", "prefs.timers.pomo_auto", "prefs.timers.pomo_auto.desc", "pomodoro auto start next phase continue"),
-                toggle("system.pomodoro.syncSpotify", "prefs.timers.pomo_spotify", "prefs.timers.pomo_spotify.desc", "pomodoro spotify music pause play")
-            ]
-        },
-        {
-            "id": "focus",
-            "title": "prefs.timers.section.focus",
-            "entries": [
-                number("system.focus.minutes", "prefs.timers.focus_minutes", "prefs.timers.focus_minutes.desc", 5, 480, 5, "min", "focus mode length minutes default"),
-                toggle("system.focus.dnd", "prefs.timers.focus_dnd", "prefs.timers.focus_dnd.desc", "focus do not disturb dnd notifications silence"),
-                toggle("system.focus.hideBadges", "prefs.timers.focus_badges", "prefs.timers.focus_badges.desc", "focus badges unread bell notifications hide"),
-                toggle("system.focus.summary", "prefs.timers.focus_summary", "prefs.timers.focus_summary.desc", "focus summary missed notifications end")
-            ]
-        },
-        {
-            "id": "input",
-            "title": "prefs.timers.section.input",
-            "entries": [
+                toggle("system.focus.summary", "prefs.timers.focus_summary", "prefs.timers.focus_summary.desc", "focus summary missed notifications end"),
+                toggle("system.pomodoro.syncSpotify", "prefs.timers.pomo_spotify", "prefs.timers.pomo_spotify.desc", "pomodoro spotify music pause play"),
                 {
                     "key": "system.timers.noteTitle",
                     "type": "text",

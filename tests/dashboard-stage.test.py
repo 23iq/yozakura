@@ -129,7 +129,11 @@ check(ev(item(h, nxt, "nextTime"), "text") == "10:00", "the Pomodoro shows its c
 
 week = h.find(stage, "week")
 check(count(h, week, "weekToday") == 1, "the week marks today")
-check(count(h, week, "eventDot") >= 1, "days with events are dotted")
+# Both events can fall in the next week (late on the week's last day), so
+# count the dots the shown week should carry rather than assume one.
+shown = ev(week, "days.filter(d => marked[d.iso] === true).length")
+check(ev(week, "Object.keys(marked).length") >= 1, "event days are marked")
+check(count(h, week, "eventDot") == shown, "days with events in the week are dotted")
 ev(week, "openMonth()")
 wait_until(lambda: ev(stage, "detail") == "month" and ev(find_item(h, stage, "month"), "visible") and not ev(nxt, "visible"))
 wait_stable(lambda: ev(h.find(stage, "right"), "t"))

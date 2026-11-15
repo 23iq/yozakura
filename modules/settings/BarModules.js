@@ -9,6 +9,7 @@ var INFO = {};
 Registry.MODULES.forEach(function (m) {
     INFO[m.id] = {
         "icon": m.icon,
+        "logo": m.logo === true,
         "label": m.label
     };
 });

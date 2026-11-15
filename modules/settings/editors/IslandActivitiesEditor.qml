@@ -2,135 +2,87 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
 import qs.modules.settings.store
 import qs.config
 import qs.modules.settings.controls
-import "../Ui.js" as Ui
 import "../../widgets/defaultview/activities/ActivityRegistry.js" as Registry
 import qs.modules.components.kit
 
-// notch.activities: the island's activities in display order. Drag a row
-// by its handle to reorder, pick its side (leading / trailing) and switch
-// it on or off. Media sits in the middle and only has the switch.
-Item {
+// notch.activities: the island's activities in display order (ReorderList:
+// drag a row by its grip, Up / Down on it, or its arrows), the side it
+// shows on (leading / trailing) and a switch. Media sits in the middle and
+// only has the switch. In a card of the page row (`fillHeight`): whole rows,
+// the rest scrolls with a fade at the foot.
+ReorderList {
     id: root
 
     property var entry
-
-    objectName: "islandActivitiesEditor"
-
     readonly property var list: Registry.resolve(Config.notch ? Config.notch.activities : [])
-    readonly property int rowHeight: Metrics.rowHeight + Metrics.spacing
-    // Motion tokens (var: their sub-objects are untyped for qmllint)
-    readonly property var morph: Motion.morph
-
-    implicitWidth: 480
-    implicitHeight: root.list.length * root.rowHeight
 
     function write(next) {
         SettingsStore.set("notch.activities", Registry.toConfig(next));
     }
+    function itemOf(id) {
+        return root.list.find(e => e.id === id) || null;
+    }
 
-    Repeater {
-        model: root.list.length
+    objectName: "islandActivitiesEditor"
+    name: "activity"
+    keys: root.list.map(e => e.id)
+    rowHeight: Space.controlM + Space.xs
+    labelOf: id => I18n.t("prefs.notch.activity." + id)
+    onMoved: (id, from, to) => root.write(Registry.move(root.list, from, to))
 
-        delegate: Item {
-            id: row
-            required property int index
-            readonly property var item: root.list[row.index]
-            readonly property bool dragging: handle.drag.active
+    row: Item {
+        id: line
+        property string rowKey: ""
+        property int rowIndex: 0
+        readonly property var item: root.itemOf(line.rowKey)
 
-            width: root.width
-            height: root.rowHeight
-            // Dragging assigns y directly; releasing re-binds it to the slot
-            y: row.index * root.rowHeight
-            z: row.dragging ? 2 : 1
+        KitText {
+            anchors.left: parent.left
+            anchors.right: controls.left
+            anchors.rightMargin: Space.s
+            anchors.verticalCenter: parent.verticalCenter
+            role: "body"
+            opacity: line.item && line.item.enabled ? 1 : 0.45
+            text: I18n.t("prefs.notch.activity." + line.rowKey)
+            elide: Text.ElideRight
+        }
 
-            Behavior on y {
-                enabled: Config.animDuration > 0 && !row.dragging
-                NumberAnimation {
-                    duration: root.morph.duration
-                    easing.type: root.morph.easing
-                }
-            }
+        Row {
+            id: controls
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Space.m
 
-            StyledRect {
-                anchors.fill: parent
-                anchors.bottomMargin: Metrics.spacing
-                variant: row.dragging ? "focus" : "common"
-                radius: Styling.radius(0)
-                opacity: row.item && row.item.enabled ? 1 : 0.6
-            }
-
-            // Drag handle: the grip, moving the row freely along y
-            Icon {
-                id: grip
-                role: "title"
-                x: Metrics.spacing
+            SelectorControl {
+                visible: !!line.item && line.item.side !== "center"
+                // a narrow card: the side as two icons
+                iconOnly: root.width < Space.px(440)
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: -Metrics.spacing / 2
-                icon: Icons.dotsNine
-                color: Ui.alpha(Colors.overBackground, 0.6)
-
-                MouseArea {
-                    id: handle
-                    anchors.fill: parent
-                    anchors.margins: -Metrics.spacing / 2
-                    cursorShape: row.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                    drag.target: row
-                    drag.axis: Drag.YAxis
-                    drag.minimumY: 0
-                    drag.maximumY: root.height - root.rowHeight
-                    onReleased: {
-                        const to = Math.round(row.y / root.rowHeight);
-                        if (to !== row.index)
-                            root.write(Registry.move(root.list, row.index, to));
-                        row.y = Qt.binding(() => row.index * root.rowHeight);
+                options: [
+                    {
+                        "value": "leading",
+                        "label": "prefs.notch.activity.leading",
+                        "icon": "alignLeft"
+                    },
+                    {
+                        "value": "trailing",
+                        "label": "prefs.notch.activity.trailing",
+                        "icon": "alignRight"
                     }
-                }
+                ]
+                value: line.item ? line.item.side : "leading"
+                onSelected: v => root.write(Registry.setField(root.list, line.rowKey, "side", v))
             }
-
-            KitText {
-                anchors.left: grip.right
-                anchors.leftMargin: Metrics.spacing
-                anchors.right: controls.left
-                anchors.verticalCenter: grip.verticalCenter
-                text: row.item ? I18n.t("prefs.notch.activity." + row.item.id) : ""
-                elide: Text.ElideRight
-            }
-
-            Row {
-                id: controls
-                anchors.right: parent.right
-                anchors.rightMargin: Metrics.spacing
-                anchors.verticalCenter: grip.verticalCenter
-                spacing: Metrics.spacing
-
-                SelectorControl {
-                    visible: !!row.item && row.item.side !== "center"
-                    anchors.verticalCenter: parent.verticalCenter
-                    options: [
-                        {
-                            "value": "leading",
-                            "label": "prefs.notch.activity.leading",
-                            "icon": "alignLeft"
-                        },
-                        {
-                            "value": "trailing",
-                            "label": "prefs.notch.activity.trailing",
-                            "icon": "alignRight"
-                        }
-                    ]
-                    value: row.item ? row.item.side : "leading"
-                    onSelected: v => root.write(Registry.setField(root.list, row.item.id, "side", v))
-                }
-                ToggleControl {
-                    anchors.verticalCenter: parent.verticalCenter
-                    checked: !!row.item && row.item.enabled
-                    onToggled: v => root.write(Registry.setField(root.list, row.item.id, "enabled", v))
-                }
+            ToggleControl {
+                objectName: "activitySwitch:" + line.rowKey
+                anchors.verticalCenter: parent.verticalCenter
+                checked: !!line.item && line.item.enabled
+                Accessible.name: I18n.t("prefs.notch.activity." + line.rowKey)
+                onToggled: v => root.write(Registry.setField(root.list, line.rowKey, "enabled", v))
             }
         }
     }

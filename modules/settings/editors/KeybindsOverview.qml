@@ -47,6 +47,11 @@ ColumnLayout {
                 onSaved: uid => KeybindsStore.expandedUid = ""
             }
         }
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Space.m
 
         PillButton {
             objectName: "keybindsAdd"
@@ -73,6 +78,8 @@ ColumnLayout {
             visible: search.text !== ""
             icon: Icons.cancel
             size: "xs"
+            tooltip: I18n.t("common.clear")
+            Accessible.name: I18n.t("common.clear")
             onClicked: KeybindsStore.editorQuery = ""
         }
     }
@@ -157,4 +164,9 @@ ColumnLayout {
     }
 
     Component.onCompleted: KeybindsStore.refreshNative()
+
+    // in a card taller than the toolbar: the toolbar stays at the top
+    Item {
+        Layout.fillHeight: true
+    }
 }

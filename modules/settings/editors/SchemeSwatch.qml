@@ -44,12 +44,13 @@ Item {
                 }
             }
             SequentialAnimation on x {
-                running: !strip.ready && SchemePreviews.loading
+                // (no shimmer with motion off)
+                running: !strip.ready && SchemePreviews.loading && Motion.pan.duration > 0
                 loops: Animation.Infinite
                 NumberAnimation {
                     from: -strip.width
                     to: strip.width
-                    duration: 1100
+                    duration: Motion.pan.duration * 2
                 }
             }
         }

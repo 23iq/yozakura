@@ -212,5 +212,22 @@
    "modules/services/ai/ProviderSetup.qml": "method comes from ProviderConnect.testCall: providers.test / providers.ollama.probe (both exist in the registry)",
    "modules/services/FocusMode.qml": "TimersService.call(completed ? \"dismiss\" : \"cancel\") (both timers methods exist in the registry)"
   }
+ },
+ "singletonMembers": {
+  "_doc": "singleton name -> its file: every Name.member used in modules/ QML must be declared there",
+  "singletons": {
+   "Look": "modules/components/kit/Look.qml",
+   "Type": "modules/components/kit/Type.qml",
+   "Space": "modules/components/kit/Space.qml",
+   "FocusState": "modules/components/kit/FocusState.qml",
+   "Motion": "modules/theme/Motion.qml",
+   "Styling": "modules/theme/Styling.qml",
+   "Metrics": "modules/theme/Metrics.qml",
+   "BarMetrics": "modules/theme/BarMetrics.qml",
+   "Glass": "modules/theme/Glass.qml",
+   "Lighting": "modules/theme/Lighting.qml",
+   "Icons": "modules/theme/Icons.qml",
+   "Colors": "modules/theme/Colors.qml"
+  }
  }
 }

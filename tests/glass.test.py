@@ -1,7 +1,8 @@
 """Glass system in QML, offscreen: the Glass singleton drives StyledRect
 (opacity, tint, highlight, per-surface roots), the legibility floor holds,
-the settings Glass section (master slider, follow-preset chip, collapsible
-advanced section, per-surface editor) writes theme.glass.* and the preview
+the glass editors (master slider, follow-preset chip, per-surface editor;
+out of the settings window since the Glass macro on Look moves the amount,
+still used by the catalog and presets) write theme.glass.* and the preview
 reports the guaranteed contrast.
 """
 import sys
@@ -37,7 +38,8 @@ import QtQuick.Window
 import qs.config
 import qs.modules.theme
 import qs.modules.components
-import qs.modules.settings
+import qs.modules.settings.editors
+import qs.modules.settings.previews
 import qs.modules.settings.store
 Window {
     id: w
@@ -63,9 +65,13 @@ Window {
         StyledRect { objectName: "pane"; variant: "pane"; width: 120; height: 80 }
         StyledRect { objectName: "primary"; variant: "primary"; width: 120; height: 80 }
     }
-    SettingsShell { objectName: "shell"; y: 100; width: 1000; height: 800 }
+    Column {
+        y: 100; width: 1000
+        GlassAmountEditor { width: 900; entry: ({ "key": "theme.glass.amount" }) }
+        GlassSurfacesEditor { width: 900 }
+        GlassPreview { width: 900 }
+    }
 }""")
-h.eval(h.find(win, "shell"), 'select("appearance")')
 
 
 def ev(expr):
@@ -128,19 +134,7 @@ ev('w.findItem("glassFollowPreset").children[1].clicked(null)')
 settle()
 check(ev("Config.theme.glass.amount") == -1, "chip resets to the preset's amount")
 
-# Expert sections show in the All view (Simple hides advanced rows).
-ev("SettingsStore.setShowAll(true)")
-settle()
-
-# Advanced section is folded; a search jump unfolds it.
-adv = ev('w.findItem("settingsSection:glassAdvanced")')
-check(adv is not None and ev('w.findItem("settingsSection:glassAdvanced").expanded') is False, "advanced folded")
-ev('w.findItem("settingsSection:glassAdvanced").rowFor("theme.glass.advanced.tintStrength")')
-check(ev('w.findItem("settingsSection:glassAdvanced").expanded') is True, "rowFor unfolds the section")
-
 # Per-surface editor writes the override.
-ev('w.findItem("settingsSection:glassSurfaces").expanded = true')
-settle()
 check(ev('w.findItem("glassSurface:dock") !== null'), "surface rows rendered")
 ev('w.findItem("glassSurface:dock").children[0].toggled(true)')
 settle()

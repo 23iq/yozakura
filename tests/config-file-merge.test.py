@@ -35,6 +35,8 @@ h.module("Quickshell.Io", {
     "FileViewError": "QtObject { enum Value { Success, Unknown, FileNotFound, PermissionDenied, NotAFile } }",
     "FileView": """QtObject {
     property string path
+    property bool blockWrites
+    property bool wroteBlocking
     property bool atomicWrites
     property bool watchChanges
     property QtObject adapter

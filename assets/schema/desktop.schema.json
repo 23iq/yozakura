@@ -13,7 +13,7 @@
       "description": "Show the files of your Desktop folder.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "arrange",
         "label": "prefs.desktop.icons",
         "control": "toggle",
         "keywords": "desktop icons files show hide"
@@ -26,7 +26,7 @@
       "description": "Size of desktop icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "arrange",
         "label": "prefs.desktop.icon_size",
         "control": "slider",
         "step": 4,
@@ -50,7 +50,7 @@
       "description": "Vertical space between icons.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "arrange",
         "label": "prefs.desktop.icon_spacing",
         "control": "slider",
         "step": 2,
@@ -69,13 +69,13 @@
       "x-unit": "px"
     },
     "textColor": {
-      "title": "Label colour",
+      "title": "Label color",
       "type": "string",
       "default": "overBackground",
-      "description": "Colour of the icon names.",
+      "description": "Color of the icon names.",
       "x-settings": {
         "category": "desktop",
-        "section": "icons",
+        "section": "arrange",
         "label": "prefs.desktop.icon_text",
         "control": "custom",
         "component": "ColorRoleSwatches",
@@ -108,7 +108,7 @@
       "description": "Blurs the wallpaper behind niri's workspace overview.",
       "x-settings": {
         "category": "overview",
-        "section": "wallpaper",
+        "section": "grid",
         "label": "prefs.desktop.overview_blur",
         "control": "toggle",
         "keywords": "overview blur wallpaper niri workspaces"
@@ -121,10 +121,9 @@
       "description": "How one wallpaper turns into the next. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
-        "section": "transition",
+        "section": "panorama",
         "label": "prefs.wall.transition",
         "control": "selector",
-        "preview": "TransitionPreview",
         "keywords": "transition animation grow wipe dissolve fade random shader effect",
         "enabledWhen": {
           "all": [
@@ -173,7 +172,7 @@
       "description": "Length of the wallpaper transition. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
-        "section": "transition",
+        "section": "panorama",
         "label": "prefs.wall.transition_duration",
         "control": "slider",
         "step": 50,
@@ -241,7 +240,6 @@
         "section": "panorama",
         "label": "prefs.wall.mode",
         "control": "selector",
-        "preview": "PanoramaPreview",
         "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
       },
       "enum": [
@@ -278,7 +276,7 @@
       "description": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.depth_layering",
         "control": "toggle",
         "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
@@ -366,10 +364,10 @@
       }
     },
     "depthClockInk": {
-      "title": "Clock colour",
+      "title": "Clock color",
       "type": "string",
       "default": "auto",
-      "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
+      "description": "Auto picks light or dark ink from the wallpaper; a palette color follows your theme.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
@@ -412,7 +410,7 @@
       "description": "Show widgets on the desktop. They pause while windows cover them.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.widgets_enabled",
         "control": "toggle",
         "keywords": "widgets desktop show hide"
@@ -425,10 +423,10 @@
       "description": "Add widgets, then drag and resize them on the desktop (right click on the desktop or the Edit Desktop Widgets shortcut).",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.widgets",
         "control": "custom",
-        "component": "DesktopWidgetsEditor",
+        "component": "DesktopWidgetsMore",
         "keywords": "widgets add remove media music calendar events system cpu ram gpu network note sticky weather arrange edit drag",
         "visibleWhen": {
           "key": "desktop.widgetsEnabled",
@@ -494,7 +492,7 @@
       "description": "Widgets snap to this grid while you move or resize them.",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.widget_grid",
         "control": "slider",
         "step": 4,
@@ -525,7 +523,7 @@
       "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
       "x-settings": {
         "category": "desktop",
-        "section": "widgets",
+        "section": "arrange",
         "label": "prefs.desktop.widget_variant",
         "control": "selector",
         "keywords": "widget style surface glass background card pane",

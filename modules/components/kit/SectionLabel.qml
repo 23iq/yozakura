@@ -9,6 +9,9 @@ Item {
     id: root
 
     property string text: ""
+    // "label" (UPPERCASE, tracked) or "group" (sentence case: a group of
+    // rows inside a settings card)
+    property string role: "label"
     property string action: ""
     property int inset: Look.rowInset
     // Keyboard focus / a pending confirmation on the action: drawn as hovered.
@@ -22,7 +25,7 @@ Item {
 
     KitText {
         id: label
-        role: "label"
+        role: root.role
         text: root.text
         anchors.left: parent.left
         anchors.leftMargin: root.inset

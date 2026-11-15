@@ -1,7 +1,8 @@
 .pragma library
 
-// AI > model picker, reasoning effort and context window (spliced into
-// schema/ai.js after the status strip section). Entry format: see
+// AI > reasoning effort, model picker and context window (spliced into
+// schema/ai.js after the status strip section; the picker card goes to the
+// Providers tab, Categories.js). Entry format: see
 // modules/settings/AGENTS.md.
 
 function level(value) {
@@ -20,7 +21,15 @@ var sections = [
                 "description": "prefs.ai.effort_default.desc",
                 "keywords": "reasoning effort thinking default level budget",
                 "options": [{ "value": "auto", "label": "prefs.ai.effort_auto" }, level("off"), level("low"), level("medium"), level("high"), level("max")]
-            },
+            }
+        ]
+    },
+    {
+        // how the AI bar's model picker lists models: joins the Providers
+        // tab's models card (Categories.js)
+        "id": "picker",
+        "title": "prefs.ai.providers.defaults",
+        "entries": [
             {
                 "key": "ai.picker.showCapabilities",
                 "type": "toggle",

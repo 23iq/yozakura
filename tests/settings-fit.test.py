@@ -1,0 +1,170 @@
+"""Every settings page and home lay out cleanly at the default window
+(1180x780), offscreen, with the device fixtures (tests/lib/device_fixtures.py).
+
+A page is the destination grid (modules/settings/AGENTS.md, PAGE
+COMPOSITION): in a wide window two panes (the cards in the left column, the
+stage sticky in the right one with the inspector under it) or, without a
+stage, the cards in both columns; in a narrow window (or a list page) the
+stage on top and the cards under it; the folded More settings card last.
+For home and every tab this checks, with tests/lib/settings_probe.py:
+
+* no two sibling cards, no two rows of a card, no two header parts, the
+  stage / hint / first card and no two home tiles (nor a tile's name /
+  status and its scene) intersect;
+* no text is elided or painted outside its box or its card;
+* every option of a picture-card selector is within reach;
+* a stage on top takes at most a third of the page (unless it asks for
+  more), one beside the cards fits the view; only desktop pages have a
+  desktop stage.
+
+Then again after interactions: gates toggled, the island off, several
+bars, other selector options, an editor that grows, a long value; and no
+binding or polish loop is printed meanwhile.
+"""
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+import headless  # noqa: E402
+
+headless.ensure(gl=True)
+
+from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
+from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
+from PySide6.QtTest import QTest  # noqa: E402
+from settings_env import SettingsEnv  # noqa: E402
+from settings_probe import problems, settled_probe, window  # noqa: E402
+
+DESKTOP = {"bar", "notch", "dock", "desktop", "lockscreen", "notifications", "menus", "windows", "wallpapers"}
+MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
+         ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
+
+env = SettingsEnv("settings-fit", devices=True, text_wider=0.2, pin_fonts=True)
+h = env.h
+failures: list[str] = []
+loops: list[str] = []
+_prev = qInstallMessageHandler(None)
+
+
+def _capture(mode, ctx, msg):
+    if "polish() loop" in msg or "Binding loop" in msg:
+        loops.append(msg)
+    if _prev:
+        _prev(mode, ctx, msg)
+
+
+qInstallMessageHandler(_capture)
+
+
+def check(ok: bool, what: str) -> None:
+    if not ok:
+        failures.append(what)
+        print("FAIL:", what, file=sys.stderr)
+
+
+win = env.load(window(env))
+shell = h.find(win, "shell")
+density: dict[str, int] = {}
+
+
+def probe(label: str, settle_ms: int = 250) -> dict | None:
+    QTest.qWait(settle_ms)
+    m = settled_probe(h, win, label)
+    for p in problems(m, label):
+        check(False, p)
+    return m
+
+
+def page(cat: str, label: str | None = None) -> dict | None:
+    h.eval(shell, f'select("{cat}")')
+    check(env.wait_page(win), f"{cat}: page built")
+    m = probe(label or cat)
+    if m is not None and not m["home"]:
+        st = m["stage"]
+        if st is not None:
+            check(cat in DESKTOP or not st["desktop"], f"{cat}: a desktop stage on a page that is not about the desktop")
+            # the strips of the bar, island, dock, toasts and OSD read at a glance
+            if cat in ("bar", "notch", "dock", "notifications", "menus"):
+                # (0: nothing but the Screen canvas, e.g. the island off: no loupe)
+                check(st["glyph"] == 0 or st["glyph"] >= 10, f"{cat}: the smallest glyph on the stage is {st['glyph']} px (want 10)")
+    return m
+
+
+# Tabs whose first screen is still short of the goal (big pictures or
+# editors among their first cards): a ratchet, they may only go up.
+# Lowered on 2026-11-13 when pages became one readable column (two panes:
+# cards beside a sticky stage; no stage: one centred column) instead of a
+# masonry of two or three columns: fewer rows reach the first screen, by
+# design (the owner chose readability over density).
+# Lowered again on 2026-11-14 for notifications and ai: in two panes the
+# right column is the sticky stage alone (no cards under it, AUDIT M5).
+# launcher: its searches are one list editor (switch + prefix + order per
+# row), counted as one row although it shows all of them.
+# Tightened on 2026-11-15 to one row under what the pages showed then
+# (appearance 7, wallpapers 2, desktop 7, power 4, terminal 5, dock 4,
+# system 5, ai 7, notch 8, notifications 8; voice 13 and timers 12 reach
+# the goal and left the list): one row of slack while the advanced rows
+# move back into the pages.
+SHORT = {"appearance": 6, "wallpapers": 2, "bar": 4, "launcher": 1, "desktop": 6, "lockscreen": 5, "menus": 5,
+         "dashboard": 6, "power": 3, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 4,
+         "ai": 6, "notifications": 7}
+
+
+def dense(cat: str, m: dict | None) -> None:
+    """The first screen at 1180x780 shows the stage and at least 8 whole rows
+    on a page with a stage, 9 on a plain page (one column; or every row it
+    has)."""
+    if m is None or m["home"] or not m["schema"] or m["list"]:
+        return
+    want = min(8 if m["stage"] is not None else 9, m["rowsTotal"])
+    if cat in SHORT and SHORT[cat] < want:
+        check(m["rows"] >= SHORT[cat], f"{cat}: {m['rows']} whole rows on the first screen, fewer than before ({SHORT[cat]})")
+        return
+    check(m["rows"] >= want, f"{cat}: {m['rows']} whole rows on the first screen (want {want} of {m['rowsTotal']})")
+
+
+# home
+h.eval(shell, "goHome()")
+m = probe("home", 600)
+check(m is not None and m["home"], "home: shown")
+
+for cat in json.loads(h.eval(win, "JSON.stringify(categoryIds())")):
+    m = page(cat)
+    if m is not None:
+        density[cat] = m["rows"]
+        dense(cat, m)
+
+# interactions: every state shows other rows, cards and values
+STATES = [
+    ("bar", "bar (several bars)", f"SettingsStore.set('bar.panels', {MULTI})", "SettingsStore.set('bar.panels', [])"),
+    ("bar", "bar (frame on)", "SettingsStore.set('bar.frameEnabled', true)", "SettingsStore.set('bar.frameEnabled', false)"),
+    ("notch", "island off", "SettingsStore.set('notch.enabled', false)", "SettingsStore.set('notch.enabled', true)"),
+    ("notch", "island hover off (a gate)", "SettingsStore.set('notch.disableHoverExpansion', true)",
+     "SettingsStore.set('notch.disableHoverExpansion', false)"),
+    ("notifications", "notifications in a corner", "SettingsStore.set('notifications.presentation', 'corner')",
+     "SettingsStore.set('notifications.presentation', 'auto')"),
+    ("timers", "timers in a card", "SettingsStore.set('layout.panels.host', 'card')", "SettingsStore.set('layout.panels.host', 'auto')"),
+    ("launcher", "launcher as a sheet", "SettingsStore.set('layout.launcher.host', 'sheet')", "SettingsStore.set('layout.launcher.host', 'auto')"),
+    ("menus", "menus as a sheet", "SettingsStore.set('layout.launcher.host', 'sheet')", "SettingsStore.set('layout.launcher.host', 'auto')"),
+    ("terminal", "terminal prompt on", "SettingsStore.set('terminal.enabled', true)", "SettingsStore.set('terminal.enabled', false)"),
+    ("desktop", "desktop icons and clock on", "SettingsStore.set('desktop.enabled', true); SettingsStore.set('desktop.depthClock', true)",
+     "SettingsStore.set('desktop.enabled', false); SettingsStore.set('desktop.depthClock', false)"),
+    ("system", "a long location", "SettingsStore.set('weather.location', 'Llanfairpwllgwyngyll, Isle of Anglesey, Wales')",
+     "SettingsStore.set('weather.location', '')"),
+    ("voice", "voice off", "SettingsStore.set('voice.enabled', false)", "SettingsStore.set('voice.enabled', true)"),
+]
+for cat, label, do, undo in STATES:
+    h.eval(win, do)
+    page(cat, label)
+    h.eval(win, undo)
+
+check(not loops, f"no binding or polish loop ({len(loops)}: {loops[:3]})")
+print("rows on screen per tab (density):", json.dumps(density))
+if failures:
+    # last, after any QML warnings, so the tail of a CI log shows them
+    print("\n".join("FAIL: " + f for f in failures))
+    print(f"settings-fit: {len(failures)} failure(s)")
+    h.exit(1)
+print("settings-fit: ok")
+h.exit(0)

@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import "../../components/preview/Preview.js" as Preview
 
 // `· high ▾` next to the engine chip: the reasoning effort of the visible
 // engine, changed in place with a segmented selector. Hidden when the model
@@ -17,8 +18,11 @@ StyledRect {
     id: root
     objectName: "composerEffort"
 
-    readonly property var levels: Ai.effort ? Ai.effort.levels : []
-    readonly property string level: Ai.effort ? Ai.effort.level : ""
+    // Preview (`preview`): the samples "ai.effortLevels" and "ai.effort"
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
+    readonly property var levels: root.inPreview ? Preview.sample(root.preview, "ai.effortLevels", []) : (Ai.effort ? Ai.effort.levels : [])
+    readonly property string level: root.inPreview ? Preview.sample(root.preview, "ai.effort", "") : (Ai.effort ? Ai.effort.level : "")
     // "" (auto) first: the engine's own default.
     readonly property var options: levels.length > 0 ? [""].concat(levels) : []
 

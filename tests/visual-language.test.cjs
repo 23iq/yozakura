@@ -126,6 +126,7 @@ test('kit: Glass effect off makes the glass language opaque, other languages unc
     assert.equal(off.window, null, 'no frosted window with glass off');
     assert.equal(off.float.fillOpacity, 1, 'floats are opaque with glass off');
     assert.deepEqual(off.group, on.group, 'cards keep their tonal box');
+    assert.ok(on.card.fillOpacity < 0.9 && off.card.fillOpacity >= 0.92, 'settings cards go solid with glass off');
     assert.ok(V.kit('glass').window, 'no flag keeps the language spec');
     for (const l of ['ink', 'tiles', 'classic', 'device'])
         assert.equal(V.kit(l, false), V.kit(l), l);

@@ -54,11 +54,17 @@ KeyboardCard {
     DisplayRow {
         width: parent.width
         separator: false
+        compact: root.headless
         label: I18n.t("prefs.keyboard.switch")
         hint: I18n.t("prefs.keyboard.switch.desc")
-        KeyChips {
+        // a single choice of five: the window's dropdown (never chips that
+        // read as a multiple choice)
+        SelectorControl {
             objectName: "bindChips"
             width: parent.width
+            translate: false
+            segmentLimit: 0
+            stretch: true
             options: root.bindChoices
             value: root.switchBind
             onSelected: v => root.bindPicked(v)
@@ -71,6 +77,8 @@ KeyboardCard {
             id: quickRow
             required property var modelData
             width: parent.width
+            compact: root.headless
+            inline: true
             label: I18n.t("prefs.keyboard.opt." + quickRow.modelData.key)
             hint: I18n.t("prefs.keyboard.opt." + quickRow.modelData.key + ".desc")
             ToggleControl {

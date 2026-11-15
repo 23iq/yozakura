@@ -81,9 +81,9 @@ def island(name: str, config_extra: str = "") -> Harness:
     for n, body in {
         "UserInfo": "Item { implicitWidth: 24; implicitHeight: 24 }",
         "NotificationIndicator": "Item { implicitWidth: 24; implicitHeight: 24 }",
-        "MediaSummary": "Item { property var player; property bool mediaExpanded; property bool revealed; property bool selectorOpen: false; property bool selectorHovered: false }",
-        "CompactPlayer": "Item { property var player; property bool notchHovered }",
-        "IslandNotifications": "Item { property bool hovered; property bool navigating: false }",
+        "MediaSummary": "Item { property var player; property var preview; property bool mediaExpanded; property bool revealed; property bool selectorOpen: false; property bool selectorHovered: false }",
+        "CompactPlayer": "Item { property var player; property var preview; property bool notchHovered }",
+        "IslandNotifications": "Item { property var preview; property bool hovered; property bool navigating: false }",
         "IslandRail": "Column { property var player; property int motionDuration; property bool mediaHovered: false; signal mediaClicked }",
     }.items():
         h.stub(n, body)

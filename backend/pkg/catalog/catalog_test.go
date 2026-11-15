@@ -79,7 +79,7 @@ func TestEntryMetadata(t *testing.T) {
 	assert.Equal(t, []any{"top", "bottom", "left", "right"}, e.Enum)
 	assert.NotNil(t, e.Settings)
 	assert.Equal(t, "bar", e.Settings.Category)
-	assert.Equal(t, "Bar & Islands", c.CategoryTitle("bar"))
+	assert.Equal(t, "Bar", c.CategoryTitle("bar"))
 
 	r, _ := c.Entry("theme.roundness")
 	assert.Equal(t, 0.0, *r.Min)

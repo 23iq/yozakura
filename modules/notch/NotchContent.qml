@@ -44,7 +44,7 @@ Item {
     // Space between the screen edge and the notch: the island floats; a
     // side notch already sits past the bar/dock on its edge, or on the
     // monitor edge itself when it is alone there (EdgeLayout.notchRect)
-    readonly property int edgeGap: (Config.notchTheme === "island" ? 4 : 0) + (vertical ? 0 : frameOffset)
+    readonly property int edgeGap: NotchShape.edgeGap(Config.notchTheme, notchPosition, frameOffset)
     readonly property int popupGap: 4
     // {x, y} of a `w` x `h` child of `box` against the notch edge (`gap`
     // from it), centered along it, on whole pixels: the attached notch's

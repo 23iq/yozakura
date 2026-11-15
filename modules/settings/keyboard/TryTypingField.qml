@@ -14,6 +14,10 @@ StyledRect {
     id: root
 
     property alias text: input.text
+    // every key going down / up in the field (the page lights it on the
+    // keyboard drawing)
+    signal keyDown(int key, string text, int modifiers)
+    signal keyUp(int key, string text, int modifiers)
 
     variant: "internalbg"
     radius: Look.radius("box")
@@ -44,6 +48,14 @@ StyledRect {
         color: Colors.overBackground
         selectionColor: Colors.primary
         selectedTextColor: Colors.overPrimary
+        Keys.onPressed: event => {
+            root.keyDown(event.key, event.text, event.modifiers);
+            event.accepted = false;
+        }
+        Keys.onReleased: event => {
+            root.keyUp(event.key, event.text, event.modifiers);
+            event.accepted = false;
+        }
 
         Text {
             visible: input.text === "" && !input.activeFocus

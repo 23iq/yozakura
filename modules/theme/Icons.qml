@@ -153,7 +153,7 @@ QtObject {
 
     // Power-profiles
     readonly property string powerSave: ""
-    readonly property string power: ""
+    readonly property string power: "\uE3DA"
     readonly property string balanced: ""
     readonly property string performance: ""
 

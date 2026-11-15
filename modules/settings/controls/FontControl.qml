@@ -15,6 +15,10 @@ Item {
     // Shown when no family is set (e.g. "keep the app's own font")
     property string placeholder: ""
     property string sizeUnit: "px"
+    // The size stepper (a family-only key has none) and the live sample
+    // (a page whose stage shows the fonts needs none).
+    property bool showSize: true
+    property bool showSample: true
     signal familyPicked(string family)
     signal sizeEdited(int size)
 
@@ -26,15 +30,25 @@ Item {
         width: parent.width
         spacing: Space.m
 
-        Row {
+        // the family and its size side by side; the size goes under the
+        // family when the name would not fit beside it (never a cut name)
+        Flow {
             width: parent.width
             spacing: Space.s
+
+            readonly property real beside: parent.width - (sizeStepper.visible ? sizeStepper.width + spacing : 0)
+            readonly property real need: familyMetrics.advanceWidth(familyText.shown) * 1.1 + Space.m + Space.s * 2 + caret.implicitWidth + Space.m
+
+            FontMetrics {
+                id: familyMetrics
+                font: familyText.font
+            }
 
             Item {
                 id: pickButton
                 objectName: "fontPickButton"
-                width: parent.width - sizeStepper.width - parent.spacing
-                height: Space.controlS
+                width: parent.need <= parent.beside ? parent.beside : parent.width
+                height: Math.max(Space.controlS, familyText.implicitHeight + Space.s * 2)
                 activeFocusOnTab: true
                 Keys.onReturnPressed: picker.open()
                 Keys.onSpacePressed: picker.open()
@@ -45,16 +59,23 @@ Item {
                     focused: picker.opened
                 }
                 KitText {
+                    id: familyText
                     anchors.left: parent.left
                     anchors.leftMargin: Space.m
                     anchors.right: caret.left
                     anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
                     role: "body"
-                    text: root.family !== "" ? root.family : root.placeholder
-                    font.family: root.family !== "" ? root.family : Type.bodyFont
-                    font.italic: root.family === ""
-                    color: root.family !== "" ? Type.text : Type.muted
+                    // no family set: the placeholder, else the font in use
+                    readonly property string shown: root.family !== "" ? root.family : (root.placeholder !== "" ? root.placeholder : (root.monospace ? Type.monoFont : Type.bodyFont))
+                    text: shown
+                    font.family: root.family !== "" ? root.family : (root.monospace ? Type.monoFont : Type.bodyFont)
+                    font.italic: root.family === "" && root.placeholder !== ""
+                    color: root.family !== "" || root.placeholder === "" ? Type.text : Type.muted
+                    // a translated placeholder wraps, whole (the button grows);
+                    // a family name (data) may elide
+                    wrapMode: root.family === "" ? Text.WordWrap : Text.NoWrap
+                    elide: root.family === "" ? Text.ElideNone : Text.ElideRight
                 }
                 Text {
                     id: caret
@@ -77,7 +98,7 @@ Item {
 
             NumberControl {
                 id: sizeStepper
-                anchors.verticalCenter: parent.verticalCenter
+                visible: root.showSize
                 value: root.size
                 from: 8
                 to: 32
@@ -88,6 +109,7 @@ Item {
 
         // Live sample, in the language's control box.
         Item {
+            visible: root.showSample
             width: parent.width
             height: sample.implicitHeight + Space.l * 2
             clip: true

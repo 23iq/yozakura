@@ -34,7 +34,7 @@ test('short words only match whole words', () => {
 
 test('synonyms find the setting the schema names differently', () => {
     assert.ok(ids(en, 'transparency').includes('macro.glass'));
-    assert.ok(ids(en, 'rounded corners').includes('theme.roundness'));
+    assert.ok(ids(en, 'rounded corners').includes('macro.roundness'));
     assert.ok(ids(en, 'island').includes('notch'));
     assert.ok(ids(en, 'taskbar').includes('bar'));
 });
@@ -42,7 +42,7 @@ test('synonyms find the setting the schema names differently', () => {
 test('Russian words find settings in the translated UI', () => {
     assert.ok(ids(ru, 'прозрачность').includes('macro.glass'));
     assert.ok(ids(ru, 'обои').includes('wallpapers'));
-    assert.ok(ids(ru, 'скругление').includes('theme.roundness'));
+    assert.ok(ids(ru, 'скругление').includes('macro.roundness'));
     assert.ok(ids(ru, 'остров').includes('notch'));
 });
 

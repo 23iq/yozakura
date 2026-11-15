@@ -39,3 +39,17 @@ Follows parent AGENTS.md. No additional conventions.
 - Hover: never a hover-enabled `MouseArea` over the notch to detect presence (children take it); use the container `HoverHandler` (`NotchContent`) and the held state. Size, radius and avoidance moves share `Motion.morph`; no per-state easing switches
 - Avoid direct stack manipulation - use `Visibilities` service signals (onLauncherChanged, onDashboardChanged, etc.)
 - Don't skip `Qt.callLater()` when pushing to StackView from Connections - prevents async list modification issues
+
+## SETTINGS PREVIEWS
+Settings shows the real island (modules/settings/AGENTS.md, LIVE PREVIEWS)
+through `modules/shell/NotchPreview.qml`: the Notch and DefaultView with a
+`preview` (PreviewContext), placed like NotchContent places it (keep
+`NotchShape.edgeGap` and NotchPlacement shared, never a copy of their math).
+Notch, NotchSilhouette (`attached`, set by Notch), DefaultView,
+IslandHeader, IslandNotifications read `notch.style` / `notch.position`
+through `Preview.pick` and the content through `Preview.sample`: `player`,
+`notifications`, `activities`, `levels` (NotchVisualizer, still, no cava),
+`focusedTitle` (CompactPlayer). A new piece of the resting island that reads
+a service for what it shows reads it through `Preview.sample` too; a new
+look key a picture varies needs one `Preview.pick`.
+
