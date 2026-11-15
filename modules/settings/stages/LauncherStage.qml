@@ -43,7 +43,7 @@ Stage {
         samples: ({
                 "launcher.query": stage.query,
                 "launcher.live": Samples.LIVE,
-                "launcher.rows": Samples.rows(stage.style, stage.query, k => I18n.t(k), n => Icons[n] ?? "")
+                "launcher.rows": Samples.rows(stage.style, stage.query, k => I18n.t(k), n => Icons[n] ?? "", id => SettingsStore.get("prefix." + id) ?? "")
             })
     }
 

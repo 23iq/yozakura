@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.services
 import qs.modules.components.preview
 import qs.modules.services.activities
 import qs.modules.settings.store
@@ -52,8 +53,8 @@ Item {
         overrides: root.overrides
         samples: {
             const now = Date.now();
-            const timer = root.state === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now)) : null;
-            return LiveSamples.island(root.state, now, SettingsStore.wallpaper || "", timer);
+            const timer = root.state === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now, k => I18n.t(k))) : null;
+            return LiveSamples.island(root.state, now, SettingsStore.wallpaper || "", timer, k => I18n.t(k));
         }
     }
 
