@@ -56,7 +56,7 @@ Item {
                 anchors.fill: parent
                 sourceComponent: thumbnailComponent
                 property string sourceFile: cell.modelData
-                active: cell.isInViewport && cell.tab.visible && GlobalStates.dashboardOpen
+                active: cell.isInViewport && cell.tab.visible && cell.tab.dashboardShown
                 asynchronous: true
 
                 // Placeholder while the thumbnail loads
