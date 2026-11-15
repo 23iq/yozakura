@@ -3341,7 +3341,6 @@
   "prefs.displays.hero_hint": "Drag a monitor to move it · click one to pick it",
   "prefs.displays.night": "Night light",
   "prefs.displays.night_on": "Warmer screens",
-  "prefs.displays.night_off": "Off",
   "prefs.displays.resolution": "Resolution",
   "prefs.displays.refresh": "Refresh rate",
   "prefs.displays.refresh.desc": "Higher is smoother.",
