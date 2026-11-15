@@ -1,9 +1,9 @@
 """Every settings page and home lay out cleanly at the default window
 (1180x780), offscreen, with the device fixtures (tests/lib/device_fixtures.py).
 
-A page is one scrolling column of cards under a compact stage (only where
-the desktop is the subject) and a one-line hint (modules/settings/AGENTS.md,
-PAGE COMPOSITION). For home and every tab this checks, with
+A page is its cards beside a sticky stage (two panes; only where the
+desktop is the subject) or one centred column of cards without one, with a
+one-line hint (modules/settings/AGENTS.md, PAGE COMPOSITION). For home and every tab this checks, with
 tests/lib/settings_probe.py:
 
 * no two sibling cards, no two rows of a card, no two header parts, the
@@ -98,9 +98,14 @@ def page(cat: str, label: str | None = None) -> dict | None:
 # right column is the sticky stage alone (no cards under it, AUDIT M5).
 # launcher: its searches are one list editor (switch + prefix + order per
 # row), counted as one row although it shows all of them.
-SHORT = {"appearance": 2, "wallpapers": 1, "bar": 4, "launcher": 1, "desktop": 5, "lockscreen": 5, "menus": 5,
-         "dashboard": 6, "power": 2, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 3,
-         "ai": 6, "voice": 6, "timers": 7, "notifications": 7}
+# Tightened on 2026-11-15 to one row under what the pages showed then
+# (appearance 7, wallpapers 2, desktop 7, power 4, terminal 5, dock 4,
+# system 5, ai 7, notch 8, notifications 8; voice 13 and timers 12 reach
+# the goal and left the list): one row of slack while the advanced rows
+# move back into the pages.
+SHORT = {"appearance": 6, "wallpapers": 2, "bar": 4, "launcher": 1, "desktop": 6, "lockscreen": 5, "menus": 5,
+         "dashboard": 6, "power": 3, "terminal": 4, "windows": 3, "notch": 7, "dock": 3, "system": 4,
+         "ai": 6, "notifications": 7}
 
 
 def dense(cat: str, m: dict | None) -> None:
