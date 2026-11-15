@@ -105,6 +105,7 @@ Item {
         LiveGate.forget(root);
         settle.stop();
         regrab.stop();
+        stuck.stop();
         root.settled = false;
         if (loader.source.toString() !== "")
             loader.source = "";
@@ -182,6 +183,22 @@ Item {
         root.built = true;
         root.generation++;
         loader.setSource(root.source, root.properties || {});
+        stuck.restart();
+    }
+    // an asynchronous build that never lands (seen offscreen under load:
+    // the Loader stays Loading) is started again, a few times
+    Timer {
+        id: stuck
+        property int tries: 0
+        interval: 4000
+        onTriggered: {
+            if (loader.status !== Loader.Loading || !root.wanted) {
+                stuck.tries = 0;
+                return;
+            }
+            if (stuck.tries++ < 3)
+                root.reload();
+        }
     }
     // build and settle again (a snapshot pictures it again); hidden, it is
     // built when it shows

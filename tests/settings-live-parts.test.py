@@ -159,6 +159,12 @@ check(h.eval(resting_view(), "activePlayer === null"), "at rest nothing plays (t
 h.eval(st, 'showing = "media"')
 check(wait_until(lambda: h.eval(resting_view(), "activePlayer !== null && activePlayer.trackTitle === 'Hanami Night'")),
       "music: the sample track")
+# the legacy summary (no hover expansion): the sample track plays
+ev("SettingsStore.set('notch.disableHoverExpansion', true)")
+check(wait_until(lambda: ev('w.findItem("compactPlayer", w.stage("islandStage")) !== null')
+                 and ev('w.findItem("compactPlayer", w.stage("islandStage")).isPlaying') is True),
+      "music, legacy summary: the sample track is playing")
+ev("SettingsStore.set('notch.disableHoverExpansion', false)")
 h.eval(st, 'showing = "notification"')
 check(wait_until(lambda: h.eval(live, "targetRect.height") > rest_h + 40), "a notification grows the island")
 check(wait_until(lambda: ev('w.findItem("islandNotifications", w.stage("islandStage")).visible') is True),
@@ -171,6 +177,13 @@ check(ev("Object.keys(CavaService.consumers).filter(k => CavaService.consumers[k
 part = ev('w.findItem("islandPart", w.stage("islandStage"))')
 check(part is not None and h.eval(part, "width") > 0, "the island's place answers clicks (its card)")
 h.eval(st, 'showing = "rest"')
+# at the end of the edge it still hangs from the middle of its card (where
+# it sits along the screen is the canvas' job)
+ev("SettingsStore.set('notch.align', 'end')")
+check(wait_until(lambda: abs(h.eval(part, "x + width / 2") - h.eval(st, "width / 2")) < 2),
+      "an island at the end of its edge stands in the middle of the stage")
+check(h.eval(st, "backdrop && framed"), "...in a card of its own")
+ev("SettingsStore.set('notch.align', 'center')")
 
 # the Screen canvas: the real island at rest, at its place
 canvas_live = ev('w.findItem("screenMiniLive", w.findItem("sharedCanvas"))')
@@ -208,7 +221,7 @@ check(wait_until(lambda: ev('w.findItem("menuOnStage", w.stage("osdStage")) !== 
 
 # ---- the dock's indicator -------------------------------------------------------
 dock = ev('w.findItem("lineDock")')
-check(wait_until(lambda: h.eval(dock, "dock !== null")), "a live dock builds")
+check(wait_until(lambda: h.eval(dock, "dock !== null"), timeout_ms=15000), "a live dock builds")
 src = ev("""(function() {
     var out = [];
     (function walk(it) { if (!it) return; if (it.source !== undefined && String(it.source).indexOf("indicators/") >= 0) out.push(String(it.source));
@@ -228,6 +241,18 @@ check(ev("w.barsFullscreen()") > 0, "a fullscreen window reaches the preview bar
 check(ev("Object.keys(WeatherFx.coveredScreens).filter(k => WeatherFx.coveredScreens[k]).length") == 0,
       "...and none of them covers the weather of a screen")
 ev("CompositorData.anyFullscreen = false")
+
+# the Bar stage keeps its scale and height while a setting changes (its
+# natural length is read from a copy, never by laying the bar shown out wide)
+bst = ev('w.stage("barStage")')
+check(bst is not None and wait_until(lambda: h.eval(bst, "need") > 0), "the Bar stage measured its bar")
+before = (h.eval(bst, "zoom"), h.eval(bst, "height"))
+ev("(function() { var p = JSON.parse(JSON.stringify(w.stage('barStage').panels)); p[0].reserve = !p[0].reserve; SettingsStore.set('bar.panels', p); })()")
+seen = set()
+for _ in range(12):
+    pump(40)
+    seen.add((round(h.eval(bst, "zoom"), 4), round(h.eval(bst, "height"), 1)))
+check(seen == {(round(before[0], 4), round(before[1], 1))}, f"a bar change: the stage never rescales meanwhile ({sorted(seen)})")
 
 # ---- a hidden preview is inactive ------------------------------------------------
 # the Bar page holds live bars (its stage, the canvas) and pictures (the
