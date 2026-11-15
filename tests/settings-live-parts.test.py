@@ -118,6 +118,8 @@ Window {
         return out;
     }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
+    // a control of the page that has the keyboard
+    Item { objectName: "outsideFocus"; width: 1; height: 1; activeFocusOnTab: true }
     // a real dock with an indicator style the config does not have
     LiveDock {
         objectName: "lineDock"
@@ -225,6 +227,17 @@ check(wait_until(lambda: ev('w.findItem("controlsModule", w.stage("osdStage")) !
 check(ev("OsdService.inlineHosts") == 0, "a bar in a preview registers no inline OSD host")
 ev("SettingsStore.set('layout.osd.style', 'pill')")
 check(wait_until(lambda: ev('w.findItem("menuOnStage", w.stage("osdStage")) !== null')), "the menu on the stage")
+
+# ---- a hosted view never takes the keyboard -------------------------------------
+select("dashboard")
+dash = ev('w.findItem("dashboardLive")')
+check(dash is not None and wait_until(lambda: h.eval(dash, "view !== null"), timeout_ms=15000), "dashboard: the stage's view is built")
+ev('w.findItem("outsideFocus").forceActiveFocus()')
+check(ev('w.activeFocusItem !== null && w.activeFocusItem.objectName === "outsideFocus"'), "the page's control has the keyboard")
+h.eval(dash, "view.forceActiveFocus()")
+pump(50)
+check(ev('w.activeFocusItem !== null && w.activeFocusItem.objectName === "outsideFocus"'),
+      "a hosted view that grabs the keyboard gives it back to the page's control")
 
 # ---- the dock's indicator -------------------------------------------------------
 dock = ev('w.findItem("lineDock")')

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import qs.modules.components.kit
 
 // LivePart: a real shell component shown as a picture. The component is
@@ -53,6 +54,33 @@ Item {
     property string fit: "contain"
     // false: the part takes no input at all
     property bool interactive: false
+    // The part never takes the keyboard: a view that grabs it when it is
+    // built or changes (the dashboard's focus: true, BentoView's
+    // forceActiveFocus) gives it back to what had it (the page's control).
+    property Item focusBefore: null
+    Component.onCompleted: root.focusBefore = root.Window.window ? root.Window.window.activeFocusItem : null
+    function inPart(it) {
+        for (let p = it; p; p = p.parent)
+            if (p === sandbox)
+                return true;
+        return false;
+    }
+    Connections {
+        target: root.interactive ? root.Window.window : null
+        function onActiveFocusItemChanged() {
+            const it = root.Window.window ? root.Window.window.activeFocusItem : null;
+            if (!it)
+                return;
+            if (!root.inPart(it)) {
+                root.focusBefore = it;
+                return;
+            }
+            if (root.focusBefore && root.focusBefore.visible)
+                root.focusBefore.forceActiveFocus();
+            else
+                it.focus = false;
+        }
+    }
     // false: nothing is built
     property bool active: true
     // on screen (false: an ancestor hides it); a part hidden `holdMs` is
