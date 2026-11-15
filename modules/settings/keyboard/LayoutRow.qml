@@ -92,21 +92,42 @@ Item {
     }
 
     Column {
+        id: names
         anchors.left: badge.right
         anchors.leftMargin: Space.l
         anchors.right: variantBox.left
         anchors.rightMargin: Space.l
         anchors.verticalCenter: parent.verticalCenter
         spacing: Space.xs
+        // the name has the column's whole width (xkb data: it elides only
+        // where even that is short); the "Active" chip sits on the line
+        // under it, after the code, so it never reaches the dropdown
+        KitText {
+            objectName: "layoutName"
+            width: Math.min(implicitWidth, names.width)
+            elide: Text.ElideRight
+            text: row.description || row.code
+            font.weight: Font.DemiBold
+        }
         Row {
+            id: codeLine
+            width: names.width
             spacing: Space.s
+            visible: !row.narrow || row.active
             KitText {
-                text: row.description || row.code
-                font.weight: Font.DemiBold
+                id: codeText
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(0, Math.min(implicitWidth, codeLine.width - (activeChip.visible ? activeChip.width + codeLine.spacing : 0)))
+                elide: Text.ElideRight
+                role: "caption"
+                visible: !row.narrow
+                text: row.code + (row.variant !== "" ? "  ·  " + row.variant : "")
+                color: Colors.overSurfaceVariant
             }
             // the layout in use: the kit's active chip (the accent marks
             // what is active; a raw amber badge was off the palette)
             Chip {
+                id: activeChip
                 objectName: "layoutActive"
                 visible: row.active
                 anchors.verticalCenter: parent.verticalCenter
@@ -115,12 +136,6 @@ Item {
                 Accessible.role: Accessible.StaticText
                 text: I18n.t("prefs.keyboard.active")
             }
-        }
-        KitText {
-            role: "caption"
-            visible: !row.narrow
-            text: row.code + (row.variant !== "" ? "  ·  " + row.variant : "")
-            color: Colors.overSurfaceVariant
         }
     }
 
