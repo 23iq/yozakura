@@ -11,6 +11,7 @@ import "CompositorGate.js" as CompositorGate
 import "SchemaUtil.js" as SchemaUtil
 import "BentoLayout.js" as BentoLayout
 import "Registry.js" as Registry
+import "Ui.js" as Ui
 
 // A schema-driven tab, one scrolling page on the destination's grid: in a
 // wide window two equal columns, the same in every tab of a destination
@@ -96,7 +97,7 @@ Flickable {
     readonly property point previewAt: Qt.point(heroArea.x, heroArea.y - page.contentY)
     readonly property real previewW: heroArea.width
     // the pointer is over the stage (its hint shows meanwhile)
-    readonly property bool previewHovered: heroHover.hovered || (page.usesShared && page.sharedCanvas.hovered === true)
+    readonly property bool previewHovered: heroHover.hovered || (page.usesShared && Ui.prop(page.sharedCanvas, "hovered") === true)
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -268,7 +269,7 @@ Flickable {
         // slide over the receding stage as the page scrolls)
         z: page.split ? 2 : 0
         width: page.split ? page.cardsW - page.colW - page.gap : page.cardsW
-        height: page.usesShared ? Math.round(page.sharedCanvas.preferredHeight) : (stageLoader.shown ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0)
+        height: page.usesShared ? Math.round(Number(Ui.prop(page.sharedCanvas, "preferredHeight")) || 0) : (stageLoader.shown ? stageLoader.height + (page.footH > 0 && !page.footSide ? Space.s + page.footH : 0) : 0)
         visible: page.stageUrl !== ""
         scale: 1 - heroArea.recede * 0.12
         opacity: 1 - heroArea.recede * 0.7

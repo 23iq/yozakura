@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.controls
@@ -215,9 +216,9 @@ Item {
                     editorLoader.shown = true;
                 }
             }
-            source: !waits || shown ? Qt.resolvedUrl(Registry.editor(controls.row.entry.component)) : ""
+            source: !editorLoader.waits || editorLoader.shown ? Qt.resolvedUrl(Registry.editor(controls.row.entry.component)) : ""
             // a lazy editor fades in once built (it never pops in)
-            opacity: !waits || status === Loader.Ready ? 1 : 0
+            opacity: !editorLoader.waits || editorLoader.status === Loader.Ready ? 1 : 0
             Behavior on opacity {
                 enabled: editorLoader.waits && Motion.glide.duration > 0
                 NumberAnimation {

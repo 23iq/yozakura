@@ -84,7 +84,7 @@ Stage {
         objectName: "notifIsland"
         active: stage.island
         visible: stage.island
-        state: "notification"
+        showing: "notification"
         // as large as life where it fits
         zoom: Math.min(1, (stage.width - Space.l * 2) / Math.max(560, islandToast.targetRect.width), (stage.height - Space.m) / Math.max(1, islandToast.targetRect.height + Space.m))
         overrides: ({

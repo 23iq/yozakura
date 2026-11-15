@@ -1015,6 +1015,8 @@
   "prefs.inspector.hint": "Наведите на настройку, чтобы узнать, что она делает",
   "prefs.inspector.more": "и ещё %1",
   "prefs.inspector.custom": "Изменено",
+  "prefs.more.expanded": "развёрнуто",
+  "prefs.more.collapsed": "свёрнуто",
   "prefs.more.title": "Другие настройки",
   "prefs.more.count.one": "%1 настройка",
   "prefs.more.count.few": "%1 настройки",

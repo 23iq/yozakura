@@ -85,7 +85,7 @@ FocusScope {
     // A bare editor sits at the rows' inset like every picture choice,
     // unless it draws its own row inset (`rowInset: false` on the editor: a
     // list of full-width rows): then it fills the card's width.
-    readonly property bool fullBleed: row.labelHidden && type === "custom" && !!(stackedControl.item && stackedControl.item.item && stackedControl.item.item.rowInset === false)
+    readonly property bool fullBleed: row.labelHidden && type === "custom" && Ui.prop(Ui.prop(stackedControl.item, "item"), "rowInset") === false
     // A label over a big control (pictures, an editor, a list, swatches):
     // it names a group of the card, not one setting of a line: the kit
     // `group` role (smaller, muted, more room above than below), between

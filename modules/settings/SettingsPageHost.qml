@@ -265,13 +265,13 @@ Item {
         x: canvasLoader.slot.x
         y: canvasLoader.slot.y
         width: host.canvasPart !== "" ? (Ui.prop(host.item, "previewW") || 0) : 0
-        height: canvasLoader.item ? canvasLoader.item.implicitHeight : 0
+        height: Number(Ui.prop(canvasLoader.item, "implicitHeight")) || 0
         active: host.canvasWanted
         visible: host.canvasPart !== "" && !!host.item && host.item.visible
         source: Qt.resolvedUrl("stages/ScreenCanvas.qml")
         onLoaded: {
-            item.width = Qt.binding(() => canvasLoader.width);
-            item.show(host.canvasShows, host.canvasStage);
+            canvasLoader.item.width = Qt.binding(() => canvasLoader.width);
+            Ui.invoke(canvasLoader.item, "show", [host.canvasShows, host.canvasStage]);
         }
     }
 }

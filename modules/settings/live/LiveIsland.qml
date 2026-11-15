@@ -3,10 +3,14 @@ import qs.modules.services
 import qs.modules.components.preview
 import qs.modules.services.activities
 import qs.modules.settings.store
+// LiveTarget (a singleton of this directory) through the module: tooling
+// resolves the implicit directory import without its qmldir
+import qs.modules.settings.live
 import "LiveSamples.js" as LiveSamples
+import "../Ui.js" as Ui
 
 // The real island (modules/shell/NotchPreview.qml, by URL: the shell's
-// Notch and resting view) in a stage or a picture, showing `state` with
+// Notch and resting view) in a stage or a picture, showing the sample `showing` with
 // sample content (LiveSamples.island: "rest" | "media" | "notification" |
 // "timer"); `overrides` shows config keys with another value (Preview.js),
 // e.g. {"notch.style": "pill"}.
@@ -23,7 +27,7 @@ import "LiveSamples.js" as LiveSamples
 Item {
     id: root
 
-    property string state: "rest"
+    property string showing: "rest"
     property var overrides: ({})
     property real zoom: 1
     // "edge" | "screen" | "island"
@@ -41,20 +45,20 @@ Item {
     readonly property bool ready: part.ready
     // the island's target (not animated) place and size, native px (kept
     // once a snapshot freed the part)
-    readonly property rect liveTarget: root.island ? root.island.targetRect : Qt.rect(0, 0, 0, 0)
+    readonly property rect liveTarget: Ui.prop(root.island, "targetRect") ?? Qt.rect(0, 0, 0, 0)
     property rect targetRect: Qt.rect(0, 0, 0, 0)
     onLiveTargetChanged: if (root.liveTarget.width > 0)
         root.targetRect = root.liveTarget
     // the island in this item (its silhouette, as it is drawn now)
-    readonly property rect islandRect: root.island ? part.mapFromPart(root.island, root.island.notchRect) : Qt.rect(0, 0, 0, 0)
+    readonly property rect islandRect: root.island ? part.mapFromPart(root.island, Ui.prop(root.island, "notchRect")) : Qt.rect(0, 0, 0, 0)
 
     PreviewContext {
         id: context
         overrides: root.overrides
         samples: {
             const now = Date.now();
-            const timer = root.state === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now, k => I18n.t(k))) : null;
-            return LiveSamples.island(root.state, now, SettingsStore.wallpaper || "", timer, k => I18n.t(k));
+            const timer = root.showing === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now, k => I18n.t(k))) : null;
+            return LiveSamples.island(root.showing, now, SettingsStore.wallpaper || "", timer, k => I18n.t(k));
         }
     }
 

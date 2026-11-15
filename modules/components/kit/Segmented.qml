@@ -32,7 +32,7 @@ Item {
         for (let i = 0; i < segments.count; i++) {
             const s = segments.itemAt(i);
             if (s)
-                w += s.natural;
+                w += s.implicitWidth;
         }
         return Math.ceil(w);
     }
@@ -147,8 +147,8 @@ Item {
 
                 objectName: seg.modelData.name || ""
                 // the label's room in its active weight, whichever is current
-                readonly property real natural: content.implicitWidth - label.implicitWidth + Math.max(label.implicitWidth, boldProbe.implicitWidth) + Space.l * 2
-                width: seg.natural + root.segmentExtra
+                implicitWidth: content.implicitWidth - label.implicitWidth + Math.max(label.implicitWidth, boldProbe.implicitWidth) + Space.l * 2
+                width: seg.implicitWidth + root.segmentExtra
                 height: row.height
                 Accessible.role: Accessible.PageTab
                 Accessible.name: seg.text

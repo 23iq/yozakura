@@ -4,6 +4,9 @@ import QtQuick
 import qs.config
 import qs.modules.notch
 import qs.modules.widgets.defaultview
+// EdgeService (a singleton of this directory) through the module: tooling
+// resolves the implicit directory import without its qmldir
+import qs.modules.shell
 import "../notch/NotchShape.js" as NotchShape
 import "../notch/styles/NotchStyles.js" as NotchStyles
 import "../components/preview/Preview.js" as Preview

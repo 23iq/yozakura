@@ -1011,6 +1011,8 @@
   "prefs.inspector.hint": "Point at a setting to see what it does",
   "prefs.inspector.more": "+%1 more",
   "prefs.inspector.custom": "Changed",
+  "prefs.more.expanded": "expanded",
+  "prefs.more.collapsed": "collapsed",
   "prefs.more.title": "More settings",
   "prefs.more.count.one": "%1 setting",
   "prefs.more.count.other": "%1 settings",

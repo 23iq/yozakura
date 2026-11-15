@@ -1011,6 +1011,8 @@
   "prefs.inspector.hint": "Señala un ajuste para ver qué hace",
   "prefs.inspector.more": "y %1 más",
   "prefs.inspector.custom": "Cambiado",
+  "prefs.more.expanded": "desplegado",
+  "prefs.more.collapsed": "plegado",
   "prefs.more.title": "Más ajustes",
   "prefs.more.count.one": "%1 ajuste",
   "prefs.more.count.other": "%1 ajustes",

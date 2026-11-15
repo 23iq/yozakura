@@ -12,7 +12,7 @@ Timer {
     id: watch
 
     // the Loader watched (anything with a `status`)
-    property QtObject loader: null
+    property var loader: null
     // false: a stuck build is left alone (it is going away)
     property bool wanted: true
     property int maxTries: 3

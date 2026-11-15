@@ -3,7 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.modules.components.preview
+// LiveTarget (a singleton of this directory) through the module: tooling
+// resolves the implicit directory import without its qmldir
+import qs.modules.settings.live
 import "LiveSamples.js" as LiveSamples
+import "../Ui.js" as Ui
 
 // The real panels of a screen at its native size (give it LiveTarget's
 // size; the parent scales it): every bar panel (LiveBars), the dock
@@ -58,11 +62,11 @@ Item {
         }
         return false;
     }
-    readonly property string dockEdge: root.dock ? root.dock.position : "bottom"
+    readonly property string dockEdge: Ui.prop(root.dock, "position") ?? "bottom"
     // the room the dock takes on its edge (as the shell reserves it)
-    readonly property real dockDepth: root.dockOn ? root.dock.dockSize + root.dock.totalMargin : 0
+    readonly property real dockDepth: root.dockOn ? (Number(Ui.prop(root.dock, "dockSize")) || 0) + (Number(Ui.prop(root.dock, "totalMargin")) || 0) : 0
     function dockRect() {
-        return root.dockOn ? root.dock.surfaceRect : Qt.rect(0, 0, 0, 0);
+        return (root.dockOn ? Ui.prop(root.dock, "surfaceRect") : undefined) ?? Qt.rect(0, 0, 0, 0);
     }
     function depth(edge) {
         return bars.depth(edge);
@@ -71,7 +75,7 @@ Item {
     readonly property Item island: islandLoader.item as Item
     readonly property bool islandOn: root.showIsland && !!root.island && Config.notch.enabled !== false
     function islandRect() {
-        return root.islandOn ? root.island.notchRect : Qt.rect(0, 0, 0, 0);
+        return (root.islandOn ? Ui.prop(root.island, "notchRect") : undefined) ?? Qt.rect(0, 0, 0, 0);
     }
     PreviewContext {
         id: islandContext

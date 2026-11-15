@@ -27,7 +27,7 @@ Item {
     readonly property int corner: root.notch && Config.notchTheme === "default" && Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property bool framed: root.host !== "sidebar"
     readonly property int pad: root.notch ? 16 : (root.framed ? Metrics.padding : 0)
-    readonly property Item view: viewLoader.item
+    readonly property Item view: viewLoader.item as Item
     readonly property real viewWidth: root.view ? root.view.implicitWidth : 0
     readonly property real viewHeight: root.view ? root.view.implicitHeight : 0
     readonly property bool ready: viewLoader.status === Loader.Ready && (!root.framed || frameLoader.status === Loader.Ready)

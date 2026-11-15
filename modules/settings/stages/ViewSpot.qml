@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.settings.store
+import qs.modules.settings.live
 
 // A StageSpot over a part of a live hosted view (LiveHosted): the view's
 // child named `name` (objectName), measured again when the view is built,
@@ -8,7 +9,7 @@ import qs.modules.settings.store
 StageSpot {
     id: root
 
-    required property Item hosted
+    required property LiveHosted hosted
     property string name: ""
     property rect at: Qt.rect(0, 0, 0, 0)
 
