@@ -46,6 +46,14 @@ QtObject {
     property var agents: QtObject {
         property var agents: [{ id: "claude", label: "Claude Code", available: true, version: "2.1" },
                               { id: "codex", label: "Codex", available: false, version: "" }]
+        // AgentModels: each agent's model catalog (none loaded here)
+        property var modelCatalogs: QtObject {
+            property var catalogs: ({})
+            function has(agent, cwd) { return true; }
+            function get(agent, cwd) { return { models: [], manualModel: false, loading: false }; }
+        }
+        function settingsFor(agent, cwd) { return modelCatalogs.get(agent, cwd); }
+        function refreshModels(agent, cwd) {}
     }
     property var mcp: QtObject {
         property var servers: [{ name: "yozakura", source: "yozakura", transport: "stdio", command: "yozakura", args: ["mcp"] }]
