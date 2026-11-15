@@ -29,16 +29,22 @@ function pick(ctx, key, live) {
     return live;
 }
 
-// sample(ctx, key, live) -> the context's sample data for `key` (what a
-// part shows instead of a live service or its runtime state: a launcher
-// query, the tab a dashboard shows, a conversation), else `live`. Like
-// pick, but for data, not config keys.
-function sample(ctx, key, live) {
+// sample(ctx, name, live) -> the context's sample `name` (data a preview
+// shows instead of a live service's: a track, notifications, activities;
+// a sample that is null or [] means "none"), else `live`. Read the live
+// value in the caller's binding, like `pick`:
+//
+//     readonly property var player: Preview.sample(preview, "player",
+//                                                  MprisController.activePlayer)
+//
+// The sample names a part reads are listed where it reads them (the
+// island: modules/notch/AGENTS.md, SETTINGS PREVIEWS).
+function sample(ctx, name, live) {
     if (!ctx)
         return live;
     var s = ctx.samples;
-    if (s && Object.prototype.hasOwnProperty.call(s, key))
-        return s[key];
+    if (s && Object.prototype.hasOwnProperty.call(s, name))
+        return s[name];
     return live;
 }
 

@@ -7,6 +7,10 @@ import qs.modules.components.preview
 // dock's surface with `margin` around it. `overrides` shows config keys
 // with another value (Preview.js), e.g. {"dock.theme": "floating"}.
 // `snapshot` pictures it once and frees it (galleries).
+// `frame: "app"` frames one running app (its button, the dock's depth
+// across): the running indicator cards; no app runs: the whole dock.
+// `zoom` > 0 shows it at that scale (sizes compared side by side), the
+// overflow cut by the picture.
 Item {
     id: root
 
@@ -15,6 +19,9 @@ Item {
     property real nativeHeight: 240
     property real margin: 10
     property real maxZoom: 1.6
+    property real zoom: 0
+    // "surface" | "app"
+    property string frame: "surface"
     property bool snapshot: false
     // false: nothing is built
     property bool active: true
@@ -29,6 +36,29 @@ Item {
         overrides: root.overrides
     }
 
+    // the first running app button under `item` (DockAppButton names itself
+    // "dockApp:<id>"), else the first app button, else null
+    function appButton(item) {
+        let first = null;
+        const walk = it => {
+            const kids = it.children || [];
+            for (let i = 0; i < kids.length; i++) {
+                const k = kids[i];
+                if (String(k.objectName).indexOf("dockApp:") === 0 && k.visible) {
+                    if (k.appIsRunning)
+                        return k;
+                    if (!first)
+                        first = k;
+                }
+                const found = walk(k);
+                if (found)
+                    return found;
+            }
+            return null;
+        };
+        return walk(item) || first;
+    }
+
     LivePart {
         id: part
         anchors.fill: parent
@@ -40,6 +70,7 @@ Item {
         nativeWidth: root.nativeWidth
         nativeHeight: root.nativeHeight
         maxZoom: root.maxZoom
+        zoom: root.zoom
         snapshot: root.snapshot
         active: root.active
         refreshKey: root.refreshKey
@@ -47,6 +78,11 @@ Item {
             if (!dock.surfaceRect)
                 return Qt.rect(0, 0, 0, 0);
             const r = dock.surfaceRect;
+            const app = root.frame === "app" ? root.appButton(dock) : null;
+            if (app) {
+                const p = app.mapToItem(dock, 0, 0);
+                return dock.isVertical ? Qt.rect(r.x, p.y - app.height * 0.75, r.width, app.height * 2.5) : Qt.rect(p.x - app.width * 0.75, r.y, app.width * 2.5, r.height);
+            }
             return Qt.rect(r.x - root.margin, r.y - root.margin, r.width + root.margin * 2, r.height + root.margin * 2);
         }
     }

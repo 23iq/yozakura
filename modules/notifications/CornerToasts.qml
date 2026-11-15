@@ -7,6 +7,7 @@ import qs.modules.shell
 import qs.modules.components.kit
 import qs.config
 import "NotificationPolicy.js" as Policy
+import "ToastModel.js" as ToastModel
 
 // Classic toasts in a screen corner (notifications.presentation "corner",
 // or "auto" with a taskbar-like bar style). Lives in the unified shell
@@ -33,7 +34,7 @@ Item {
     readonly property bool atBottom: anchorsInfo.vertical === "bottom"
     readonly property string side: anchorsInfo.horizontal
     readonly property int gap: Space.m
-    readonly property int toastWidth: Math.round(Math.min(width - 2 * gap, Metrics.toastW * Math.max(1, Styling.fontSize(0) / 14)))
+    readonly property int toastWidth: Math.round(Math.min(width - 2 * gap, ToastModel.toastWidth(Metrics.toastW, Styling.fontSize(0))))
 
     // Input region (UnifiedShellPanel mask)
     readonly property Item hitbox: list

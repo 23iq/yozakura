@@ -86,6 +86,8 @@ QtObject {
 ACTIVITY_SERVICE = """pragma Singleton
 QtObject {
     property string presentation: "notch"; property int count: 0; property var items: []
+    property var activities: []; property var tasks: []; property var privacy: []; property bool showSpeed: true
+    function activate(a, b, s) {} function transferAction(t, a) {} function iconUrl(n) { return "" }
     property var transfers: [{ id: "dl1", source: "browserDownloads", kind: "download", state: "running",
         title: "archlinux-2026.10.01-x86_64.iso", processed: 503316480, total: 1181116006, rate: 8388608,
         units: "bytes", startedAt: 1 }]

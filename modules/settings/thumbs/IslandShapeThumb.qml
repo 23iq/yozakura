@@ -2,51 +2,36 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.components.kit
+import qs.modules.settings.store
+import qs.modules.settings.live
 
-// Card picture of the island's shape (notch.style): a close crop of the
-// screen's top edge over your wallpaper with the island drawn alone, big:
-// "attached" hangs from the edge (only its lower corners round),
-// "island" floats just under it, "pill" is a smaller, fully round pill.
+// Card picture of the island's shape (notch.style): your island at rest,
+// the shell's own (live/LiveIsland), in shape `value`, hanging from the
+// picture's top edge (your edge when it is the bottom one) as from the
+// screen's: "attached" flows out of the edge, "island" floats under it,
+// "pill" rests as a small capsule (at about the others' scale). Pictured
+// once, again when the island's look changes.
 MiniScreen {
     id: root
 
     property var entry
     property var value: "attached"
-    readonly property bool attached: root.value === "attached"
-    readonly property bool pill: root.value === "pill"
-    readonly property real h: Math.round(root.height * (root.pill ? 0.2 : 0.26))
-    readonly property real r: root.pill ? root.h / 2 : Math.round(root.h * 0.45)
+    readonly property string edge: SettingsStore.get("notch.position") === "bottom" ? "bottom" : "top"
+    // pictured again when the island or the colours change
+    readonly property string look: JSON.stringify([root.edge, SettingsStore.get("notch.noMediaDisplay"), SettingsStore.get("notch.customText"), SettingsStore.get("theme.roundness"), SettingsStore.get("theme.font"), String(Colors.primary), String(Colors.background)])
 
-    Mark {
-        id: island
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: Math.round(root.width * (root.pill ? 0.34 : 0.5))
-        height: root.h + (root.attached ? root.r : 0)
-        // attached: its top corners are above the picture's edge
-        y: root.attached ? -root.r : Math.round(root.height * 0.08)
-        radius: root.r
-        color: Colors.surfaceContainer
-        border.width: Space.hairline
-        border.color: Qt.alpha(Colors.overBackground, 0.28)
-
-        // a word and a dot: what it shows at rest
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: (root.attached ? root.r : 0) + (root.h - height) / 2
-            height: Math.round(root.h * 0.3)
-            spacing: Math.round(root.h * 0.2)
-            Mark {
-                width: Math.round(root.h * 1.2)
-                height: parent.height * 0.7
-                anchors.verticalCenter: parent.verticalCenter
-                color: Qt.alpha(Colors.overBackground, 0.7)
-            }
-            Mark {
-                width: parent.height
-                height: parent.height
-                color: Qt.alpha(Colors.overBackground, 0.7)
-            }
-        }
+    LiveIsland {
+        id: live
+        anchors.fill: parent
+        snapshot: true
+        refreshKey: root.look
+        // the island at rest across most of the picture (a pill's capsule
+        // at the scale of a header that long, so the shapes compare)
+        zoom: root.width * 0.92 / Math.max(380, live.targetRect.width)
+        overrides: ({
+                "notch.style": String(root.value),
+                "notch.position": root.edge,
+                "notch.align": "center"
+            })
     }
 }

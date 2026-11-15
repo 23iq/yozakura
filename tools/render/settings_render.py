@@ -213,6 +213,15 @@ def find_visual(item, name: str):
     return None
 
 
+def find_all_visual(item, name: str) -> list:
+    """Every item named `name` in the visual tree (a stage kept by the
+    Screen canvas and the page's own may both be there)."""
+    found = [item] if item.objectName() == name else []
+    for child in item.childItems():
+        found += find_all_visual(child, name)
+    return found
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("categories", nargs="*", default=["appearance", "bar", "wallpapers"])
@@ -223,7 +232,7 @@ def main() -> int:
     ap.add_argument("--search", default="", help="type a query in the search field")
     ap.add_argument("--languages", default="", help="comma separated visual languages (ink,glass,tiles)")
     ap.add_argument("--eval", default="", metavar="OBJECT:EXPR",
-                    help="evaluate EXPR on the named item after the page loads (e.g. open a popup)")
+                    help="evaluate EXPR on every item of that name after the page loads (e.g. open a popup)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
     ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
@@ -324,7 +333,8 @@ Window {{
             QTest.qWait(700)
         if args.eval:
             name, _, expr = args.eval.partition(":")
-            env.h.eval(find_visual(win.contentItem(), name), expr)
+            for target in find_all_visual(win.contentItem(), name):
+                env.h.eval(target, expr)
             QTest.qWait(700)
         suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "") \
             + ("-hover" if args.hover else "") + ("-undo" if args.undo else "")

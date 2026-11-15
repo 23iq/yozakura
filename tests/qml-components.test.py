@@ -2,7 +2,7 @@
 
 This checks QML type/loading errors, not live shell behavior or integration.
 """
-import os, pathlib, tempfile, shutil
+import os, pathlib, re, tempfile, shutil
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401  (never a live window)
@@ -74,7 +74,7 @@ Item { property string tooltipText; property bool show }''',
  'BarPopup':'''import QtQuick
 Item { property Item anchorItem; property var bar; property int contentWidth; property int contentHeight; property int popupPadding: 8; property bool isOpen: false; function toggle() { isOpen = !isOpen; } }'''})
  module('qs.modules.notch', {'NotchNotificationView':'''import QtQuick
-Item { property bool isNavigating: false; property bool notchHovered: false; implicitHeight: 80 }'''})
+Item { property bool isNavigating: false; property bool notchHovered: false; property var popups: []; implicitHeight: 80 }'''})
  module('qs.modules.components.kit', kit_stubs.files())
  module('qs.modules.globals', {'GlobalStates': 'pragma Singleton\nimport QtQuick\nQtObject {}', 'BatterySaver': 'pragma Singleton\nimport QtQuick\nQtObject { property bool active: false }'})
  module('qs.modules.corners', {'RoundCorner': 'import QtQuick\nItem { enum CornerEnum { TopRight, BottomRight, TopLeft, BottomLeft } property int corner; property real size; property color color }'})
@@ -97,6 +97,10 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  shutil.copy(repo/'modules/notch/NotchShape.js', children)
  for n in names: shutil.copy(repo/'modules/widgets/defaultview'/(n+'.qml'),children)
  shutil.copy(repo/'modules/widgets/defaultview/IslandMedia.js',children)
+ # the preview lens (Preview.js) next to the flat copies, their imports pointed at it
+ shutil.copy(repo/'modules/components/preview/Preview.js', children)
+ for f in children.glob('*.qml'):
+  f.write_text(re.sub(r'"(\.\./)+components/preview/Preview\.js"', '"Preview.js"', f.read_text()))
  (children/'activities').mkdir()
  (children/'styles').mkdir()
  shutil.copy(repo/'modules/notch/styles/NotchStyles.js', children/'styles')
@@ -111,7 +115,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  timers_stubs.copy_js(p)
  for n in ['UserInfo','NotificationIndicator']:
   (children/(n+'.qml')).write_text('import QtQuick\nItem { width: 20; height: 20 }')
- (children/'CompactPlayer.qml').write_text('import QtQuick\nItem { property var player; property bool notchHovered }')
+ (children/'CompactPlayer.qml').write_text('import QtQuick\nItem { property var player; property var preview; property bool notchHovered }')
  (children/'NotchSmoke.qml').write_text('import QtQuick\nNotch { defaultViewComponent: Component { Item { implicitWidth: 300; implicitHeight: 44 } } }')
  names += ['NotchViewTransition', 'NotchSmoke']
  engine=QQmlEngine(); engine.addImportPath(tmp)

@@ -3,19 +3,24 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.modules.components.preview
+import "LiveSamples.js" as LiveSamples
 
 // The real panels of a screen at its native size (give it LiveTarget's
-// size; the parent scales it): every bar panel (LiveBars) and the dock
-// (modules/dock/DockContent.qml, by URL), each the shell's own component
-// with a PreviewContext. Inert: it takes no input. Geometry for the page,
-// in native px of this item: `bars` (LiveBars), `depth(edge)` (bars),
-// `dockOn`, `dockEdge`, `dockDepth`, `dockRect()`.
+// size; the parent scales it): every bar panel (LiveBars), the dock
+// (modules/dock/DockContent.qml, by URL) and the island at rest
+// (modules/shell/NotchPreview.qml, by URL, LiveSamples' "rest": nothing
+// playing, no notification), each the shell's own component with a
+// PreviewContext. Inert: it takes no input. Geometry for the page, in
+// native px of this item: `bars` (LiveBars), `depth(edge)` (bars),
+// `dockOn`, `dockEdge`, `dockDepth`, `dockRect()`, `islandOn`,
+// `islandRect()`.
 Item {
     id: root
 
     property var screen: LiveTarget.screen
     property var preview: PreviewContext {}
     property bool showDock: true
+    property bool showIsland: true
     readonly property alias bars: bars
 
     enabled: false
@@ -41,6 +46,17 @@ Item {
         return bars.depth(edge);
     }
 
+    readonly property Item island: islandLoader.item as Item
+    readonly property bool islandOn: root.showIsland && !!root.island && Config.notch.enabled !== false
+    function islandRect() {
+        return root.islandOn ? root.island.notchRect : Qt.rect(0, 0, 0, 0);
+    }
+    PreviewContext {
+        id: islandContext
+        overrides: root.preview ? root.preview.overrides : ({})
+        samples: LiveSamples.island("rest", 0, "", null)
+    }
+
     LiveBars {
         id: bars
         anchors.fill: parent
@@ -59,5 +75,18 @@ Item {
                 "preview": root.preview
             }))
         Component.onDestruction: LiveGate.forget(dockLoader)
+    }
+
+    Loader {
+        id: islandLoader
+        anchors.fill: parent
+        asynchronous: true
+        active: root.showIsland && !!root.screen && Config.notch.enabled !== false
+        visible: root.islandOn
+        Component.onCompleted: LiveGate.ask(islandLoader, () => islandLoader.setSource(Qt.resolvedUrl("../../shell/NotchPreview.qml"), {
+                "screen": root.screen,
+                "preview": islandContext
+            }))
+        Component.onDestruction: LiveGate.forget(islandLoader)
     }
 }

@@ -94,9 +94,10 @@ modules/settings/
 │                           and the list bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys,
 │                           Providers, Routines); pure helpers WindowTiles / DesktopPlace / OsdPlace /
 │                           KeyDeck.js (node-tested)
-├── live/                   LIVE PREVIEWS: the real bar panels / dock in a stage or a picture (LiveTarget,
-│                           LiveBars, LiveScreen, LivePanel, LiveDock, LiveHosted + HostedFrame;
-│                           LiveKeys.js, LivePatch.js)
+├── live/                   LIVE PREVIEWS: the real bar panels / dock / island / toasts / hosted views in a
+│                           stage or a picture (LiveTarget, LiveBars, LiveScreen, LivePanel, LiveDock,
+│                           LiveIsland, LiveToast, LiveStrips, LiveHosted + HostedFrame; LiveKeys.js,
+│                           LivePatch.js, LiveSamples.js)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, ChoiceGrid (the one picture
@@ -663,13 +664,15 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
   the live shell). `overrides`: `{"dotted.key": value}` shown instead of the
   live config; `samples`: `{"part.key": value}`, data a part shows instead
   of a live service or its runtime state (a launcher query, the dashboard's
-  tab, a conversation; each key is documented where the part reads it). A
-  part with a context is revealed at once (no auto-hide, no hover reveal)
-  and claims nothing session-wide.
+  tab, a conversation, the island's track / notifications / activities;
+  each key is documented where the part reads it). A part with a context
+  is revealed at once (no auto-hide, no hover reveal) and claims nothing
+  session-wide.
 - `Preview.js`: `pick(ctx, key, live)` (the override, else the live value,
   read in the caller's binding so it keeps following the config),
-  `sample(ctx, key, live)` (the same for `samples`), `on(ctx)`,
-  `withValue(overrides, key, value)`.
+  `sample(ctx, key, live)` (the sample, else the service's value; a null or
+  empty sample is "none" and wins), `on(ctx)`, `withValue(overrides, key,
+  value)`.
 - `LivePart`: the generic host. `source` (URL), `properties` (initial, the
   required ones too), `nativeWidth/Height` (or the implicit size), `crop`
   or `cropOf(item)` (the native rect framed, measured once settled and then
@@ -680,7 +683,8 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
   again); `mapFromPart(item, rect)` for a page's own overlays; `settleMs`
   (time to settle before it is measured / pictured; a part whose root has
   a `ready` property is waited for until it is true). Built through
-  `LiveGate`, asynchronously.
+  `LiveGate`, asynchronously. Torn down, its frame stops following the
+  part (`leaving`: an owner's `cropOf` never runs in a dying context).
 - `LiveGate` (singleton): the build queue. A page shows first (no live part
   is created in the frames that lay it out: opening Bar costs ~40 ms, as
   before), then its parts are built one per frame (`ask(owner, build)`,
@@ -697,17 +701,39 @@ Settings side (`modules/settings/live/`):
   Geometry in native px: `bars`, `depth(edge)`, `panelRect(i)`, `modules()`
   (every module slot, found by its objectName `barSlot:<id>`, set by
   BarModuleSlot for any module of the registry).
-- `LiveScreen`: LiveBars + the real dock (DockContent) at the screen's size;
-  ScreenMini scales it (`k`) and draws the windows, frame, island (still a
-  drawing, see below), corners (the real ScreenCornersContent) and the
-  page's interaction (panel rings / picking, module buttons and StageSpots
-  from `panelRects` / `moduleRects`, re-measured after each change and
-  when the pointer arrives).
+- `LiveScreen`: LiveBars + the real dock (DockContent) + the real island at
+  rest (shell/NotchPreview, LiveSamples' "rest") at the screen's size;
+  ScreenMini scales it (`k`) and draws the windows, frame, corners (the
+  real ScreenCornersContent) and the page's interaction (panel rings /
+  picking, module buttons, the island's / dock's spot, ring and click, and
+  StageSpots from `panelRects` / `moduleRects` / `islandRect()`, re-measured
+  after each change and when the pointer arrives).
 - `LivePanel`: one real panel in a picture: your primary panel's spec with
   `patch` over it (`LivePatch.only(ids)`, `sample(groups)`, `style(id)`),
   `overrides`, `frame: "panel" | "modules"`, `snapshot`, `refreshKey`.
 - `LiveDock`: the real dock framed on its surface (`overrides`, e.g.
-  `dock.theme`), `surfaceRect` in the item.
+  `dock.theme`, `dock.iconSize`, `dock.indicator`), `surfaceRect` in the
+  item; `frame: "app"` frames one running app (the indicator cards), `zoom`
+  one scale for several (the size cards).
+- `LiveIsland`: the real island (shell/NotchPreview.qml: the Notch, the
+  resting view, its place on the edge) showing `state` ("rest" | "media" |
+  "notification" | "timer") from LiveSamples; `overrides` (`notch.style`,
+  `notch.position`, `notch.align`); framed as a window of the item's size at
+  `zoom` on the island's edge, centred on it (the island hangs from the
+  item's edge as from the screen's), or `frame: "screen"`; `targetRect`
+  (native, not animated: size a stage once per state, the island morphs
+  into it), `islandRect` (in the item). Island stage, shape / edge cards,
+  the Notifications stage's island.
+- `LiveToast`: the real corner toast (notifications/CornerToast.qml) with
+  the sample message, `grouped` (the app's stack behind it), `stackUp`, at
+  the shell's width (ToastModel.toastWidth); `snapshot`.
+- `LiveStrips`: the real strips (notifications/strips/StripsView.qml) with
+  the sample groups, framed on their hit box.
+- `LiveSamples.js` (pure): the content previews show: the island's
+  `STATES` (id, label, card), `island(state, now, art, timerActivity)`,
+  `track(art)`, `messages` / `group` / `groups(now, grouped)`, `timer(now)`
+  (made an activity by the shell's TimerActivity.timerActivity, so its
+  label and ring follow `system.timers`), `osd()`.
 - `LiveKeys.js`: a module's StageSpot keys and the Bar card it opens
   (generic default: `bar.moduleOptions.<id>` / the layout card).
 - `LiveHosted`: a hosted surface as it opens: the shell's own view (`source`
@@ -731,13 +757,24 @@ session-wide thing (IPC targets, owners, edge reservations, weather covers)
 skip that when `Preview.on(preview)`; pass the context down where children
 read it (bar modules get it as `bar.preview`; Workspaces passes its looks to
 its buttons); read each look key a picture may vary through `Preview.pick`.
+A state of a part comes from samples, never from the session: read the
+service through `Preview.sample(preview, "name", Service.value)` where the
+part decides what it shows (the island: `player`, `notifications`,
+`activities`, `levels`, `focusedTitle`; the strips: `popupGroups`,
+`popupAppNames`; the bar's inline OSD: `osd`), and in a preview drop what
+would animate or register (the visualizer draws the sample `levels` still
+and never asks cava; the inline OSD registers no host and takes no OSD
+event; the island's notification is born at once).
 Overridable today: `workspaces.indicatorStyle`, `numeralStyle`,
 `showNumbers`, `alwaysShowNumbers`, `showAppIcons`,
 `bar.moduleOptions.clock.face`, `dock.theme`, `dock.enabled` (integrated
-dock in a bar), `layout.launcher.resultStyle` / `.preview` /
-`.compactWhenEmpty` (LauncherView, LauncherSearch), `layout.dashboard.home`
-(Dashboard); a panel's style / groups / edge are its spec (LivePanel
-`patch`), no override needed.
+dock in a bar), `dock.iconSize`, `dock.showRunningIndicators`,
+`dock.indicator`, `notch.style`, `notch.position`, `notch.align` (the
+island: Notch, NotchSilhouette via Notch, DefaultView, IslandHeader,
+IslandNotifications, NotchPreview); a panel's style / groups / edge are its
+spec (LivePanel `patch`), no override needed. Also
+`layout.launcher.resultStyle` / `.preview` / `.compactWhenEmpty`
+(LauncherView, LauncherSearch), `layout.dashboard.home` (Dashboard).
 Samples read today: `launcher.query`, `launcher.selected`, `launcher.live`
 (providers created and searched for real: the apps, in memory),
 `launcher.rows` (`{providerId: [rows]}` of the others; LauncherSamples.js);
@@ -772,7 +809,35 @@ change (`need`: its groups' natural length): wider bars are shown smaller.
 Test env: `tests/lib/live_previews.py` merges panels_env's import tree and
 fixture desktop into SettingsEnv (one 1920x1080 screen), so every settings
 test and render shows the real bar (it also leaves through
-`clean_exit`: the live modules crash PySide's teardown pass).
+`clean_exit`: the live modules crash PySide's teardown pass), plus the
+island's and the notifications' trees with idle services (a stage's samples
+are what it shows). `tests/settings-live-parts.test.py` checks the island
+states, the canvas island, the three notification presentations, the inline
+OSD and a dock indicator override, and that no preview registers anything.
+Render a state: `settings_render.py notch --eval 'islandStage:showing =
+"media"'` (`--eval` runs on every item of that name).
+The island: NotchContent is the live notch's composer (Visibilities, hover,
+avoidance, registrations); a preview uses `shell/NotchPreview.qml` instead
+(shell layer, beside it: the same Notch and DefaultView, placed with
+NotchPlacement and `NotchShape.edgeGap` like NotchContent, EdgeService's
+environment with the preview's place), so nothing of the session runs.
+The Island stage shows each state with the island's own morph (its height
+follows `targetRect`); the canvas shows it at rest; the shape cards
+(one scale for every shape) and edge cards picture it with the option as an
+override.
+Notifications: the stage is the real corner toast (LiveToast), the real
+island holding the sample message (LiveIsland "notification": its card or
+compact style is the live `notifications.notchStyle`) or the real strips
+(LiveStrips); the corner cards picture the real toast at each corner.
+Menus & OSD: the OSD styles are their real components (LivePart, sample
+`osd()`), "in the bar" your bar's real controls button holding the level
+(LivePanel with the `osd` sample); the menu is the shell's popup surface
+(components/PopupSurface.qml, shared with BarPopup: the popup style, entry
+motion, replayed when `theme.popup.entry` changes, and tail) holding the
+bar's menu rows (bar/modules/MenuRow.qml, by URL) with sample actions.
+Dock: the size cards are your dock at each `dock.iconSize`, one scale for
+all; the indicator cards your dock framed on a running app with each
+indicator (DockIndicator picks `dock.indicator`).
 Live: the Launcher stage and result-style cards (LiveHosted, LauncherView),
 the Dashboard stage and home cards (LiveHosted, Dashboard; the cards are
 snapshots), the Assistant stage (LiveHosted "sidebar", AiCenterPreview).
@@ -781,15 +846,15 @@ home / widgets and the AI center's transcript / composer / header trees
 (`HOSTED_QMLDIRS`, stand-in Metrics / Wallpapers tabs and launcher prefix
 tabs) with idle service stand-ins; app icons are PNG files (an
 asynchronous `image://icon` from the Python provider deadlocks).
-Still drawn by hand: the island in ScreenMini and the Island stage / shape
-cards, the Notifications / OSD stages (phase 2, part D), the dock's size
-and indicator cards, the windows and frame; the Windows stage and the
-Overview style cards (the overview and tiling show live compositor windows
-and screencopies: they need sample windows in a PreviewContext); the
-Assistant's message-style and size cards (BarLook, a singleton, reads the
-message style: an override cannot reach it; the size card is the panel's
-share of the screen, a placement diagram). Power, Updates and Terminal are
-settings views (Terminal already shows the real TerminalPreview).
+Still drawn: the windows and frame of the canvas (no shell part), the small
+screens with corner / edge targets of the Notifications and OSD stages
+(controls, not parts); the Windows stage and the Overview style cards (the
+overview and tiling show live compositor windows and screencopies: they
+need sample windows in a PreviewContext); the Assistant's message-style
+and size cards (BarLook, a singleton, reads the message style: an override
+cannot reach it; the size card is the panel's share of the screen, a
+placement diagram). Power, Updates and Terminal are settings views
+(Terminal already shows the real TerminalPreview).
 
 ## STAGE COMPONENTS (frame-independent)
 - Shortcuts: a KeyRecorder shares the keys it has while it records

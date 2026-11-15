@@ -61,6 +61,9 @@ for f in (h.root / "app").iterdir():
     if f.is_file():
         shutil.copy(f, dvd / f.name)
 shutil.copytree(h.root / "app/activities", dvd / "activities", dirs_exist_ok=True)
+# relative imports out of the flat copy (qmlharness._rehome_imports)
+if (h.root / "app/_ext").is_dir():
+    shutil.copytree(h.root / "app/_ext", dvd / "_ext", dirs_exist_ok=True)
 h._write_qmldir(dvd, "qs.modules.widgets.defaultview")
 h.module("qs.modules.corners", {"RoundCorner": "Item { enum CornerEnum { TopLeft, TopRight, BottomLeft, BottomRight } property int corner; property real size; property color color }"})
 h.module("Quickshell.Widgets", {"ClippingRectangle": "Rectangle {}"})

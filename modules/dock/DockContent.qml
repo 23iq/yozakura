@@ -306,6 +306,7 @@ Item {
                 anchors.topMargin: (dockContent.implicitHeight - implicitHeight) / 2
                 visible: !root.isVertical
                 screen: root.screen
+                preview: root.preview
                 pinned: root.pinned
                 onPinToggled: root.pinned = !root.pinned
             }
@@ -319,6 +320,7 @@ Item {
                 vertical: true
                 position: root.position
                 screen: root.screen
+                preview: root.preview
                 pinned: root.pinned
                 onPinToggled: root.pinned = !root.pinned
             }

@@ -178,8 +178,8 @@ def global_states(wallpaper: dict) -> str:
     function clearLauncherState() {}"""
     qml = global_states_qml(wallpaper).replace("property bool settingsWindowVisible: true", extra)
     # The bento player tints itself with the wallpaper.
-    return qml.replace("function nextWallpaper() {}", "function nextWallpaper() {}\n"
-                       "        function getLockscreenFramePath(p) { return thumbs[p] || p }")
+    return qml.replace('function getLockscreenFramePath(p) { return "" }',
+                       "function getLockscreenFramePath(p) { return thumbs[p] || p }")
 
 
 class DashboardEnv(KitEnv):

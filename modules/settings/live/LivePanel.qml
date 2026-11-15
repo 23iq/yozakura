@@ -22,6 +22,9 @@ Item {
 
     property var patch: ({})
     property var overrides: ({})
+    // sample data its modules show (PreviewContext.samples), e.g. the
+    // inline OSD: {"osd": {"kind": "volume", "value": 0.62}}
+    property var samples: ({})
     property real nativeWidth: 960
     property real nativeHeight: 160
     // what is framed: "panel" (its whole body) or "modules" (the piece of
@@ -56,6 +59,7 @@ Item {
     PreviewContext {
         id: context
         overrides: root.overrides
+        samples: root.samples
     }
 
     LivePart {

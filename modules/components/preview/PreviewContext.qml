@@ -12,8 +12,9 @@ import QtQuick
 // `samples`: data a part shows instead of a live service or its runtime
 // state, {"part.key": value}, read with Preview.sample (the launcher's
 // query and the rows of providers that would do I/O, the tab a dashboard
-// shows, a sample conversation); each key is documented where a part
-// reads it.
+// shows, a sample conversation, the island's track / notifications /
+// activities; a null or [] sample means "none"); each key is documented
+// where a part reads it.
 QtObject {
     property var overrides: ({})
     property var samples: ({})

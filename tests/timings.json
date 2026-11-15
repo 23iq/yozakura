@@ -185,6 +185,7 @@
  "settings-load-stable.test.py": 8.0,
  "settings-regressions.test.py": 4.9,
  "settings-rehome.test.py": 0.8,
+ "settings-live-parts.test.py": 12.0,
  "settings-shell.test.py": 8.0,
  "settings-sidebar-hover.test.py": 1.5,
  "settings-ui.test.py": 13.2,

@@ -12,13 +12,13 @@ import "../../bar/panels/PanelLayout.js" as PanelLayout
 import "../live/LiveKeys.js" as ScreenParts
 
 // The shared screen miniature of the settings stages: your screen as the
-// shell draws it, to one scale. The bars and the dock are the shell's own
-// components (live/LiveScreen: the real panels laid out at the screen's
+// shell draws it, to one scale. The bars, the dock and the island (at rest)
+// are the shell's own components (live/LiveScreen: the real panels laid out at the screen's
 // native size, then scaled; LIVE PREVIEWS in modules/settings/AGENTS.md),
 // so every module, icon, workspace indicator, clock face, style and colour
 // is the real one, and a new module or style shows up here by itself.
 // Layers, back to front: windows in the space everything else leaves
-// (reserved space made visible), the screen frame, the panels, the
+// (reserved space made visible), the screen frame, the panels, dock and
 // island, the rounded screen corners, then the page's `overlay` (surfaces
 // that open somewhere, in screen coordinates: `freeRect`, `islandRect`,
 // `edgeDepth(edge)`). A page turns layers on and off (`showWindows`,
@@ -89,9 +89,8 @@ Item {
     readonly property string dockEdge: live.dockEdge
     // the shell's rounded screen corners (a tile that crops the screen sets false)
     property bool corners: screen.get("theme.enableCorners", true) !== false
-    // the island's edge (on a side edge it stands upright, centred)
+    // the island's edge (on a side edge it stands upright: the live island)
     readonly property string islandEdge: ["bottom", "left", "right"].indexOf(screen.get("notch.position", "top")) >= 0 ? screen.get("notch.position", "top") : "top"
-    readonly property bool islandUpright: screen.islandEdge === "left" || screen.islandEdge === "right"
     // Room taken on an edge by the bars, the frame and the dock.
     function edgeDepth(edge) {
         return screen.frameWidth + (screen.depths[edge] || 0) + (screen.dockOn && screen.dockEdge === edge ? live.dockDepth * screen.k : 0);
@@ -284,6 +283,7 @@ Item {
             objectName: "screenMiniLive"
             anchors.fill: parent
             showDock: screen.showDock
+            showIsland: screen.showIsland
         }
     }
 
@@ -401,31 +401,17 @@ Item {
         }
     }
 
-    // The island.
-    Mark {
+    // The island (the real one is in the live layer): its spot and ring.
+    Item {
         id: island
-        visible: screen.showIsland && screen.island
-        readonly property real along: Math.round(screen.width * 0.13)
-        readonly property real across: Math.round(screen.unit * 1.2)
-        // its inset from its edge: centred in a bar on that edge, else close to it
-        readonly property real inset: {
-            const barOnEdge = screen.panels.some(p => p.edge === screen.islandEdge);
-            return screen.frameWidth + (barOnEdge && screen.depths[screen.islandEdge] > 0 ? Math.max(0, (screen.depths[screen.islandEdge] - island.across) / 2) : Space.xs);
-        }
-        width: screen.islandUpright ? island.across : island.along
-        height: screen.islandUpright ? island.along : island.across
-        x: screen.islandEdge === "left" ? island.inset : screen.islandEdge === "right" ? screen.width - width - island.inset : (screen.width - width) / 2
-        y: screen.islandEdge === "bottom" ? screen.height - height - island.inset : screen.islandEdge === "top" ? island.inset : (screen.height - height) / 2
-        color: Colors.surfaceContainerLowest
-        border.width: Space.hairline
-        border.color: Qt.alpha(Colors.outlineVariant, 0.7)
+        readonly property rect r: live.islandOn ? live.islandRect() : Qt.rect(0, 0, 0, 0)
+        visible: screen.showIsland && screen.island && live.islandOn
+        x: island.r.x * screen.k
+        y: island.r.y * screen.k
+        width: island.r.width * screen.k
+        height: island.r.height * screen.k
+        readonly property real radius: Math.min(width, height) / 2
 
-        Mark {
-            anchors.centerIn: parent
-            width: screen.islandUpright ? Math.max(2, Math.round(screen.unit * 0.14)) : parent.width * 0.36
-            height: screen.islandUpright ? parent.height * 0.36 : Math.max(2, Math.round(screen.unit * 0.14))
-            color: Qt.alpha(Colors.overBackground, 0.35)
-        }
         StageSpot {
             keys: ["notch"]
             cornerRadius: island.radius
