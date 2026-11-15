@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.aicenter.common
 import qs.modules.components.kit
+import qs.modules.services
 
 // Attachment thumbnails/chips under a user message or in the composer.
 Flow {
@@ -59,6 +60,7 @@ Flow {
                         sourceSize: Qt.size(128, 128)
                     }
                     IconButton {
+                        accessibleName: I18n.t("common.remove")
                         visible: root.removable
                         anchors.top: parent.top
                         anchors.right: parent.right

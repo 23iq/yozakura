@@ -10,6 +10,7 @@ import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.globals
 import qs.config
+import qs.modules.services
 
 PanelWindow {
     id: root
@@ -126,6 +127,7 @@ PanelWindow {
 
                     // Toggle Ratio Button
                     IconButton {
+                        tooltip: I18n.t(root.isSquare ? "a11y.mirror_wide" : "a11y.mirror_square")
                         icon: root.isSquare ? Icons.arrowsOut : Icons.crop
                         onClicked: {
                             root.isSquare = !root.isSquare;
@@ -142,6 +144,7 @@ PanelWindow {
 
                     // Flip Button
                     IconButton {
+                        tooltip: I18n.t("a11y.flip")
                         icon: Icons.flipX
                         active: root.isFlipped
                         onClicked: root.isFlipped = !root.isFlipped
@@ -149,6 +152,7 @@ PanelWindow {
 
                     // Close Button
                     IconButton {
+                        tooltip: I18n.t("common.close")
                         icon: Icons.cancel
                         danger: true
                         onClicked: GlobalStates.mirrorWindowVisible = false

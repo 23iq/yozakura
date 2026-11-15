@@ -99,6 +99,7 @@ Item {
                     IconButton {
                         required property string modelData
                         required property int index
+                        accessibleName: I18n.t(index === 0 ? "common.cancel" : "a11y.confirm")
                         size: "s"
                         icon: modelData
                         highlighted: (noteItem.isInDeleteMode ? noteItem.tab.deleteButtonIndex : noteItem.tab.renameButtonIndex) === index

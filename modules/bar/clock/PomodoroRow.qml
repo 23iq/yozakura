@@ -80,6 +80,7 @@ Column {
                     onClicked: root.editing = !root.editing
                 }
                 IconButton {
+                    accessibleName: I18n.t("a11y.skip")
                     visible: pomo.running
                     anchors.verticalCenter: parent.verticalCenter
                     size: "s"
@@ -87,6 +88,7 @@ Column {
                     onClicked: pomo.skip()
                 }
                 IconButton {
+                    accessibleName: I18n.t("timers.cancel")
                     visible: pomo.active
                     anchors.verticalCenter: parent.verticalCenter
                     size: "s"

@@ -150,6 +150,7 @@ ColumnLayout {
                 onMoved: v => root.changed(v)
             }
             IconButton {
+                accessibleName: I18n.t("common.clear")
                 visible: root.isSet && !root.field.required
                 icon: Icons.cancel
                 size: "s"
@@ -172,6 +173,7 @@ ColumnLayout {
                 onChanged: v => root.changed(v)
             }
             IconButton {
+                accessibleName: I18n.t("common.clear")
                 visible: root.isSet && !root.field.required
                 icon: Icons.cancel
                 size: "s"

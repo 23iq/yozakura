@@ -33,6 +33,7 @@ Item {
             spacing: Space.m
 
             IconButton {
+                Accessible.ignored: true
                 anchors.horizontalCenter: parent.horizontalCenter
                 size: "l"
                 active: true

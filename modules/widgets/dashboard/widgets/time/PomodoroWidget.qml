@@ -72,6 +72,7 @@ HostWidget {
                 onClicked: pomo.nudge("-1m")
             }
             IconButton {
+                accessibleName: I18n.t("timers.reset")
                 visible: pomo.active && !pomo.ringing
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
@@ -87,6 +88,7 @@ HostWidget {
                 onClicked: pomo.main()
             }
             IconButton {
+                accessibleName: I18n.t("a11y.skip")
                 visible: pomo.running
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
@@ -95,6 +97,7 @@ HostWidget {
                 onClicked: pomo.skip()
             }
             IconButton {
+                accessibleName: I18n.t("timers.cancel")
                 visible: pomo.active && (root.wideTile || !pomo.running)
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"

@@ -87,6 +87,7 @@ Group {
 
             IconButton {
                 objectName: "prevMonth"
+                accessibleName: I18n.t("a11y.previous_month")
                 size: "s"
                 icon: Icons.caretLeft
                 onClicked: root.monthShift--
@@ -94,6 +95,7 @@ Group {
 
             IconButton {
                 objectName: "nextMonth"
+                accessibleName: I18n.t("a11y.next_month")
                 size: "s"
                 icon: Icons.caretRight
                 onClicked: root.monthShift++

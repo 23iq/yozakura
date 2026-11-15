@@ -7,6 +7,7 @@ import qs.modules.components.kit
 // panel) and shows a tooltip.
 IconButton {
     id: root
+    accessibleName: root.tooltipText
 
     property string tooltipText: ""
     signal more

@@ -79,6 +79,7 @@ ColumnLayout {
                         RowLayout {
                             Layout.fillWidth: true
                             IconButton {
+                                accessibleName: I18n.t(item.open ? "a11y.collapse" : "a11y.expand")
                                 icon: item.open ? Icons.caretUp : Icons.caretDown
                                 size: "xs"
                                 onClicked: item.open = !item.open
@@ -95,6 +96,7 @@ ColumnLayout {
                                 text: I18n.t("ai.output_" + (item.modelData.output || "default"))
                             }
                             IconButton {
+                                accessibleName: I18n.t("common.delete")
                                 icon: Icons.trash
                                 danger: true
                                 size: "xs"

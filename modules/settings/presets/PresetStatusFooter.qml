@@ -86,6 +86,7 @@ Item {
             IconButton {
                 id: more
                 objectName: "presetStatusMore"
+                accessibleName: I18n.t("prefs.presets.more_actions")
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
@@ -114,6 +115,7 @@ Item {
     // Compact: the preset glyph (active while there are changes).
     IconButton {
         id: glyph
+        accessibleName: I18n.t("presets.status.label")
         visible: root.compact
         anchors.horizontalCenter: parent.horizontalCenter
         y: Space.l

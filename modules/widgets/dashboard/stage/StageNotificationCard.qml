@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
 import "../home/HomeModel.js" as HomeModel
+import qs.modules.services
 
 // One app's notifications as a card on the raised surface: the app icon
 // tile (kit Art: the icon or image, else the app's initial), the latest
@@ -132,6 +133,7 @@ Item {
 
             IconButton {
                 objectName: "clearGroup"
+                accessibleName: I18n.t("a11y.dismiss")
                 anchors.fill: parent
                 visible: root.hovered
                 size: "s"

@@ -177,6 +177,7 @@ Item {
                 spacing: Space.s
 
                 IconButton {
+                    accessibleName: I18n.t("island.previous")
                     anchors.verticalCenter: parent.verticalCenter
                     objectName: "prevButton"
                     icon: Icons.previous
@@ -188,6 +189,7 @@ Item {
                 IconButton {
                     id: play
                     objectName: "playButton"
+                    accessibleName: I18n.t(MprisController.isPlaying ? "a11y.pause" : "a11y.play")
                     anchors.verticalCenter: parent.verticalCenter
                     size: "l"
                     width: root.playSize
@@ -200,6 +202,7 @@ Item {
                 }
 
                 IconButton {
+                    accessibleName: I18n.t("island.next")
                     anchors.verticalCenter: parent.verticalCenter
                     objectName: "nextButton"
                     icon: Icons.next

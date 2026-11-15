@@ -146,6 +146,7 @@ StyledRect {
                     model: RoutineModel.ICONS
                     delegate: IconButton {
                         required property string modelData
+                        accessibleName: modelData
                         icon: Icons[modelData] || ""
                         size: "xs"
                         active: root.routine.icon === modelData

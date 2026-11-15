@@ -54,6 +54,7 @@ RowLayout {
     }
 
     IconButton {
+        tooltip: I18n.t("a11y.light_mode")
         icon: Config.theme.lightMode ? Icons.sun : Icons.moon
         active: Config.theme.lightMode
         onClicked: Config.theme.lightMode = !Config.theme.lightMode

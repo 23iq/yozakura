@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
+import qs.modules.services
 
 // Embed of a link preview on a ClipboardCard: a large 16:9 thumbnail with a
 // play action for videos, otherwise the text beside a small thumbnail.
@@ -82,6 +83,7 @@ ClipboardCard {
             icon: Icons.play
 
             IconButton {
+                accessibleName: I18n.t("a11y.play")
                 anchors.centerIn: parent
                 visible: parent.ready
                 size: "l"

@@ -85,6 +85,7 @@ Item {
 
                 IconButton {
                     id: button
+                    accessibleName: I18n.t(slot.modelData < 0 ? "a11y.decrease" : "a11y.increase")
                     visible: slot.modelData !== 0
                     size: "s"
                     icon: slot.modelData < 0 ? Icons.minus : Icons.plus

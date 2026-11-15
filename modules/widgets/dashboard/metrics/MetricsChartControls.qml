@@ -61,6 +61,7 @@ RowLayout {
 
     IconButton {
         objectName: "intervalDown"
+        accessibleName: I18n.t("a11y.decrease")
         size: "s"
         icon: Icons.minus
         onClicked: root.stepInterval(-1)
@@ -76,6 +77,7 @@ RowLayout {
 
     IconButton {
         objectName: "intervalUp"
+        accessibleName: I18n.t("a11y.increase")
         size: "s"
         icon: Icons.plus
         onClicked: root.stepInterval(1)

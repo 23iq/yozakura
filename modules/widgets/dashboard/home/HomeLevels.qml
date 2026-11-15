@@ -81,6 +81,7 @@ Column {
 
         IconButton {
             objectName: "outputDevices"
+            accessibleName: I18n.t("a11y.output_devices")
             size: "s"
             icon: Icons.caretRight
             active: root.detail === "output"
@@ -105,6 +106,7 @@ Column {
 
         IconButton {
             objectName: "inputDevices"
+            accessibleName: I18n.t("a11y.input_devices")
             size: "s"
             icon: Icons.caretRight
             active: root.detail === "input"

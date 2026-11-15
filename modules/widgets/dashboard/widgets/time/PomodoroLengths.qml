@@ -34,6 +34,7 @@ Column {
             }
             IconButton {
                 id: minus
+                accessibleName: I18n.t("a11y.decrease")
                 anchors.right: plus.left
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
@@ -42,6 +43,7 @@ Column {
             }
             IconButton {
                 id: plus
+                accessibleName: I18n.t("a11y.increase")
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"

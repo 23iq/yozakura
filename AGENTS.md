@@ -300,6 +300,9 @@ a ratchet in `tools/lint/baselines/kit-literals.json`: a directory may only go d
 `singleton-members` (also in `make audit`) fails on a `Look.x` / `Type.x` / `Space.x` / `Motion.x`
 (and the other singletons in `tools/audit/config.json` `singletonMembers`) that the singleton
 does not declare (a member moved or renamed reads `undefined` only at runtime).
+`iconbutton-names` (also in `make audit`) fails on a kit `IconButton` that names nothing: set
+`accessibleName` (or a `tooltip`, which is the fallback name); a purely decorative glyph sets
+`Accessible.ignored: true`.
 `.claude/` (agent worktrees, full repo copies) is excluded from every audit/lint file list.
 
 Diff-based checks use `BASE` (default `origin/main`): `make check BASE=upstream/main`.

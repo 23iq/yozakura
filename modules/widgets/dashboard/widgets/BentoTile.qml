@@ -178,6 +178,7 @@ Item {
 
         // Drag hint, top-left (the whole tile drags)
         IconButton {
+            accessibleName: I18n.t("a11y.drag_move")
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.margins: Space.xs

@@ -82,6 +82,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Space.s
                     IconButton {
+                        accessibleName: I18n.t(card.open ? "a11y.collapse" : "a11y.expand")
                         icon: card.open ? Icons.caretUp : Icons.caretDown
                         size: "xs"
                         onClicked: card.open = !card.open

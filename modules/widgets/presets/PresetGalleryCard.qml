@@ -84,6 +84,7 @@ StyledRect {
 
         IconButton {
             objectName: "cardRename"
+            tooltip: I18n.t("common.rename")
             size: "s"
             icon: Icons.pencil
             onClicked: root.renameRequested()
@@ -91,6 +92,7 @@ StyledRect {
 
         IconButton {
             objectName: "cardDelete"
+            tooltip: I18n.t("common.delete")
             size: "s"
             icon: Icons.trash
             onClicked: root.deleteRequested()

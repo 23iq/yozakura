@@ -62,6 +62,7 @@ HostWidget {
 
             Level {
                 objectName: "lightLevel"
+                name: I18n.t("a11y.sync_brightness")
                 value: root.monitor?.brightness ?? 0
                 available: root.monitor !== null && root.monitor.ready
                 icon: Icons.sun
@@ -71,6 +72,7 @@ HostWidget {
             }
             Level {
                 objectName: "volumeLevel"
+                name: I18n.t("a11y.mute_volume")
                 value: root.sinkAudio?.volume ?? 0
                 available: root.sinkAudio !== null
                 icon: root.volumeIcon(root.sinkAudio)
@@ -85,6 +87,7 @@ HostWidget {
             }
             Level {
                 objectName: "micLevel"
+                name: I18n.t("a11y.mute_mic")
                 value: root.sourceAudio?.volume ?? 0
                 available: root.sourceAudio !== null
                 icon: root.sourceAudio?.muted ? Icons.micSlash : Icons.mic
@@ -105,6 +108,7 @@ HostWidget {
         property real value: 0
         property bool available: true
         property string icon: ""
+        property string name: ""
         property bool active: false
         signal moved(real value)
         signal toggled
@@ -132,6 +136,7 @@ HostWidget {
         }
         IconButton {
             id: button
+            accessibleName: level.name
             anchors.horizontalCenter: parent.horizontalCenter
             size: "s"
             icon: level.icon

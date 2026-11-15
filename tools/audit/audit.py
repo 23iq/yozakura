@@ -8,10 +8,10 @@ Usage:
   audit.py --strict        treat warnings as errors
   audit.py --quiet         only print errors and the summary
 
-Checks: dead-code, qs-scanner, brand-literals, shell-injection, config-keys, settings-schema, snapshot-keys, translations, monoliths, layers, ipc-methods, kit-literals, singleton-members.
+Checks: dead-code, qs-scanner, brand-literals, shell-injection, config-keys, settings-schema, snapshot-keys, translations, monoliths, layers, ipc-methods, kit-literals, singleton-members, iconbutton-names.
 Hard failures (severity "error"): shell/QML injection patterns, new upward/cyclic
 imports (layers, ratchet baseline), new kit-bypassing literals per directory (kit-literals,
-ratchet baseline), unknown backend methods (ipc-methods), unknown kit singleton members (singleton-members), config schema mismatches, unknown config
+ratchet baseline), unknown backend methods (ipc-methods), unknown kit singleton members (singleton-members), nameless IconButtons (iconbutton-names), config schema mismatches, unknown config
 keys used in code, missing translations. Warnings: dead files, snapshot
 coverage, unused/stale translations, monoliths. Allowlists live in
 tools/audit/config.json - every entry needs a reason.
@@ -29,6 +29,7 @@ from checks import (  # noqa: E402
     brand_literals,
     config_keys,
     dead_code,
+    iconbutton_names,
     ipc_methods,
     kit_literals,
     layers,
@@ -43,7 +44,7 @@ from checks import (  # noqa: E402
 )
 from lib.model import ERROR, INFO, WARN, load_config  # noqa: E402
 
-CHECKS = {m.CHECK: m for m in (config_keys, translations, brand_literals, dead_code, qs_scanner, shell_injection, settings_schema, schema_fresh, snapshot_keys, monoliths, layers, ipc_methods, kit_literals, singleton_members)}
+CHECKS = {m.CHECK: m for m in (config_keys, translations, brand_literals, dead_code, qs_scanner, shell_injection, settings_schema, schema_fresh, snapshot_keys, monoliths, layers, ipc_methods, kit_literals, singleton_members, iconbutton_names)}
 _ICON = {ERROR: "[fail]", WARN: "[warn]", INFO: "[info]"}
 
 

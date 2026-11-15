@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
+import qs.modules.services
 
 // Cancel / confirm pair (kit IconButtons) at the right edge of a row in
 // delete and alias modes. `buttonIndex` (0 cancel, 1 confirm) is the
@@ -29,6 +30,7 @@ Row {
             id: button
             required property string modelData
             required property int index
+            accessibleName: I18n.t(button.index === 0 ? "common.cancel" : "a11y.confirm")
 
             size: "s"
             icon: button.modelData
