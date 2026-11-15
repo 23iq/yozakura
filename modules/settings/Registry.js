@@ -81,16 +81,13 @@ var EDITORS = {
 };
 
 var PREVIEWS = {
-    "RoundnessPreview": "previews/RoundnessPreview.qml",
     "MotionPreview": "previews/MotionPreview.qml",
     "PaletteFadePreview": "previews/PaletteFadePreview.qml",
     "LightingPreview": "previews/LightingPreview.qml",
-    "WeatherFxPreview": "previews/WeatherFxPreview.qml",
     "SentencePreview": "previews/SentencePreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
-    "StripsPreview": "previews/StripsPreview.qml",
-    "LayoutPreview": "layout/LayoutPreview.qml"
+    "StripsPreview": "previews/StripsPreview.qml"
 };
 
 // Card thumbnails of a selector shown as cards (schema `display: "cards"`,
