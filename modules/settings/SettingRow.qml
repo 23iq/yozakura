@@ -108,9 +108,11 @@ FocusScope {
     // stack it when it would not fit beside the label)
     // (`iconOnly`: segments of icons, the names in their accessible names)
     readonly property real selectorWidth: type === "selector" ? (entry.iconOnly === true ? (entry.options || []).length * Space.px(44) : (entry.options || []).length * ((entry.options || []).reduce((w, o) => Math.max(w, row.textWidth(I18n.t(o.label))), 0) + Space.px(40))) : 0
-    // a dropdown shows its longest option whole; a font row its family
+    // a dropdown shows its longest option whole; a font row a family name
+    // of a set width (never the chosen one's: two font rows of a card stack
+    // alike whatever their values)
     readonly property real dropdownNeed: type === "selector" ? (entry.options || []).reduce((w, o) => Math.max(w, row.textWidth(I18n.t(o.label))), 0) + Space.px(100) : 0
-    readonly property real fontNeed: type === "font" ? row.textWidth(String(row.value || (entry.placeholder ? I18n.t(entry.placeholder) : "") || Type.bodyFont)) + Space.px(72) : 0
+    readonly property real fontNeed: type === "font" ? Space.px(170) + Space.px(72) : 0
     // the longest word of the label (a label wraps between words, never
     // inside one) and the room the inline dropdown / font control takes:
     // when both do not fit on one line the control goes under the label
@@ -240,13 +242,15 @@ FocusScope {
         enableShadow: false
         radius: Look.chipRadius(Space.rowHeight)
     }
-    Rectangle {
+    Mark {
+        objectName: "rowFlash"
         anchors.fill: parent
         radius: Look.chipRadius(Space.rowHeight)
         color: Type.accent
         opacity: row.highlighted ? Look.activeTint * 1.5 : 0
         visible: opacity > 0
         Behavior on opacity {
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
                 duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
@@ -334,6 +338,8 @@ FocusScope {
                         sourceComponent: IconButton {
                             objectName: "rowReset"
                             size: "xs"
+                            // (the keyboard path to Reset: Tab reaches it)
+                            focusable: true
                             icon: Icons.arrowCounterClockwise
                             tooltip: I18n.t("common.reset_default")
                             onClicked: SettingsStore.reset(row.entry)
@@ -417,38 +423,6 @@ FocusScope {
         }
     }
 
-    function controlComponent() {
-        switch (type) {
-        case "toggle":
-            return toggleComponent;
-        case "slider":
-            return sliderComponent;
-        case "number":
-            return numberComponent;
-        case "selector":
-            return row.asCards ? cardsComponent : selectorComponent;
-        case "text":
-            return textComponent;
-        case "font":
-            return fontComponent;
-        case "color-role":
-            return colorRoleComponent;
-        case "custom":
-            return customComponent;
-        case "list":
-            return listComponent;
-        case "path":
-            return pathComponent;
-        case "screens":
-            return screensComponent;
-        case "multiselect":
-            return multiselectComponent;
-        case "macro":
-            return macroComponent;
-        }
-        return null;
-    }
-
     // In place of the control of a waiting row: the one switch it needs.
     Component {
         id: fixComponent
@@ -460,187 +434,12 @@ FocusScope {
         }
     }
 
-    Component {
-        id: toggleComponent
-        ToggleControl {
-            checked: row.entry.invert ? !row.value : !!row.value
-            onToggled: v => SettingsStore.set(row.entry.key, row.entry.invert ? !v : v)
-        }
+    // the typed controls (RowControls.qml: one Component per entry type)
+    function controlComponent() {
+        return controls.forType(row.type, row.asCards);
     }
-
-    Component {
-        id: sliderComponent
-        SliderControl {
-            value: Ui.finite(row.value, row.entry.min ?? 0)
-            from: row.entry.min
-            to: row.entry.max
-            stepSize: row.entry.step ?? 1
-            unit: row.entry.unit ?? ""
-            specialValues: row.entry.specialValues ?? []
-            onMoved: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: numberComponent
-        NumberControl {
-            readoutMin: row.readout
-            value: Ui.finite(row.value, row.entry.min ?? 0)
-            from: row.entry.min
-            to: row.entry.max
-            stepSize: row.entry.step ?? 1
-            unit: row.entry.unit ?? ""
-            specialValues: row.entry.specialValues ?? []
-            onChanged: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: selectorComponent
-        SelectorControl {
-            segmentLimit: row.selectorAsDropdown ? 0 : (row.entry.iconOnly === true ? 6 : 4)
-            stretch: row.columnar
-            iconOnly: row.entry.iconOnly === true
-            options: row.entry.options
-            value: row.value
-            onSelected: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: textComponent
-        TextControl {
-            text: row.value ?? ""
-            placeholder: row.entry.placeholder ? I18n.t(row.entry.placeholder) : ""
-            monospace: !!row.entry.monospace
-            multiline: row.entry.multiline === true
-            invalid: !SchemaUtil.matchesPattern(row.entry, input.text)
-            onEdited: t => {
-                if (SchemaUtil.matchesPattern(row.entry, t))
-                    SettingsStore.set(row.entry.key, t);
-                else
-                    input.text = row.value ?? "";
-            }
-        }
-    }
-
-    Component {
-        id: fontComponent
-        FontControl {
-            family: row.value ?? ""
-            size: Number(SettingsStore.get(row.entry.sizeKey) ?? 14)
-            monospace: !!row.entry.monospace
-            showSize: !!row.entry.sizeKey
-            showSample: false
-            placeholder: row.entry.placeholder ? I18n.t(row.entry.placeholder) : ""
-            sizeUnit: row.entry.sizeUnit ?? "px"
-            onFamilyPicked: f => SettingsStore.set(row.entry.key, f)
-            onSizeEdited: s => SettingsStore.set(row.entry.sizeKey, s)
-        }
-    }
-
-    Component {
-        id: colorRoleComponent
-        ColorRoleControl {
-            value: row.value
-            gradient: !!row.entry.gradient
-            onEdited: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: listComponent
-        ListControl {
-            entry: row.entry
-            items: SchemaUtil.plain(row.value) || []
-            onChanged: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: pathComponent
-        PathControl {
-            path: row.value ?? ""
-            pathKind: row.entry.pathKind ?? "file"
-            filter: row.entry.filter ?? ""
-            placeholder: row.entry.placeholder ? I18n.t(row.entry.placeholder) : ""
-            onEdited: p => SettingsStore.set(row.entry.key, p)
-        }
-    }
-
-    Component {
-        id: screensComponent
-        ScreensControl {
-            values: SchemaUtil.plain(row.value) || []
-            onChanged: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: multiselectComponent
-        ChipsControl {
-            options: row.entry.options
-            values: SchemaUtil.plain(row.value) || []
-            onChanged: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: cardsComponent
-        CardSelector {
-            sharedColumns: row.pictureColumns
-            entry: row.entry
-            fillHeight: row.fillHeight
-            options: row.entry.options
-            value: row.value
-            onSelected: v => SettingsStore.set(row.entry.key, v)
-        }
-    }
-
-    Component {
-        id: macroComponent
-        MacroSlider {
-            entry: row.entry
-            compact: row.dense
-        }
-    }
-
-    // Rich editors: modules/settings/editors/<component>.qml, each with
-    // `property var entry` and reading/writing through SettingsStore.
-    Component {
-        id: customComponent
-        Loader {
-            id: editorLoader
-            // `lazy` (a heavy editor in a card of the page row, whose height
-            // is fixed): compiled and built once the page shows, not
-            // before its first frame
-            readonly property bool waits: row.entry.lazy === true && row.fillHeight > 0
-            property bool shown: false
-            asynchronous: waits
-            Connections {
-                target: editorLoader.waits && !editorLoader.shown && editorLoader.visible ? editorLoader.Window.window : null
-                function onFrameSwapped() {
-                    editorLoader.shown = true;
-                }
-            }
-            source: !waits || shown ? Qt.resolvedUrl(Registry.editor(row.entry.component)) : ""
-            // a lazy editor fades in once built (it never pops in)
-            opacity: !waits || status === Loader.Ready ? 1 : 0
-            Behavior on opacity {
-                enabled: editorLoader.waits && Motion.glide.duration > 0
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
-            height: row.fillHeight > 0 ? Math.max(row.fillHeight, implicitHeight) : implicitHeight
-            onLoaded: {
-                Ui.setIfPresent(item, "entry", row.entry);
-                if (item && "fillHeight" in item)
-                    item.fillHeight = Qt.binding(() => row.fillHeight);
-                if (item && "sharedColumns" in item)
-                    item.sharedColumns = Qt.binding(() => row.pictureColumns);
-            }
-        }
+    RowControls {
+        id: controls
+        row: row
     }
 }
