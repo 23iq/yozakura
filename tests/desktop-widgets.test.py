@@ -53,6 +53,7 @@ h = env.h
 win = env.load(f"""
 import QtQuick
 import QtQuick.Window
+import Quickshell
 import qs.config
 import qs.modules.globals
 import qs.modules.desktop.widgets
@@ -74,6 +75,9 @@ Window {{
         id: canvas
         objectName: "canvas"
         anchors.fill: parent
+        // the env's one screen (tests/lib/live_previews.py): a widget with
+        // no monitor goes to the first screen, as on a real desktop
+        screenName: Quickshell.screens[0].name
         bounds: ({{ x: 16, y: 16, w: {W} - 32, h: {H} - 32 }})
     }}
 }}""")
@@ -168,7 +172,7 @@ tiny = next(w for w in widgets() if w["id"] == "s1")
 check(tiny["w"] * W >= h.eval(frame("s1"), "minPx.w") - 1, "resize stops at the minimum size")
 
 # Depth clock area: overlapping widgets warn in edit mode.
-ev("DesktopWidgets.setClockArea('', {x: 900, y: 40, w: 300, h: 600})")
+ev("DesktopWidgets.setClockArea(screenName, {x: 900, y: 40, w: 300, h: 600})")
 settle()
 check(h.eval(frame("w1"), "overlapsClock") is True, "weather overlaps the clock area")
 check(h.eval(frame("n1"), "overlapsClock") is False, "note does not")
