@@ -48,10 +48,14 @@ func trackGroup(pgid int, prog string) func() {
 // gone, when their members still run a program of the recorded name, and
 // forgets those records.
 func KillStaleGroups(dir string) int {
-	return killStaleGroups(dir, ownerAlive)
+	return killStaleGroups(dir, PidAlive)
 }
 
-func ownerAlive(pid int) bool {
+// PidAlive reports whether process pid exists (this one always does).
+func PidAlive(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
 	if pid == os.Getpid() {
 		return true
 	}

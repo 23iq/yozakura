@@ -98,8 +98,9 @@ var families = []family{
 			routes([]Engine{EnginePdftoppm, EngineMagick}, "png", "jpg"),
 			routes([]Engine{EnginePdftotext}, "txt"),
 		)},
-	// markup and ebooks (html prints to pdf directly in LibreOffice)
-	{sources: []string{"html"}, routes: routes(office, "pdf")},
+	// markup and ebooks: to pdf through pandoc's sandbox and sanitizer,
+	// then LibreOffice (never LibreOffice on the raw HTML: it loads any
+	// <img src> on disk or the network)
 	{sources: []string{"md", "html", "rst", "org", "tex", "epub"},
 		routes: join(
 			routes([]Engine{EngineDocPDF}, "pdf"),

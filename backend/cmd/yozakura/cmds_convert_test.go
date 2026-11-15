@@ -78,3 +78,32 @@ func TestConvertFormatsCLI(t *testing.T) {
 		t.Fatal("completion")
 	}
 }
+
+// help and the completion helper never build the service (it sweeps the
+// cache and kills stale process groups); a file named "-x" goes after --.
+func TestConvertCLILazyAndDoubleDash(t *testing.T) {
+	opened := 0
+	lazy := convertEnv{open: func() convertEnv { opened++; return testConvertEnv(t) }}
+	var out, errOut bytes.Buffer
+	for _, args := range [][]string{{"__formats"}, {"help"}, {"--help"}} {
+		if runConvert(args, lazy, &out, &errOut) != 0 {
+			t.Fatalf("%v failed", args)
+		}
+	}
+	if opened != 0 {
+		t.Fatal("the service was built for help / completion")
+	}
+	dir := t.TempDir()
+	t.Chdir(dir)
+	_ = os.WriteFile(filepath.Join(dir, "-data.json"), []byte(`{"k": 1}`), 0o644)
+	if code := runConvert([]string{"-data.json"}, lazy, &out, &errOut); code != 2 || !strings.Contains(errOut.String(), "after --") {
+		t.Fatalf("dash file without --: %d %s", code, errOut.String())
+	}
+	out.Reset()
+	if code := runConvert([]string{"--to", "yaml", "--", "-data.json"}, lazy, &out, &errOut); code != 0 || !strings.Contains(out.String(), "-data.yaml") {
+		t.Fatalf("--: %d %s %s", code, out.String(), errOut.String())
+	}
+	if opened == 0 {
+		t.Fatal("the service was never built")
+	}
+}

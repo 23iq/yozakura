@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"yozakura/backend/pkg/proc"
 )
 
@@ -33,9 +35,15 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		if err != nil {
 			return err
 		}
-		if err := placeInput(src, filepath.Join(p.Work, p.Input)); err != nil {
+		if err := placeInput(ctx, src, filepath.Join(p.Work, p.Input)); err != nil {
 			return err
 		}
+		if p.probe != nil && p.Duration == 0 {
+			p.Duration = p.probe(ctx, filepath.Join(p.Work, p.Input))
+		}
+	}
+	if err := p.writeFiles(); err != nil {
+		return err
 	}
 	for _, st := range p.Steps {
 		if err := ctx.Err(); err != nil {
@@ -43,7 +51,7 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		}
 		if st.Native != nil {
 			onProgress(-1)
-			if err := st.Native(); err != nil {
+			if err := runNative(ctx, st); err != nil {
 				return err
 			}
 			continue
@@ -71,33 +79,95 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 	return nil
 }
 
+// writeFiles creates the plan's Files that do not exist yet.
+func (p *Plan) writeFiles() error {
+	for name, content := range p.Files {
+		path := name
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(p.Work, name)
+		}
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			return err
+		}
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if errors.Is(err, os.ErrExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(content)
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // patternChars mean something to ImageMagick or ffmpeg in a file name.
 // ImageMagick resolves a symlink to its target's name, so a source whose
 // path holds one is hard-linked, else copied, never symlinked.
 const patternChars = "%[]*?{}@~:"
 
-func placeInput(src, dst string) error {
+func placeInput(ctx context.Context, src, dst string) error {
 	_ = os.Remove(dst)
-	if err := os.Link(src, dst); err == nil {
+	// opened non-blocking and checked: a path swapped for a FIFO since it
+	// was probed is never read (the open and every read would block)
+	in, err := os.OpenFile(src, os.O_RDONLY|syscall.O_NONBLOCK, 0)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	if st, err := in.Stat(); err != nil || !st.Mode().IsRegular() {
+		return errors.New("not a regular file")
+	}
+	// link the file that was checked, not whatever the path names now
+	if linkOpen(in, dst) == nil {
 		return nil
 	}
 	if !strings.ContainsAny(src, patternChars) {
 		return os.Symlink(src, dst)
 	}
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(out, in); err != nil {
+	if _, err := io.Copy(out, ctxReader{ctx, in}); err != nil {
 		out.Close()
 		return err
 	}
 	return out.Close()
+}
+
+// linkOpen hard-links the open file f to dst through /proc/self/fd.
+func linkOpen(f *os.File, dst string) error {
+	rc, err := f.SyscallConn()
+	if err != nil {
+		return err
+	}
+	var lerr error
+	if err := rc.Control(func(fd uintptr) {
+		lerr = unix.Linkat(unix.AT_FDCWD, "/proc/self/fd/"+strconv.Itoa(int(fd)), unix.AT_FDCWD, dst, unix.AT_SYMLINK_FOLLOW)
+	}); err != nil {
+		return err
+	}
+	return lerr
+}
+
+// ctxReader stops a copy when ctx is done.
+type ctxReader struct {
+	ctx context.Context
+	r   io.Reader
+}
+
+func (c ctxReader) Read(p []byte) (int, error) {
+	if err := c.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return c.r.Read(p)
 }
 
 // errTimeout is a step that ran past its timeout.
@@ -112,6 +182,11 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 	}
 	cmd := proc.Command(context.Background(), st.Prog, st.Args...)
 	cmd.Dir = st.Dir
+	// a helper that left the group but holds our pipes must not keep Wait
+	cmd.WaitDelay = 2 * time.Second
+	if len(st.Env) > 0 {
+		cmd.Env = append(os.Environ(), st.Env...)
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	tail := &tailBuffer{max: 64}
 	cmd.Stderr = tail
@@ -219,14 +294,15 @@ func collect(dir, out string) error {
 }
 
 // ProbeDuration asks ffprobe for a media file's length in seconds (0 when
-// unknown: progress is then indeterminate).
+// unknown: progress is then indeterminate). Plan.Run calls it on the
+// placed input (a neutral name: "%d" in a user's name is a pattern).
 func (t *Tools) ProbeDuration(ctx context.Context, src string) float64 {
 	if t == nil || t.ffprobe == "" {
 		return 0
 	}
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	out, err := proc.Run(ctx, t.ffprobe, "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", src)
+	out, err := proc.Run(ctx, t.ffprobe, "-v", "error", "-protocol_whitelist", "file", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", src)
 	if err != nil {
 		return 0
 	}

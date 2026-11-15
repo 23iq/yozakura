@@ -50,3 +50,29 @@ func Reserve(src, ext, dir string) (string, error) {
 	}
 	return "", fmt.Errorf("no free name for %s in %s", name, dir)
 }
+
+// ReserveDir claims a free folder name in dir like Reserve: "name",
+// "name (1)"... created empty (mkdir fails on an existing one).
+func ReserveDir(name, dir string) (string, error) {
+	for i := 0; i < maxNameTries; i++ {
+		cand := name
+		if i > 0 {
+			cand = fmt.Sprintf("%s (%d)", name, i)
+		}
+		path := filepath.Join(dir, cand)
+		err := os.Mkdir(path, 0o755)
+		if err == nil {
+			return path, nil
+		}
+		if !errors.Is(err, fs.ErrExist) {
+			return "", fmt.Errorf("cannot write to %s", dir)
+		}
+	}
+	return "", fmt.Errorf("no free name for %s in %s", name, dir)
+}
+
+// MediaName is the folder of images shipped next to a text result of src:
+// "report.docx" -> "report_media".
+func MediaName(src string) string {
+	return strings.TrimSuffix(OutputName(src, "x"), ".x") + "_media"
+}

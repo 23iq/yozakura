@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
+	"syscall"
+	"time"
 
 	conv "yozakura/backend/pkg/convert"
 )
@@ -78,6 +81,11 @@ func (s *Service) start(params json.RawMessage) (any, error) {
 func (s *Service) Start(p StartParams) ([]Job, error) {
 	outDir := expandHome(strings.TrimSpace(p.OutDir), s.o.Home)
 	if outDir != "" {
+		// a relative folder would resolve against whatever directory
+		// each tool runs in
+		if abs, err := filepath.Abs(outDir); err == nil {
+			outDir = abs
+		}
 		if st, err := os.Stat(outDir); err != nil || !st.IsDir() {
 			return nil, fmt.Errorf("output folder %s does not exist", outDir)
 		}
@@ -102,7 +110,7 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 	if abs, err := filepath.Abs(path); err == nil {
 		path = abs
 	}
-	state, msg, from := StateQueued, "", ""
+	state, msg, from, to := StateQueued, "", "", it.Target
 	switch fm, ok := conv.Detect(path); {
 	case !conv.IsRegular(path):
 		state, msg = StateFailed, "not a regular file"
@@ -113,7 +121,10 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 		state, msg = StateFailed, "unknown format"
 	default:
 		from = fm.ID
-		if _, ok := conv.Lookup(it.Target); !ok {
+		// "jpeg", "JPG", ".png" name a format; the routes know its id
+		if f, ok := conv.Lookup(it.Target); ok {
+			to = f.ID
+		} else {
 			state, msg = StateFailed, "unknown target "+it.Target
 		}
 	}
@@ -128,7 +139,7 @@ func (s *Service) newJob(it Item, outDir string, q conv.Quality) (Job, error) {
 		return Job{}, errors.New("the converter is shutting down")
 	}
 	s.seq++
-	j := &Job{ID: fmt.Sprintf("c%d", s.seq), Path: path, Name: filepath.Base(path), From: from, To: it.Target,
+	j := &Job{ID: fmt.Sprintf("c%d", s.seq), Path: path, Name: filepath.Base(path), From: from, To: to,
 		State: state, Error: msg, Progress: -1, outDir: outDir, quality: q, ctx: ctx}
 	s.jobs[j.ID] = j
 	s.order = append(s.order, j.ID)
@@ -201,7 +212,7 @@ func (s *Service) run(id string) {
 		s.update(id, func(j *Job) { j.State = StateCancelled })
 		return
 	}
-	output, err := s.convert(ctx, id, req, outDir)
+	output, err := s.safeConvert(ctx, id, req, outDir)
 	s.update(id, func(j *Job) {
 		switch {
 		case err == nil:
@@ -215,6 +226,35 @@ func (s *Service) run(id string) {
 	})
 }
 
+// safeConvert is convert with a panic turned into the job's error: the
+// service lives in the daemon that supervises the shell.
+func (s *Service) safeConvert(ctx context.Context, id string, req conv.Request, outDir string) (out string, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "convert: job %s panicked: %v\n%s", id, r, debug.Stack())
+			out, err = "", fmt.Errorf("the converter failed on this file (%v)", r)
+		}
+	}()
+	return s.convert(ctx, id, req, outDir)
+}
+
+// progressEvery: progress is published at most this often (ffmpeg reports
+// many times a second; the end and unknown progress always go out).
+const progressEvery = 100 * time.Millisecond
+
+// progress returns the job's throttled progress callback.
+func (s *Service) progress(id string) conv.ProgressFunc {
+	last, lastAt := -2.0, time.Time{}
+	return func(f float64) {
+		now := time.Now()
+		if f == last || (f >= 0 && f < 1 && last >= 0 && now.Sub(lastAt) < progressEvery) {
+			return
+		}
+		last, lastAt = f, now
+		s.update(id, func(j *Job) { j.Progress = f })
+	}
+}
+
 // convert runs one job in a private work directory: under the cache when
 // it is on the output's filesystem (nothing appears in the user's folder
 // and the result is still renamed, never copied), else a hidden one in the
@@ -226,12 +266,27 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	if dir == "" {
 		dir = filepath.Dir(req.Src)
 	}
-	work, err := s.workDir(dir)
+	work, release, err := s.workDir(dir)
 	if err != nil {
 		return "", err
 	}
-	defer os.RemoveAll(work)
-	plan, err := conv.BuildPlan(req, t, work, conv.PlanOptions{OfficeProfile: s.officeProfile()})
+	defer release()
+	opts := conv.PlanOptions{OfficeProfile: s.officeProfile()}
+	// a text result of a docx / odt / epub keeps its images in a folder
+	// next to it, named before the run (the text links to it)
+	media := ""
+	if conv.ShipsMedia(req.From, req.To) {
+		if media, err = conv.ReserveDir(conv.MediaName(req.Src), dir); err != nil {
+			return "", err
+		}
+		opts.MediaLink = filepath.Base(media)
+		defer func() {
+			if media != "" {
+				_ = os.Remove(media) // unused: still empty
+			}
+		}()
+	}
+	plan, err := conv.BuildPlan(req, t, work, opts)
 	if err != nil {
 		return "", err
 	}
@@ -244,13 +299,8 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 			return "", ctx.Err()
 		}
 	}
-	if plan.Engine == conv.EngineFFmpeg {
-		plan.Duration = t.ProbeDuration(ctx, req.Src)
-	}
 	s.update(id, func(j *Job) { j.State, j.Engine, j.Progress = StateRunning, string(plan.Engine), -1 })
-	if err := plan.Run(ctx, func(f float64) {
-		s.update(id, func(j *Job) { j.Progress = f })
-	}); err != nil {
+	if err := plan.Run(ctx, s.progress(id)); err != nil {
 		return "", err
 	}
 	if err := ctx.Err(); err != nil {
@@ -263,6 +313,13 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	if err := os.Rename(plan.Out, final); err != nil {
 		os.Remove(final)
 		return "", fmt.Errorf("cannot write to %s", dir)
+	}
+	if media != "" && plan.Media != "" {
+		// onto the reserved empty folder: rename(2) replaces an empty one
+		// (os.Rename refuses any existing folder)
+		if st, err := os.Stat(plan.Media); err == nil && st.IsDir() && syscall.Rename(plan.Media, media) == nil {
+			media = ""
+		}
 	}
 	return final, nil
 }

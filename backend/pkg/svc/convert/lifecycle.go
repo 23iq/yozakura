@@ -19,6 +19,8 @@ import (
 //   <cache>/convert/work/<pid>-*            work directories
 //   <cache>/convert/office-profile-<pid>    its LibreOffice profile
 //   <cache>/convert/groups/<pid>-<pgid>     its running process groups
+//   <cache>/convert/outside/<pid>-*         the path of a hidden work dir it
+//                                           made in an output folder
 
 func (s *Service) workRoot() string { return filepath.Join(s.o.CacheDir, "work") }
 
@@ -29,23 +31,66 @@ func (s *Service) officeProfile() string {
 	return filepath.Join(s.o.CacheDir, "office-profile-"+strconv.Itoa(os.Getpid()))
 }
 
-// workDir makes the job's private directory: under the cache when it is on
-// dir's filesystem (the result can be renamed into dir), else a hidden one
-// in dir.
-func (s *Service) workDir(dir string) (string, error) {
+func (s *Service) outsideRoot() string { return filepath.Join(s.o.CacheDir, "outside") }
+
+// hiddenPrefix starts the name of a work dir made in an output folder.
+func hiddenPrefix() string { return "." + brand.AppID + "-convert-" }
+
+// workDir makes the job's private directory and returns its cleanup:
+// under the cache when it is on dir's filesystem (the result can be
+// renamed into dir), else a hidden one in dir, recorded in the cache so a
+// later start removes it if this process dies first.
+func (s *Service) workDir(dir string) (string, func(), error) {
 	if s.o.CacheDir != "" {
 		root := s.workRoot()
 		if err := os.MkdirAll(root, 0o700); err == nil && sameDevice(root, dir) {
 			if w, err := os.MkdirTemp(root, strconv.Itoa(os.Getpid())+"-"); err == nil {
-				return w, nil
+				return w, func() { _ = os.RemoveAll(w) }, nil
 			}
 		}
 	}
-	w, err := os.MkdirTemp(dir, "."+brand.AppID+"-convert-")
+	w, err := os.MkdirTemp(dir, hiddenPrefix()+strconv.Itoa(os.Getpid())+"-")
 	if err != nil {
-		return "", fmt.Errorf("cannot write to %s", dir)
+		return "", nil, fmt.Errorf("cannot write to %s", dir)
 	}
-	return w, nil
+	record := ""
+	if s.o.CacheDir != "" && os.MkdirAll(s.outsideRoot(), 0o700) == nil {
+		if f, err := os.CreateTemp(s.outsideRoot(), strconv.Itoa(os.Getpid())+"-"); err == nil {
+			_, _ = f.WriteString(w)
+			f.Close()
+			record = f.Name()
+		}
+	}
+	return w, func() {
+		_ = os.RemoveAll(w)
+		if record != "" {
+			_ = os.Remove(record)
+		}
+	}, nil
+}
+
+// sweepOutside removes the hidden work dirs dead processes recorded; a
+// record only ever names a dir of the recorded process's own pattern.
+func (s *Service) sweepOutside() {
+	entries, err := os.ReadDir(s.outsideRoot())
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		pid, ok := leadingPid(e.Name(), "-")
+		if ok && conv.PidAlive(pid) {
+			continue
+		}
+		rec := filepath.Join(s.outsideRoot(), e.Name())
+		b, _ := os.ReadFile(rec)
+		_ = os.Remove(rec)
+		w := strings.TrimSpace(string(b))
+		if ok && filepath.IsAbs(w) && strings.HasPrefix(filepath.Base(w), hiddenPrefix()+strconv.Itoa(pid)+"-") {
+			if st, err := os.Lstat(w); err == nil && st.IsDir() {
+				_ = os.RemoveAll(w)
+			}
+		}
+	}
 }
 
 func sameDevice(a, b string) bool {
@@ -65,16 +110,17 @@ func (s *Service) sweep() {
 	groups := filepath.Join(s.o.CacheDir, "groups")
 	conv.KillStaleGroups(groups)
 	conv.TrackGroupsIn(groups)
+	s.sweepOutside()
 	if entries, err := os.ReadDir(s.workRoot()); err == nil {
 		for _, e := range entries {
-			if pid, ok := leadingPid(e.Name(), "-"); ok && !pidAlive(pid) {
+			if pid, ok := leadingPid(e.Name(), "-"); ok && !conv.PidAlive(pid) {
 				_ = os.RemoveAll(filepath.Join(s.workRoot(), e.Name()))
 			}
 		}
 	}
 	profiles, _ := filepath.Glob(filepath.Join(s.o.CacheDir, "office-profile-*"))
 	for _, p := range profiles {
-		if pid, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(p), "office-profile-")); err == nil && !pidAlive(pid) {
+		if pid, err := strconv.Atoi(strings.TrimPrefix(filepath.Base(p), "office-profile-")); err == nil && !conv.PidAlive(pid) {
 			_ = os.RemoveAll(p)
 		}
 	}
@@ -89,17 +135,6 @@ func leadingPid(name, sep string) (int, bool) {
 	}
 	pid, err := strconv.Atoi(head)
 	return pid, err == nil
-}
-
-func pidAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	if pid == os.Getpid() {
-		return true
-	}
-	err := syscall.Kill(pid, 0)
-	return err == nil || err == syscall.EPERM
 }
 
 // Stop cancels every job, waits (bounded) for them to clean up and

@@ -5,16 +5,18 @@
 //
 // IPC (service "convert"):
 //
-//	formats {}                          -> {formats, engines}
+//	formats {}                          -> {formats, engines}  (MCP / scripts; the window probes)
 //	probe {paths}                       -> {files: [File]}
 //	start {items: [{path, target}], outDir?, quality?} -> {jobs: [Job]}
 //	cancel {id}                         -> {}
-//	clear {}                            -> {}   forget finished jobs
+//	clear {}                            -> {}   forget finished jobs (MCP / scripts)
 //	paste {}                            -> {paths}  files or image data on the clipboard
 //	copy {path}                         -> {}   a result to the clipboard
 //
 // Events: convert.job (Job) on every change; a subscriber first gets every
-// job still known.
+// job still known. Progress is published at most every progressEvery; an
+// event a full subscriber buffer refused is made good by resending every
+// job (see resync), so a job's final state is never lost.
 package convert
 
 import (
@@ -29,8 +31,9 @@ import (
 	"yozakura/backend/pkg/ipc"
 )
 
-// toolsTTL: how long a detection of the installed engines is reused.
-const toolsTTL = 30 * time.Second
+// toolsTTL: how long a detection of the installed engines is used before
+// it is refreshed (in the background: callers keep the previous one).
+const toolsTTL = 2 * time.Minute
 
 // Options are the side effects of the service (faked in tests).
 type Options struct {
@@ -45,14 +48,17 @@ type Options struct {
 type Service struct {
 	o Options
 
+	// tools is detected without s.mu: detection runs programs for seconds
+	tools toolCache
+
 	mu      sync.Mutex
-	tools   *conv.Tools
-	toolsAt time.Time
 	jobs    map[string]*Job
 	order   []string
-	subs    []*ipc.Subscriber
+	subs    []*subscription
 	cancels map[string]func()
 	seq     int
+	// resyncing: a retry of the stale subscribers is scheduled
+	resyncing bool
 
 	sem chan struct{}
 	// one LibreOffice at a time on this process's profile; a channel so a
@@ -79,7 +85,7 @@ func New(o Options) *Service {
 		o.Workers = 2
 	}
 	s := &Service{o: o, jobs: map[string]*Job{}, cancels: map[string]func(){}, sem: make(chan struct{}, o.Workers),
-		office: make(chan struct{}, 1)}
+		office: make(chan struct{}, 1), tools: toolCache{ready: make(chan struct{})}}
 	s.sweep()
 	return s
 }
@@ -93,18 +99,52 @@ func (s *Service) Register(srv *ipc.Server) {
 			"clear": s.clear, "paste": s.paste, "copy": s.copy,
 		},
 		Subscribe: s.subscribe,
-		Async:     map[string]bool{"formats": true, "probe": true, "paste": true, "copy": true},
+		// start detects every file's format (a slow or hung mount must not
+		// stall the shell's ordered connection)
+		Async: map[string]bool{"formats": true, "probe": true, "start": true, "paste": true, "copy": true},
 	})
 }
 
-// Tools returns the detected engines, refreshed after toolsTTL.
+// toolCache holds the last detection of the installed engines.
+type toolCache struct {
+	mu         sync.Mutex
+	tools      *conv.Tools
+	at         time.Time
+	refreshing bool
+	ready      chan struct{} // closed by the first detection
+}
+
+// Tools returns the detected engines. Only the very first call waits for a
+// detection; later ones get the last result at once, and one past toolsTTL
+// starts a refresh in the background. s.mu is never held meanwhile.
 func (s *Service) Tools() *conv.Tools {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.tools == nil || time.Since(s.toolsAt) > toolsTTL {
-		s.tools, s.toolsAt = s.o.Detect(), time.Now()
+	c := &s.tools
+	c.mu.Lock()
+	t := c.tools
+	if (t == nil || time.Since(c.at) > toolsTTL) && !c.refreshing {
+		c.refreshing = true
+		go s.refreshTools()
 	}
-	return s.tools
+	c.mu.Unlock()
+	if t != nil {
+		return t
+	}
+	<-c.ready
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.tools
+}
+
+func (s *Service) refreshTools() {
+	t := s.o.Detect()
+	c := &s.tools
+	c.mu.Lock()
+	first := c.tools == nil
+	c.tools, c.at, c.refreshing = t, time.Now(), false
+	c.mu.Unlock()
+	if first {
+		close(c.ready)
+	}
 }
 
 func (s *Service) formats(json.RawMessage) (any, error) {
@@ -175,19 +215,28 @@ func (s *Service) probe(params json.RawMessage) (any, error) {
 	return map[string]any{"files": files}, nil
 }
 
+// subscription is a subscriber and whether it missed an event.
+type subscription struct {
+	sub   *ipc.Subscriber
+	stale bool
+}
+
+// resyncEvery: how soon a subscriber that missed an event gets every job
+// again.
+const resyncEvery = 200 * time.Millisecond
+
 func (s *Service) subscribe(sub *ipc.Subscriber) {
 	s.mu.Lock()
-	s.subs = append(s.subs, sub)
-	for _, id := range s.order {
-		sub.Send("convert.job", *s.jobs[id])
-	}
+	w := &subscription{sub: sub}
+	s.subs = append(s.subs, w)
+	s.resync(w)
 	s.mu.Unlock()
 	go func() {
 		<-sub.StopCh()
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		for i, x := range s.subs {
-			if x == sub {
+			if x == w {
 				s.subs = append(s.subs[:i], s.subs[i+1:]...)
 				return
 			}
@@ -195,9 +244,48 @@ func (s *Service) subscribe(sub *ipc.Subscriber) {
 	}()
 }
 
-// publish sends a copy of the job to every subscriber; s.mu is held.
+// publish sends a copy of the job to every subscriber; s.mu is held. A
+// subscriber whose buffer is full is resent every job later instead.
 func (s *Service) publish(j *Job) {
-	for _, sub := range s.subs {
-		sub.Send("convert.job", *j)
+	for _, w := range s.subs {
+		if w.stale {
+			s.resync(w)
+		} else if !w.sub.TrySend("convert.job", *j) {
+			w.stale = true
+			s.scheduleResync()
+		}
 	}
+}
+
+// resync sends every job to w (the current state of each: whatever it
+// missed); w stays stale until all fit. s.mu is held.
+func (s *Service) resync(w *subscription) {
+	w.stale = false
+	for _, id := range s.order {
+		if !w.sub.TrySend("convert.job", *s.jobs[id]) {
+			w.stale = true
+			s.scheduleResync()
+			return
+		}
+	}
+}
+
+// scheduleResync retries the stale subscribers after resyncEvery, until
+// none is left (a finished job publishes nothing more on its own). s.mu is
+// held.
+func (s *Service) scheduleResync() {
+	if s.resyncing {
+		return
+	}
+	s.resyncing = true
+	time.AfterFunc(resyncEvery, func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.resyncing = false
+		for _, w := range s.subs {
+			if w.stale {
+				s.resync(w)
+			}
+		}
+	})
 }

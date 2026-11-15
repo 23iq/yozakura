@@ -38,7 +38,6 @@ func convertFile(t *testing.T, src, to string) string {
 	if err != nil {
 		t.Fatalf("%s->%s: %v", from.ID, to, err)
 	}
-	p.Duration = realTools.ProbeDuration(context.Background(), src)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	var last float64 = -2

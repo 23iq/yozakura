@@ -32,9 +32,9 @@ func TestArgvBuilders(t *testing.T) {
 		{"mp4", "webm", QualitySmall, EngineFFmpeg, []string{"libvpx-vp9", "-crf 40", "libopus"}},
 		{"mp4", "gif", QualityBalanced, EngineFFmpeg, []string{"fps=15", "palettegen", "-loop 0", "out.gif"}},
 		{"gif", "mp4", QualityBalanced, EngineFFmpeg, []string{"scale=trunc(iw/2)*2:trunc(ih/2)*2"}},
-		{"jpg", "png", QualityBalanced, EngineMagick, []string{"magick in.jpg[0] out.png"}},
-		{"png", "jpg", QualityBest, EngineMagick, []string{"-background white -alpha remove", "-quality 92", "out.jpg"}},
-		{"gif", "webp", QualityBalanced, EngineMagick, []string{"magick in.gif -quality 80 out.webp"}},
+		{"jpg", "png", QualityBalanced, EngineMagick, []string{"magick -limit memory 1GiB", "-limit area 268435456", "JPEG:in.jpg[0] PNG:out.png"}},
+		{"png", "jpg", QualityBest, EngineMagick, []string{"-background white -alpha remove", "-quality 92", "JPEG:out.jpg"}},
+		{"gif", "webp", QualityBalanced, EngineMagick, []string{"GIF:in.gif -quality 80 WEBP:out.webp"}},
 		{"png", "ico", QualityBalanced, EngineMagick, []string{"icon:auto-resize"}},
 		{"svg", "png", QualityBalanced, EngineRsvg, []string{"rsvg-convert -f png -o out.png in.svg"}},
 		{"docx", "pdf", QualityBalanced, EngineSoffice, []string{"soffice --headless", "-env:UserInstallation=file:///prof", "--convert-to pdf --outdir office-out in.docx"}},
@@ -71,6 +71,32 @@ func TestDocPDFSteps(t *testing.T) {
 		argv(p, 2) != "pandoc -f json -t odt -s -o /work/mid.odt /work/doc-safe.json" || p.Steps[2].Dir != "/in" ||
 		!strings.Contains(argv(p, 3), "--convert-to pdf --outdir office-out mid.odt") || p.Steps[3].Out != "out.pdf" {
 		t.Fatalf("%s | %s | %s", argv(p, 0), argv(p, 2), argv(p, 3))
+	}
+	// html too: LibreOffice never reads the raw page (it loads any image)
+	if h := plan(t, "html", "pdf", QualityBalanced); h.Engine != EngineDocPDF || argv(h, 0) != "pandoc --sandbox -f html -t json -o doc.json in.html" {
+		t.Fatalf("html->pdf: %s %s", h.Engine, argv(h, 0))
+	}
+	// an html result embeds its images; a text result of a container
+	// ships them next to it
+	if a := argv(plan(t, "md", "html", QualityBalanced), 2); !strings.Contains(a, "-t html5 -s --embed-resources -o /work/out.html") {
+		t.Fatalf("md->html writer: %s", a)
+	}
+	old := allTools()
+	old.pandocNoEmbed = true
+	p, _ = BuildPlan(Request{Src: "/in/a.md", From: "md", To: "html"}, old, "/work", PlanOptions{})
+	if !strings.Contains(argv(p, 2), "--self-contained") {
+		t.Fatalf("old pandoc: %s", argv(p, 2))
+	}
+	p, _ = BuildPlan(Request{Src: "/in/a.docx", From: "docx", To: "md"}, allTools(), "/work", PlanOptions{MediaLink: "a_media"})
+	if p.Media != "/work/media" {
+		t.Fatalf("docx->md media %q", p.Media)
+	}
+	p, _ = BuildPlan(Request{Src: "/in/a.md", From: "md", To: "rst"}, allTools(), "/work", PlanOptions{MediaLink: "a_media"})
+	if p.Media != "" {
+		t.Fatalf("md->rst ships media %q", p.Media)
+	}
+	if MediaName("/x/report.v2.docx") != "report.v2_media" {
+		t.Fatal(MediaName("/x/report.v2.docx"))
 	}
 }
 

@@ -1,8 +1,8 @@
 package convert
 
 import (
+	"context"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"time"
 )
@@ -63,7 +63,9 @@ type Step struct {
 	Progress bool
 	// Timeout bounds the step (a password prompt or a stuck office).
 	Timeout time.Duration
-	Native  func() error
+	// Env is added to the program's environment.
+	Env    []string
+	Native func() error
 }
 
 // Plan is everything a conversion runs, in order. Run first links the
@@ -77,12 +79,23 @@ type Plan struct {
 	Out    string
 	// Duration of the source in seconds (ffmpeg progress), 0 = unknown.
 	Duration float64
+	// Media is the folder of images to ship next to the result as
+	// PlanOptions.MediaLink ("" = none).
+	Media string
+	// Files are written before the first step when missing (a tool's
+	// policy or settings): a relative path is inside Work.
+	Files map[string]string
+	// probe reads the duration of the placed input when Duration is 0.
+	probe func(context.Context, string) float64
 }
 
 // PlanOptions: where LibreOffice keeps its profile (a private one, so a
 // running LibreOffice never swallows the conversion); "" = inside work.
+// MediaLink names the folder (relative to the result) a container's images
+// go to when ShipsMedia; "" drops them from text results.
 type PlanOptions struct {
 	OfficeProfile string
+	MediaLink     string
 }
 
 // Work-directory names: the linked source, the result, intermediates.
@@ -137,17 +150,24 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 	timeout := stepTimeouts[tg.Engine]
 	switch tg.Engine {
 	case EngineFFmpeg:
+		p.probe = t.ProbeDuration
 		p.Steps = []Step{{Prog: prog, Args: ffmpegArgs(r, out), Progress: true, Out: out, Timeout: timeout}}
 	case EngineMagick:
-		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out), Out: out, Timeout: timeout}}
+		p.Files = map[string]string{magickPolicyFile: magickPolicy(req.From, req.To, t.magickCoder(req.From), work)}
+		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out, t), Env: magickEnv(work), Out: out, Timeout: timeout}}
 	case EngineRsvg:
 		p.Steps = []Step{{Prog: prog, Args: []string{"-f", req.To, "-o", out, in}, Out: out, Timeout: timeout}}
 	case EngineSoffice:
+		p.Files = officeFiles(profile)
 		p.Steps = []Step{sofficeStep(prog, profile, req.From, req.To, in, out)}
 	case EnginePandoc:
-		p.Steps = pandocSteps(t.Prog(EnginePandoc), req.From, req.To, in, out, req.Src, work)
+		p.Steps = pandocSteps(t, req.From, req.To, in, out, req.Src, work, o.MediaLink)
+		if o.MediaLink != "" && ShipsMedia(req.From, req.To) {
+			p.Media = filepath.Join(work, mediaDir)
+		}
 	case EngineDocPDF:
-		p.Steps = append(pandocSteps(t.Prog(EnginePandoc), req.From, "odt", in, midODT, req.Src, work),
+		p.Files = officeFiles(profile)
+		p.Steps = append(pandocSteps(t, req.From, "odt", in, midODT, req.Src, work, ""),
 			sofficeStep(t.Prog(EngineSoffice), profile, "odt", "pdf", midODT, out))
 	case EnginePdftoppm:
 		args := []string{"-png"}
@@ -169,13 +189,16 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 
 // pandocSteps: pandoc reads the document in its sandbox (nothing but the
 // input; a container's own media is extracted into the work dir) into its
-// document tree, SanitizeAST cleans it (images only from the document's
-// own folder tree or its extracted media, no remote or absolute paths, no
-// raw HTML that loads files, no metadata naming files), and the writer
-// runs from that folder so relative images resolve there. The writer runs
-// outside the sandbox: pandoc 3.1's sandbox also hides its own data files
-// (the EPUB stylesheet).
-func pandocSteps(prog, from, to, in, out, src, work string) []Step {
+// document tree, SanitizeAST cleans it (see sanitize.go), and the writer
+// runs from the document's folder so relative images resolve there. The
+// writer runs outside the sandbox: pandoc 3.1's sandbox also hides its own
+// data files (the EPUB stylesheet).
+//
+// Images survive in every target: docx, odt and epub embed them, html gets
+// them embedded (a single file), and a container's extracted media is
+// shipped next to a text result (md, rst, org, tex) as mediaLink.
+func pandocSteps(t *Tools, from, to, in, out, src, work, mediaLink string) []Step {
+	prog := t.Prog(EnginePandoc)
 	timeout := stepTimeouts[EnginePandoc]
 	read := []string{"--sandbox", "-f", pandocReaders[from], "-t", "json", "-o", astRaw}
 	root := filepath.Dir(src)
@@ -183,13 +206,28 @@ func pandocSteps(prog, from, to, in, out, src, work string) []Step {
 		read = append(read, "--extract-media="+mediaDir)
 		root = work
 	}
+	if !ShipsMedia(from, to) {
+		mediaLink = ""
+	}
+	write := []string{"-f", "json", "-t", pandocWriters[to], "-s"}
+	if to == "html" {
+		write = append(write, t.pandocEmbedFlag())
+	}
 	rawPath, safePath := filepath.Join(work, astRaw), filepath.Join(work, astSafe)
 	return []Step{
 		{Prog: prog, Args: append(read, in), Out: astRaw, Timeout: timeout},
-		{Out: astSafe, Native: func() error { return SanitizeAST(rawPath, safePath, root) }},
-		{Prog: prog, Dir: root, Args: []string{"-f", "json", "-t", pandocWriters[to], "-s", "-o", filepath.Join(work, out), safePath},
-			Out: out, Timeout: timeout},
+		{Out: astSafe, Native: func() error { return SanitizeAST(rawPath, safePath, root, mediaLink) }},
+		{Prog: prog, Dir: root, Args: append(write, "-o", filepath.Join(work, out), safePath), Out: out, Timeout: timeout},
 	}
+}
+
+// mediaTargets are text results whose images stay files next to them.
+var mediaTargets = map[string]bool{"md": true, "rst": true, "org": true, "tex": true}
+
+// ShipsMedia: converting from -> to with pandoc leaves the source's own
+// images in a folder next to the result (PlanOptions.MediaLink, Plan.Media).
+func ShipsMedia(from, to string) bool {
+	return pandocContainers[from] && mediaTargets[to]
 }
 
 func label(id string) string {
@@ -201,7 +239,9 @@ func label(id string) string {
 
 // ffmpegArgs: quiet except errors, progress on stdout, never reads stdin.
 func ffmpegArgs(req Request, out string) []string {
-	args := []string{"-hide_banner", "-nostdin", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y", "-i", req.Src}
+	// only the local file: no nested protocols (HLS, concat, crypto ...)
+	args := []string{"-hide_banner", "-nostdin", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y",
+		"-protocol_whitelist", "file", "-i", req.Src}
 	q := req.Quality
 	to := byID[req.To]
 	switch {
@@ -266,65 +306,6 @@ func videoCodec(to string, q Quality) []string {
 		return []string{"-c:v", "mpeg4", "-q:v", pickQ(q, "8", "5", "2"), "-c:a", "libmp3lame", "-q:a", "4"}
 	}
 	return nil
-}
-
-// magickArgs: the first frame unless the target keeps several (animated
-// gif / webp, multi-page tiff / pdf); jpg and bmp get a white background
-// instead of transparency.
-func magickArgs(req Request, out string) []string {
-	var args []string
-	src := req.Src
-	if req.From == "pdf" {
-		args = append(args, "-density", "150")
-	}
-	if !contains([]string{"gif", "webp", "tiff", "pdf"}, req.To) {
-		src += "[0]"
-	}
-	args = append(args, src)
-	switch req.To {
-	case "jpg", "bmp":
-		args = append(args, "-background", "white", "-alpha", "remove", "-alpha", "off")
-	case "ico":
-		args = append(args, "-define", "icon:auto-resize=256,128,64,48,32,16")
-	}
-	switch req.To {
-	case "jpg":
-		args = append(args, "-quality", pickQ(req.Quality, "60", "82", "92"))
-	case "webp":
-		args = append(args, "-quality", pickQ(req.Quality, "60", "80", "92"))
-	case "avif":
-		args = append(args, "-quality", pickQ(req.Quality, "45", "60", "80"))
-	case "jxl":
-		args = append(args, "-quality", pickQ(req.Quality, "70", "85", "95"))
-	}
-	return append(args, out)
-}
-
-// officeFilters: LibreOffice's --convert-to value per target.
-var officeFilters = map[string]string{
-	"pdf":  "pdf",
-	"docx": "docx:MS Word 2007 XML",
-	"doc":  "doc:MS Word 97",
-	"odt":  "odt",
-	"rtf":  "rtf",
-	"txt":  "txt:Text (encoded):UTF8",
-	"html": "html",
-	"xlsx": "xlsx:Calc MS Excel 2007 XML",
-	"ods":  "ods",
-	"csv":  "csv:Text - txt - csv (StarCalc):44,34,76,1",
-	"pptx": "pptx:Impress MS PowerPoint 2007 XML",
-	"odp":  "odp",
-}
-
-func sofficeStep(prog, profile, from, to, src, out string) Step {
-	profileURL := url.URL{Scheme: "file", Path: profile}
-	args := []string{"--headless", "--norestore", "--nolockcheck", "--nologo", "--nodefault",
-		"-env:UserInstallation=" + profileURL.String()}
-	if from == "pdf" {
-		args = append(args, "--infilter=writer_pdf_import")
-	}
-	args = append(args, "--convert-to", officeFilters[to], "--outdir", officeOut, src)
-	return Step{Prog: prog, Args: args, Collect: officeOut, Out: out, Timeout: stepTimeouts[EngineSoffice]}
 }
 
 // pandoc reader / writer names per format.

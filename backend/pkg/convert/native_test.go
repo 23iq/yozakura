@@ -27,7 +27,7 @@ func TestJSONToYAMLKeepsOrderAndTypes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "zeta: 1\nalpha: x\nzip: \"01234\"\non: yes\nlist:\n  - true\n  - null\n  - 1.5\nnested:\n  b: 2\n  a: 1\n"
+	want := "zeta: 1\nalpha: x\nzip: \"01234\"\n\"on\": \"yes\"\nlist:\n  - true\n  - null\n  - 1.5\nnested:\n  b: 2\n  a: 1\n"
 	if got != want {
 		t.Fatalf("got\n%s\nwant\n%s", got, want)
 	}
