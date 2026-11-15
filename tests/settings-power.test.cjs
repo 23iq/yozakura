@@ -59,9 +59,45 @@ test('a step stays between the steps that are on around it', () => {
     assert.deepEqual(plain(S.range(steps, 'lock')), { min: 150, max: 330 });
     assert.equal(S.clampTo(steps, 'lock', 3600), 330);
     assert.equal(S.clampTo(steps, 'lock', 30), 150);
-    assert.equal(S.clampTo(steps, 'lock', null), 330, 'not never while a later step is on');
+    assert.equal(S.clampTo(steps, 'lock', null), null, 'any step may go to never, later ones on or not');
+    assert.equal(S.clampTo(steps, 'dim', null), null, 'dimming can be turned off while lock and sleep stay');
     assert.equal(S.clampTo(steps, 'sleep', null), null, 'the last step may go to never');
     assert.equal(S.clampTo(Object.assign({}, steps, { off: null, sleep: null }), 'lock', null), null);
+    // a step off between two that are on: they still order around it
+    assert.deepEqual(plain(S.range(Object.assign({}, steps, { lock: null }), 'off')), { min: 150, max: 1800 });
+});
+
+test('two listeners of one step: moving the knob moves both, never removes the shown one only', () => {
+    // screen dim at 150 s and the keyboard backlight off at 160 s
+    const two = [
+        { timeout: 150, onTimeout: 'brightnessctl -s set 10', onResume: 'brightnessctl -r' },
+        { timeout: 160, onTimeout: 'brightnessctl -sd rgb:kbd_backlight set 0', onResume: 'brightnessctl -rd rgb:kbd_backlight' },
+        { timeout: 300, onTimeout: 'loginctl lock-session' },
+    ];
+    const moved = S.withStep(two, 'dim', 200);
+    assert.equal(moved.length, 3, 'no listener is lost');
+    assert.equal(moved.find(l => /kbd/.test(l.onTimeout)).timeout, 210, 'the second one keeps its 10 s after the first');
+    assert.equal(S.read(moved).dim, 200);
+    const off = S.withStep(two, 'dim', null);
+    assert.equal(off.length, 2, 'never removes the first listener of the step only');
+    assert.ok(off.some(l => /kbd/.test(l.onTimeout)), 'the keyboard backlight listener stays');
+    assert.equal(S.read(off).dim, 160, 'and now shows as the step');
+    // two lock listeners: both kept on a move
+    const locks = [{ timeout: 300, onTimeout: 'loginctl lock-session' }, { timeout: 310, onTimeout: 'hyprlock --immediate' }];
+    assert.deepEqual(plain(S.withStep(locks, 'lock', 600).map(l => l.timeout)), [600, 610]);
+});
+
+test('the keyboard steps a knob through the snapped times inside its range', () => {
+    const steps = S.read(DEFAULTS); // dim 150, lock 300, off 330, sleep 1800
+    assert.equal(S.nudge(steps, 'dim', 1), 180);
+    assert.equal(S.nudge(steps, 'dim', -1), 120);
+    assert.equal(S.nudge(steps, 'lock', 1), 330, 'stops at the next step');
+    assert.equal(S.nudge(steps, 'off', -1), 300, 'stops at the previous step');
+    assert.equal(S.nudge(steps, 'sleep', 1), 2700);
+    assert.equal(S.nudge(Object.assign({}, steps, { sleep: 7200 }), 'sleep', 1), null, 'past the last time: never');
+    assert.equal(S.nudge(Object.assign({}, steps, { sleep: null }), 'sleep', -1), 7200, 'from never back to the latest time');
+    assert.equal(S.nudge(Object.assign({}, steps, { dim: null }), 'dim', -1), 300, 'from never: the latest time before the next step');
+    assert.equal(S.nudge(Object.assign({}, steps, { dim: null }), 'dim', 1), null);
 });
 
 test('handles at nearly the same time are pushed apart inside the track', () => {
@@ -69,6 +105,22 @@ test('handles at nearly the same time are pushed apart inside the track', () => 
     assert.deepEqual(plain(xs), [100, 130, 160, 400]);
     const end = S.spread([480, 490, 500], 30, 0, 500);
     assert.deepEqual(plain(end), [440, 470, 500]);
+});
+
+test('knob centres: steps that are on at their times, steps that are off in the never zone', () => {
+    // no dimming, lock at 5 min, sleep at 30 min (hypridle without dim)
+    const steps = { dim: null, lock: 300, off: null, sleep: 1800 };
+    const c = S.centres(steps, 0, 500, 30);
+    assert.ok(Math.abs(c.lock - S.toPos(300) * 500) < 1e-6, `lock at its time (${c.lock})`);
+    assert.ok(Math.abs(c.sleep - S.toPos(1800) * 500) < 1e-6, `sleep at its time (${c.sleep})`);
+    for (const id of ['dim', 'off']) {
+        assert.ok(c[id] >= 500 * S.TIME_SPAN && c[id] <= 500, `${id} in the never zone (${c[id]})`);
+    }
+    assert.ok(c.dim !== c.off, 'off knobs do not sit on each other where there is room');
+    // the defaults: nearly equal times pushed apart, all inside the time span
+    const d = S.centres(S.read(DEFAULTS), 0, 500, 30);
+    assert.ok(d.off - d.lock >= 30 - 1e-9 && d.lock - d.dim >= 30 - 1e-9);
+    assert.ok(d.sleep <= 500 * S.TIME_SPAN + 1e-9);
 });
 
 test('times read as people say them', () => {
