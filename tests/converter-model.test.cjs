@@ -189,3 +189,30 @@ test('a hide next to an output change is an output loss, not a close', () => {
     assert.ok(!M.outputLoss(10000, 5000, 1500)); // an old change: the user closed it
     assert.ok(!M.outputLoss(10000, 0, 1500)); // no output change since start
 });
+
+test('start requests are told apart by their batch token', () => {
+    let rows = M.addFiles([], [jpg, png]);
+    rows = M.markPending(rows, [{ path: '/p/a.jpg', target: 'png' }], 1);
+    rows = M.markPending(rows, [{ path: '/p/b.png', target: 'jpg' }], 2);
+    // request 1 failed: only its row goes back to ready
+    const failed = M.clearPending(rows, 1);
+    assert.deepStrictEqual(plain(failed.map(M.rowState)), ['ready', 'pending']);
+    // a reply attaches only to its own request's rows (same path and target)
+    const j = { id: 'c1', path: '/p/b.png', to: 'jpg', state: 'queued' };
+    assert.strictEqual(M.attachJobs(rows, [j], 1)[1].job.state, 'pending');
+    assert.strictEqual(M.attachJobs(rows, [j], 2)[1].job.id, 'c1');
+    // removed and added again while request 1 was pending: request 2's row
+    let again = M.addFiles(M.removeRow(rows, '/p/a.jpg'), [jpg]);
+    again = M.markPending(again, [{ path: '/p/a.jpg', target: 'png' }], 3);
+    const old = { id: 'c0', path: '/p/a.jpg', to: 'png', state: 'queued' };
+    assert.strictEqual(M.attachJobs(again, [old], 1).find(r => r.path === '/p/a.jpg').job.state, 'pending');
+});
+
+test('the raise token is unique and finds only its window', () => {
+    const a = M.raiseToken('yozakura', 5);
+    assert.ok(a.indexOf('yozakura-converter-5-') === 0);
+    const clients = [{ title: 'Converter', address: 'x' }, { title: a, address: 'y' }];
+    assert.strictEqual(M.windowTitled(clients, a).address, 'y');
+    assert.strictEqual(M.windowTitled(clients, ''), null);
+    assert.strictEqual(M.windowTitled(null, a), null);
+});

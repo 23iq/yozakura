@@ -6,8 +6,9 @@ BackendService for the backend `convert` service:
   * convert.probe answers from PROBE (tests/fixtures/converter-probe.json,
     made by the real backend probe with ffmpeg, ImageMagick, LibreOffice
     and poppler but no pandoc), keyed by file name;
-  * convert.start answers queued jobs c1, c2, ... (held until
-    flushStart() while `deferStart`: a job event can beat the reply);
+  * convert.start answers queued jobs c1, c2, ... (held in order while
+    `deferStart`: flushStart() answers the oldest, failStart() fails it;
+    a job event can beat the reply);
   * convert.paste answers `pasteReply`;
   * every call is recorded in `calls`; `emit(service, data)` pushes a
     subscription event (convert.job).
@@ -34,10 +35,13 @@ QtObject {
     property var pasteArgs: []
     property int seq: 0
     property var subs: []
-    // deferStart: hold the start reply until flushStart() (events may come first)
+    // deferStart: hold start replies (in order) until flushStart() answers
+    // the oldest (events may come first) or failStart() fails it
     property bool deferStart: false
-    property var heldStart: null
-    function flushStart() { const h = heldStart; heldStart = null; if (h) h.cb(h.r, null); }
+    property var heldStarts: []
+    function _nextHeld() { const h = heldStarts[0]; heldStarts = heldStarts.slice(1); return h; }
+    function flushStart() { const h = _nextHeld(); if (h) h.cb(h.r, null); }
+    function failStart(err, code) { const h = _nextHeld(); if (h) h.cb(null, err, code, []); }
     function call(method, params, cb) {
         calls = calls.concat([{ method: method, params: params }]);
         let r = {};
@@ -60,7 +64,7 @@ QtObject {
             if (pasteError !== "") { err = pasteError; code = pasteCode || undefined; args = pasteArgs; } else r = pasteReply;
         }
         if (method === "convert.start" && deferStart && cb) {
-            heldStart = { cb: cb, r: r };
+            heldStarts = heldStarts.concat([{ cb: cb, r: r }]);
             return;
         }
         if (cb) cb(err ? null : r, err, code, args);

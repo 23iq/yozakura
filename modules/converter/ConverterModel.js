@@ -262,14 +262,21 @@ function applyJob(rows, job) {
     return rows;
 }
 
-// The jobs of a start reply take over the pending rows they were started
-// for (same path and target), in order.
-function attachJobs(rows, jobs) {
+// A row waiting for the reply of start request `batch`.
+function pendingIn(row, batch) {
+    return !!row && !!row.job && row.job.state === "pending" && row.job.batch === batch;
+}
+
+// The jobs of start request `batch`'s reply take over the rows that request
+// marked pending (same path and target), in order. Rows of another request
+// (in flight too, or a path removed and added again meanwhile) never take
+// this reply's jobs.
+function attachJobs(rows, jobs, batch) {
     var out = (rows || []).slice();
     (jobs || []).forEach(function (job) {
         for (var i = 0; i < out.length; i++) {
             var r = out[i];
-            if (r.job && r.job.state === "pending" && r.path === job.path && r.target === job.to) {
+            if (pendingIn(r, batch) && r.path === job.path && r.target === job.to) {
                 out[i] = Object.assign({}, r, {
                     "job": job
                 });
@@ -280,10 +287,11 @@ function attachJobs(rows, jobs) {
     return out;
 }
 
-// Rows still waiting for a start reply go back to ready (the call failed).
-function clearPending(rows) {
+// The rows of start request `batch` go back to ready (the call failed);
+// other requests' pending rows stay.
+function clearPending(rows, batch) {
     return (rows || []).map(function (r) {
-        return r.job && r.job.state === "pending" ? Object.assign({}, r, {
+        return pendingIn(r, batch) ? Object.assign({}, r, {
             "job": null
         }) : r;
     });
@@ -331,13 +339,32 @@ function outputLoss(hiddenAt, outputsChangedAt, window) {
     return outputsChangedAt > 0 && Math.abs(hiddenAt - outputsChangedAt) <= window;
 }
 
+// A window title no other toplevel has: the converter wears it for a
+// moment so the compositor's window list names it unambiguously.
+function raiseToken(appId, now) {
+    return String(appId || "app") + "-converter-" + String(now) + "-" + Math.floor(Math.random() * 1e9);
+}
+
+// The client (YozdService.clients.values) titled exactly `title`, or null.
+function windowTitled(clients, title) {
+    if (!title)
+        return null;
+    var list = clients || [];
+    for (var i = 0; i < list.length; i++) {
+        if (list[i] && list[i].title === title)
+            return list[i];
+    }
+    return null;
+}
+
 // "file:///a%20b/%23c.png" for a local path (each segment percent-encoded).
 function fileUri(path) {
     return "file://" + String(path || "").split("/").map(encodeURIComponent).join("/");
 }
 
-// Mark the rows a start request covers as pending until the jobs arrive.
-function markPending(rows, items) {
+// Mark the rows start request `batch` (a token per request) covers as
+// pending until its reply hands them their jobs.
+function markPending(rows, items, batch) {
     var paths = {};
     (items || []).forEach(function (it) {
         paths[it.path] = true;
@@ -346,6 +373,7 @@ function markPending(rows, items) {
         return paths[r.path] ? Object.assign({}, r, {
             "job": {
                 "id": "",
+                "batch": batch,
                 "state": "pending",
                 "progress": -1,
                 "path": r.path,

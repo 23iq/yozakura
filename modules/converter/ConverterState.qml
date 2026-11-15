@@ -36,7 +36,10 @@ QtObject {
     property var _early: ({})
     // Paths whose pending start was stopped or removed before the reply
     // named its job: that job is cancelled as soon as the reply comes.
+    // {<batch>: {<path>: true}}, per start request
     property var _cancelOnReply: ({})
+    // the token of the latest start request (ConverterModel.markPending)
+    property int _batch: 0
     // The latest result of this batch: revealed once the batch is over
     // (system.converter.openFolder), however its last job ended.
     property string _lastOutput: ""
@@ -121,6 +124,14 @@ QtObject {
         root.rows = Model.removeRow(root.rows, path);
     }
 
+    // Stop every conversion under way (the rows stay).
+    function stopAll() {
+        root.rows.forEach(r => {
+            if (Model.working(r))
+                root.cancel(r);
+        });
+    }
+
     function clearAll() {
         root.rows.forEach(r => {
             if (Model.working(r))
@@ -140,7 +151,8 @@ QtObject {
         root.notice = "";
         if (!root.busy)
             root._lastOutput = "";
-        root.rows = Model.markPending(root.rows, items);
+        const batch = ++root._batch;
+        root.rows = Model.markPending(root.rows, items, batch);
         BackendService.call("convert.start", {
             "items": items,
             "outDir": Config.system.converter.outputDir,
@@ -148,8 +160,8 @@ QtObject {
         }, (result, error, code, args) => {
             if (error || !result) {
                 root.notice = root.errorText(code, error, args);
-                root._cancelOnReply = ({});
-                root.rows = Model.clearPending(root.rows);
+                root._dropCancels(batch);
+                root.rows = Model.clearPending(root.rows, batch);
                 return;
             }
             const jobs = result.jobs || [];
@@ -157,15 +169,13 @@ QtObject {
             jobs.forEach(j => own[j.id] = true);
             root._own = own;
             // stopped or removed while the reply was on its way
-            const drop = Object.assign({}, root._cancelOnReply);
+            const drop = root._cancelOnReply[batch] || ({});
             jobs.forEach(j => {
-                if (drop[j.path]) {
+                if (drop[j.path])
                     root._cancelId(j.id);
-                    delete drop[j.path];
-                }
             });
-            root._cancelOnReply = drop;
-            root.rows = Model.attachJobs(root.rows, jobs);
+            root._dropCancels(batch);
+            root.rows = Model.attachJobs(root.rows, jobs, batch);
             const early = Object.assign({}, root._early);
             jobs.forEach(j => {
                 if (early[j.id]) {
@@ -209,10 +219,17 @@ QtObject {
         if (row.job.id) {
             root._cancelId(row.job.id);
         } else if (row.job.state === "pending") {
-            const drop = Object.assign({}, root._cancelOnReply);
-            drop[row.path] = true;
-            root._cancelOnReply = drop;
+            const all = Object.assign({}, root._cancelOnReply);
+            all[row.job.batch] = Object.assign({}, all[row.job.batch] || ({}));
+            all[row.job.batch][row.path] = true;
+            root._cancelOnReply = all;
         }
+    }
+
+    function _dropCancels(batch) {
+        const all = Object.assign({}, root._cancelOnReply);
+        delete all[batch];
+        root._cancelOnReply = all;
     }
 
     function _cancelId(id) {

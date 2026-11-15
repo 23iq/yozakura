@@ -281,7 +281,55 @@ settle()
 seq = ev("BackendService.seq")
 cancelled = sorted(c["params"]["id"] for c in calls("convert.cancel")[cancels:])
 check(cancelled == sorted(["c%d" % (seq - 1), "c%d" % seq]), "stopped and removed pending rows cancel their jobs: %s" % cancelled)
+
+# two starts in flight: the first fails; the second's pending rows and its
+# stop request survive, and its reply still takes them
+reset([D + "holiday-photo.jpg"])
+ev("converter.convert()")
+ev("converter.add(['%s', '%s'])" % (D + "screenshot.png", D + "podcast-episode.flac"))
+settle()
+ev("converter.convert()")
+settle()
+check(len(js("BackendService.heldStarts")) == 2, "two start requests in flight")
+h.eval(row(D + "podcast-episode.flac"), "removeOrStop(null)")
+ev("BackendService.failStart('output folder /x does not exist', 'out_dir_missing')")
+settle()
+check(h.eval(row(D + "holiday-photo.jpg"), "phase") == "ready", "the failed start's row is ready again")
+check(h.eval(row(D + "screenshot.png"), "phase") == "pending", "the other start's row stays pending")
+cancels = len(calls("convert.cancel"))
+ev("BackendService.flushStart()")
+settle()
+seq = ev("BackendService.seq")
+check(h.eval(row(D + "screenshot.png"), "phase") == "queued", "the other start's reply attaches its job")
+check([c["params"]["id"] for c in calls("convert.cancel")[cancels:]] == ["c%d" % seq],
+      "the other start's stop request survives the first failure")
+
+# a path removed while its start is pending and added again: the old reply
+# never attaches to the new row
+reset([D + "holiday-photo.jpg"])
+ev("converter.convert()")
+ev("converter.remove('%s')" % (D + "holiday-photo.jpg"))
+ev("converter.add(['%s'])" % (D + "holiday-photo.jpg"))
+settle()
+ev("converter.convert()")
+settle()
+cancels = len(calls("convert.cancel"))
+ev("BackendService.flushStart()")
+settle()
+old = "c%d" % (ev("BackendService.seq") - 1)
+check([c["params"]["id"] for c in calls("convert.cancel")[cancels:]] == [old], "the removed row's job is cancelled")
+check(h.eval(row(D + "holiday-photo.jpg"), "phase") == "pending", "the old job does not take the new row")
+ev("BackendService.flushStart()")
+settle()
+check(h.eval(row(D + "holiday-photo.jpg"), "job.id") == "c%d" % ev("BackendService.seq"), "the new row gets its own job")
 ev("BackendService.deferStart = false")
+
+# while converting with nothing new to start, Convert is Stop all
+button = item("convertButton")
+check(h.eval(button, "stops") and button.property("text") == "Stop all", "a busy Convert turns into Stop all")
+cancels = len(calls("convert.cancel"))
+h.eval(button, "clicked()")
+check([c["params"]["id"] for c in calls("convert.cancel")[cancels:]] == ["c%d" % ev("BackendService.seq")], "Stop all cancels")
 
 # "show files when done": the batch ends with a failure after a success -> reveal
 reset([D + "holiday-photo.jpg", D + "screenshot.png"])

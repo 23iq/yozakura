@@ -275,17 +275,20 @@ FocusScope {
                     Layout.fillWidth: true
                 }
 
+                // Convert; while converting with nothing new to start, it
+                // turns (spinner and all) into Stop all: always a real action
                 Chip {
                     objectName: "convertButton"
+                    readonly property bool stops: conv.busy && conv.startCount === 0
                     primary: conv.startCount > 0
-                    // while converting it is the progress label: readable, not dimmed
-                    enabled: conv.startCount > 0 || conv.busy
+                    danger: stops
+                    enabled: conv.startCount > 0 || stops
                     focusable: true
                     action: true
-                    icon: conv.busy ? Icons.spinnerGap : Icons.swap
-                    spinning: conv.busy
-                    text: conv.busy && conv.startCount === 0 ? I18n.t("converter.converting") : (conv.startCount > 1 ? I18n.t("converter.convert_n", conv.startCount) : I18n.t("converter.convert"))
-                    onClicked: conv.convert()
+                    icon: stops ? Icons.spinnerGap : Icons.swap
+                    spinning: stops
+                    text: stops ? I18n.t("converter.stop_all") : (conv.startCount > 1 ? I18n.t("converter.convert_n", conv.startCount) : I18n.t("converter.convert"))
+                    onClicked: stops ? conv.stopAll() : conv.convert()
                 }
             }
         }

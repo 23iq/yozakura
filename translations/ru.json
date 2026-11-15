@@ -4575,6 +4575,7 @@
   "converter.clear": "Очистить всё",
   "converter.remove": "Убрать",
   "converter.stop": "Остановить",
+  "converter.stop_all": "Остановить все",
   "converter.show": "Показать в папке",
   "converter.copy": "Копировать",
   "converter.convert": "Конвертировать",

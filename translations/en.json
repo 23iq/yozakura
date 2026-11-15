@@ -4545,6 +4545,7 @@
   "converter.clear": "Clear all",
   "converter.remove": "Remove",
   "converter.stop": "Stop",
+  "converter.stop_all": "Stop all",
   "converter.show": "Show in folder",
   "converter.copy": "Copy",
   "converter.convert": "Convert",
