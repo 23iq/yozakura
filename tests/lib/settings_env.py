@@ -1008,10 +1008,9 @@ class SettingsEnv:
 
     def end_undo_step(self, win) -> None:
         """The next change starts a new undo step, as once the merge window
-        (UndoModel.COALESCE_MS) has passed, without waiting it out: the steps
-        are aged to time 0, as the store does with a redone step (`win`
-        imports qs.modules.settings.store)."""
-        self.h.eval(win, "SettingsStore.undoStack = SettingsStore.undoStack.map(s => Object.assign({}, s, { time: 0 }))")
+        (UndoModel.COALESCE_MS) has passed, without waiting it out
+        (SettingsStore.sealSteps; `win` imports qs.modules.settings.store)."""
+        self.h.eval(win, "SettingsStore.sealSteps()")
 
     def wait_page(self, win, ms: int = 8000) -> bool:
         """Wait until the settings page has built all its sections (schema

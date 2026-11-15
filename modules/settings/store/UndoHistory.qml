@@ -100,6 +100,14 @@ QtObject {
             history.clear();
     }
 
+    // The next change starts a new step, even within the merge window
+    // (UndoModel.COALESCE_MS): the steps are aged to time 0, as a redone one.
+    function seal() {
+        history.undoStack = history.undoStack.map(s => Object.assign({}, s, {
+                "time": 0
+            }));
+    }
+
     // Changes made by `fn` are one step labelled `label` (an i18n key).
     function transaction(label, fn) {
         if (history._txnDepth === 0)

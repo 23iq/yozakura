@@ -308,6 +308,11 @@ Singleton {
         history.transaction(label, fn);
     }
 
+    // The next change is a new step even within the merge window (tests).
+    function sealSteps() {
+        history.seal();
+    }
+
     // Undoes the newest step (a step changed elsewhere since is dropped on
     // the way). true: undone.
     function undo() {
