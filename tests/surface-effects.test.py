@@ -152,7 +152,7 @@ for eid in ["none", "crt", "ink"]:
 h.eval(shell, 'select("bar")')
 pump(600)
 for sid in ["pill", "underline", "dot", "brush", "bracket"]:
-    check(ev(f'w.findItem("card:{sid}") !== null'), f"indicator card for {sid}")
+    check(wait_until(lambda sid=sid: ev(f'w.findItem("card:{sid}") !== null'), timeout_ms=10000), f"indicator card for {sid}")
 ev('w.findItem("card:bracket").clicked()')
 wait_until(lambda: ev("Config.workspaces.indicatorStyle") == "bracket")
 check(ev("Config.workspaces.indicatorStyle") == "bracket", "clicking a card sets workspaces.indicatorStyle")

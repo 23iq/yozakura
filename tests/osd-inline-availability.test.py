@@ -15,9 +15,8 @@ env = PanelsEnv("osd-inline-availability", bar={
     "layout": {"style": "classic", "left": [], "right": ["controls"], "drawer": []},
 }, extra={"layout": {"osd": {"style": "bar-inline"}}})
 h = env.h
-h.singleton("qs.modules.bar.workspaces", "CompositorData", COMPOSITOR_DATA.replace(
-    "function monitorHasFullscreen(m) { return false; }",
-    "property bool fullscreen: false; function monitorHasFullscreen(m) { return fullscreen; }"))
+# (the stub's `anyFullscreen` puts a fullscreen window on every monitor)
+h.singleton("qs.modules.bar.workspaces", "CompositorData", COMPOSITOR_DATA)
 shutil.copytree(REPO / "modules/shell/osd", env.root / "qs/modules/shell/osd", dirs_exist_ok=True)
 env._qmldir(env.root / "qs/modules/shell/osd", "qs.modules.shell.osd")
 env._qmldir(env.root / "qs/modules/shell/osd/styles", "qs.modules.shell.osd.styles")
@@ -66,10 +65,10 @@ h.eval(svc, 'report("volume", 0.3, false, "", "")')
 assert inline.property("shown")
 assert inline.property("value") == 0.3
 compositor = h.engine.singletonInstance("qs.modules.bar.workspaces", "CompositorData")
-compositor.setProperty("fullscreen", True)
+compositor.setProperty("anyFullscreen", True)
 assert not h.eval(bar, "reveal")
 assert h.eval(svc, 'routeForScreen("DP-1").window'), "fullscreen-hidden bar must fall back"
-compositor.setProperty("fullscreen", False)
+compositor.setProperty("anyFullscreen", False)
 h.eval(window, 'Config.bar.layout = ({style: "classic", left: [], right: [], drawer: ["controls"]})')
 wait_until(lambda: svc.property("inlineHosts") == 0)
 assert svc.property("inlineHosts") == 0, "collapsed drawer cannot host an OSD"
