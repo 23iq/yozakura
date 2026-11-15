@@ -269,6 +269,7 @@ MIRROR = [
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
     "modules/services/timers/TimerFormat.js",  # the Timers stage formats like the island
+    "modules/services/ai/EffortPrefs.js",  # the AI agents editor
     # Presets page: the unified gallery's tabs, cards and stores
     "modules/widgets/presets",
     "config/defaults",
