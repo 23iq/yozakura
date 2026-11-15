@@ -2,6 +2,7 @@ package convert
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -54,5 +55,37 @@ func TestErrorCodes(t *testing.T) {
 	}
 	if Wrap(CodeBadInput, nil) != nil {
 		t.Error("Wrap(nil)")
+	}
+}
+
+// Every code the window translates has its line in every language (and
+// unknown_method, the IPC server's code for a missing service).
+func TestEveryCodeIsTranslated(t *testing.T) {
+	files, _ := filepath.Glob("../../../translations/*.json")
+	n := 0
+	for _, f := range files {
+		if filepath.Base(f) == "languages.json" {
+			continue
+		}
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var tr map[string]any
+		if err := json.Unmarshal(b, &tr); err != nil {
+			t.Fatal(err)
+		}
+		n++
+		for _, c := range append(append([]string(nil), Codes...), "unknown_method", "other") {
+			if DetailCodes[c] {
+				continue
+			}
+			if _, ok := tr["converter.error."+c]; !ok {
+				t.Errorf("%s: converter.error.%s missing", filepath.Base(f), c)
+			}
+		}
+	}
+	if n < 3 {
+		t.Fatalf("found %d translation files", n)
 	}
 }

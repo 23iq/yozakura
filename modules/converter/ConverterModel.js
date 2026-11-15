@@ -289,40 +289,38 @@ function clearPending(rows) {
     });
 }
 
-// The translation suffix (converter.error.<key>) of a probe error.
-function errorKey(error) {
-    switch (error) {
-    case "not found":
-        return "missing";
-    case "a folder":
-        return "folder";
-    case "not a regular file":
-        return "special";
-    }
-    return "unknown";
+// Codes whose message is a tool's or parser's own words: shown as is.
+var DETAIL_CODES = {
+    "tool_failed": true,
+    "bad_input": true
+};
+
+// The translation suffix (converter.error.<code>) of a probe error: its
+// code (backend File.code), unknown_format for a row without one.
+function errorKey(code) {
+    return code ? String(code) : "unknown_format";
 }
 
-// A backend error (a plain English string) as {key, arg}: the translation
-// suffix (converter.error.<key>) and its %1, or key "" for one not known
-// here (a tool's own message: shown as is).
-function errorInfo(error) {
-    var e = String(error || "");
-    var m;
-    if (e === "no file on the clipboard")
-        return { "key": "paste_none", "arg": "" };
-    if (e === "the clipboard is empty")
-        return { "key": "paste_empty", "arg": "" };
-    if (e === "not found")
-        return { "key": "missing", "arg": "" };
-    if (e === "the converter is shutting down")
-        return { "key": "stopping", "arg": "" };
-    if (e.indexOf("unknown method: convert.") === 0)
-        return { "key": "service", "arg": "" };
-    if ((m = /^output folder (.*) does not exist$/.exec(e)))
-        return { "key": "out_dir", "arg": m[1] };
-    if ((m = /^cannot write to (.*)$/.exec(e)))
-        return { "key": "no_write", "arg": m[1] };
-    return { "key": "", "arg": e };
+// A backend error as {key, args, text}: key is the translation suffix
+// (converter.error.<key>, its %1.. = args) taken from the error's stable
+// code; key "" when there is no code (an old daemon, a broken socket) or
+// the code's message is the detail itself (a tool's own words): text is
+// then shown as is. Never matched on the English message.
+function errorInfo(code, error, args) {
+    var c = String(code || "");
+    var text = String(error || "");
+    var list = Array.isArray(args) ? args.map(String) : [];
+    if (c === "" || DETAIL_CODES[c])
+        return {
+            "key": "",
+            "args": list,
+            "text": text
+        };
+    return {
+        "key": c,
+        "args": list,
+        "text": text
+    };
 }
 
 // The window was hidden from outside at `hiddenAt` (ms): an output going

@@ -149,23 +149,37 @@ test('a pending row (start sent, no reply yet) is working, not editable', () => 
     assert.ok(!M.working(null) && M.editable(null));
 });
 
-test('backend errors map to translation keys by cause', () => {
-    const info = e => plain(M.errorInfo(e));
-    assert.deepStrictEqual(info('no file on the clipboard'), { key: 'paste_none', arg: '' });
-    assert.deepStrictEqual(info('the clipboard is empty'), { key: 'paste_empty', arg: '' });
-    assert.deepStrictEqual(info('unknown method: convert.paste'), { key: 'service', arg: '' });
-    assert.deepStrictEqual(info('output folder /x y does not exist'), { key: 'out_dir', arg: '/x y' });
-    assert.deepStrictEqual(info('cannot write to /ro'), { key: 'no_write', arg: '/ro' });
-    assert.deepStrictEqual(info('the converter is shutting down'), { key: 'stopping', arg: '' });
-    assert.deepStrictEqual(info('not found'), { key: 'missing', arg: '' });
-    // a tool's own message stays as it is
-    assert.deepStrictEqual(info("Unknown encoder 'libmp3lame'"), { key: '', arg: "Unknown encoder 'libmp3lame'" });
-    assert.deepStrictEqual(info(null), { key: '', arg: '' });
+test('backend errors map to translation keys by their code, never by the message', () => {
+    const info = (c, e, a) => plain(M.errorInfo(c, e, a));
+    assert.deepStrictEqual(info('clipboard_no_file', 'no file on the clipboard'),
+        { key: 'clipboard_no_file', args: [], text: 'no file on the clipboard' });
+    assert.deepStrictEqual(info('clipboard_empty', 'x').key, 'clipboard_empty');
+    assert.deepStrictEqual(info('clipboard_unavailable', 'x').key, 'clipboard_unavailable');
+    assert.deepStrictEqual(info('unknown_method', 'unknown method: convert.paste').key, 'unknown_method');
+    assert.deepStrictEqual(info('out_dir', 'output folder /x y does not exist', ['/x y']),
+        { key: 'out_dir', args: ['/x y'], text: 'output folder /x y does not exist' });
+    assert.deepStrictEqual(info('tool_missing', 'm', ['MP3', 'ffmpeg']).args, ['MP3', 'ffmpeg']);
+    // the English message alone (an old daemon) is shown as it is
+    assert.deepStrictEqual(info('', 'cannot write to /ro'), { key: '', args: [], text: 'cannot write to /ro' });
+    // a tool's or parser's own words stay as they are
+    assert.deepStrictEqual(info('tool_failed', "Unknown encoder 'libmp3lame'"),
+        { key: '', args: [], text: "Unknown encoder 'libmp3lame'" });
+    assert.deepStrictEqual(info('bad_input', 'YAML: line 2').key, '');
+    assert.deepStrictEqual(info(null, null), { key: '', args: [], text: '' });
+    // probe rows: their code, unknown_format without one
+    assert.strictEqual(M.errorKey('folder'), 'folder');
+    assert.strictEqual(M.errorKey(undefined), 'unknown_format');
     const fs = require('node:fs');
-    for (const lang of ['en', 'es', 'ru']) {
-        const tr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'translations', lang + '.json'), 'utf8'));
-        for (const k of ['paste_none', 'paste_empty', 'service', 'out_dir', 'no_write', 'stopping', 'missing', 'other'])
-            assert.ok(tr['converter.error.' + k], `converter.error.${k} missing in ${lang}`);
+    const codes = ['not_found', 'folder', 'not_regular', 'unknown_format', 'unknown_target', 'unsupported', 'tool_missing',
+        'too_large', 'timeout', 'cancelled', 'no_output', 'crashed', 'no_write', 'exists', 'out_dir', 'stopping',
+        'clipboard_empty', 'clipboard_unavailable', 'clipboard_no_file', 'bad_request', 'unknown_job', 'unknown_method', 'other'];
+    const dir = path.join(__dirname, '..', 'translations');
+    for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json') && f !== 'languages.json')) {
+        const tr = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+        for (const k of codes)
+            assert.ok(tr['converter.error.' + k], `converter.error.${k} missing in ${file}`);
+        for (const k of ['done', 'saved', 'failed', 'reason'])
+            assert.ok(tr['notify.convert.' + k], `notify.convert.${k} missing in ${file}`);
     }
 });
 

@@ -52,18 +52,25 @@ QtObject {
             root.reveal(out);
     }
 
-    // A backend error as a translated line (known errors by cause, else a
-    // generic line with the backend's words).
-    function errorText(error) {
-        const info = Model.errorInfo(error);
-        return info.key !== "" ? I18n.t("converter.error." + info.key, info.arg) : I18n.t("converter.error.other", info.arg);
+    // The translated line of an error code, "" when the code is unknown
+    // here (a newer daemon): the caller shows the backend's words.
+    function _codeText(info) {
+        const key = "converter.error." + info.key;
+        return info.key !== "" && I18n.has(key) ? I18n.t(key, ...info.args) : "";
     }
 
-    // A failed job's error: translated when known, else the tool's own
+    // A failed call's error (code, message, args from BackendService.call)
+    // as a translated line, else a generic line with the backend's words.
+    function errorText(code, error, args) {
+        const info = Model.errorInfo(code, error, args);
+        return root._codeText(info) || I18n.t("converter.error.other", info.text);
+    }
+
+    // A failed job's error: translated by its code, else the tool's own
     // words (ffmpeg, ImageMagick...).
-    function jobErrorText(error) {
-        const info = Model.errorInfo(error);
-        return info.key !== "" ? I18n.t("converter.error." + info.key, info.arg) : info.arg;
+    function jobErrorText(job) {
+        const info = Model.errorInfo(job ? job.code : "", job ? job.error : "", job ? job.errorArgs : []);
+        return root._codeText(info) || info.text;
     }
 
     function add(paths) {
@@ -74,10 +81,10 @@ QtObject {
         root.probing = true;
         BackendService.call("convert.probe", {
             "paths": list
-        }, (result, error) => {
+        }, (result, error, code, args) => {
             root.probing = false;
             if (error || !result) {
-                root.notice = root.errorText(error);
+                root.notice = root.errorText(code, error, args);
                 return;
             }
             root.rows = Model.addFiles(root.rows, result.files || []);
@@ -90,9 +97,9 @@ QtObject {
 
     function paste() {
         root.notice = "";
-        BackendService.call("convert.paste", {}, (result, error) => {
+        BackendService.call("convert.paste", {}, (result, error, code, args) => {
             if (error || !result) {
-                root.notice = root.errorText(error || "no file on the clipboard");
+                root.notice = root.errorText(error ? code : "clipboard_no_file", error, args);
                 return;
             }
             root.add(result.paths || []);
@@ -138,9 +145,9 @@ QtObject {
             "items": items,
             "outDir": Config.system.converter.outputDir,
             "quality": root.quality
-        }, (result, error) => {
+        }, (result, error, code, args) => {
             if (error || !result) {
-                root.notice = root.errorText(error);
+                root.notice = root.errorText(code, error, args);
                 root._cancelOnReply = ({});
                 root.rows = Model.clearPending(root.rows);
                 return;
@@ -225,8 +232,8 @@ QtObject {
     function copy(path) {
         BackendService.call("convert.copy", {
             "path": path
-        }, (result, error) => {
-            root.notice = error ? root.errorText(error) : "";
+        }, (result, error, code, args) => {
+            root.notice = error ? root.errorText(code, error, args) : "";
         });
     }
 

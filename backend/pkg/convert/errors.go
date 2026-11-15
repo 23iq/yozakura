@@ -37,6 +37,13 @@ const (
 	CodeUnknownJob           = "unknown_job"           // Args: job id
 )
 
+// Codes lists every code (the window translates each one not in
+// DetailCodes as converter.error.<code>).
+var Codes = []string{CodeNotFound, CodeFolder, CodeNotRegular, CodeUnknownFormat, CodeUnknownTarget, CodeUnsupported,
+	CodeToolMissing, CodeTooLarge, CodeTimeout, CodeCancelled, CodeToolFailed, CodeBadInput, CodeNoOutput, CodeCrashed,
+	CodeNoWrite, CodeExists, CodeOutDir, CodeStopping, CodeClipboardEmpty, CodeClipboardUnavailable, CodeClipboardNoFile,
+	CodeBadRequest, CodeUnknownJob}
+
 // DetailCodes carry a message that is the detail itself (shown as is).
 var DetailCodes = map[string]bool{CodeToolFailed: true, CodeBadInput: true}
 

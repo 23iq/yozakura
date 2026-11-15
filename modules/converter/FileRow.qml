@@ -28,7 +28,7 @@ Item {
     signal pickTarget(string path, Item anchor)
 
     // the full error of a failed conversion, under the row
-    readonly property string errorText: root.phase === "failed" && root.job ? root.converter.jobErrorText(root.job.error) : ""
+    readonly property string errorText: root.phase === "failed" && root.job ? root.converter.jobErrorText(root.job) : ""
 
     implicitHeight: Space.rowHeight + (errorLine.visible ? errorLine.implicitHeight + Space.xs : 0)
     implicitWidth: list.implicitWidth
@@ -78,7 +78,7 @@ Item {
             return "";
         switch (root.phase) {
         case "invalid":
-            return r.error ? I18n.t("converter.error." + Model.errorKey(r.error)) : "";
+            return r.error ? I18n.t("converter.error." + Model.errorKey(r.code)) : "";
         case "unavailable":
             return I18n.t("converter.needs", root.target ? root.target.needs : "");
         case "failed":

@@ -30,6 +30,8 @@ QtObject {
     property var probe: ({})
     property var pasteReply: ({ "paths": [] })
     property string pasteError: ""
+    property string pasteCode: ""
+    property var pasteArgs: []
     property int seq: 0
     property var subs: []
     // deferStart: hold the start reply until flushStart() (events may come first)
@@ -40,11 +42,13 @@ QtObject {
         calls = calls.concat([{ method: method, params: params }]);
         let r = {};
         let err = null;
+        let code = undefined;
+        let args = undefined;
         if (method === "convert.probe") {
             r = { files: params.paths.map(p => {
                 const name = p.substring(p.lastIndexOf("/") + 1);
                 return probe[name] ? Object.assign({}, probe[name], { path: p })
-                    : { path: p, name: name, size: 0, targets: [], error: "unknown format" };
+                    : { path: p, name: name, size: 0, targets: [], error: "unknown format", code: "unknown_format" };
             }) };
         } else if (method === "convert.start") {
             r = { jobs: params.items.map(it => {
@@ -53,13 +57,13 @@ QtObject {
                          to: it.target, state: "queued", progress: -1 };
             }) };
         } else if (method === "convert.paste") {
-            if (pasteError !== "") err = pasteError; else r = pasteReply;
+            if (pasteError !== "") { err = pasteError; code = pasteCode || undefined; args = pasteArgs; } else r = pasteReply;
         }
         if (method === "convert.start" && deferStart && cb) {
             heldStart = { cb: cb, r: r };
             return;
         }
-        if (cb) cb(err ? null : r, err);
+        if (cb) cb(err ? null : r, err, code, args);
     }
     function callOk(method, params, onOk, tag) { call(method, params, (r, e) => { if (!e && onOk) onOk(r); }); }
     function addSubscription(services, cb) { subs = subs.concat([cb]); return subs.length; }

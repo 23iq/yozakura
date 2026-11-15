@@ -158,7 +158,7 @@ emit({"id": "c1", "path": D + "holiday-photo.jpg", "to": "bmp", "state": "done",
       "output": D + "holiday-photo.bmp"})
 check(h.eval(row(D + "holiday-photo.jpg"), "subtitle") == "Saved as holiday-photo.bmp", "done shows the result")
 emit({"id": "c2", "path": D + "podcast-episode.flac", "to": "mp3", "state": "failed",
-      "error": "Error while decoding stream: Invalid data found when processing input"})
+      "error": "Error while decoding stream: Invalid data found when processing input", "code": "tool_failed"})
 check(h.eval(row(D + "podcast-episode.flac"), "phase") == "failed", "failed state")
 check(h.eval(row(D + "podcast-episode.flac"), "subtitle") == "Conversion failed", "failed subtitle")
 check("Invalid data" in h.eval(row(D + "podcast-episode.flac"), "errorText"), "the short error is shown")
@@ -169,7 +169,7 @@ ev("converter.copy('%s')" % (D + "holiday-photo.bmp"))
 check(calls("convert.copy")[-1]["params"]["path"] == D + "holiday-photo.bmp", "copy asks the backend")
 
 # paste: nothing on the clipboard is a notice
-ev("BackendService.pasteError = 'no file on the clipboard'")
+ev("BackendService.pasteError = 'no file on the clipboard'; BackendService.pasteCode = 'clipboard_no_file'")
 QTest.keyClick(win, Qt.Key_V, Qt.ControlModifier)
 settle()
 check(ev("converter.notice") == "No file on the clipboard", "Ctrl+V with nothing says so")
@@ -293,21 +293,36 @@ seq = ev("BackendService.seq")
 emit({"id": "c%d" % (seq - 1), "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "progress": 1,
       "output": D + "holiday-photo.png"})
 check(len(detached()) == shown, "no reveal while a job still runs")
-emit({"id": "c%d" % seq, "path": D + "screenshot.png", "to": "jpg", "state": "failed", "error": "cannot write to /ro"})
+emit({"id": "c%d" % seq, "path": D + "screenshot.png", "to": "jpg", "state": "failed", "error": "cannot write to /ro",
+      "code": "no_write", "errorArgs": ["/ro"]})
 opened = detached()
 check(len(opened) == shown + 1 and opened[-1][4] == "file://" + D + "holiday-photo.png",
       "the batch's result is revealed when its last job fails: %s" % opened[shown:])
 check(h.eval(row(D + "screenshot.png"), "errorText") == "Cannot write to /ro", "a known job error is translated")
 h.eval(probe, "setOpenFolder(false)")
 
-# errors by cause
-ev("BackendService.pasteError = 'the clipboard is empty'")
+# errors by their code, never by the English message
+ev("BackendService.pasteError = 'cannot read the clipboard'; BackendService.pasteCode = 'clipboard_unavailable'")
 key(Qt.Key_V, Qt.ControlModifier)
-check("wl-paste" in ev("converter.notice"), "an unreadable clipboard says so: %s" % ev("converter.notice"))
-ev("BackendService.pasteError = 'unknown method: convert.paste'")
+check("wl-clipboard" in ev("converter.notice"), "a missing wl-paste says so: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = 'the clipboard is empty'; BackendService.pasteCode = 'clipboard_empty'")
+key(Qt.Key_V, Qt.ControlModifier)
+check(ev("converter.notice") == "The clipboard is empty", "an empty clipboard says so: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = 'unknown method: convert.paste'; BackendService.pasteCode = 'unknown_method'")
 key(Qt.Key_V, Qt.ControlModifier)
 check(ev("converter.notice") == "The converter service is not running: restart the shell", "a missing service says so")
-ev("BackendService.pasteError = ''")
+ev("BackendService.pasteError = 'output folder /o does not exist'; BackendService.pasteCode = 'out_dir';"
+   " BackendService.pasteArgs = ['/o']")
+key(Qt.Key_V, Qt.ControlModifier)
+check(ev("converter.notice") == "The output folder /o does not exist", "a code's arguments fill the line: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = 'the clipboard is empty'; BackendService.pasteCode = ''; BackendService.pasteArgs = []")
+key(Qt.Key_V, Qt.ControlModifier)
+check(ev("converter.notice") == "Something went wrong: the clipboard is empty",
+      "a message without a code is not matched: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = 'x'; BackendService.pasteCode = 'some_future_code'")
+key(Qt.Key_V, Qt.ControlModifier)
+check(ev("converter.notice") == "Something went wrong: x", "an unknown code falls back: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = ''; BackendService.pasteCode = ''")
 
 # keyboard: Tab reaches the toolbar and the drop zone; Ctrl+O, Enter on the
 # drop zone open the chooser; Delete removes the row in focus
