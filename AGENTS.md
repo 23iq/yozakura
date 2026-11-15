@@ -311,9 +311,9 @@ make install    # sudo install of ./yozakura to /usr/local/bin
   `onboarding-window.qml`, started on demand by the daemon's `windows` service,
   `backend/pkg/svc/windows`), so they cost nothing until opened. Only the main shell
   claims session-wide resources: check `ProcessRole.primary` (modules/globals) in any
-  service that does (modules/services/AGENTS.md). Staged settings preview on the
-  desktop through the daemon's `preview` relay (modules/settings/AGENTS.md, SEPARATE
-  PROCESS). A root file compiles what it names: keep these two lean (load windows by URL).
+  service that does (modules/services/AGENTS.md). The Settings window writes its
+  own Config live and the main shell follows the files; only the wizard stages through
+  the daemon's `preview` relay (modules/settings/AGENTS.md, SEPARATE PROCESS). A root file compiles what it names: keep these two lean (load windows by URL).
 - Large files (>800 lines, `make audit` lists them): `PresetsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `MetricsTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.
