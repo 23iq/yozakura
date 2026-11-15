@@ -64,7 +64,10 @@ StyledRect {
     scale: root.pressed ? 0.94 : 1
 
     Accessible.role: Accessible.Button
-    Accessible.name: root.icon
+    // the tooltip says what it does; the glyph is a private-use code point
+    Accessible.name: root.tooltip
+    Accessible.focusable: root.focusable
+    Accessible.onPressAction: root.clicked()
 
     Behavior on opacity {
         enabled: Motion.micro.duration > 0
