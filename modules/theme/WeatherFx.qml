@@ -8,7 +8,7 @@ import "VisualLanguage.js" as VisualLanguage
 // Weather on surfaces (theme.weatherFx): which effects the current weather
 // asks for, resolved once for the whole shell. StyledRect loads one overlay
 // (modules/components/weatherfx/WeatherOverlay.qml) per surface root while
-// `active` (or while a preview scope exists); with mode "off" nothing is
+// `active`; with mode "off" nothing is
 // created and nothing here runs.
 //
 // WeatherService feeds the weather (code, °C) here, Lighting the place; the
@@ -28,8 +28,6 @@ QtObject {
 
     // "" = the live weather; else a WeatherFxModel.PREVIEWS id
     property string previewCondition: ""
-    // Preview scopes alive (WeatherFxScope): overlays load while > 0
-    property int scopes: 0
     // Fixed seed for renders and tests (0 = random layouts)
     property int seed: 0
 
