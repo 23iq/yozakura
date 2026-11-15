@@ -217,7 +217,8 @@ FittedFrame {
         x: row.x
         y: row.y
         width: row.width
-        height: row.height
+        // the row's height, but not a screen of empty card on a tall window
+        height: Math.min(row.height, Space.px(560))
         onInstallRequested: source => page.askConfirm("install", null, source)
     }
 

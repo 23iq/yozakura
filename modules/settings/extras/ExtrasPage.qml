@@ -20,6 +20,8 @@ FittedFrame {
     id: page
     listForm: true
     hasHint: false
+    // the band holds its title and two whole lines of installed apps
+    bandMin: summary.implicitHeight + Space.l * 2
 
     required property var category
     readonly property var entries: ExtrasService.catalog ? (ExtrasService.catalog.entries || []) : []
@@ -71,6 +73,7 @@ FittedFrame {
                 }
             }
             Column {
+                id: summary
                 x: ring.x + ring.width + Space.l
                 anchors.verticalCenter: parent.verticalCenter
                 width: band.width - x - side.width - Space.xl * 2
@@ -82,10 +85,13 @@ FittedFrame {
                 // the installed apps
                 Flow {
                     width: parent.width
-                    height: Math.min(implicitHeight, Space.chip * 2 + Space.xs)
+                    // at most two whole lines of chips (a dense chip's height)
+                    readonly property real chipH: chips.count > 0 && chips.itemAt(0) ? chips.itemAt(0).height : Space.chip
+                    height: Math.min(implicitHeight, chipH * 2 + spacing)
                     clip: true
                     spacing: Space.xs
                     Repeater {
+                        id: chips
                         model: page.installed
                         delegate: Chip {
                             required property var modelData

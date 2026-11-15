@@ -18,14 +18,22 @@ import qs.modules.components.kit
 // inspector of the picked one (on / off, rotation, adaptive sync, Identify;
 // Apply at its foot), one hint line, then one row of cards for the picked
 // monitor: resolution, refresh rate, scale ("Aa" that grows) and night
-// light. Edits build a draft;
+// light (each as tall as its content: the row never stretches them).
+// Edits build a draft;
 // Apply runs it for 15 s on every screen with a "keep these settings?"
 // prompt (DisplayConfirmOverlay); keeping it saves it. Night light is live.
 FittedFrame {
     id: page
     stackable: true
     stackedHeight: row.y + row.height + page.pad
-    rowNeed: resolutionCard.chrome + resolutionList.needed
+    // the row grows to its tallest card: the resolutions (a long list
+    // scrolls past about six rows), the scale strip or night light; never
+    // to the window, so no card stretches what it holds
+    rowNeed: Math.max(resolutionCard.chrome + Math.min(resolutionList.needed, (Space.controlS + Space.xs) * 6.5), scaleCard.chrome + scaleSteps.implicitHeight, nightCard.chrome + nightLight.implicitHeight)
+    // The hero: the room the hint and the row leave (FittedFrame caps it on
+    // a tall window). Stacked (narrow window, the page scrolls) it is half
+    // as tall as wide, at least what the inspector needs.
+    readonly property real heroHeight: page.stacked ? Math.max(Space.px(300), (page.width - page.margin * 2) * 0.5, side.needed + Look.boxPadding * 2 + Space.s * 2) : page.heroH
 
     required property var category
 
@@ -128,7 +136,7 @@ FittedFrame {
         x: page.margin
         y: Space.s
         width: page.width - page.margin * 2
-        height: page.heroH
+        height: page.heroHeight
 
         // the inspector's column inside the hero card
         readonly property real sideW: Math.max(page.sideW, Space.px(240))
@@ -251,7 +259,7 @@ FittedFrame {
         objectName: "displaysRow"
         x: page.margin
         // stacked (narrow window): under the hint, one card a line
-        y: page.stacked ? hint.y + hint.height + page.gap : page.height - page.rowH - page.pad
+        y: page.stacked ? hint.y + hint.height + page.gap : page.rowY
         width: page.width - page.margin * 2
         spacing: page.gap
         readonly property real cardW: page.stacked ? row.width : (row.width - row.spacing * 3) / 4
@@ -307,14 +315,16 @@ FittedFrame {
         }
 
         PageCard {
+            id: scaleCard
             objectName: "displayCard:scale"
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.scale")
             value: page.selectedConfig ? DisplayFormat.formatScale(page.selectedConfig.scale) : ""
             DisplayScaleSteps {
+                id: scaleSteps
                 objectName: "scaleChips"
-                anchors.fill: parent
+                width: parent.width
                 enabled: page.active
                 options: page.selectedConfig ? DisplayFormat.scaleOptions(page.selectedConfig.scale, DisplayModel.suggestScale(page.selectedOutput || {})) : []
                 value: page.selectedConfig ? page.selectedConfig.scale : 1
@@ -325,13 +335,15 @@ FittedFrame {
         }
 
         PageCard {
+            id: nightCard
             objectName: "displayCard:night"
             width: row.cardW
             height: page.rowH
             title: I18n.t("prefs.displays.night")
             value: NightLightClient.active ? NightLightClient.temp + " K" : I18n.t("prefs.displays.night_off")
             DisplayNightLight {
-                anchors.fill: parent
+                id: nightLight
+                width: parent.width
             }
         }
     }

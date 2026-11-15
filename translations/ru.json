@@ -3359,6 +3359,7 @@
   "prefs.displays.refresh_upgrade": "Ваш монитор поддерживает %1",
   "prefs.displays.scale": "Масштаб",
   "prefs.displays.scale.desc": "Увеличивает всё на экране. Искра отмечает размер, подходящий для этого экрана.",
+  "prefs.displays.scale_suggested": "%1 лучше всего подходит этому экрану",
   "prefs.displays.rotation": "Поворот",
   "prefs.displays.rotation.0": "Обычный",
   "prefs.displays.rotation.1": "90°",

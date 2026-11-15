@@ -53,7 +53,7 @@ FittedFrame {
         x: root.margin
         y: Space.s
         width: root.width - root.margin * 2
-        height: root.height - y - hint.height - Space.s - root.gap - root.rowH - Space.l
+        height: root.layoutH - y - hint.height - Space.s - root.gap - root.rowH - Space.l
 
         Stage {
             id: stage
@@ -119,7 +119,7 @@ FittedFrame {
     Item {
         id: row
         x: root.margin
-        y: root.height - root.rowH - Space.l
+        y: root.layoutH - root.rowH - Space.l
         width: root.width - root.margin * 2
         height: root.rowH
 

@@ -42,14 +42,24 @@ Flickable {
     // the share of the page the band takes (a category's `bandShare`: a band
     // that is the page's main control, such as Sound's two big sliders)
     property real bandShare: 0.24
-    readonly property real bandH: frame.listForm && frame.band ? Math.round(Math.max(Space.px(120), frame.height * frame.bandShare, frame.bandMin)) : 0
+    // (never taller than `bandCap`: a tall window gives the room to the
+    // list under it, not to a band of mostly empty space)
+    readonly property real bandCap: Space.px(260)
+    readonly property real bandH: frame.listForm && frame.band ? Math.round(Math.max(Space.px(120), Math.min(frame.height * frame.bandShare, frame.bandCap), frame.bandMin)) : 0
     // the row of cards: one card height, or (list form) the rest of the page
     // the height the cards of the row want (a page sets it from its cards'
     // content): the row grows to it, the hero gives up the room, so a card
     // never scrolls inside itself while the window has room for it
     property real rowNeed: 0
     readonly property real rowH: frame.listForm ? Math.max(Look.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Math.max(Look.cardRowHeight, Math.min(frame.rowNeed, frame.height - Space.s - frame.hintH - frame.gap - frame.pad - Space.px(200)))
-    readonly property real rowY: frame.height - frame.rowH - frame.pad
+    // The stage form's hero is never taller than a 16:9 picture of its
+    // width (`heroCap`): a tall window keeps it in proportion with the row
+    // right under it, the rest of the page stays empty at the foot (no
+    // hero of mostly empty space). `layoutH`: the height the page lays out
+    // in (the window's, or less on a tall one); the list form takes it all.
+    readonly property real heroCap: Math.max(Space.px(300), (frame.width - frame.margin * 2) * 9 / 16)
+    readonly property real layoutH: frame.listForm ? frame.height : Math.min(frame.height, Space.s + frame.heroCap + frame.hintH + frame.gap + frame.rowH + frame.pad)
+    readonly property real rowY: frame.layoutH - frame.rowH - frame.pad
     // the stage form's hero: the height the hint and the row leave
-    readonly property real heroH: Math.max(Space.px(160), frame.height - Space.s - frame.hintH - frame.gap - frame.rowH - frame.pad)
+    readonly property real heroH: Math.max(Space.px(160), frame.layoutH - Space.s - frame.hintH - frame.gap - frame.rowH - frame.pad)
 }

@@ -108,10 +108,10 @@ StyledRect {
     // Number badge
     Rectangle {
         id: badge
-        x: 10
-        y: 10
-        width: 26
-        height: 26
+        x: Space.s
+        y: Space.s
+        width: Space.xl
+        height: Space.xl
         radius: width / 2
         visible: tile.height > 52
         color: tile.selected ? Colors.primary : Ui.alpha(Colors.overBackground, 0.14)
@@ -135,7 +135,9 @@ StyledRect {
     Column {
         id: labels
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: tile.height < 110 ? 10 : 0
+        // a short tile moves its labels (and their plate) down, clear of
+        // the number badge, as far as the tile's foot allows
+        anchors.verticalCenterOffset: badge.visible ? Math.max(0, Math.min(badge.y + badge.height + Space.xs + Space.s - (tile.height - labels.height) / 2, (tile.height - labels.height) / 2 - Space.xs)) : 0
         width: parent.width - 24
         spacing: Space.xs / 2
 
