@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
@@ -9,36 +10,67 @@ import "ConverterModel.js" as Model
 // The converter's content: a drop zone while empty, then one row per file
 // grouped by kind (a header per kind with several files), the quality
 // control when a lossy target is chosen, and Convert. Files come by drag and
-// drop (anywhere, also with files listed), Ctrl+V or the file chooser.
-// Enter converts, Esc closes (closeRequested), Tab walks the target chips.
+// drop (anywhere, also with files listed), Ctrl+V or the file chooser
+// (Ctrl+O, the drop zone, the + button). Keyboard: Tab walks every control
+// (toolbar, drop zone, kind and target chips, row buttons, Convert), Enter
+// converts, Delete removes the row in focus (FileRow), Esc closes
+// (closeRequested). The list follows the focus and fades out at the bottom
+// while more rows are below.
 FocusScope {
     id: root
 
     property alias converter: conv
     readonly property alias picker: picker
+    readonly property alias chooser: chooser
 
     signal closeRequested
 
     focus: true
 
+    // anchor: the chip that asks (the focus returns to it)
     function pickRow(path, anchor) {
         const row = Model.rowByPath(conv.rows, path);
-        if (!row)
+        if (!row || !Model.editable(row))
             return;
         picker.mode = "row";
         picker.subject = path;
-        picker.open(row.name, row.targets, row.target);
+        picker.open(row.name, row.targets, row.target, anchor);
     }
 
-    function pickKind(kind) {
+    function pickKind(kind, anchor) {
         const group = conv.groups.find(g => g.kind === kind);
         picker.mode = "kind";
         picker.subject = kind;
-        picker.open(I18n.t("converter.all_kind", I18n.t(Model.kindInfo(kind).label)), Model.commonTargets(conv.rows, kind), group ? group.target : "");
+        picker.open(I18n.t("converter.all_kind", I18n.t(Model.kindInfo(kind).label)), Model.commonTargets(conv.rows, kind), group ? group.target : "", anchor);
+    }
+
+    // Scroll the list so the control in focus is in view.
+    readonly property Item focusItem: root.Window.activeFocusItem
+    onFocusItemChanged: root.reveal(root.focusItem)
+
+    function reveal(item) {
+        if (!item || !list.visible)
+            return;
+        let inside = false;
+        for (let p = item.parent; p; p = p.parent) {
+            if (p === list.contentItem) {
+                inside = true;
+                break;
+            }
+        }
+        if (!inside)
+            return;
+        const top = item.mapToItem(list.contentItem, 0, 0).y - Space.s;
+        const bottom = top + item.height + Space.s * 2;
+        if (top < list.contentY)
+            list.contentY = Math.max(list.originY, top);
+        else if (bottom > list.contentY + list.height)
+            list.contentY = Math.min(bottom - list.height, list.originY + list.contentHeight - list.height);
     }
 
     ConverterState {
         id: conv
+        objectName: "converterState"
     }
 
     FileChooser {
@@ -61,6 +93,9 @@ FocusScope {
         } else if (event.key === Qt.Key_V && (event.modifiers & Qt.ControlModifier)) {
             conv.paste();
             event.accepted = true;
+        } else if (event.key === Qt.Key_O && (event.modifiers & Qt.ControlModifier)) {
+            chooser.open();
+            event.accepted = true;
         }
     }
 
@@ -73,9 +108,12 @@ FocusScope {
             anchors.fill: parent
             spacing: Look.groupGap
 
-            // header: title, add files, clear all
+            // header: title, add files, paste, clear all; at the rows'
+            // inset (the art column, the row buttons' right edge)
             RowLayout {
                 Layout.fillWidth: true
+                Layout.leftMargin: Look.rowInset
+                Layout.rightMargin: Look.rowInset
                 spacing: Space.s
 
                 Icon {
@@ -93,6 +131,7 @@ FocusScope {
                 IconButton {
                     objectName: "addButton"
                     size: "s"
+                    focusable: true
                     icon: Icons.plus
                     tooltip: I18n.t("converter.add")
                     onClicked: chooser.open()
@@ -101,6 +140,7 @@ FocusScope {
                 IconButton {
                     objectName: "pasteButton"
                     size: "s"
+                    focusable: true
                     icon: Icons.clipboard
                     tooltip: I18n.t("converter.paste")
                     onClicked: conv.paste()
@@ -110,6 +150,7 @@ FocusScope {
                     objectName: "clearButton"
                     visible: !conv.empty
                     size: "s"
+                    focusable: true
                     icon: Icons.broom
                     tooltip: I18n.t("converter.clear")
                     onClicked: conv.clearAll()
@@ -135,6 +176,15 @@ FocusScope {
                 clip: true
                 spacing: Space.xs
                 boundsBehavior: Flickable.StopAtBounds
+                // more rows below: the last visible ones fade out
+                readonly property bool more: list.contentHeight > list.height && !list.atYEnd
+                layer.enabled: list.more
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: fade
+                    maskThresholdMin: 0.5
+                    maskSpreadAtMin: 1
+                }
                 model: KeyedListModel {
                     keys: Model.entryKeys(conv.rows)
                 }
@@ -150,7 +200,7 @@ FocusScope {
                         KindHeader {
                             converter: conv
                             kind: entry.key.substring(2)
-                            onPickKind: kind => root.pickKind(kind)
+                            onPickKind: (kind, anchor) => root.pickKind(kind, anchor)
                         }
                     }
 
@@ -179,6 +229,8 @@ FocusScope {
             // footer: quality (lossy targets only) and the one primary action
             RowLayout {
                 Layout.fillWidth: true
+                Layout.leftMargin: Look.rowInset
+                Layout.rightMargin: Look.rowInset
                 visible: !conv.empty
                 spacing: Space.s
 
@@ -226,12 +278,40 @@ FocusScope {
                 Chip {
                     objectName: "convertButton"
                     primary: conv.startCount > 0
-                    enabled: conv.startCount > 0
+                    // while converting it is the progress label: readable, not dimmed
+                    enabled: conv.startCount > 0 || conv.busy
                     focusable: true
+                    action: true
                     icon: conv.busy ? Icons.spinnerGap : Icons.swap
+                    spinning: conv.busy
                     text: conv.busy && conv.startCount === 0 ? I18n.t("converter.converting") : (conv.startCount > 1 ? I18n.t("converter.convert_n", conv.startCount) : I18n.t("converter.convert"))
                     onClicked: conv.convert()
                 }
+            }
+        }
+    }
+
+    // the list fade's mask (out of the layout): opaque, then clear over
+    // the last row height
+    Mark {
+        id: fade
+        width: list.width
+        height: list.height
+        visible: false
+        layer.enabled: list.more
+        radius: 0
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Type.text
+            }
+            GradientStop {
+                position: Math.max(0, 1 - Space.rowHeight / Math.max(1, fade.height))
+                color: Type.text
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha(Type.text, 0)
             }
         }
     }
@@ -256,7 +336,7 @@ FocusScope {
         visible: !conv.empty
         radius: Space.surfaceRadius
         color: Type.accent
-        opacity: drop.containsDrag ? 0.1 : 0
+        opacity: drop.containsDrag ? Look.activeTint : 0
     }
 
     FormatPicker {
@@ -270,8 +350,8 @@ FocusScope {
                 conv.setKindTarget(picker.subject, id);
             else
                 conv.setTarget(picker.subject, id);
-            root.forceActiveFocus();
+            picker.restoreFocus(root);
         }
-        onDismissed: root.forceActiveFocus()
+        onDismissed: picker.restoreFocus(root)
     }
 }

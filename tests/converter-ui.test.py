@@ -162,7 +162,7 @@ emit({"id": "c2", "path": D + "podcast-episode.flac", "to": "mp3", "state": "fai
 check(h.eval(row(D + "podcast-episode.flac"), "phase") == "failed", "failed state")
 check(h.eval(row(D + "podcast-episode.flac"), "subtitle") == "Conversion failed", "failed subtitle")
 check("Invalid data" in h.eval(row(D + "podcast-episode.flac"), "errorText"), "the short error is shown")
-check(ev("converter.startCount") == 1 + 0, "a failed row can be converted again")
+check(ev("converter.startCount") == 1, "a failed row can be converted again")
 
 # copy and reveal of a done row
 ev("converter.copy('%s')" % (D + "holiday-photo.bmp"))
@@ -217,6 +217,139 @@ emit({"id": nxt, "path": D + "holiday-photo.jpg", "to": "png", "state": "done", 
       "output": D + "holiday-photo (1).png"})
 check(h.eval(row(D + "holiday-photo.jpg"), "subtitle") == "Saved as holiday-photo (1).png", "replay of own job is harmless")
 ev("BackendService.deferStart = false")
+
+# Config and the Quickshell stub (execDetached is recorded in `detached`)
+# from a context that imports them
+probe = env.load("""
+import QtQuick
+import Quickshell
+import qs.config
+QtObject {
+    function setOpenFolder(v) { Config.system.converter.openFolder = v }
+    function detached() { return JSON.stringify(Quickshell.detached) }
+}""")
+
+
+def detached():
+    return json.loads(h.eval(probe, "detached()"))
+
+
+def focused():
+    it = win.activeFocusItem()
+    return it.objectName() if it is not None else None
+
+
+def key(k, mod=Qt.NoModifier):
+    QTest.keyClick(win, k, mod)
+    settle()
+
+
+def reset(paths=()):
+    ev("converter.clearAll()")
+    settle()
+    if paths:
+        ev("converter.add(%s)" % json.dumps(list(paths)))
+        settle()
+
+
+# a thumbnail URL is percent-encoded: '#' is not a fragment
+odd = "/home/user/My #1 shots/screenshot.png"
+reset([odd])
+art = walk(row(odd), "rowArt")
+check(art is not None and "%231" in h.eval(art, "String(source)"), "thumbnail URL encodes '#': %s" % (art and h.eval(art, "String(source)")))
+
+# a pending row (start sent, reply not back) cannot change; Stop and Remove
+# on it cancel its job once the reply names it
+reset([D + "holiday-photo.jpg", D + "screenshot.png"])
+cancels = len(calls("convert.cancel"))
+ev("BackendService.deferStart = true")
+ev("converter.convert()")
+settle()
+photo = row(D + "holiday-photo.jpg")
+check(h.eval(photo, "phase") == "pending" and not h.eval(photo, "editable"), "pending row is not editable")
+check(not walk(photo, "targetChip").property("visible") and walk(photo, "targetLabel").property("visible"),
+      "a pending row shows its target as text, not a chip")
+check(h.eval(photo, "working") and walk(photo, "removeButton").property("tooltip") == "Stop", "a pending row offers Stop")
+ev("pickRow('%s', null)" % (D + "holiday-photo.jpg"))
+check(not picker.property("shown"), "no picker for a pending row")
+h.eval(photo, "removeOrStop(null)")
+ev("converter.remove('%s')" % (D + "screenshot.png"))
+settle()
+check(len(calls("convert.cancel")) == cancels, "nothing to cancel before the reply")
+ev("BackendService.flushStart()")
+settle()
+seq = ev("BackendService.seq")
+cancelled = sorted(c["params"]["id"] for c in calls("convert.cancel")[cancels:])
+check(cancelled == sorted(["c%d" % (seq - 1), "c%d" % seq]), "stopped and removed pending rows cancel their jobs: %s" % cancelled)
+ev("BackendService.deferStart = false")
+
+# "show files when done": the batch ends with a failure after a success -> reveal
+reset([D + "holiday-photo.jpg", D + "screenshot.png"])
+h.eval(probe, "setOpenFolder(true)")
+shown = len(detached())
+ev("converter.convert()")
+settle()
+seq = ev("BackendService.seq")
+emit({"id": "c%d" % (seq - 1), "path": D + "holiday-photo.jpg", "to": "png", "state": "done", "progress": 1,
+      "output": D + "holiday-photo.png"})
+check(len(detached()) == shown, "no reveal while a job still runs")
+emit({"id": "c%d" % seq, "path": D + "screenshot.png", "to": "jpg", "state": "failed", "error": "cannot write to /ro"})
+opened = detached()
+check(len(opened) == shown + 1 and opened[-1][4] == "file://" + D + "holiday-photo.png",
+      "the batch's result is revealed when its last job fails: %s" % opened[shown:])
+check(h.eval(row(D + "screenshot.png"), "errorText") == "Cannot write to /ro", "a known job error is translated")
+h.eval(probe, "setOpenFolder(false)")
+
+# errors by cause
+ev("BackendService.pasteError = 'the clipboard is empty'")
+key(Qt.Key_V, Qt.ControlModifier)
+check("wl-paste" in ev("converter.notice"), "an unreadable clipboard says so: %s" % ev("converter.notice"))
+ev("BackendService.pasteError = 'unknown method: convert.paste'")
+key(Qt.Key_V, Qt.ControlModifier)
+check(ev("converter.notice") == "The converter service is not running: restart the shell", "a missing service says so")
+ev("BackendService.pasteError = ''")
+
+# keyboard: Tab reaches the toolbar and the drop zone; Ctrl+O, Enter on the
+# drop zone open the chooser; Delete removes the row in focus
+reset()
+view.forceActiveFocus()
+key(Qt.Key_Tab)
+check(focused() == "addButton", "Tab reaches Add files first: %s" % focused())
+key(Qt.Key_Tab)
+check(focused() == "pasteButton", "then Paste: %s" % focused())
+key(Qt.Key_Tab)
+check(focused() == "dropZone", "then the drop zone: %s" % focused())
+key(Qt.Key_Return)
+check(ev("chooser.running"), "Enter on the drop zone opens the file chooser")
+ev("chooser.running = false")
+view.forceActiveFocus()
+key(Qt.Key_O, Qt.ControlModifier)
+check(ev("chooser.running"), "Ctrl+O opens the file chooser")
+ev("chooser.running = false")
+
+reset([D + "holiday-photo.jpg", D + "screenshot.png", D + "podcast-episode.flac"])
+remove = walk(row(D + "screenshot.png"), "removeButton")
+check(h.eval(remove, "focusable") and h.eval(item("clearButton"), "focusable"),
+      "row and toolbar buttons are focusable")
+walk(row(D + "screenshot.png"), "targetChip").forceActiveFocus()
+key(Qt.Key_Delete)
+check(row(D + "screenshot.png") is None, "Delete removes the row in focus")
+check(focused() not in (None, ""), "the focus moves on after Delete: %s" % focused())
+
+# the picker: opens on the current target, Tab stays inside, Esc returns
+# the focus to the chip that opened it
+chip = walk(row(D + "holiday-photo.jpg"), "targetChip")
+check(h.eval(chip, "isButton"), "the target chip reads as a button")
+chip.forceActiveFocus()
+key(Qt.Key_Return)
+check(picker.property("shown") and focused() == "pick_png", "the picker focuses the current target: %s" % focused())
+key(Qt.Key_Backtab, Qt.ShiftModifier)
+last = focused()
+check(last is not None and last.startswith("pick_") and last != "pick_png", "Shift+Tab from the first chip wraps to the last: %s" % last)
+key(Qt.Key_Tab)
+check(focused() == "pick_png", "Tab from the last chip wraps to the first: %s" % focused())
+key(Qt.Key_Escape)
+check(not picker.property("shown") and win.activeFocusItem() == chip, "Esc returns the focus to the chip: %s" % focused())
 
 if failures:
     print(f"{len(failures)} failure(s)")

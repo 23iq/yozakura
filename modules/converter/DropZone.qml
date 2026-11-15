@@ -6,7 +6,8 @@ import qs.modules.components.kit
 // The empty converter: the window's hero, one inset drop target with a
 // quiet outline that turns accent with "Release to add" while files are
 // dragged over the window (`dragging`). One short line, then the other
-// ways in: click to choose (clicked()) or Ctrl+V.
+// ways in: click to choose (clicked()) or Ctrl+V. A button for the
+// keyboard too: Tab reaches it, Enter / Space choose files.
 Item {
     id: root
 
@@ -16,12 +17,26 @@ Item {
 
     signal clicked
 
+    activeFocusOnTab: true
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.clicked();
+            event.accepted = true;
+        }
+    }
+
+    Accessible.role: Accessible.Button
+    Accessible.name: I18n.t("converter.choose")
+    Accessible.description: I18n.t("converter.drop_hint")
+    Accessible.focusable: true
+    Accessible.onPressAction: root.clicked()
+
     Well {
         objectName: "dropWell"
         anchors.fill: parent
         radius: root.radius
         border.width: root.dragging ? Space.stroke : Space.hairline
-        border.color: root.dragging ? Type.accent : (mouse.containsMouse ? Type.muted : Type.track)
+        border.color: root.dragging ? Type.accent : (mouse.containsMouse || root.activeFocus ? Type.muted : Type.track)
 
         Behavior on border.color {
             ColorAnimation {
@@ -35,7 +50,7 @@ Item {
         anchors.fill: parent
         radius: root.radius
         color: Type.accent
-        opacity: root.dragging ? 0.12 : (mouse.containsMouse ? 0.04 : 0)
+        opacity: root.dragging ? Look.activeTint : 0
 
         Behavior on opacity {
             NumberAnimation {
@@ -118,5 +133,10 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
+    }
+
+    FocusRing {
+        radius: root.radius + Space.stroke
+        shown: root.activeFocus
     }
 }

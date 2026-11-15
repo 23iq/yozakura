@@ -6,9 +6,12 @@ import qs.modules.components.kit
 import "ConverterModel.js" as Model
 
 // One file of the converter: thumbnail or kind icon, name, size and format
-// (or the result / the error), an arrow and the target chip, then what the
-// row can do now: remove; cancel while converting; show in folder and copy
-// when done. A progress line runs along the bottom while converting.
+// (or the result / the error), an arrow and the target chip (its format as
+// plain text once it cannot change), then what the row can do now, in a
+// fixed slot (ActionSlot) so the chips line up: remove; stop while
+// converting; show in folder and copy when done. A progress line runs along
+// the bottom while converting. Delete removes (stops) the row whose control
+// has the keyboard focus; the focus moves on to the next control.
 Item {
     id: root
 
@@ -19,15 +22,55 @@ Item {
     readonly property var target: root.row ? Model.targetOf(root.row, root.row.target) : null
     readonly property var job: root.row ? root.row.job : null
     readonly property string subtitle: root.subtitleText()
-    readonly property bool working: ["pending", "queued", "running"].indexOf(root.phase) !== -1
+    readonly property bool working: Model.working(root.row)
+    readonly property bool editable: Model.editable(root.row)
 
     signal pickTarget(string path, Item anchor)
 
     // the full error of a failed conversion, under the row
-    readonly property string errorText: root.phase === "failed" && root.job ? (root.job.error || "") : ""
+    readonly property string errorText: root.phase === "failed" && root.job ? root.converter.jobErrorText(root.job.error) : ""
 
     implicitHeight: Space.rowHeight + (errorLine.visible ? errorLine.implicitHeight + Space.xs : 0)
     implicitWidth: list.implicitWidth
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Delete) {
+            root.removeOrStop(root.Window.activeFocusItem);
+            event.accepted = true;
+        }
+    }
+
+    // Stop a conversion under way, else remove the row. When `from` (the
+    // control used) has the focus, it goes on to the next control outside
+    // this row, which is about to go away.
+    function removeOrStop(from) {
+        if (root.working) {
+            root.converter.cancel(root.row);
+            return;
+        }
+        const next = from && from.activeFocus ? root.nextOutside(from) : null;
+        root.converter.remove(root.path);
+        if (next)
+            next.forceActiveFocus(Qt.TabFocusReason);
+    }
+
+    function nextOutside(from) {
+        let it = from;
+        for (let i = 0; i < 32 && it; i++) {
+            it = it.nextItemInFocusChain(true);
+            if (it && !root.holds(it))
+                return it;
+        }
+        return null;
+    }
+
+    function holds(item) {
+        for (let p = item; p; p = p.parent) {
+            if (p === root)
+                return true;
+        }
+        return false;
+    }
 
     function subtitleText() {
         const r = root.row;
@@ -68,8 +111,9 @@ Item {
                 implicitHeight: Space.controlM
 
                 Art {
+                    objectName: "rowArt"
                     anchors.fill: parent
-                    source: root.row && Model.hasThumb(root.row) ? "file://" + root.row.path : ""
+                    source: root.row && Model.hasThumb(root.row) ? Model.fileUri(root.row.path) : ""
                     icon: Icons[Model.kindInfo(root.row ? root.row.kind : "").icon] || Icons.file
                 }
 
@@ -97,51 +141,72 @@ Item {
                     tone: "muted"
                 }
 
-                Chip {
-                    id: chip
-                    objectName: "targetChip"
+                // one width for every row: the chips form a column
+                Item {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: root.target !== null
-                    focusable: true
-                    text: root.row ? String(root.row.target).toUpperCase() : ""
-                    trailingIcon: Model.editable(root.row) ? Icons.caretDown : ""
-                    width: Math.max(implicitWidth, Space.controlXL)
-                    enabled: Model.editable(root.row)
-                    opacity: !enabled || root.phase === "unavailable" ? 0.38 : 1
-                    onClicked: root.pickTarget(root.path, chip)
+                    width: Math.max(chip.implicitWidth, Space.controlXL)
+                    height: chip.implicitHeight
+
+                    Chip {
+                        id: chip
+                        objectName: "targetChip"
+                        anchors.fill: parent
+                        visible: root.editable
+                        focusable: true
+                        action: true
+                        // the target needs a tool that is missing: an error
+                        // tint and a warning glyph (readable, not dimmed)
+                        danger: root.phase === "unavailable"
+                        active: root.phase === "unavailable"
+                        icon: root.phase === "unavailable" ? Icons.warning : ""
+                        text: root.row ? String(root.row.target).toUpperCase() : ""
+                        trailingIcon: Icons.caretDown
+                        onClicked: root.pickTarget(root.path, chip)
+                    }
+
+                    // converting or converted: the target, no longer a control
+                    KitText {
+                        objectName: "targetLabel"
+                        anchors.centerIn: parent
+                        visible: !root.editable
+                        role: "secondary"
+                        color: Type.secondary
+                        text: chip.text
+                    }
                 }
 
-                IconButton {
-                    objectName: "revealButton"
+                ActionSlot {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: root.phase === "done"
-                    size: "s"
-                    icon: Icons.folderOpen
-                    tooltip: I18n.t("converter.show")
-                    onClicked: root.converter.reveal(root.job.output)
-                }
 
-                IconButton {
-                    objectName: "copyButton"
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.phase === "done"
-                    size: "s"
-                    icon: Icons.copy
-                    tooltip: I18n.t("converter.copy")
-                    onClicked: root.converter.copy(root.job.output)
-                }
+                    IconButton {
+                        objectName: "revealButton"
+                        visible: root.phase === "done"
+                        size: "s"
+                        focusable: true
+                        icon: Icons.folderOpen
+                        tooltip: I18n.t("converter.show")
+                        onClicked: root.converter.reveal(root.job.output)
+                    }
 
-                IconButton {
-                    objectName: "removeButton"
-                    anchors.verticalCenter: parent.verticalCenter
-                    size: "s"
-                    icon: root.working ? Icons.stop : Icons.cancel
-                    tooltip: I18n.t(root.working ? "converter.stop" : "converter.remove")
-                    onClicked: {
-                        if (root.working)
-                            root.converter.cancel(root.row);
-                        else
-                            root.converter.remove(root.path);
+                    IconButton {
+                        objectName: "copyButton"
+                        visible: root.phase === "done"
+                        size: "s"
+                        focusable: true
+                        icon: Icons.copy
+                        tooltip: I18n.t("converter.copy")
+                        onClicked: root.converter.copy(root.job.output)
+                    }
+
+                    IconButton {
+                        id: removeButton
+                        objectName: "removeButton"
+                        size: "s"
+                        focusable: true
+                        icon: root.working ? Icons.stop : Icons.cancel
+                        tooltip: I18n.t(root.working ? "converter.stop" : "converter.remove")
+                        onClicked: root.removeOrStop(removeButton)
                     }
                 }
             }
@@ -154,7 +219,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: list.bottom
-        anchors.leftMargin: Look.rowInset + Space.controlM + Space.m
+        anchors.leftMargin: list.textX
         anchors.rightMargin: Look.rowInset
         visible: root.errorText !== ""
         role: "caption"
