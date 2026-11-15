@@ -202,6 +202,13 @@ ev("SettingsStore.set('notifications.groupByApp', true)")
 select("notifications")
 check(wait_until(lambda: ev('w.findItem("toastCard", w.stage("notifStage")) !== null')), "corner: the real toast card")
 check(wait_until(lambda: ev('w.count("toastSheet", w.stage("notifStage"))') == 2), "...grouped: the app's other two behind it")
+# a short stage (a small window caps it): the small screen beside the
+# toast, all of it in view
+nst = ev('w.stage("notifStage")')
+h.eval(nst, "width = 584; height = 104")
+scr = ev('w.findItem("notifScreen", w.stage("notifStage"))')
+check(h.eval(nst, "stacked") is False and h.eval(scr, "y >= 0 && y + height <= 104"),
+      "corner, a short stage: the small screen beside the toast, in view")
 ev("SettingsStore.set('notifications.presentation', 'notch')")
 check(wait_until(lambda: ev('w.findItem("islandNotifications", w.findItem("notifIsland", w.stage("notifStage"))) !== null')),
       "island: the real island holding the message")
