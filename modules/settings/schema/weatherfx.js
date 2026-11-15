@@ -13,8 +13,6 @@ function toggle(id, keywords) {
     return {
         "key": "theme.weatherFx." + id,
         "type": "toggle",
-        // which effects show: fine tuning, out of the window
-        "advanced": true,
         "visibleWhen": shown,
         "label": "prefs.weatherfx." + id,
         "description": "prefs.weatherfx." + id + ".desc",

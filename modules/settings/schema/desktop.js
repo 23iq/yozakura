@@ -75,7 +75,7 @@ var category = {
     "description": "prefs.cat.desktop.desc",
     "keywords": "desktop icons clock depth wallpaper widgets",
     "stage": "DesktopStage",
-    // icon size is a rare knob: in More, with the arrangement
+    // icon size is a rare knob (`advanced`), with the arrangement
     "row": ["arrange", { "id": "clock", "weight": 1.6 }],
     "sections": [
         {

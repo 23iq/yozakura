@@ -2,10 +2,11 @@
 
 // System: the stage is your desktop speaking your language (SystemStage:
 // the date as it writes it, the weather in your unit, the shell's
-// identity); the row: the language as picture cards and the weather. The
-// "only shell" card (Hyprland) opens in More. Idle, sleep and the battery
-// saver live on Power (power.js); performance, authentication and storage
-// are plumbing: out of the window.
+// identity); the row: the language as picture cards and the weather, then
+// the "only shell" card (Hyprland). Idle, sleep and the battery saver live
+// on Power (power.js). Sections shown on other tabs (Categories.js):
+// performance on Power, video wallpapers on Wallpapers, storage and the
+// clipboard on Dashboard.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -100,32 +101,10 @@ var category = {
         {
             "id": "performance",
             "title": "settings.system.performance",
-            // performance plumbing: out of the window (yozakura config)
-            "advanced": true,
             "entries": [
                 toggle("performance.blurTransition", "performance.blur_transition", "system.performance.blur_transition_desc", "blur transition animation panels"),
                 toggle("performance.windowPreview", "performance.window_preview", "system.performance.window_preview_desc", "window preview thumbnails overview dock"),
                 toggle("performance.wavyLine", "performance.wavy_line", "system.performance.wavy_line_desc", "wavy line progress media animation"),
-                toggle("performance.pauseWallpaperOnFullscreen", "system.performance.pause_wallpaper_fullscreen", "system.performance.pause_wallpaper_fullscreen_desc", "video wallpaper fullscreen game pause"),
-                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause"),
-                toggle("performance.pauseWallpaperOnIdle", "system.performance.pause_wallpaper_idle", "system.performance.pause_wallpaper_idle_desc", "video wallpaper idle away afk inactive pause"),
-                {
-                    "key": "performance.pauseWallpaperIdleDelay",
-                    "type": "number",
-                    "label": "system.performance.pause_wallpaper_idle_delay",
-                    "description": "system.performance.pause_wallpaper_idle_delay_desc",
-                    "keywords": "video wallpaper idle delay seconds timeout pause",
-                    "min": 5,
-                    "max": 3600,
-                    "step": 5,
-                    "unit": "s",
-                    "visibleWhen": {
-                        "key": "performance.pauseWallpaperOnIdle",
-                        "equals": true
-                    }
-                },
-                toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
-                toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
                 {
                     "key": "performance.visualizerFps",
                     "type": "number",
@@ -196,6 +175,33 @@ var category = {
             ]
         },
         {
+            // pausing and scaling video wallpapers: on the Wallpapers tab
+            "id": "video",
+            "title": "prefs.wall.section.video",
+            "entries": [
+                toggle("performance.pauseWallpaperOnFullscreen", "system.performance.pause_wallpaper_fullscreen", "system.performance.pause_wallpaper_fullscreen_desc", "video wallpaper fullscreen game pause"),
+                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause"),
+                toggle("performance.pauseWallpaperOnIdle", "system.performance.pause_wallpaper_idle", "system.performance.pause_wallpaper_idle_desc", "video wallpaper idle away afk inactive pause"),
+                {
+                    "key": "performance.pauseWallpaperIdleDelay",
+                    "type": "number",
+                    "label": "system.performance.pause_wallpaper_idle_delay",
+                    "description": "system.performance.pause_wallpaper_idle_delay_desc",
+                    "keywords": "video wallpaper idle delay seconds timeout pause",
+                    "min": 5,
+                    "max": 3600,
+                    "step": 5,
+                    "unit": "s",
+                    "visibleWhen": {
+                        "key": "performance.pauseWallpaperOnIdle",
+                        "equals": true
+                    }
+                },
+                toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
+                toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k")
+            ]
+        },
+        {
             "id": "auth",
             "title": "prefs.sys.section.auth",
             "entries": [
@@ -212,8 +218,6 @@ var category = {
         {
             "id": "storage",
             "title": "prefs.sys.section.storage",
-            // mount points and tmpfs: out of the window (yozakura config)
-            "advanced": true,
             "entries": [
                 {
                     "key": "system.disks",

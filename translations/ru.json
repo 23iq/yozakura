@@ -1947,7 +1947,7 @@
   "prefs.bar.section.media": "Медиа",
   "prefs.bar.media_title": "Название трека",
   "prefs.bar.media_title.desc": "Название рядом с обложкой (горизонтальные панели).",
-  "prefs.bar.media_visualizer": "Визуализатор",
+  "prefs.bar.media_visualizer": "Визуализатор медиа",
   "prefs.bar.media_visualizer.desc": "Маленькие полоски звука, пока что-то играет.",
   "prefs.bar.section.sentence": "Фраза",
   "prefs.bar.sentence_fragments": "Части фразы",
@@ -1960,7 +1960,7 @@
   "prefs.bar.sentence_separator.dot": "Точка",
   "prefs.bar.sentence_separator.comma": "Запятая",
   "prefs.bar.sentence_separator.none": "Без",
-  "prefs.bar.sentence_verbosity": "Подробность",
+  "prefs.bar.sentence_verbosity": "Подробность фразы",
   "prefs.bar.sentence_verbosity.desc": "Кратко: только значения; полностью: целые фразы.",
   "prefs.bar.sentence_verbosity.short": "Кратко",
   "prefs.bar.sentence_verbosity.full": "Полностью",
@@ -4801,5 +4801,7 @@
   "prefs.notif.dnd_now": "Отключить уведомления сейчас",
   "prefs.ai.quick_use": "Использовать быстрый вопрос",
   "prefs.ai.tasks.notify_me": "Уведомлять меня",
-  "prefs.desktop.arrange_on_desktop": "Расставить на рабочем столе"
+  "prefs.desktop.arrange_on_desktop": "Расставить на рабочем столе",
+  "prefs.bar.section.modules": "Модули",
+  "prefs.wall.section.video": "Видеообои"
 }

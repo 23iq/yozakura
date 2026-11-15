@@ -3,8 +3,8 @@
 // Assistant > Code tasks (ai.tasks.*, pushed to the backend through
 // tasks.configure by TasksService): a composed page. The stage is the task
 // board (TasksStage); beside it: plan first, work in place, notifications;
-// the row: new tasks, review, the board's cards. In More: the layout, the
-// fallback agent, confirmations, done limit, which events notify. Entry
+// the row: new tasks, review, the board's cards; then a card of the layout,
+// the fallback agent, confirmations and done limit, and the notifications. Entry
 // format: see modules/settings/AGENTS.md.
 
 var category = {

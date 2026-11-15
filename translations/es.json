@@ -1939,7 +1939,7 @@
   "prefs.bar.section.media": "Multimedia",
   "prefs.bar.media_title": "Título de la pista",
   "prefs.bar.media_title.desc": "Muestra el título junto a la carátula (barras horizontales).",
-  "prefs.bar.media_visualizer": "Visualizador",
+  "prefs.bar.media_visualizer": "Visualizador multimedia",
   "prefs.bar.media_visualizer.desc": "Pequeñas barras de audio mientras algo suena.",
   "prefs.bar.section.sentence": "Frase",
   "prefs.bar.sentence_fragments": "Fragmentos",
@@ -1952,7 +1952,7 @@
   "prefs.bar.sentence_separator.dot": "Punto",
   "prefs.bar.sentence_separator.comma": "Coma",
   "prefs.bar.sentence_separator.none": "Ninguno",
-  "prefs.bar.sentence_verbosity": "Redacción",
+  "prefs.bar.sentence_verbosity": "Redacción de la frase",
   "prefs.bar.sentence_verbosity.desc": "Corta muestra solo los valores; completa se lee como frases.",
   "prefs.bar.sentence_verbosity.short": "Corta",
   "prefs.bar.sentence_verbosity.full": "Completa",
@@ -4761,5 +4761,7 @@
   "prefs.notif.dnd_now": "Silenciar notificaciones ahora",
   "prefs.ai.quick_use": "Usar la pregunta rápida",
   "prefs.ai.tasks.notify_me": "Avisarme",
-  "prefs.desktop.arrange_on_desktop": "Organizar en el escritorio"
+  "prefs.desktop.arrange_on_desktop": "Organizar en el escritorio",
+  "prefs.bar.section.modules": "Módulos",
+  "prefs.wall.section.video": "Fondos de vídeo"
 }

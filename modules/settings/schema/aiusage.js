@@ -1,7 +1,7 @@
 .pragma library
 
 // AI > usage and subscription limits (spliced into schema/ai.js after the
-// model/effort/context sections). Entry format: see modules/settings/AGENTS.md.
+// model/effort/context sections; shown on the Providers tab, Categories.js). Entry format: see modules/settings/AGENTS.md.
 
 function opt(value, label) {
     return { "value": value, "label": label };
@@ -14,7 +14,6 @@ var sections = [
         "entries": [
             {
                 "key": "ai.usage.headerButton",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.usage_header_button",
                 "description": "prefs.ai.usage_header_button.desc",
@@ -22,7 +21,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.stripTokens",
-                "advanced": true,
                 "type": "toggle",
                 "visibleWhen": { "key": "ai.strip.cost", "equals": true },
                 "label": "prefs.ai.usage_strip_tokens",
@@ -31,7 +29,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.limitWindow",
-                "advanced": true,
                 "type": "selector",
                 "visibleWhen": { "key": "ai.strip.limit", "equals": true },
                 "label": "prefs.ai.usage_limit_window",
@@ -41,7 +38,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.claudeLimits",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.usage_claude_limits",
                 "description": "prefs.ai.usage_claude_limits.desc",
@@ -80,7 +76,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.currencyStyle",
-                "advanced": true,
                 "type": "selector",
                 "label": "prefs.ai.usage_currency",
                 "description": "prefs.ai.usage_currency.desc",
@@ -100,7 +95,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.defaultRange",
-                "advanced": true,
                 "type": "selector",
                 "label": "prefs.ai.usage_default_range",
                 "description": "prefs.ai.usage_default_range.desc",
@@ -109,7 +103,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.sparklines",
-                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.usage_sparklines",
                 "description": "prefs.ai.usage_sparklines.desc",
@@ -117,7 +110,6 @@ var sections = [
             },
             {
                 "key": "ai.usage.hiddenProviders",
-                "advanced": true,
                 "type": "list",
                 "itemType": "text",
                 "placeholder": "prefs.ai.usage_hidden.placeholder",
