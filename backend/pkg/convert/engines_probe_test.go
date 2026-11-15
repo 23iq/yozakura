@@ -40,6 +40,27 @@ func TestMagickFormatListIM6(t *testing.T) {
 	}
 }
 
+// SVG through ImageMagick runs its MSVG (or RSVG) coder: an ImageMagick 6
+// without its "extra" coders lists neither and offers no SVG route, while
+// Ubuntu's full package lists MSVG next to SVG.
+func TestMagickSVGNeedsItsCoder(t *testing.T) {
+	core := "     JPEG* JPEG      rw-   Joint Photographic Experts Group JFIF format\n" +
+		"      PNG* PNG       rw-   Portable Network Graphics (libpng 1.6.43)\n"
+	extra := core + "     MSVG  SVG       rw+   ImageMagick's own SVG internal renderer\n" +
+		"      SVG  SVG       rw+   Scalable Vector Graphics (XML 2.9.14)\n"
+	for list, want := range map[string]bool{core: false, extra: true} {
+		tools := NewTools(map[Engine]string{EngineMagick: "convert"}, parseMagickFormats(list))
+		if tg, _ := Route("svg", "jpg", tools); tg.Available != want {
+			t.Errorf("svg->jpg available=%v, want %v (MSVG listed: %v)", tg.Available, want, want)
+		}
+	}
+	// only the generic SVG coder listed (the inkscape delegate): no route
+	svgOnly := NewTools(map[Engine]string{EngineMagick: "convert"}, map[string]string{"SVG": "rw+", "JPEG": "rw-"})
+	if tg, _ := Route("svg", "jpg", svgOnly); tg.Available {
+		t.Errorf("svg->jpg without MSVG/RSVG: %+v", tg)
+	}
+}
+
 func TestPandocVersionGate(t *testing.T) {
 	for v, want := range map[string]bool{"pandoc 3.1.3\n": true, "pandoc 2.15": true, "pandoc 2.14.2": false, "pandoc 2.9": false, "garbage": false} {
 		if PandocHasSandbox(v) != want {

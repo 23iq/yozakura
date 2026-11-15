@@ -26,6 +26,7 @@ func TestMSVGUnderASymlinkedWorkDir(t *testing.T) {
 		t.Fatalf("policy lacks the resolved work dir:\n%s", pol)
 	}
 	need(t, EngineMagick)
+	needMagickCoder(t, "MSVG")
 	src := filepath.Join(t.TempDir(), "x.svg")
 	_ = os.WriteFile(src, []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"><rect width="4" height="4" fill="red"/></svg>`), 0o644)
 	tools := NewTools(map[Engine]string{EngineMagick: realTools.Prog(EngineMagick)}, nil) // no RSVG listed: MSVG

@@ -238,12 +238,15 @@ func magickName(id string) string {
 }
 
 // magickCan reports whether ImageMagick reads (write=false) or writes the
-// format. An unreadable list assumes yes (the conversion then reports).
+// format through the coder a run names (SVG: RSVG or MSVG, both missing
+// from an ImageMagick 6 without its "extra" coders package, as Ubuntu's
+// with --no-install-recommends). An unreadable list assumes yes (the
+// conversion then reports).
 func (t *Tools) magickCan(id string, write bool) bool {
 	if t.magickFormats == nil {
 		return true
 	}
-	mode, ok := t.magickFormats[magickName(id)]
+	mode, ok := t.magickFormats[t.magickCoder(id)]
 	if !ok {
 		return false
 	}

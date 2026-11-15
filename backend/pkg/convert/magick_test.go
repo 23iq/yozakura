@@ -105,6 +105,7 @@ func TestMagickRefusesContentOfAnotherFormat(t *testing.T) {
 // with librsvg or with ImageMagick's own renderer.
 func TestMagickSVGKeepsToItsFolder(t *testing.T) {
 	need(t, EngineMagick)
+	needMagickCoder(t, "MSVG")
 	outside := t.TempDir()
 	secret := filepath.Join(outside, "secret.png")
 	red := image.NewRGBA(image.Rect(0, 0, 8, 8))
@@ -135,6 +136,19 @@ func TestMagickSVGKeepsToItsFolder(t *testing.T) {
 		}
 		if r, g, _, _ := img.At(4, 4).RGBA(); r > 0xc000 && g < 0x4000 {
 			t.Errorf("%s drew a file outside the SVG's folder", tools.magickCoder("svg"))
+		}
+	}
+}
+
+// needMagickCoder skips a test that runs a coder this ImageMagick lacks:
+// ImageMagick 6 without its "extra" coders package (Ubuntu's imagemagick
+// installed with --no-install-recommends, as in CI) has no SVG, MSVG nor
+// RSVG at all, so no SVG conversion exists to check.
+func needMagickCoder(t *testing.T, coder string) {
+	t.Helper()
+	if f := realTools.magickFormats; f != nil {
+		if _, ok := f[coder]; !ok {
+			t.Skipf("this ImageMagick has no %s coder", coder)
 		}
 	}
 }
