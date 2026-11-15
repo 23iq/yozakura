@@ -13,7 +13,9 @@ import qs.modules.settings.store
 // newer release: its version and "What's new". Under it the three
 // channels as lanes (stable releases, pre-releases, every commit), the
 // one followed lit with your version on it; a click on a lane follows it
-// (one undo step). With checks off the state says so.
+// (one undo step). With checks off the state says so; never checked, it
+// does not claim you are up to date. A short stage (a small window) drops
+// the big mark and the lanes' captions: everything stays in view.
 Stage {
     id: stage
 
@@ -49,7 +51,9 @@ Stage {
     stageHeight: Space.px(300)
     // a short stage: the state on the left, the lanes stacked on the right
     // (stacked under each other they would run over the action)
-    readonly property real laneHeight: Math.round(stage.u * 3.4)
+    readonly property bool tight: stage.height > 0 && stage.height < Space.px(150)
+    readonly property real laneHeight: Math.round(stage.u * (stage.tight ? 2.4 : 3.4))
+    readonly property bool checked: stage.lastCheck > 0
     readonly property bool sideBySide: summary.implicitHeight + stage.laneHeight + stage.u * 1.2 + stage.height * 0.12 + Space.m > stage.height
 
     // the state and its one action
@@ -62,6 +66,7 @@ Stage {
 
         Mark {
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: !stage.tight
             width: Math.round(stage.u * 3.6)
             height: width
             color: stage.newer ? Type.accent : Qt.alpha(Type.accent, 0.16)
@@ -78,7 +83,7 @@ Stage {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "display"
             font.pixelSize: Math.round(stage.u * 1.25)
-            text: stage.newer ? I18n.t("prefs.updates.available", stage.latest) : I18n.t("prefs.updates.stage.up_to_date")
+            text: stage.newer ? I18n.t("prefs.updates.available", stage.latest) : I18n.t(stage.checked || !stage.service ? "prefs.updates.stage.up_to_date" : "prefs.updates.never_checked")
         }
         KitText {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -88,8 +93,10 @@ Stage {
                     return I18n.t("prefs.updates.stage.off").replace("%1", stage.current);
                 if (stage.checking)
                     return I18n.t("prefs.updates.checking");
-                const when = stage.lastCheck > 0 ? I18n.t("prefs.updates.last_check", Qt.formatDateTime(new Date(stage.lastCheck), "d MMM, HH:mm")) : I18n.t("prefs.updates.never_checked");
-                return I18n.t("prefs.updates.current", stage.current) + " · " + when;
+                // (never checked: the title says so already)
+                if (!stage.checked)
+                    return I18n.t("prefs.updates.current", stage.current);
+                return I18n.t("prefs.updates.current", stage.current) + " · " + I18n.t("prefs.updates.last_check", Qt.formatDateTime(new Date(stage.lastCheck), "d MMM, HH:mm"));
             }
         }
         Chip {
@@ -147,18 +154,20 @@ Stage {
                             text: I18n.t(lane.modelData.label)
                         }
                         KitText {
+                            visible: !stage.tight
                             role: "caption"
                             color: Type.muted
                             text: I18n.t(lane.modelData.tag)
                         }
                     }
                 }
-                // your version, pinned to the lane you follow
+                // your version, on the lane you follow (inside it: never over
+                // the lane above)
                 Mark {
                     visible: lane.on
                     anchors.right: parent.right
                     anchors.rightMargin: Math.round(stage.u * 0.6)
-                    y: -height / 2
+                    anchors.verticalCenter: parent.verticalCenter
                     width: versionText.implicitWidth + stage.u * 0.8
                     height: Math.round(stage.u * 1.2)
                     radius: Look.radius("chip", height)

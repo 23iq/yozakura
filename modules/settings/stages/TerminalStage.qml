@@ -48,16 +48,29 @@ Stage {
         }
     }
 
+    // the room the window has: the notice has its own line under it (never
+    // over its text)
+    Item {
+        id: room
+        width: parent.width
+        height: notice.visible ? notice.y - Space.s : parent.height
+        clip: true
+    }
+    // The kitty window is as tall as its lines. A short stage shows it a
+    // little smaller (down to `minFit`), then cuts its top: the prompt, at
+    // the bottom, stays in view.
+    readonly property real minFit: 0.72
+    readonly property real windowHeight: window.item ? window.item.implicitHeight : 0
+    readonly property real fit: stage.windowHeight > 0 ? Math.max(stage.minFit, Math.min(1, room.height / stage.windowHeight)) : 1
     Loader {
         id: window
         objectName: "terminalWindow"
-        // the notice has its own line under the window (never over its text)
-        x: 0
-        y: 0
-        width: parent.width
-        height: notice.visible ? notice.y - Space.s : parent.height
-        // (the kitty window is as tall as its lines: a short stage cuts it)
-        clip: true
+        parent: room
+        width: room.width / stage.fit
+        height: stage.windowHeight > 0 ? stage.windowHeight : room.height
+        scale: stage.fit
+        transformOrigin: Item.TopLeft
+        y: Math.min(0, room.height - stage.windowHeight * stage.fit)
         asynchronous: true
         source: Qt.resolvedUrl("../../terminal/TerminalPreview.qml")
         onLoaded: {
@@ -76,7 +89,7 @@ Stage {
     }
 
     StageSpot {
-        anchors.fill: window
+        anchors.fill: room
         anchors.margins: Space.l
         keys: ["terminal.prompt", "terminal.enabled", "terminal.greeting", "terminal.fastfetchPreset", "terminal.cursorShape", "terminal.cursorBlink"]
     }

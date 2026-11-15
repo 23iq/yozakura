@@ -125,6 +125,10 @@ check(cards is not None, "system: the language as picture cards")
 
 # ---- Updates: one action; a lane follows its channel -----------------------
 select("updates")
+# never checked: the state does not claim you are up to date
+state_text = ev('(function() { var c = w.findItem("updatesState"); var out = []; for (var i = 0; i < c.children.length; i++) if (c.children[i].text !== undefined) out.push(c.children[i].text); return out.join(" | "); })()')
+check("up to date" not in state_text.lower() and "Not checked yet" in state_text,
+      f"updates: never checked, the state says so ({state_text})")
 before = ev("UpdateService.checks")
 h.eval(ev('w.findItem("updatesAction")'), "clicked()")
 check(ev("UpdateService.checks") == before + 1, "updates: the action checks now")

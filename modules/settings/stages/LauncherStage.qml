@@ -27,7 +27,7 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(250)
+    readonly property real preferredHeight: Space.px(300)
 
     stageHeight: stage.preferredHeight
 
