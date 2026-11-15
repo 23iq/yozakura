@@ -63,7 +63,7 @@ Stage {
     // little smaller (down to `minFit`), then cuts its top: the prompt, at
     // the bottom, stays in view.
     readonly property real minFit: 0.72
-    readonly property real windowHeight: window.item ? window.item.implicitHeight : 0
+    readonly property real windowHeight: (window.item as Item)?.implicitHeight ?? 0
     readonly property real fit: stage.windowHeight > 0 ? Math.max(stage.minFit, Math.min(1, room.height / stage.windowHeight)) : 1
     Loader {
         id: window

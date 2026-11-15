@@ -139,13 +139,14 @@ Item {
                         // (a slow pulse; none with animations off), then
                         // the picture fades in over it
                         Mark {
+                            id: waiting
                             objectName: "lockPreviewWaiting"
                             anchors.fill: parent
                             radius: 0
                             visible: picture.status !== Image.Ready
                             color: Look.raisedFill(false)
                             SequentialAnimation on opacity {
-                                running: parent.visible && Motion.base > 0
+                                running: waiting.visible && Motion.base > 0
                                 loops: Animation.Infinite
                                 NumberAnimation {
                                     from: 1

@@ -7,6 +7,7 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings
 import "../live/LiveKeys.js" as LiveKeys
+import "../Ui.js" as Ui
 
 // The Screen destination's canvas (two panes): the whole screen as it is
 // laid out (every bar, the island, the dock, the frame, on your wallpaper).
@@ -61,7 +62,7 @@ Item {
     property bool ready: false
     readonly property bool covered: canvas.part === "desktop" || canvas.part === "lock"
     readonly property Item current: loupes.count > 0 ? loupes.itemAt(canvas.parts.indexOf(canvas.part)) : null
-    readonly property var loupe: canvas.current ? canvas.current.item : null
+    readonly property var loupe: (canvas.current as Loader)?.item ?? null
     // a part that is off has nothing to magnify (the canvas shows it gone)
     readonly property bool partOn: canvas.part === "dock" ? SettingsStore.get("dock.enabled") !== false : canvas.part === "island" ? SettingsStore.get("notch.enabled") !== false : true
     // (a part that is off: its stage may draw a ghost of it with its
@@ -186,7 +187,7 @@ Item {
             objectName: "screenCanvasLoupe:" + loupeLoader.modelData
             y: loupeLoader.cover ? 0 : frame.height + Space.m
             width: canvas.width
-            height: loupeLoader.cover ? canvas.screenH : (loupeLoader.current ? canvas.loupeH : (loupeLoader.item ? Math.min(Space.px(320), Math.max(Space.px(96), loupeLoader.item.preferredHeight || Space.px(120))) : 0))
+            height: loupeLoader.cover ? canvas.screenH : (loupeLoader.current ? canvas.loupeH : (loupeLoader.item ? Math.min(Space.px(320), Math.max(Space.px(96), Number(Ui.prop(loupeLoader.item, "preferredHeight")) || Space.px(120))) : 0))
             z: loupeLoader.cover ? 1 : 0
             active: !!canvas.urls[loupeLoader.modelData]
             source: canvas.urls[loupeLoader.modelData] || ""

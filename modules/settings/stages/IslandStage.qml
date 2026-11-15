@@ -84,7 +84,7 @@ Stage {
         objectName: "islandLive"
         visible: stage.islandOn
         active: stage.islandOn
-        state: stage.showing
+        showing: stage.showing
         zoom: stage.zoom
         // against its edge: a band along it, or a column on a side edge
         x: stage.position === "right" ? stage.width - width : 0

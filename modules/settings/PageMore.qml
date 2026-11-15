@@ -75,7 +75,7 @@ Card {
         return moreCard._find(s => s.sectionId === sectionId ? s : null);
     }
     function _find(pick) {
-        const list = content.item ? content.item.children : [];
+        const list = (content.item as Item)?.children ?? [];
         for (let i = 0; i < list.length; i++) {
             const s = list[i] as SettingsSection;
             if (!s)

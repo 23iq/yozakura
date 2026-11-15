@@ -3,6 +3,9 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components.preview
 import qs.modules.settings.store
+// LiveTarget (a singleton of this directory) through the module: tooling
+// resolves the implicit directory import without its qmldir
+import qs.modules.settings.live
 import "../../bar/panels/PanelLayout.js" as PanelLayout
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 import "LiveKeys.js" as LiveKeys

@@ -8,6 +8,7 @@ import qs.modules.components.kit
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../PanelsModel.js" as PanelsModel
+import "../Ui.js" as Ui
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 
 // bar.panels editor: the panel list (add / remove) and, for the panel
@@ -148,7 +149,7 @@ Item {
         default property alias control: holder.data
         readonly property Item item: holder.children.length > 0 ? holder.children[0] : null
         // (a stretched selector: the column it was given)
-        readonly property real controlW: line.item ? (line.item.stretch === true ? line.item.width : line.item.implicitWidth) : 0
+        readonly property real controlW: line.item ? (Ui.prop(line.item, "stretch") === true ? line.item.width : line.item.implicitWidth) : 0
         readonly property real controlH: line.item ? line.item.implicitHeight : 0
         readonly property bool stacked: name.implicitWidth + Space.l + line.controlW > line.width
         width: parent ? parent.width : 0

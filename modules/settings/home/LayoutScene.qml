@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings.stages
+import "../Ui.js" as Ui
 
 // Home tile scene of Screen: your whole screen as a small monitor standing
 // on the card (16:9 in a thin bezel, on a neck and a foot, fitted and
@@ -24,9 +25,12 @@ Item {
     readonly property bool stand: scene.height >= Space.px(120)
     readonly property real standShare: scene.stand ? 0.16 : 0
     readonly property real bezel: Math.max(Space.hairline * 2, Math.round(scene.height * 0.02))
+    // the tile's monitor shape (HomeTile.monitorAspect; the tile is typed as
+    // its base Card)
+    readonly property real aspect: Number(Ui.prop(scene.tile, "monitorAspect")) || 16 / 9
     // the monitor: 16:9, as large as the scene holds with its stand
-    readonly property real monitorWidth: Math.min(scene.width - scene.bezel * 2, scene.height / (1 + scene.standShare) * scene.tile.monitorAspect)
-    readonly property real monitorHeight: scene.monitorWidth / scene.tile.monitorAspect
+    readonly property real monitorWidth: Math.min(scene.width - scene.bezel * 2, scene.height / (1 + scene.standShare) * scene.aspect)
+    readonly property real monitorHeight: scene.monitorWidth / scene.aspect
     readonly property real standHeight: Math.round(scene.monitorHeight * scene.standShare)
 
     // the stand: a neck and a foot

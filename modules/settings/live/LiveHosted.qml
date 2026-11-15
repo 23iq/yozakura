@@ -4,6 +4,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.components.preview
 import "../../shell/hosts/HostResolve.js" as HostResolve
+import "../Ui.js" as Ui
 
 // A hosted surface (the launcher, the dashboard) as it opens: the shell's
 // own view, by URL, with a PreviewContext (`overrides`, `samples`), inside
@@ -58,7 +59,7 @@ Item {
     property string side: Config.layout && Config.layout.sheet && Config.layout.sheet.side === "left" ? "left" : "right"
     readonly property alias part: part
     // the hosted view (null in a snapshot, and until it is built)
-    readonly property Item view: part.item ? part.item.view : null
+    readonly property Item view: Ui.prop(part.item, "view") ?? null
     readonly property bool ready: part.ready
     // the frame's native size and its scale here
     readonly property real nativeWidth: part.partWidth
@@ -147,9 +148,9 @@ Item {
         // the wheel scrolls the page around the stage, never the view's
         // own lists (an unaccepted wheel would reach them under the cover)
         onWheel: wheel => {
-            let f = root.parent;
-            while (f && f.contentY === undefined)
-                f = f.parent;
+            let f = null;
+            for (let p = root.parent; p && !f; p = p.parent)
+                f = p as Flickable;
             if (f && f.contentHeight > f.height)
                 f.contentY = Math.max(0, Math.min(f.contentHeight - f.height, f.contentY - wheel.angleDelta.y));
         }
