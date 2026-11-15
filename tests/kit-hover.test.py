@@ -68,7 +68,7 @@ for name, below in (("tipTop", True), ("tipLow", False)):
     move(c.x(), c.y())
     tip = btn.findChild(QObject, "iconButtonTooltip")
     assert tip is not None, f"{name}: IconButton carries the kit Tooltip"
-    wait_until(lambda: tip.property("opened"))
+    wait_until(lambda t=tip: t.property("opened"))
     assert tip.property("text") == btn.property("tooltip"), name
     top = tip.property("y") + h.eval(btn, "mapToItem(null, 0, 0)").y()
     by = h.eval(btn, "mapToItem(null, 0, 0)").y()
@@ -79,6 +79,6 @@ for name, below in (("tipTop", True), ("tipLow", False)):
         assert top + tip_h <= by + 1, (name, "above the button", top, tip_h, by)
     assert top >= 0 and top + tip_h <= 300 + 1, (name, "inside the window", top, tip_h)
     move(10, 10)
-    wait_until(lambda: not tip.property("visible"))
+    wait_until(lambda t=tip: not t.property("visible"))
 
 print("kit-hover: ok")
