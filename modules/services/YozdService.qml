@@ -107,6 +107,12 @@ Singleton {
         });
     }
 
+    // The current window list (clients.values), typed for callers: the
+    // `clients` holder is declared as a plain QtObject.
+    function windowList(): var {
+        return root.clients.values || [];
+    }
+
     // Raise and focus a window (address as in clients.values).
     function focusWindow(address) {
         if (!address) return;

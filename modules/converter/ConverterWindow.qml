@@ -97,7 +97,7 @@ FloatingWindow {
         interval: 100
         repeat: true
         onTriggered: {
-            const client = Model.windowTitled(YozdService.clients.values, root._raiseToken);
+            const client = Model.windowTitled(YozdService.windowList(), root._raiseToken);
             if (client) {
                 const ws = YozdService.focusedMonitor?.activeWorkspace?.id || YozdService.focusedWorkspace?.id || 0;
                 if (ws && client.workspace?.id !== ws)
