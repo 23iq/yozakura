@@ -66,22 +66,32 @@ Item {
         }
 
         Column {
+            id: info
             anchors.verticalCenter: parent.verticalCenter
             spacing: Space.xs / 2
+            // never under the tabs: a narrow dashboard elides the date line
+            readonly property real room: root.width - actions.width - Space.l - clock.width - when.spacing
+            readonly property real natural: Math.max(dateLine.implicitWidth, weather.visible ? glyph.implicitWidth + weather.spacing + temperature.implicitWidth : 0)
+            width: Math.max(0, Math.min(info.natural, info.room))
 
             KitText {
+                id: dateLine
                 objectName: "date"
+                width: parent.width
+                elide: Text.ElideRight
                 role: root.showClock ? "body" : "title"
                 font.weight: Look.labelWeight
                 text: Qt.locale(I18n.resolvedLanguage).toString(root.now, "dddd, MMMM d")
             }
 
             Row {
+                id: weather
                 objectName: "weather"
                 spacing: Space.s
                 visible: WeatherService.dataAvailable && root.showClock
 
                 Text {
+                    id: glyph
                     anchors.verticalCenter: parent.verticalCenter
                     text: Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode ?? WeatherService.weatherCode, WeatherService.effectiveIsDay ?? true)] || Icons.sun
                     font.family: Icons.font
@@ -90,8 +100,11 @@ Item {
                 }
 
                 KitText {
+                    id: temperature
                     objectName: "temperature"
                     anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, info.width - glyph.width - weather.spacing)
+                    elide: Text.ElideRight
                     role: "secondary"
                     tabular: true
                     text: WidgetFormat.temp(WeatherService.currentTemp) + "  " + (WeatherService.effectiveWeatherDescription ?? "")
@@ -101,6 +114,7 @@ Item {
     }
 
     Row {
+        id: actions
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Space.m
