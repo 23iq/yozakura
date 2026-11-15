@@ -589,9 +589,11 @@ working on every preset/edge/light-dark/roundness 0..24/`animDuration 0`.
    to the `GlobalStates` snapshot list when a settings panel edits it.
 2. Declare it in `modules/settings/schema/<category>.js` (type, label,
    description, options/min/max, `visibleWhen`) and add the strings to
-   `translations/{en,es,ru}.json` (see `modules/settings/AGENTS.md`). Only
-   important options are rows of the Settings window; a rare or expert knob
-   gets `"advanced": true` (still in the catalog, the CLI and MCP).
+   `translations/{en,es,ru}.json` (see `modules/settings/AGENTS.md`). The
+   tab's cards hold the important options; a rare or expert knob gets
+   `"advanced": true`: it is a row of the tab's folded "More settings" card
+   (found by search, which opens the card at it, and reset by Reset page),
+   and stays in the catalog, the CLI and MCP.
 3. If the settings UI does not state its allowed values (custom editor, no
    entry), describe it in `config/meta/<domain>.js` (description, `enum`,
    `min`/`max`, `items`; shared lists in `config/meta/Enums.js`).

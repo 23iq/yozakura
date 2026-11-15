@@ -148,7 +148,10 @@ language's card over the ambient (`modules/theme/InkContrast.js`, `tests/kit-mut
 quieter than `secondary` where the surfaces allow, never below AA.
 Live previews (`modules/components/preview/`, the settings stages and picture cards): `LivePart`
 (a real shell component created by URL, inert, scaled into the item; `snapshot` pictures it once),
-`LiveGate` (the queue that builds them one per step after the page), `PreviewContext` (a part's
+`LiveGate` (the queue that builds them one per step after the page), `LiveHold` (a hidden part:
+a cached page, another tab, the kept-alive Settings window; it is torn down once it stayed hidden
+`holdMs`, 1.5 s, and built again when shown), `LoadWatch` (an async build that stays Loading
+offscreen is started again), `PreviewContext` (a part's
 `preview`: `overrides` of config keys, `samples` instead of live services; null in the live shell)
 and `Preview.js` (`pick(preview, key, live)`, `sample`; `tests/live-preview.test.cjs`).
 Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
