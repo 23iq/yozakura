@@ -217,11 +217,16 @@ func LocalResource(target, root string) bool {
 }
 
 // LocalImage is LocalResource that is also an image when it exists (a
-// key file renamed .png is not one); a missing file embeds nothing.
+// key file renamed .png is not one); a missing file embeds nothing. An
+// SVG, in a file or a data: URI, must reference nothing outside itself
+// (svgSafe).
 func LocalImage(target, root string) bool {
 	paths, ok := localPaths(target, root)
 	if !ok {
 		return false
+	}
+	if t := strings.TrimSpace(target); strings.HasPrefix(strings.ToLower(t), "data:") {
+		return dataSVGSafe(t)
 	}
 	for _, p := range paths {
 		st, err := os.Stat(p)
@@ -231,7 +236,8 @@ func LocalImage(target, root string) bool {
 		if !st.Mode().IsRegular() {
 			return false
 		}
-		if f, _, ok := sniffFile(p); !ok || f.Kind != KindImage {
+		f, _, ok := sniffFile(p)
+		if !ok || f.Kind != KindImage || (f.ID == "svg" && !svgFileSafe(p)) {
 			return false
 		}
 	}
