@@ -294,6 +294,12 @@ until(lambda: ev("currentCategory") == "sound", "settingsCategory opens the page
 # Power / System: list editor (idle listeners), string list of paths (disks)
 select("power")
 n0 = ev("Config.system.idle.listeners.length")
+# the raw listeners are a group of the tab's More card (advanced section)
+check(ev('w.findItem("idleCommandsToggle")') is None, "one fold on Power: the More card, no Advanced toggle")
+more = ev('w.findItem("moreSettings", w.findItem("settingsPage").item)')
+check(more is not None and h.eval(more, "visible"), "Power has a More card")
+h.eval(more, "open(true)")
+until(lambda: ev('w.findItem("settingRow:power.commands")') is not None, "the idle commands open in the More card")
 lst = row("power.commands")
 h.eval(lst, """(function() {
     function find(item) {

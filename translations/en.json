@@ -4520,8 +4520,6 @@
   "prefs.power.section.away": "While you're away",
   "prefs.power.section.sleep": "Sleep",
   "prefs.power.section.commands": "Idle commands",
-  "prefs.power.section.advanced": "Advanced",
-  "prefs.power.commands_toggle": "Idle commands · %1",
   "prefs.power.idle": "Idle timeline",
   "prefs.power.idle.desc": "When the screen dims, locks, turns off and the computer sleeps while you are away. Drag a step; drag it to the end for never.",
   "prefs.power.step.dim": "Dim",

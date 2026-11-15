@@ -4554,8 +4554,6 @@
   "prefs.power.section.away": "Пока вас нет",
   "prefs.power.section.sleep": "Сон",
   "prefs.power.section.commands": "Команды простоя",
-  "prefs.power.section.advanced": "Дополнительно",
-  "prefs.power.commands_toggle": "Команды простоя · %1",
   "prefs.power.idle": "Шкала простоя",
   "prefs.power.idle.desc": "Когда экран тускнеет, блокируется, гаснет и компьютер засыпает. Перетащите шаг; в конец — никогда.",
   "prefs.power.step.dim": "Тусклее",

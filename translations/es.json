@@ -4520,8 +4520,6 @@
   "prefs.power.section.away": "Mientras no estás",
   "prefs.power.section.sleep": "Suspensión",
   "prefs.power.section.commands": "Órdenes de inactividad",
-  "prefs.power.section.advanced": "Avanzado",
-  "prefs.power.commands_toggle": "Órdenes de inactividad · %1",
   "prefs.power.idle": "Línea de inactividad",
   "prefs.power.idle.desc": "Cuándo se atenúa, se bloquea, se apaga la pantalla y se suspende el equipo. Arrastra un paso; al final, nunca.",
   "prefs.power.step.dim": "Atenuar",

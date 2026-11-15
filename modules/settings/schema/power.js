@@ -2,9 +2,9 @@
 
 // Power: the battery and power profile (the stage), battery saver, what
 // happens while you are away (one idle timeline, the lock command) and
-// around sleep (two switches). The raw idle listeners are a card of their
-// own (IdleCommands); the sleep commands are advanced (the switches set
-// them). Entry format: see modules/settings/AGENTS.md.
+// around sleep (two switches). The raw idle listeners (IdleCommands) and
+// the sleep commands (the switches set them) are advanced: the tab's More
+// card holds them. Entry format: see modules/settings/AGENTS.md.
 
 function command(key, label, description, placeholder, keywords, advanced) {
     return {
@@ -57,9 +57,10 @@ var category = {
         },
         {
             // the raw listeners (a command at a time), for what the timeline
-            // does not draw: an Advanced card, folded away (IdleCommands)
+            // does not draw: a group of the tab's More card (IdleCommands)
             "id": "commands",
-            "title": "prefs.power.section.advanced",
+            "title": "prefs.power.section.commands",
+            "advanced": true,
             "entries": [
                 {
                     "id": "power.commands",
