@@ -16,6 +16,14 @@ import (
 //     denies the script / network / indirect-read coders and external
 //     delegates (Ghostscript only when the route needs PDF);
 //   - is bounded by -limit and keeps its temporary files in the work dir.
+//
+// Limit: ImageMagick loads MAGICK_CONFIGURE_PATH's policy.xml before the
+// system one and applies the last rule matching a coder or path (checked
+// with ImageMagick 7.1.2: of two policy files, the later one's grant wins).
+// A system or admin policy that grants a coder or path therefore overrides
+// our deny for it, and nothing makes our file load last. The explicit
+// coder still decides how the input itself is decoded; the denies are
+// defence in depth for what a decoder reads on its own.
 
 // magickPolicyFile is written into the work dir, read through
 // MAGICK_CONFIGURE_PATH.
