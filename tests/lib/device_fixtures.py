@@ -173,9 +173,18 @@ import qs.modules.theme
 QtObject {
     id: audio
     property var calls: []
+    // a node's `audio` is an object, as PwNodeAudio is (a Connections
+    // target in the bar's ControlsPopup)
+    property Component levelC: Component {
+        QtObject {
+            property real volume
+            property bool muted
+        }
+    }
+    function level(vol, muted) { return levelC.createObject(audio, { "volume": vol, "muted": muted }) }
     function node(id, name, desc, vol, extra) {
         return Object.assign({ "id": id, "name": name, "description": desc, "nickname": "", "ready": true,
-                               "isStream": false, "properties": {}, "audio": { "volume": vol, "muted": false } }, extra || {})
+                               "isStream": false, "properties": {}, "audio": level(vol, false) }, extra || {})
     }
     property var outputDevices: [node(41, "alsa_output.speaker", "Speakers", 0.62),
                                  node(42, "alsa_output.hdmi", "HDMI · LG 27GL850", 1),
@@ -189,12 +198,12 @@ QtObject {
     property var source: inputDevices[0]
     function friendlyDeviceName(n) { return (n && (n.nickname || n.description)) || "Unknown" }
     function appNodeDisplayName(n) { return (n && n.properties && n.properties["application.name"]) || (n && n.description) || "Unknown" }
-    function setVolume(v) { calls = calls.concat([["volume", v]]); sink = Object.assign({}, sink, { "audio": { "volume": v, "muted": sink.audio.muted } }) }
-    function setMicVolume(v) { calls = calls.concat([["mic", v]]); source = Object.assign({}, source, { "audio": { "volume": v, "muted": source.audio.muted } }) }
+    function setVolume(v) { calls = calls.concat([["volume", v]]); sink = Object.assign({}, sink, { "audio": level(v, sink.audio.muted) }) }
+    function setMicVolume(v) { calls = calls.concat([["mic", v]]); source = Object.assign({}, source, { "audio": level(v, source.audio.muted) }) }
     function setNodeVolume(n, v) { calls = calls.concat([["node", n.id, v]]) }
     function setDefaultSink(n) { calls = calls.concat([["sink", n.id]]); sink = n }
     function setDefaultSource(n) { calls = calls.concat([["source", n.id]]); source = n }
-    function toggleMute() { calls = calls.concat([["mute"]]); sink = Object.assign({}, sink, { "audio": { "volume": sink.audio.volume, "muted": !sink.audio.muted } }) }
+    function toggleMute() { calls = calls.concat([["mute"]]); sink = Object.assign({}, sink, { "audio": level(sink.audio.volume, !sink.audio.muted) }) }
     function toggleMicMute() { calls = calls.concat([["micmute"]]) }
     function volumeIcon(volume, muted) { return muted ? Icons.speakerX : volume <= 0 ? Icons.speakerNone : volume < 0.33 ? Icons.speakerLow : Icons.speakerHigh }
 }"""
