@@ -26,3 +26,25 @@ function moduleKeys(id) {
 function sectionOf(id) {
     return MODULE_SECTIONS[id] || "layout";
 }
+
+// The settings a snapshot picture of a bar (LivePanel) or of the dock
+// (LiveDock) draws from: a change of one of them pictures it again, any
+// other key (motion, wallpaper, the AI, the island's behaviour...) leaves
+// the picture alone. Colours are followed apart (Colors). The theme keys
+// are the ones the kit and the bar draw with (fonts, roundness, density,
+// shape, language, glass, shadows, the sr* surfaces, corners, icons, text
+// style, the surface effect, the progress ink).
+var THEME_DRAWN = /^theme\.(font|monoFont|roundness|density|shape|language|glass|shadow|sr|enableCorners|icons|type|surfaceEffect|progressRole)/;
+var PICTURE_KEYS = {
+    // (a bar holds the integrated dock, the island's edge picks the primary
+    // panel, specials are modules of it)
+    "bar": /^(bar|workspaces|dock|notch|specials)\./,
+    // (a dock in the bar follows the bar's look)
+    "dock": /^(dock|bar)\./
+};
+
+function redraws(kind, key) {
+    var k = String(key);
+    var own = PICTURE_KEYS[kind];
+    return !!own && (own.test(k) || THEME_DRAWN.test(k));
+}

@@ -5,6 +5,7 @@ import qs.modules.components.preview
 import qs.modules.settings.store
 import "../../bar/panels/PanelLayout.js" as PanelLayout
 import "../../bar/panels/PanelStyles.js" as PanelStyles
+import "LiveKeys.js" as LiveKeys
 
 // One real bar panel framed in a picture (a picture card, a strip): your
 // primary bar's spec with `patch` laid over it (another style, only some
@@ -56,7 +57,7 @@ Item {
     Connections {
         target: root.snapshot ? SettingsStore : null
         function onValueSet(key) {
-            if (/^(bar|workspaces|theme|dock|notch|weather|general)\./.test(String(key)))
+            if (LiveKeys.redraws("bar", key))
                 root.revision++;
         }
     }

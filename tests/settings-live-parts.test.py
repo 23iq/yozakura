@@ -117,6 +117,16 @@ Window {
         })(from || w.contentItem);
         return out;
     }
+    // the first snapshot LivePart under `from`
+    function snapshotPart(from) {
+        var found = null;
+        (function walk(it) {
+            if (found || !it) return;
+            if (it.wanted !== undefined && it.pictured !== undefined && it.snapshot) { found = it; return; }
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(from || w.contentItem);
+        return found;
+    }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
     // a control of the page that has the keyboard
     Item { objectName: "outsideFocus"; width: 1; height: 1; activeFocusOnTab: true }
@@ -280,6 +290,10 @@ check(seen == {(round(before[0], 4), round(before[1], 1))}, f"a bar change: the 
 check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.snapshot && p.live).length") == 0, timeout_ms=20000),
       "the cards of the Bar page are pictures (no live part left)")
 check(ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") > 0, "the Bar page's stage and canvas are live")
+# a picture taken again gets its failed grabs tried again (the count of an
+# earlier one, given up after 20, starts over)
+check(ev("(function() { var p = w.snapshotPart(w.findItem('shell')); p.grabTries = 20; p.retake(); return p.grabTries; })()") == 0,
+      "retake() starts the failed-grab count over")
 # Settings hidden (the kept-alive window, KeepAliveLoader): every part goes
 ev("w.findItem('shell').visible = false")
 check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") == 0, timeout_ms=6000),

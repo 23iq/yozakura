@@ -105,6 +105,9 @@ Item {
     readonly property bool awake: hold.awake
     // a snapshot whose picture is taken: its live part is gone
     property bool pictured: false
+    // failed grabs of this picture tried again so far (at most 20; a new
+    // build or picture starts over)
+    property alias grabTries: regrab.tries
     // the live part should exist now
     readonly property bool wanted: root.active && root.awake && !root.pictured
     LiveHold {
@@ -125,8 +128,10 @@ Item {
     }
     // built in its turn (LiveGate), unless it already is
     function wake() {
-        if (root.wanted && loader.status === Loader.Null)
+        if (root.wanted && loader.status === Loader.Null) {
+            regrab.tries = 0;
             root.reload();
+        }
     }
     // the live part goes (a picture stays)
     function sleep() {
@@ -225,6 +230,8 @@ Item {
     function retake() {
         settle.stop();
         refresh.stop();
+        // a new picture gets its own failed grabs tried again
+        regrab.tries = 0;
         root.pictured = false;
         if (root.wanted)
             root.reload();

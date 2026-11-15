@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components.preview
 import qs.modules.settings.store
+import "LiveKeys.js" as LiveKeys
 
 // The real dock (modules/dock/DockContent.qml, by URL: your apps, pins,
 // running indicators, size, spacing and style) framed in a picture or a
@@ -41,7 +42,7 @@ Item {
     Connections {
         target: root.snapshot ? SettingsStore : null
         function onValueSet(key) {
-            if (/^(dock|theme|apps|general)\./.test(String(key)))
+            if (LiveKeys.redraws("dock", key))
                 root.revision++;
         }
     }

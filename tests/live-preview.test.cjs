@@ -171,3 +171,16 @@ test('the dashboard preview loads its wallpaper thumbnails (isVisible, not Globa
     assert.match(cell, /cell\.tab\.dashboardShown/);
     assert.doesNotMatch(cell, /GlobalStates\.dashboardOpen/);
 });
+
+test('a snapshot bar / dock is pictured again only for a setting it draws', () => {
+    const K = Keys;
+    for (const k of ['bar.position', 'workspaces.indicatorStyle', 'notch.position', 'dock.theme', 'theme.roundness', 'theme.fontSize', 'theme.srBarBg.opacity', 'theme.shadowBlur', 'theme.glass.enabled'])
+        assert.equal(K.redraws('bar', k), true, k);
+    for (const k of ['general.reduceMotion', 'theme.paletteTransitionDuration', 'theme.weatherFx', 'theme.lighting.enabled', 'weather.location', 'ai.enabled', 'apps.terminal'])
+        assert.equal(K.redraws('bar', k), false, k);
+    assert.equal(K.redraws('dock', 'dock.iconSize'), true);
+    assert.equal(K.redraws('dock', 'theme.roundness'), true);
+    assert.equal(K.redraws('dock', 'workspaces.indicatorStyle'), false);
+    assert.equal(K.redraws('dock', 'general.anything'), false);
+    assert.equal(K.redraws('nothing', 'bar.position'), false);
+});
