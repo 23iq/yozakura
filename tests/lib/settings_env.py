@@ -156,6 +156,9 @@ QtObject {
     property string currentProfile: "balanced"
     property bool isAvailable: true
     property var availableProfiles: ["power-saver", "balanced", "performance"]
+    // (the bar's battery popup in a live preview)
+    function getProfileIcon(name) { return "" }
+    function getProfileDisplayName(name) { return name || "" }
 }"""
 
 UPDATE_STUB = """pragma Singleton
