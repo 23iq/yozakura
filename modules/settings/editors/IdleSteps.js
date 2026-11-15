@@ -1,10 +1,14 @@
 .pragma library
+.import "../../globals/BrandActions.js" as BrandActions
 
 // Pure model of the idle timeline (editors/IdleTimeline.qml): the idle
 // listeners (system.idle.listeners: [{timeout, onTimeout, onResume}]) read
 // as four steps - dim the screen, lock, turn the screen off, sleep - each at
 // a time or never. Listeners that are none of these are kept as they are.
 // Node-tested (tests/settings-power.test.cjs).
+
+// the app's CLI (never a literal name: the brand)
+var APP = BrandActions.appId;
 
 // The steps in timeline order, how a listener's command is recognised, and
 // the listener a step gets when it is turned on again.
@@ -13,8 +17,8 @@ var STEPS = [
         "id": "dim",
         "match": /brightness/,
         "listener": {
-            "onTimeout": "yozakura brightness 10 -s",
-            "onResume": "yozakura brightness -r"
+            "onTimeout": APP + " brightness 10 -s",
+            "onResume": APP + " brightness -r"
         }
     },
     {
@@ -26,17 +30,18 @@ var STEPS = [
     },
     {
         "id": "off",
-        "match": /screen off|dpms off|dpms,? ?off/,
+        // niri: `niri msg action power-off-monitors`
+        "match": /screen off|dpms off|dpms,? ?off|power-off-monitors/,
         "listener": {
-            "onTimeout": "yozakura screen off",
-            "onResume": "yozakura screen on"
+            "onTimeout": APP + " screen off",
+            "onResume": APP + " screen on"
         }
     },
     {
         "id": "sleep",
         "match": /suspend|hibernate|sleep/,
         "listener": {
-            "onTimeout": "yozakura suspend"
+            "onTimeout": APP + " suspend"
         }
     }
 ];

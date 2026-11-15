@@ -21,6 +21,7 @@ test('the default listeners read as dim, lock, screen off and sleep', () => {
     assert.deepEqual(plain(S.read(DEFAULTS)), { dim: 150, lock: 300, off: 330, sleep: 1800 });
     assert.equal(S.stepOf({ onTimeout: 'hyprlock' }), 'lock');
     assert.equal(S.stepOf({ onTimeout: 'systemctl hibernate' }), 'sleep');
+    assert.equal(S.stepOf({ onTimeout: 'niri msg action power-off-monitors' }), 'off', 'niri turns the screens off too');
     assert.equal(S.stepOf({ onTimeout: 'notify-send hi' }), '');
     assert.deepEqual(plain(S.read([])), { dim: null, lock: null, off: null, sleep: null });
 });
