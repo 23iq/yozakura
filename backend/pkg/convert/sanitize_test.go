@@ -34,7 +34,7 @@ func sanitize(t *testing.T, doc map[string]any, root, mediaLink string) (string,
 	if err := os.WriteFile(in, b, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := SanitizeAST(in, out, root, mediaLink); err != nil {
+	if err := SanitizeAST(in, out, root, mediaLink, "docx"); err != nil {
 		t.Fatal(err)
 	}
 	res, _ := os.ReadFile(out)

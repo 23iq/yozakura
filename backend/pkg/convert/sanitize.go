@@ -22,7 +22,7 @@ import (
 //     svg image ... by src, srcset, poster, data, xlink:href, a CSS url())
 //     from anywhere but the document's folder, and tags such as link,
 //     script, style, iframe, object, embed, base are dropped;
-//   - raw LaTeX that reads files is dropped, raw markup of other formats
+//   - raw TeX is kept only in text results (tex, md...), raw markup of other formats
 //     (OpenXML, ODF, RTF ...: written into the output as is) is dropped;
 //   - only plain descriptive metadata is kept (title, author, abstract
 //     ...), and it is cleaned like the body (a title can hold an image).
@@ -34,9 +34,9 @@ var metaKeep = map[string]bool{"title": true, "subtitle": true, "author": true, 
 	"category": true, "rights": true, "publisher": true, "creator": true, "contributor": true, "identifier": true,
 	"language": true, "toc-title": true, "institute": true, "pagetitle": true, "title-prefix": true}
 
-// texLoaders mark raw LaTeX that reads another file.
-var texLoaders = []string{"\\include", "\\input", "\\usepackage", "\\lstinputlisting", "\\verbatiminput",
-	"\\openin", "\\read", "\\write18", "\\immediate", "\\href", "\\url"}
+// textTargets: results that are text: raw TeX in them is inert text (we
+// never compile it; a .tex result is the user's to compile, as written).
+var textTargets = map[string]bool{"tex": true, "md": true, "rst": true, "org": true, "txt": true}
 
 // rawText: raw formats whose content is only ever text in the output.
 var rawText = map[string]bool{"markdown": true, "commonmark": true, "gfm": true, "rst": true, "org": true,
@@ -46,7 +46,8 @@ var rawText = map[string]bool{"markdown": true, "commonmark": true, "gfm": true,
 // in srcDir and writes it to out. A non-empty mediaLink rewrites images
 // under the extracted media folder ("media/...") to mediaLink/...: the
 // folder that is shipped next to a text result.
-func SanitizeAST(in, out, srcDir, mediaLink string) error {
+// to is the target format: raw TeX survives only into text results.
+func SanitizeAST(in, out, srcDir, mediaLink, to string) error {
 	raw, err := os.ReadFile(in)
 	if err != nil {
 		return err
@@ -61,7 +62,7 @@ func SanitizeAST(in, out, srcDir, mediaLink string) error {
 	if err != nil {
 		root = filepath.Clean(srcDir)
 	}
-	c := cleaner{root: root, mediaLink: mediaLink}
+	c := cleaner{root: root, mediaLink: mediaLink, keepTeX: textTargets[to]}
 	if meta, ok := doc["meta"].(map[string]any); ok {
 		for k, v := range meta {
 			if metaKeep[k] {
@@ -84,6 +85,7 @@ func SanitizeAST(in, out, srcDir, mediaLink string) error {
 type cleaner struct {
 	root      string
 	mediaLink string
+	keepTeX   bool
 }
 
 // clean walks the tree and returns the cleaned value.
@@ -137,13 +139,9 @@ func (c cleaner) rawSafe(format, s string) bool {
 	case strings.HasPrefix(format, "html"):
 		return rawHTMLSafe(s, c.root)
 	case format == "latex" || format == "tex" || format == "context":
-		low := strings.ToLower(s)
-		for _, l := range texLoaders {
-			if strings.Contains(low, l) {
-				return false
-			}
-		}
-		return true
+		// no list of TeX loaders is complete (\csname input\endcsname,
+		// \catcode): raw TeX is kept only where it is text
+		return c.keepTeX
 	}
 	return rawText[format]
 }

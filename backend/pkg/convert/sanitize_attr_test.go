@@ -1,6 +1,8 @@
 package convert
 
 import (
+	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 )
@@ -44,6 +46,27 @@ func TestSanitizeASTElementAttributes(t *testing.T) {
 	for _, keep := range []string{`"lang","en"`, `"data-keep","1"`, `"style","color: red"`, `"width","50%"`, `"ok.png"`, `"code"`} {
 		if !strings.Contains(text, keep) {
 			t.Errorf("cleaned tree lost %q:\n%s", keep, text)
+		}
+	}
+}
+
+// Raw TeX is inert text in a text result and dropped from every other
+// one (no loader list is complete: \csname input\endcsname).
+func TestSanitizeASTRawTeX(t *testing.T) {
+	doc := func() map[string]any {
+		return map[string]any{"meta": map[string]any{}, "blocks": []any{para(raw("latex", `\csname input\endcsname{/etc/passwd}`))}}
+	}
+	for to, keep := range map[string]bool{"tex": true, "md": true, "docx": false, "html": false, "epub": false, "odt": false} {
+		work := t.TempDir()
+		in, out := work+"/in.json", work+"/out.json"
+		b, _ := json.Marshal(doc())
+		_ = os.WriteFile(in, b, 0o600)
+		if err := SanitizeAST(in, out, work, "", to); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := os.ReadFile(out)
+		if strings.Contains(string(got), "csname") != keep {
+			t.Errorf("%s: raw TeX kept=%v, want %v", to, !keep, keep)
 		}
 	}
 }

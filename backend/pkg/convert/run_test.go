@@ -65,7 +65,7 @@ func TestPlanHardening(t *testing.T) {
 		}
 	}
 	p := plan(t, "mkv", "mp4", QualityBalanced)
-	if !strings.Contains(argv(p, 0), "-protocol_whitelist file -i in.mkv") {
+	if !strings.Contains(argv(p, 0), "-protocol_whitelist file -f matroska -i in.mkv") {
 		t.Errorf("ffmpeg argv %s", argv(p, 0))
 	}
 	var probed string
