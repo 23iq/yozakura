@@ -20,9 +20,14 @@ Stage {
     readonly property int level: band.wifiOn && band.name !== "" ? ConnectModel.bars(NetworkService.networkStrength) : 0
 
     stageHeight: Space.px(150)
+    // a narrow window: the tile takes its own width, not the big one, and
+    // the name gives way (it is data: it elides, never runs under the tile)
+    readonly property bool compact: band.width < Space.px(760)
 
     Row {
+        id: where
         x: Space.xxl
+        width: tile.x - x - Space.xl
         anchors.verticalCenter: parent.verticalCenter
         spacing: Space.xl
 
@@ -53,13 +58,19 @@ Stage {
 
         Column {
             anchors.verticalCenter: parent.verticalCenter
+            width: Math.max(0, where.width - (band.wired ? Space.controlM : Space.m * 4 + Space.xs * 3) - where.spacing)
             spacing: Space.xs
             KitText {
                 objectName: "networkName"
+                width: Math.min(implicitWidth, parent.width)
+                elide: Text.ElideRight
                 role: "display"
                 text: band.wired ? I18n.t("prefs.net.wired") : (band.name !== "" ? band.name : I18n.t(band.wifiOn ? "prefs.net.not_connected" : "prefs.net.wifi_off"))
             }
             KitText {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
                 role: "secondary"
                 visible: text !== ""
                 text: band.wired ? "" : (band.current ? ConnectModel.wifiLine(band.current, k => I18n.t(k)) : "")
@@ -68,11 +79,12 @@ Stage {
     }
 
     Tile {
+        id: tile
         objectName: "wifiTile"
         anchors.right: parent.right
         anchors.rightMargin: Space.xxl
         anchors.verticalCenter: parent.verticalCenter
-        width: Space.controlXL * 2
+        width: band.compact ? implicitWidth : Space.controlXL * 2
         icon: band.wifiOn ? Icons.wifiHigh : Icons.wifiOff
         text: I18n.t("prefs.net.wifi")
         subtext: I18n.t(band.wifiOn ? "prefs.net.on" : "prefs.net.off")
