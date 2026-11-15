@@ -2,9 +2,9 @@
 a page that scrolls the wheel scrolls the page and the slider under the
 pointer stays where it was; once the slider was pressed (it takes the focus:
 LineSlider through WheelGuard.claim, onto the focusable control wrapping it
-when there is one; LevelSlider and Knob themselves) the wheel steps it; a
-slider outside a scrolling view (a bar popup) takes the wheel on hover, and
-a press there leaves the focus where it was."""
+when there is one, LevelSlider the same way, Knob itself) the wheel steps it;
+a slider outside a scrolling view (a bar popup) takes the wheel on hover,
+and a press there leaves the focus where it was (LineSlider, LevelSlider)."""
 import functools
 import sys
 from pathlib import Path
@@ -20,7 +20,7 @@ SCENE = """import QtQuick
 import QtQuick.Window
 import qs.modules.components.kit
 Window {
-    width: 400; height: 400; visible: true
+    width: 400; height: 460; visible: true
     Flickable {
         objectName: "page"
         width: 400; height: 300
@@ -42,6 +42,7 @@ Window {
     }
     Item { objectName: "other"; focus: true }
     LineSlider { objectName: "loose"; y: 340; width: 300; value: 0.5 }
+    LevelSlider { objectName: "looseLevel"; y: 370; width: 300; value: 0.5 }
 }"""
 
 env = KitEnv("kit-wheel")
@@ -125,6 +126,9 @@ wheel(loose)
 check(abs(ev(loose, "value") - 0.5) > 1e-6, "a slider outside a scrolling view takes the wheel")
 press(loose)
 check(ev(get("other"), "activeFocus") is True, "a press outside a scrolling view leaves the focus alone")
+looseLevel = get("looseLevel")
+press(looseLevel)
+check(ev(get("other"), "activeFocus") is True, "a level slider pressed outside a scrolling view leaves the focus alone")
 
 if failures:
     sys.exit(1)

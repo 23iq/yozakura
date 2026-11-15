@@ -3,8 +3,8 @@
 // Whether a control under the pointer may take a wheel event (sliders,
 // level sliders, knobs). On a page that scrolls, the wheel belongs to the
 // page: a control takes it only once it holds the keyboard focus (clicked or
-// reached with Tab: Knob and LevelSlider take the focus on press,
-// LineSlider through claim()), so scrolling past a slider never moves it.
+// reached with Tab: Knob takes the focus on press, LineSlider and
+// LevelSlider through claim()), so scrolling past a slider never moves it.
 // Outside a scrolling view (a bar popup, a panel) the wheel adjusts it as
 // before. Pure but for the item tree it walks; tests/kit-wheel.test.py.
 
