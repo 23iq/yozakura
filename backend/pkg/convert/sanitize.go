@@ -22,7 +22,7 @@ import (
 //     svg image ... by src, srcset, poster, data, xlink:href, a CSS url())
 //     from anywhere but the document's folder, and tags such as link,
 //     script, style, iframe, object, embed, base are dropped;
-//   - raw LaTeX that reads files is dropped, raw markup of other formats
+//   - raw TeX is kept only in text results (tex, md...), raw markup of other formats
 //     (OpenXML, ODF, RTF ...: written into the output as is) is dropped;
 //   - only plain descriptive metadata is kept (title, author, abstract
 //     ...), and it is cleaned like the body (a title can hold an image).
@@ -34,9 +34,9 @@ var metaKeep = map[string]bool{"title": true, "subtitle": true, "author": true, 
 	"category": true, "rights": true, "publisher": true, "creator": true, "contributor": true, "identifier": true,
 	"language": true, "toc-title": true, "institute": true, "pagetitle": true, "title-prefix": true}
 
-// texLoaders mark raw LaTeX that reads another file.
-var texLoaders = []string{"\\include", "\\input", "\\usepackage", "\\lstinputlisting", "\\verbatiminput",
-	"\\openin", "\\read", "\\write18", "\\immediate", "\\href", "\\url"}
+// textTargets: results that are text: raw TeX in them is inert text (we
+// never compile it; a .tex result is the user's to compile, as written).
+var textTargets = map[string]bool{"tex": true, "md": true, "rst": true, "org": true, "txt": true}
 
 // rawText: raw formats whose content is only ever text in the output.
 var rawText = map[string]bool{"markdown": true, "commonmark": true, "gfm": true, "rst": true, "org": true,
@@ -46,7 +46,8 @@ var rawText = map[string]bool{"markdown": true, "commonmark": true, "gfm": true,
 // in srcDir and writes it to out. A non-empty mediaLink rewrites images
 // under the extracted media folder ("media/...") to mediaLink/...: the
 // folder that is shipped next to a text result.
-func SanitizeAST(in, out, srcDir, mediaLink string) error {
+// to is the target format: raw TeX survives only into text results.
+func SanitizeAST(in, out, srcDir, mediaLink, to string) error {
 	raw, err := os.ReadFile(in)
 	if err != nil {
 		return err
@@ -61,7 +62,7 @@ func SanitizeAST(in, out, srcDir, mediaLink string) error {
 	if err != nil {
 		root = filepath.Clean(srcDir)
 	}
-	c := cleaner{root: root, mediaLink: mediaLink}
+	c := cleaner{root: root, mediaLink: mediaLink, keepTeX: textTargets[to]}
 	if meta, ok := doc["meta"].(map[string]any); ok {
 		for k, v := range meta {
 			if metaKeep[k] {
@@ -84,12 +85,17 @@ func SanitizeAST(in, out, srcDir, mediaLink string) error {
 type cleaner struct {
 	root      string
 	mediaLink string
+	keepTeX   bool
 }
 
 // clean walks the tree and returns the cleaned value.
 func (c cleaner) clean(v any) any {
 	switch n := v.(type) {
 	case []any:
+		if isAttr(n) {
+			n[2] = cleanAttrs(n[2].([]any))
+			return n
+		}
 		for i := range n {
 			n[i] = c.clean(n[i])
 		}
@@ -133,15 +139,70 @@ func (c cleaner) rawSafe(format, s string) bool {
 	case strings.HasPrefix(format, "html"):
 		return rawHTMLSafe(s, c.root)
 	case format == "latex" || format == "tex" || format == "context":
-		low := strings.ToLower(s)
-		for _, l := range texLoaders {
-			if strings.Contains(low, l) {
-				return false
-			}
-		}
-		return true
+		// no list of TeX loaders is complete (\csname input\endcsname,
+		// \catcode): raw TeX is kept only where it is text
+		return c.keepTeX
 	}
 	return rawText[format]
+}
+
+// Element attributes (pandoc's Attr: [id, [classes], [[key, value]...]])
+// of a Div, Span, Header, Image, Link, Code, Table... are written into
+// html and epub as they are: a style with url() or a srcset there loads
+// when the result is opened. Keys that name a resource are dropped, a
+// style that fetches is dropped.
+var attrLoaders = map[string]bool{"src": true, "srcset": true, "imagesrcset": true, "poster": true, "background": true,
+	"data": true, "href": true, "xlink:href": true, "lowsrc": true, "dynsrc": true, "codebase": true, "manifest": true,
+	"archive": true, "classid": true, "icon": true, "action": true, "formaction": true, "ping": true}
+
+// isAttr: v is shaped like an Attr triple.
+func isAttr(v []any) bool {
+	if len(v) != 3 {
+		return false
+	}
+	if _, ok := v[0].(string); !ok {
+		return false
+	}
+	classes, ok := v[1].([]any)
+	if !ok {
+		return false
+	}
+	for _, c := range classes {
+		if _, ok := c.(string); !ok {
+			return false
+		}
+	}
+	kvs, ok := v[2].([]any)
+	if !ok {
+		return false
+	}
+	for _, kv := range kvs {
+		p, ok := kv.([]any)
+		if !ok || len(p) != 2 {
+			return false
+		}
+		if _, ok := p[0].(string); !ok {
+			return false
+		}
+		if _, ok := p[1].(string); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func cleanAttrs(kvs []any) []any {
+	out := kvs[:0]
+	for _, kv := range kvs {
+		p := kv.([]any)
+		k := strings.ToLower(strings.TrimSpace(p[0].(string)))
+		v := p[1].(string)
+		if attrLoaders[k] || strings.HasSuffix(k, ":href") || (k == "style" && cssLoads(v)) {
+			continue
+		}
+		out = append(out, kv)
+	}
+	return out
 }
 
 // LocalResource reports whether an image target is a file inside root:
@@ -154,11 +215,16 @@ func LocalResource(target, root string) bool {
 }
 
 // LocalImage is LocalResource that is also an image when it exists (a
-// key file renamed .png is not one); a missing file embeds nothing.
+// key file renamed .png is not one); a missing file embeds nothing. An
+// SVG, in a file or a data: URI, must reference nothing outside itself
+// (svgSafe).
 func LocalImage(target, root string) bool {
 	paths, ok := localPaths(target, root)
 	if !ok {
 		return false
+	}
+	if t := strings.TrimSpace(target); strings.HasPrefix(strings.ToLower(t), "data:") {
+		return dataSVGSafe(t)
 	}
 	for _, p := range paths {
 		st, err := os.Stat(p)
@@ -168,7 +234,8 @@ func LocalImage(target, root string) bool {
 		if !st.Mode().IsRegular() {
 			return false
 		}
-		if f, _, ok := sniffFile(p); !ok || f.Kind != KindImage {
+		f, _, ok := sniffFile(p)
+		if !ok || f.Kind != KindImage || (f.ID == "svg" && !svgFileSafe(p)) {
 			return false
 		}
 	}

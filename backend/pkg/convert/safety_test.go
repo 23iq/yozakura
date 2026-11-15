@@ -75,11 +75,13 @@ func TestPandocPullsOnlyTheDocumentsOwnFiles(t *testing.T) {
 	doc := t.TempDir()
 	_ = os.Mkdir(filepath.Join(doc, "img"), 0o755)
 	pngFile(t, filepath.Join(doc, "img", "pic.png"), 2, 2, "LOCAL-MARKER")
+	_ = os.WriteFile(filepath.Join(doc, "img", "draw.svg"), []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2">`+
+		`<image href="`+secret+`"/></svg>`), 0o644)
 	_ = os.Symlink(secret, filepath.Join(doc, "img", "sneaky.png"))
 	md := "---\nepub-cover-image: " + secret + "\ntitle: \"![t](" + secret + ")\"\nabstract: \"![t](" + secret + ")\"\n---\n# t\n\n" +
 		"![a](" + secret + ")\n\n![b](../" + filepath.Base(outside) + "/secret.png)\n\n" +
 		"![c](img/sneaky.png)\n\n![d](https://example.invalid/x.png)\n\n<img src=\"" + secret + "\">\n\n" +
-		"<img src = \"" + secret + "\">\n\n<video poster=\"" + secret + "\"></video>\n\n![local](img/pic.png)\n"
+		"<img src = \"" + secret + "\">\n\n<video poster=\"" + secret + "\"></video>\n\n![local](img/pic.png)\n\n![svg](img/draw.svg)\n"
 	src := filepath.Join(doc, "notes.md")
 	_ = os.WriteFile(src, []byte(md), 0o644)
 	if got := runPlan(t, src, "md", "html"); bytes.Contains(got, []byte(secret)) || !bytes.Contains(got, []byte("data:image/png;base64")) {
@@ -87,7 +89,7 @@ func TestPandocPullsOnlyTheDocumentsOwnFiles(t *testing.T) {
 	}
 	for _, to := range []string{"docx", "epub", "odt"} {
 		got := zipText(t, runPlan(t, src, "md", to))
-		if strings.Contains(got, "SECRET-MARKER") {
+		if strings.Contains(got, "SECRET-MARKER") || strings.Contains(got, secret) {
 			t.Errorf("md->%s embedded a file outside the document's folder", to)
 		}
 		if !strings.Contains(got, "LOCAL-MARKER") {

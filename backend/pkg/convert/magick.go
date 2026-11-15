@@ -3,6 +3,7 @@ package convert
 import (
 	"bytes"
 	"encoding/xml"
+	"path/filepath"
 	"strings"
 )
 
@@ -15,6 +16,14 @@ import (
 //     denies the script / network / indirect-read coders and external
 //     delegates (Ghostscript only when the route needs PDF);
 //   - is bounded by -limit and keeps its temporary files in the work dir.
+//
+// Limit: ImageMagick loads MAGICK_CONFIGURE_PATH's policy.xml before the
+// system one and applies the last rule matching a coder or path (checked
+// with ImageMagick 7.1.2: of two policy files, the later one's grant wins).
+// A system or admin policy that grants a coder or path therefore overrides
+// our deny for it, and nothing makes our file load last. The explicit
+// coder still decides how the input itself is decoded; the denies are
+// defence in depth for what a decoder reads on its own.
 
 // magickPolicyFile is written into the work dir, read through
 // MAGICK_CONFIGURE_PATH.
@@ -45,7 +54,15 @@ var magickLimits = []string{
 // magickPolicy is the policy.xml of one run from -> to in work, whose input
 // is read with coder in.
 func magickPolicy(from, to, in, work string) string {
-	denied := append([]string(nil), magickDenied...)
+	denied := make([]string, 0, len(magickDenied)+len(magickPDFCoders))
+	for _, c := range magickDenied {
+		// ImageMagick's own SVG renderer draws through its MVG coder: the
+		// input is still read as SVG (explicit MSVG:), and what it opens
+		// is bounded by the path policy below
+		if c != "MVG" || in != "MSVG" {
+			denied = append(denied, c)
+		}
+	}
 	if from != "pdf" && to != "pdf" {
 		denied = append(denied, magickPDFCoders...)
 	}
@@ -65,9 +82,18 @@ func magickPolicy(from, to, in, work string) string {
 		for _, p := range []string{"/*", "*..*", "~*"} {
 			b.WriteString(`  <policy domain="path" rights="none" pattern="` + p + `"/>` + "\n")
 		}
-		var w bytes.Buffer
-		_ = xml.EscapeText(&w, []byte(work+"/*"))
-		b.WriteString(`  <policy domain="path" rights="read|write" pattern="` + w.String() + `"/>` + "\n")
+		// ImageMagick matches the resolved path: allow the work dir as
+		// named and with its symlinks resolved (a symlinked cache, /home
+		// -> /var/home)
+		dirs := []string{work}
+		if r, err := filepath.EvalSymlinks(work); err == nil && r != work {
+			dirs = append(dirs, r)
+		}
+		for _, d := range dirs {
+			var w bytes.Buffer
+			_ = xml.EscapeText(&w, []byte(d+"/*"))
+			b.WriteString(`  <policy domain="path" rights="read|write" pattern="` + w.String() + `"/>` + "\n")
+		}
 	}
 	b.WriteString("</policymap>\n")
 	return b.String()

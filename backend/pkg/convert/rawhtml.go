@@ -28,9 +28,6 @@ var htmlSrcsets = map[string]bool{"srcset": true, "imagesrcset": true}
 // htmlLinks: an <a href> is a link the reader follows, never loaded.
 var htmlLinks = map[string]bool{"a": true, "area": true}
 
-// cssLoaders mark CSS that fetches something.
-var cssLoaders = []string{"url(", "image-set(", "@import", "expression(", "src:"}
-
 // rawHTMLSafe reports whether raw HTML only loads files under root.
 func rawHTMLSafe(raw, root string) bool {
 	z := html.NewTokenizer(strings.NewReader(raw))
@@ -74,22 +71,6 @@ func rawHTMLSafe(raw, root string) bool {
 			}
 		}
 	}
-}
-
-// cssLoads: CSS (with escapes and whitespace removed) that fetches.
-func cssLoads(css string) bool {
-	low := strings.ToLower(strings.Map(func(r rune) rune {
-		if r == '\\' || r == ' ' || r == '\t' || r == '\n' || r == '\r' || r == '\f' {
-			return -1
-		}
-		return r
-	}, css))
-	for _, l := range cssLoaders {
-		if strings.Contains(low, l) {
-			return true
-		}
-	}
-	return false
 }
 
 // looksLikeLoader: text the tokenizer did not finish (an unterminated tag)

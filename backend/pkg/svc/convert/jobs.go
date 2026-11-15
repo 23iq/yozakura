@@ -279,7 +279,18 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 	if err != nil {
 		return "", err
 	}
-	defer release()
+	// the work dir goes once nothing writes into it: a native step that a
+	// cancel gave up on may still run (it holds its own slot meanwhile)
+	var plan *conv.Plan
+	defer func() {
+		settled := plan.Settled()
+		select {
+		case <-settled:
+			release()
+		default:
+			go func() { <-settled; release() }()
+		}
+	}()
 	opts := conv.PlanOptions{OfficeProfile: s.officeProfile()}
 	// a text result of a docx / odt / epub keeps its images in a folder
 	// next to it, named before the run (the text links to it)
@@ -295,7 +306,7 @@ func (s *Service) convert(ctx context.Context, id string, req conv.Request, outD
 			}
 		}()
 	}
-	plan, err := conv.BuildPlan(req, t, work, opts)
+	plan, err = conv.BuildPlan(req, t, work, opts)
 	if err != nil {
 		return "", err
 	}

@@ -84,6 +84,10 @@ type Plan struct {
 	// Files are written before the first step when missing (a tool's
 	// policy or settings): a relative path is inside Work.
 	Files map[string]string
+	// copyInput: the input is hard-linked or copied, never symlinked.
+	copyInput bool
+	// settled closes when the last native step's goroutine ended.
+	settled <-chan struct{}
 	// probe reads the duration of the placed input when Duration is 0.
 	probe func(context.Context, string) float64
 }
@@ -152,6 +156,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 		p.probe = t.ProbeDuration
 		p.Steps = []Step{{Prog: prog, Args: ffmpegArgs(r, out), Progress: true, Out: out, Timeout: timeout}}
 	case EngineMagick:
+		p.copyInput = true
 		p.Files = map[string]string{magickPolicyFile: magickPolicy(req.From, req.To, t.magickCoder(req.From), work)}
 		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out, t), Env: magickEnv(work), Out: out, Timeout: timeout}}
 	case EngineRsvg:
@@ -215,7 +220,7 @@ func pandocSteps(t *Tools, from, to, in, out, src, work, mediaLink string) []Ste
 	rawPath, safePath := filepath.Join(work, astRaw), filepath.Join(work, astSafe)
 	return []Step{
 		{Prog: prog, Args: append(read, in), Out: astRaw, Timeout: timeout},
-		{Out: astSafe, Native: func() error { return SanitizeAST(rawPath, safePath, root, mediaLink) }},
+		{Out: astSafe, Native: func() error { return SanitizeAST(rawPath, safePath, root, mediaLink, to) }},
 		{Prog: prog, Dir: root, Args: append(write, "-o", filepath.Join(work, out), safePath), Out: out, Timeout: timeout},
 	}
 }
@@ -238,9 +243,15 @@ func label(id string) string {
 
 // ffmpegArgs: quiet except errors, progress on stdout, never reads stdin.
 func ffmpegArgs(req Request, out string) []string {
-	// only the local file: no nested protocols (HLS, concat, crypto ...)
+	// only the local file: no nested protocols (HLS, concat, crypto ...),
+	// read by the demuxer of the detected format (never a playlist or a
+	// concat list that names other local files)
 	args := []string{"-hide_banner", "-nostdin", "-loglevel", "error", "-nostats", "-progress", "pipe:1", "-y",
-		"-protocol_whitelist", "file", "-i", req.Src}
+		"-protocol_whitelist", "file"}
+	if d := ffDemuxers[req.From]; d != "" {
+		args = append(args, "-f", d)
+	}
+	args = append(args, "-i", req.Src)
 	q := req.Quality
 	to := byID[req.To]
 	switch {
@@ -262,6 +273,14 @@ func ffmpegArgs(req Request, out string) []string {
 		}
 	}
 	return append(args, out)
+}
+
+// ffDemuxers: the ffmpeg demuxer of each audio / video source (stills
+// are probed: their image readers name no other file).
+var ffDemuxers = map[string]string{
+	"mp3": "mp3", "wav": "wav", "flac": "flac", "ogg": "ogg", "opus": "ogg", "m4a": "mov", "aac": "aac",
+	"aiff": "aiff", "wma": "asf", "mp4": "mov", "mkv": "matroska", "webm": "matroska", "mov": "mov",
+	"avi": "avi", "wmv": "asf", "flv": "flv", "mpeg": "mpeg", "3gp": "mov", "gif": "gif",
 }
 
 func audioCodec(to string, q Quality) []string {

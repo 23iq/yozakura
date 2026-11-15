@@ -34,7 +34,7 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		if err != nil {
 			return err
 		}
-		if err := placeInput(ctx, src, filepath.Join(p.Work, p.Input)); err != nil {
+		if err := placeInput(ctx, src, filepath.Join(p.Work, p.Input), p.copyInput); err != nil {
 			return err
 		}
 		if p.probe != nil && p.Duration == 0 {
@@ -50,7 +50,9 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		}
 		if st.Native != nil {
 			onProgress(-1)
-			if err := runNative(ctx, st); err != nil {
+			ended, err := runNative(ctx, st)
+			p.settled = ended
+			if err != nil {
 				return err
 			}
 			continue
@@ -76,6 +78,16 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		return Errorf(CodeNoOutput, nil, "the converter wrote no output")
 	}
 	return nil
+}
+
+// Settled closes once nothing of the plan runs any more: a native step a
+// cancel or timeout gave up on may still write into the work dir until
+// then. Remove the work dir only after it.
+func (p *Plan) Settled() <-chan struct{} {
+	if p == nil || p.settled == nil {
+		return closedCh
+	}
+	return p.settled
 }
 
 // writeFiles creates the plan's Files that do not exist yet.
@@ -111,7 +123,9 @@ func (p *Plan) writeFiles() error {
 // path holds one is hard-linked, else copied, never symlinked.
 const patternChars = "%[]*?{}@~:"
 
-func placeInput(ctx context.Context, src, dst string) error {
+// copyOnly: never a symlink (ImageMagick checks its path policy and names
+// a file by the symlink's target).
+func placeInput(ctx context.Context, src, dst string, copyOnly bool) error {
 	_ = os.Remove(dst)
 	// opened non-blocking and checked: a path swapped for a FIFO since it
 	// was probed is never read (the open and every read would block)
@@ -130,7 +144,7 @@ func placeInput(ctx context.Context, src, dst string) error {
 	if linkOpen(in, dst) == nil {
 		return nil
 	}
-	if !strings.ContainsAny(src, patternChars) {
+	if !copyOnly && !strings.ContainsAny(src, patternChars) {
 		return os.Symlink(src, dst)
 	}
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)

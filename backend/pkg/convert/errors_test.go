@@ -34,7 +34,7 @@ func TestErrorCodes(t *testing.T) {
 	if err == nil || err.Error() != "not valid JSON" {
 		t.Errorf("detail lost: %v", err)
 	}
-	err = placeInput(context.Background(), filepath.Join(dir, "missing"), filepath.Join(dir, "in"))
+	err = placeInput(context.Background(), filepath.Join(dir, "missing"), filepath.Join(dir, "in"), false)
 	check("not found", err, CodeNotFound)
 	_, err = Reserve(filepath.Join(dir, "a.json"), "yaml", filepath.Join(dir, "no", "such"))
 	check("no write", err, CodeNoWrite)
