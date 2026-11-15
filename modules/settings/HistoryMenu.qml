@@ -5,8 +5,10 @@ import qs.modules.settings.store
 // The History of the settings window (the destination header's clock
 // button and home's History button): the session's changes, newest first
 // (a redo on top when there is one); a click on a change undoes it and
-// every newer one. "All changes" at the foot opens the Changes tab (what
-// differs from the defaults or the preset, with a way back for each).
+// every newer one (an item is named by its step's id, `undo:<id>`:
+// SettingsStore.undoTo, never an older step than the one shown). "All
+// changes" at the foot opens the Changes tab (what differs from the
+// defaults or the preset, with a way back for each).
 // A PageMenu: under the button it belongs to (its parent).
 PageMenu {
     id: history
@@ -28,7 +30,7 @@ PageMenu {
         const undo = SettingsStore.undoStack;
         for (let k = 0; k < Math.min(8, undo.length); k++)
             out.push({
-                "name": "undo:" + (k + 1),
+                "name": "undo:" + undo[undo.length - 1 - k].id,
                 "text": say(undo[undo.length - 1 - k], "changed"),
                 "subtitle": k === 0 ? I18n.t("prefs.undo.undo") : I18n.t("prefs.history.undo_back")
             });
@@ -53,11 +55,8 @@ PageMenu {
             SettingsStore.redo();
             return;
         }
-        // a change below the newest undoes it and every newer one
-        const n = Number(name.split(":")[1]) || 0;
-        for (let i = 0; i < n; i++) {
-            if (!SettingsStore.undo())
-                break;
-        }
+        // a change below the newest undoes it and every newer one, by the
+        // step's id (never an older step than the one named)
+        SettingsStore.undoTo(Number(name.split(":")[1]) || 0);
     }
 }

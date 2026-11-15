@@ -175,7 +175,7 @@ IconButton {
                     from: 1
                     to: 8
                     value: Config.ai.tasks.maxParallel
-                    onValueModified: SettingsStore.set("ai.tasks.maxParallel", value)
+                    onValueModified: SettingsStore.setElsewhere("ai.tasks.maxParallel", value)
                 }
                 AiText {
                     role: "caption"
@@ -192,7 +192,7 @@ IconButton {
                             required property string modelData
                             text: fb.modelData ? I18n.t("prefs.ai.tasks.agent_" + fb.modelData) : I18n.t("prefs.ai.tasks.fallback_none")
                             active: Config.ai.tasks.fallbackAgent === fb.modelData
-                            onClicked: SettingsStore.set("ai.tasks.fallbackAgent", fb.modelData)
+                            onClicked: SettingsStore.setElsewhere("ai.tasks.fallbackAgent", fb.modelData)
                         }
                     }
                 }
