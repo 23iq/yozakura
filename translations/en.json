@@ -4540,7 +4540,6 @@
   "converter.drop_release": "Release to add",
   "converter.choose": "Choose files to convert",
   "converter.no_chooser": "No file chooser found (zenity or kdialog). Drop or paste files instead.",
-  "converter.paste_empty": "No file on the clipboard",
   "converter.add": "Add files",
   "converter.paste": "Paste (Ctrl+V)",
   "converter.clear": "Clear all",
@@ -4576,5 +4575,12 @@
   "converter.error.missing": "File not found",
   "converter.error.folder": "Folders cannot be converted",
   "converter.error.unknown": "Unknown format",
-  "converter.error.special": "Not a regular file"
+  "converter.error.special": "Not a regular file",
+  "converter.error.paste_none": "No file on the clipboard",
+  "converter.error.paste_empty": "The clipboard is empty or cannot be read (wl-paste)",
+  "converter.error.stopping": "The converter is shutting down",
+  "converter.error.service": "The converter service is not running: restart the shell",
+  "converter.error.out_dir": "The output folder %1 does not exist",
+  "converter.error.no_write": "Cannot write to %1",
+  "converter.error.other": "Something went wrong: %1"
 }

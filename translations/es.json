@@ -4540,7 +4540,6 @@
   "converter.drop_release": "Suelta para añadir",
   "converter.choose": "Elige archivos para convertir",
   "converter.no_chooser": "No se encontró un selector de archivos (zenity o kdialog). Suelta o pega los archivos.",
-  "converter.paste_empty": "No hay ningún archivo en el portapapeles",
   "converter.add": "Añadir archivos",
   "converter.paste": "Pegar (Ctrl+V)",
   "converter.clear": "Quitar todo",
@@ -4576,5 +4575,12 @@
   "converter.error.missing": "Archivo no encontrado",
   "converter.error.folder": "Las carpetas no se pueden convertir",
   "converter.error.unknown": "Formato desconocido",
-  "converter.error.special": "No es un archivo normal"
+  "converter.error.special": "No es un archivo normal",
+  "converter.error.paste_none": "No hay ningún archivo en el portapapeles",
+  "converter.error.paste_empty": "El portapapeles está vacío o no se puede leer (wl-paste)",
+  "converter.error.stopping": "El conversor se está cerrando",
+  "converter.error.service": "El servicio de conversión no está en marcha: reinicia el shell",
+  "converter.error.out_dir": "La carpeta de destino %1 no existe",
+  "converter.error.no_write": "No se puede escribir en %1",
+  "converter.error.other": "Algo salió mal: %1"
 }

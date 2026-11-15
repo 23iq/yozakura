@@ -34,6 +34,37 @@ QtObject {
     // Events of ids not (yet) returned by a start reply: the event can
     // beat the reply. Applied when the reply names the id, else ignored.
     property var _early: ({})
+    // Paths whose pending start was stopped or removed before the reply
+    // named its job: that job is cancelled as soon as the reply comes.
+    property var _cancelOnReply: ({})
+    // The latest result of this batch: revealed once the batch is over
+    // (system.converter.openFolder), however its last job ended.
+    property string _lastOutput: ""
+
+    // "Show files when done": once nothing is converting any more, with
+    // at least one result written (a failed or stopped last job included).
+    onBusyChanged: {
+        if (root.busy || root._lastOutput === "")
+            return;
+        const out = root._lastOutput;
+        root._lastOutput = "";
+        if (Config.system.converter.openFolder)
+            root.reveal(out);
+    }
+
+    // A backend error as a translated line (known errors by cause, else a
+    // generic line with the backend's words).
+    function errorText(error) {
+        const info = Model.errorInfo(error);
+        return info.key !== "" ? I18n.t("converter.error." + info.key, info.arg) : I18n.t("converter.error.other", info.arg);
+    }
+
+    // A failed job's error: translated when known, else the tool's own
+    // words (ffmpeg, ImageMagick...).
+    function jobErrorText(error) {
+        const info = Model.errorInfo(error);
+        return info.key !== "" ? I18n.t("converter.error." + info.key, info.arg) : info.arg;
+    }
 
     function add(paths) {
         const list = (paths || []).filter(p => String(p).indexOf("/") === 0);
@@ -46,7 +77,7 @@ QtObject {
         }, (result, error) => {
             root.probing = false;
             if (error || !result) {
-                root.notice = String(error || "");
+                root.notice = root.errorText(error);
                 return;
             }
             root.rows = Model.addFiles(root.rows, result.files || []);
@@ -61,7 +92,7 @@ QtObject {
         root.notice = "";
         BackendService.call("convert.paste", {}, (result, error) => {
             if (error || !result) {
-                root.notice = I18n.t("converter.paste_empty");
+                root.notice = root.errorText(error || "no file on the clipboard");
                 return;
             }
             root.add(result.paths || []);
@@ -78,16 +109,18 @@ QtObject {
 
     function remove(path) {
         const row = root.rows.find(r => r.path === path);
-        if (row && row.job && row.job.id && (row.job.state === "queued" || row.job.state === "running"))
+        if (Model.working(row))
             root.cancel(row);
         root.rows = Model.removeRow(root.rows, path);
     }
 
     function clearAll() {
         root.rows.forEach(r => {
-            if (r.job && r.job.id && (r.job.state === "queued" || r.job.state === "running"))
+            if (Model.working(r))
                 root.cancel(r);
         });
+        // nothing listed is left to show
+        root._lastOutput = "";
         root.rows = [];
         root.notice = "";
     }
@@ -98,6 +131,8 @@ QtObject {
             return;
         root._subscribe();
         root.notice = "";
+        if (!root.busy)
+            root._lastOutput = "";
         root.rows = Model.markPending(root.rows, items);
         BackendService.call("convert.start", {
             "items": items,
@@ -105,7 +140,8 @@ QtObject {
             "quality": root.quality
         }, (result, error) => {
             if (error || !result) {
-                root.notice = String(error || "");
+                root.notice = root.errorText(error);
+                root._cancelOnReply = ({});
                 root.rows = Model.clearPending(root.rows);
                 return;
             }
@@ -113,6 +149,15 @@ QtObject {
             const own = Object.assign({}, root._own);
             jobs.forEach(j => own[j.id] = true);
             root._own = own;
+            // stopped or removed while the reply was on its way
+            const drop = Object.assign({}, root._cancelOnReply);
+            jobs.forEach(j => {
+                if (drop[j.path]) {
+                    root._cancelId(j.id);
+                    delete drop[j.path];
+                }
+            });
+            root._cancelOnReply = drop;
             root.rows = Model.attachJobs(root.rows, jobs);
             const early = Object.assign({}, root._early);
             jobs.forEach(j => {
@@ -142,17 +187,31 @@ QtObject {
 
     function applyJob(job) {
         const before = root.rows.find(r => r.job && r.job.id === job.id);
-        const wasDone = before && before.job.state === "done";
+        if (!before)
+            return;
+        if (job.state === "done" && before.job.state !== "done" && job.output)
+            root._lastOutput = job.output;
         root.rows = Model.applyJob(root.rows, job);
-        if (job.state === "done" && !wasDone && Config.system.converter.openFolder && !root.busy)
-            root.reveal(job.output);
     }
 
+    // Stop a row's conversion. A pending one has no job id yet: its job
+    // is cancelled when the start reply names it.
     function cancel(row) {
-        if (row && row.job && row.job.id)
-            BackendService.call("convert.cancel", {
-                "id": row.job.id
-            }, null);
+        if (!row || !row.job)
+            return;
+        if (row.job.id) {
+            root._cancelId(row.job.id);
+        } else if (row.job.state === "pending") {
+            const drop = Object.assign({}, root._cancelOnReply);
+            drop[row.path] = true;
+            root._cancelOnReply = drop;
+        }
+    }
+
+    function _cancelId(id) {
+        BackendService.call("convert.cancel", {
+            "id": id
+        }, null);
     }
 
     // Select the file in the file manager (FileManager1), else open its
@@ -167,7 +226,7 @@ QtObject {
         BackendService.call("convert.copy", {
             "path": path
         }, (result, error) => {
-            root.notice = error ? String(error) : "";
+            root.notice = error ? root.errorText(error) : "";
         });
     }
 

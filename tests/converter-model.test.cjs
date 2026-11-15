@@ -131,3 +131,47 @@ test('stale jobs never take over a row; failed starts clear pending', () => {
 test('file URIs are percent-encoded', () => {
     assert.strictEqual(M.fileUri('/a b/#c,d.png'), 'file:///a%20b/%23c%2Cd.png');
 });
+
+test('a pending row (start sent, no reply yet) is working, not editable', () => {
+    let rows = M.addFiles([], [jpg, png]);
+    rows = M.markPending(rows, [{ path: '/p/a.jpg', target: 'png' }]);
+    assert.ok(!M.editable(rows[0]) && M.working(rows[0]));
+    assert.ok(M.editable(rows[1]) && !M.working(rows[1]));
+    // neither the row nor its kind header can change its target
+    assert.strictEqual(M.setTarget(rows, '/p/a.jpg', 'webp')[0].target, 'png');
+    assert.strictEqual(M.setTarget(rows, '/p/a.jpg', 'webp')[0].job.state, 'pending');
+    const kind = M.setKindTarget(rows, 'image', 'webp');
+    assert.deepStrictEqual(plain(kind.map(r => [r.target, r.job ? r.job.state : null])), [['png', 'pending'], ['webp', null]]);
+    for (const s of ['queued', 'running'])
+        assert.ok(M.working({ job: { state: s } }) && !M.editable({ job: { state: s } }));
+    for (const s of ['done', 'failed', 'cancelled'])
+        assert.ok(!M.working({ job: { state: s } }));
+    assert.ok(!M.working(null) && M.editable(null));
+});
+
+test('backend errors map to translation keys by cause', () => {
+    const info = e => plain(M.errorInfo(e));
+    assert.deepStrictEqual(info('no file on the clipboard'), { key: 'paste_none', arg: '' });
+    assert.deepStrictEqual(info('the clipboard is empty'), { key: 'paste_empty', arg: '' });
+    assert.deepStrictEqual(info('unknown method: convert.paste'), { key: 'service', arg: '' });
+    assert.deepStrictEqual(info('output folder /x y does not exist'), { key: 'out_dir', arg: '/x y' });
+    assert.deepStrictEqual(info('cannot write to /ro'), { key: 'no_write', arg: '/ro' });
+    assert.deepStrictEqual(info('the converter is shutting down'), { key: 'stopping', arg: '' });
+    assert.deepStrictEqual(info('not found'), { key: 'missing', arg: '' });
+    // a tool's own message stays as it is
+    assert.deepStrictEqual(info("Unknown encoder 'libmp3lame'"), { key: '', arg: "Unknown encoder 'libmp3lame'" });
+    assert.deepStrictEqual(info(null), { key: '', arg: '' });
+    const fs = require('node:fs');
+    for (const lang of ['en', 'es', 'ru']) {
+        const tr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'translations', lang + '.json'), 'utf8'));
+        for (const k of ['paste_none', 'paste_empty', 'service', 'out_dir', 'no_write', 'stopping', 'missing', 'other'])
+            assert.ok(tr['converter.error.' + k], `converter.error.${k} missing in ${lang}`);
+    }
+});
+
+test('a hide next to an output change is an output loss, not a close', () => {
+    assert.ok(M.outputLoss(10000, 9800, 1500)); // the output went, then the hide
+    assert.ok(M.outputLoss(10000, 11200, 1500)); // the hide came first
+    assert.ok(!M.outputLoss(10000, 5000, 1500)); // an old change: the user closed it
+    assert.ok(!M.outputLoss(10000, 0, 1500)); // no output change since start
+});

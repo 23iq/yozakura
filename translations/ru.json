@@ -4570,7 +4570,6 @@
   "converter.drop_release": "Отпустите, чтобы добавить",
   "converter.choose": "Выберите файлы для конвертации",
   "converter.no_chooser": "Не найден диалог выбора файлов (zenity или kdialog). Перетащите или вставьте файлы.",
-  "converter.paste_empty": "В буфере обмена нет файла",
   "converter.add": "Добавить файлы",
   "converter.paste": "Вставить (Ctrl+V)",
   "converter.clear": "Очистить всё",
@@ -4606,5 +4605,12 @@
   "converter.error.missing": "Файл не найден",
   "converter.error.folder": "Папки нельзя конвертировать",
   "converter.error.unknown": "Неизвестный формат",
-  "converter.error.special": "Не обычный файл"
+  "converter.error.special": "Не обычный файл",
+  "converter.error.paste_none": "В буфере обмена нет файла",
+  "converter.error.paste_empty": "Буфер обмена пуст или недоступен (wl-paste)",
+  "converter.error.stopping": "Конвертер завершает работу",
+  "converter.error.service": "Служба конвертера не запущена: перезапустите оболочку",
+  "converter.error.out_dir": "Папка для результатов %1 не существует",
+  "converter.error.no_write": "Нет доступа на запись в %1",
+  "converter.error.other": "Что-то пошло не так: %1"
 }

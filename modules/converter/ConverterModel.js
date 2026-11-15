@@ -62,20 +62,28 @@ function targetOf(row, id) {
     return null;
 }
 
-// A row that may still change its target (not converting / converted).
+// A row that may still change its target: not converting (a pending row
+// waits for its start reply), not converted.
 function editable(row) {
     var s = row && row.job ? row.job.state : "";
-    return s !== "queued" && s !== "running" && s !== "done";
+    return s !== "pending" && s !== "queued" && s !== "running" && s !== "done";
 }
 
-// Rows with `path`'s target set to id (when it is one of its targets).
+// A row whose conversion is under way (Stop instead of Remove).
+function working(row) {
+    var s = row && row.job ? row.job.state : "";
+    return s === "pending" || s === "queued" || s === "running";
+}
+
+// Rows with `path`'s target set to id (when it is one of its targets and
+// the row is editable: a pending / converting / converted row keeps it).
 function setTarget(rows, path, id) {
     return (rows || []).map(function (r) {
-        if (r.path !== path || !targetOf(r, id))
+        if (r.path !== path || !editable(r) || !targetOf(r, id))
             return r;
         return Object.assign({}, r, {
             "target": id,
-            "job": editable(r) ? null : r.job
+            "job": null
         });
     });
 }
@@ -292,6 +300,37 @@ function errorKey(error) {
         return "special";
     }
     return "unknown";
+}
+
+// A backend error (a plain English string) as {key, arg}: the translation
+// suffix (converter.error.<key>) and its %1, or key "" for one not known
+// here (a tool's own message: shown as is).
+function errorInfo(error) {
+    var e = String(error || "");
+    var m;
+    if (e === "no file on the clipboard")
+        return { "key": "paste_none", "arg": "" };
+    if (e === "the clipboard is empty")
+        return { "key": "paste_empty", "arg": "" };
+    if (e === "not found")
+        return { "key": "missing", "arg": "" };
+    if (e === "the converter is shutting down")
+        return { "key": "stopping", "arg": "" };
+    if (e.indexOf("unknown method: convert.") === 0)
+        return { "key": "service", "arg": "" };
+    if ((m = /^output folder (.*) does not exist$/.exec(e)))
+        return { "key": "out_dir", "arg": m[1] };
+    if ((m = /^cannot write to (.*)$/.exec(e)))
+        return { "key": "no_write", "arg": m[1] };
+    return { "key": "", "arg": e };
+}
+
+// The window was hidden from outside at `hiddenAt` (ms): an output going
+// away (QtWayland unmaps the surface with it) when the outputs changed
+// within `window` ms of the hide, before or after it; otherwise the user
+// closed it.
+function outputLoss(hiddenAt, outputsChangedAt, window) {
+    return outputsChangedAt > 0 && Math.abs(hiddenAt - outputsChangedAt) <= window;
 }
 
 // "file:///a%20b/%23c.png" for a local path (each segment percent-encoded).
