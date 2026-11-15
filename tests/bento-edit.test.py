@@ -57,7 +57,7 @@ h.module("qs.modules.components", {
 })
 # The tile chrome buttons (kit IconButton) and the spacing they use.
 h.module("qs.modules.components.kit", {
-    "IconButton": "Item { property string icon; property string size; property bool active; property bool primary; "
+    "IconButton": "Item { property string icon; property string size; property bool active; property bool primary; property string tooltip; property string accessibleName; "
                   "property bool highlighted; signal clicked; implicitWidth: 36; implicitHeight: 36; "
                   "MouseArea { anchors.fill: parent; onClicked: parent.clicked() } }",
     "Space": "pragma Singleton\nQtObject { property int xs: 4 }",

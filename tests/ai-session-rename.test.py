@@ -27,7 +27,7 @@ h.module("qs.modules.aicenter.common", {
 })
 h.module("qs.modules.components.kit", {
     "IconButton": "Item { property string icon; property string size; property bool active; "
-                  "property bool danger; property string tooltip; signal clicked }",
+                  "property bool danger; property string tooltip; property string accessibleName; signal clicked }",
     "Type": "pragma Singleton\nQtObject { property color text; property color accent: 'red'; "
             "function family(r) { return 'Sans' } function size(r) { return 13 } }",
     "Look": "pragma Singleton\nQtObject { property int labelWeight: Font.Normal; function radius(r, h) { return 8 } }",
