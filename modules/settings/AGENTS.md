@@ -123,6 +123,8 @@ modules/settings/
 │                           grid, PictureGrid.js), CardSelector
 ├── editors/                rich `custom` editors (one file each, `property var entry`); PageCard +
 │                           CardScroll: a hand-written one-screen page's card and its scrolling body
+│                           ReorderList.qml: the one generic reorderable list (drag, keyboard Up / Down,
+│                           a moved row keeps its focus); list editors build on it, never their own
 ├── previews/               old under-row previews (`preview`), for pages not converted yet
 ├── schema/Categories.js    information architecture: destinations, tabs, HOME tiles, MOVED, resolve();
 │                           withSections / withEntries / withoutSections / sectionsOf compose tabs

@@ -112,6 +112,9 @@ Singleton {
                 return m.activeColorPreset;
             if (k.prop === "wallPath")
                 return m.wallpaperDir;
+            // the wallpaper on screen (the strip's pick: an undo step)
+            if (k.prop === "current")
+                return m.currentWallpaper;
             return undefined;
         }
         const domain = Config[k.domain];
@@ -156,6 +159,8 @@ Singleton {
             m.setColorPreset(value);
         else if (prop === "wallPath" && m.setWallpaperDir)
             m.setWallpaperDir(value);
+        else if (prop === "current" && m.setWallpaper)
+            m.setWallpaper(value);
     }
 
     // One value into Config (or the wallpaper manager); `staged`: the
