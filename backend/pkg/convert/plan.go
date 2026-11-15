@@ -63,7 +63,9 @@ type Step struct {
 	Progress bool
 	// Timeout bounds the step (a password prompt or a stuck office).
 	Timeout time.Duration
-	Native  func() error
+	// Env is added to the program's environment.
+	Env    []string
+	Native func() error
 }
 
 // Plan is everything a conversion runs, in order. Run first links the
@@ -77,6 +79,9 @@ type Plan struct {
 	Out    string
 	// Duration of the source in seconds (ffmpeg progress), 0 = unknown.
 	Duration float64
+	// Files are written before the first step when missing (a tool's
+	// policy or settings): a relative path is inside Work.
+	Files map[string]string
 }
 
 // PlanOptions: where LibreOffice keeps its profile (a private one, so a
@@ -139,7 +144,8 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 	case EngineFFmpeg:
 		p.Steps = []Step{{Prog: prog, Args: ffmpegArgs(r, out), Progress: true, Out: out, Timeout: timeout}}
 	case EngineMagick:
-		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out), Out: out, Timeout: timeout}}
+		p.Files = map[string]string{magickPolicyFile: magickPolicy(req.From, req.To, t.magickCoder(req.From), work)}
+		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out, t), Env: magickEnv(work), Out: out, Timeout: timeout}}
 	case EngineRsvg:
 		p.Steps = []Step{{Prog: prog, Args: []string{"-f", req.To, "-o", out, in}, Out: out, Timeout: timeout}}
 	case EngineSoffice:
@@ -266,38 +272,6 @@ func videoCodec(to string, q Quality) []string {
 		return []string{"-c:v", "mpeg4", "-q:v", pickQ(q, "8", "5", "2"), "-c:a", "libmp3lame", "-q:a", "4"}
 	}
 	return nil
-}
-
-// magickArgs: the first frame unless the target keeps several (animated
-// gif / webp, multi-page tiff / pdf); jpg and bmp get a white background
-// instead of transparency.
-func magickArgs(req Request, out string) []string {
-	var args []string
-	src := req.Src
-	if req.From == "pdf" {
-		args = append(args, "-density", "150")
-	}
-	if !contains([]string{"gif", "webp", "tiff", "pdf"}, req.To) {
-		src += "[0]"
-	}
-	args = append(args, src)
-	switch req.To {
-	case "jpg", "bmp":
-		args = append(args, "-background", "white", "-alpha", "remove", "-alpha", "off")
-	case "ico":
-		args = append(args, "-define", "icon:auto-resize=256,128,64,48,32,16")
-	}
-	switch req.To {
-	case "jpg":
-		args = append(args, "-quality", pickQ(req.Quality, "60", "82", "92"))
-	case "webp":
-		args = append(args, "-quality", pickQ(req.Quality, "60", "80", "92"))
-	case "avif":
-		args = append(args, "-quality", pickQ(req.Quality, "45", "60", "80"))
-	case "jxl":
-		args = append(args, "-quality", pickQ(req.Quality, "70", "85", "95"))
-	}
-	return append(args, out)
 }
 
 // officeFilters: LibreOffice's --convert-to value per target.

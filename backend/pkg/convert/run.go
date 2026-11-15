@@ -37,6 +37,9 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 			return err
 		}
 	}
+	if err := p.writeFiles(); err != nil {
+		return err
+	}
 	for _, st := range p.Steps {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -67,6 +70,34 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 	}
 	if fi, err := os.Stat(p.Out); err != nil || fi.Size() == 0 {
 		return errors.New("the converter wrote no output")
+	}
+	return nil
+}
+
+// writeFiles creates the plan's Files that do not exist yet.
+func (p *Plan) writeFiles() error {
+	for name, content := range p.Files {
+		path := name
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(p.Work, name)
+		}
+		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+			return err
+		}
+		f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if errors.Is(err, os.ErrExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		_, err = f.WriteString(content)
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -112,6 +143,9 @@ func runStep(ctx context.Context, st Step, duration float64, onProgress Progress
 	}
 	cmd := proc.Command(context.Background(), st.Prog, st.Args...)
 	cmd.Dir = st.Dir
+	if len(st.Env) > 0 {
+		cmd.Env = append(os.Environ(), st.Env...)
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	tail := &tailBuffer{max: 64}
 	cmd.Stderr = tail
