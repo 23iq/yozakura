@@ -42,7 +42,7 @@ MiniScreen {
         samples: ({
                 "launcher.query": root.query,
                 "launcher.live": Samples.LIVE,
-                "launcher.rows": Samples.rows(root.style, root.query, k => I18n.t(k), n => Icons[n] ?? "")
+                "launcher.rows": Samples.rows(root.style, root.query, k => I18n.t(k), n => Icons[n] ?? "", id => SettingsStore.get("prefix." + id) ?? "")
             })
     }
 }

@@ -17,7 +17,7 @@ import "../components/preview/Preview.js" as Preview
 // it never reads (the panel itself is wired to it throughout). Samples
 // (PreviewContext `preview`): "ai.rows" (ChatSession rows: {role, content,
 // thinking, toolCalls, model, status, ts}), "ai.model" ({name, provider,
-// kind}), "ai.size" ("compact" | "wide"), "ai.effortLevels", "ai.effort", "ai.cost", "ai.context"
+// kind}), "ai.size" ("compact" | "wide"), "ai.space" ("assistant" | "code": the header), "ai.effortLevels", "ai.effort", "ai.cost", "ai.context"
 // ([used, window]), "ai.limit" (0..1). Everything else (message style,
 // density, text size, avatars, times, thinking, the strip items, your
 // fonts and colours) is the live config, read by the parts themselves.
@@ -57,6 +57,7 @@ StyledRect {
 
         CenterHeader {
             Layout.fillWidth: true
+            preview: root.preview
         }
         Item {
             Layout.fillWidth: true

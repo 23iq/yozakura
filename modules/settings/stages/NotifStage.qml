@@ -49,14 +49,18 @@ Stage {
     // a narrow stage (a pane beside the cards): the small screen above the
     // toast instead of beside it
     readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
-    readonly property bool stacked: stage.narrow && stage.corners
+    // (unless the page gives it less than stacking needs, a short window:
+    // then side by side, the small screen as tall as the stage allows)
+    readonly property real stackedHeight: Math.round(Space.px(176) * 9 / 16 + cornerName.height + stage.toastHeight + Space.xs + Space.m * 4)
+    readonly property bool short: stage.height > 0 && stage.height + 1 < stage.stackedHeight
+    readonly property bool stacked: stage.narrow && stage.corners && !stage.short
     // the toast's room: beside the small screen, or the whole stage
     readonly property real room: stage.corners && !stage.stacked ? stage.width - screen.x - screen.width - Space.xl * 2 : stage.width - Space.l * 2
     // its height as large as life (a narrow pane still has the room for
     // its width; never from the stage's width: the page sizes the stage
     // from its height)
     readonly property real toastHeight: toast.part.partHeight > 0 ? toast.part.partHeight : Space.px(120)
-    readonly property real preferredHeight: stage.stacked ? Math.round(screen.height + cornerName.height + stage.toastHeight + Space.xs + Space.m * 4) : Space.px(200)
+    readonly property real preferredHeight: stage.narrow && stage.corners ? stage.stackedHeight : Space.px(200)
 
     stageHeight: stage.preferredHeight
 
@@ -122,7 +126,7 @@ Stage {
         visible: stage.corners
         y: stage.stacked ? Space.m : Math.round((parent.height - height - cornerName.height - Space.xs) / 2)
         x: stage.stacked ? Math.round((parent.width - width) / 2) : Space.xl
-        width: Space.px(176)
+        width: Math.round(Math.max(Space.px(80), Math.min(Space.px(176), (stage.height - cornerName.height - Space.xs - Space.m * 2) * 16 / 9)))
         height: Math.round(width * 9 / 16)
         radius: Look.radius("box", height)
         color: Look.raisedFill(false)

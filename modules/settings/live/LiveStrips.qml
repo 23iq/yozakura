@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.services
 import qs.modules.components.preview
 import "LiveSamples.js" as LiveSamples
 
@@ -23,7 +24,7 @@ Item {
     PreviewContext {
         id: context
         samples: {
-            const all = LiveSamples.groups(Date.now(), root.grouped);
+            const all = LiveSamples.groups(Date.now(), root.grouped, k => I18n.t(k));
             return {
                 "popupGroups": all,
                 "popupAppNames": Object.keys(all)

@@ -230,6 +230,15 @@ check(ev("Config.terminal.greeting") == "fastfetch" and ev("Config.terminal.fast
 check(h.eval(item("terminalWindow"), "item.greeting") is True, "terminal: the stage's terminal greets")
 h.eval(item("greeting:off"), "clicked()")
 check(ev("Config.terminal.greeting") == "none", "terminal: Off turns it off")
+# a short stage: the window a little smaller, then its top cut: its last
+# line (the prompt) stays in view
+term_stage = item("terminalStage")
+h.eval(term_stage, "height = 104")
+win_bottom = h.eval(item("terminalWindow"), "y + height * scale")
+room_h = h.eval(item("terminalWindow"), "parent.height")
+check(abs(win_bottom - room_h) < 1.5 and room_h < 104,
+      f"terminal, a short stage: the prompt line stays in view ({win_bottom:.0f} of {room_h:.0f})")
+check(h.eval(term_stage, "fit") >= 0.72, "...never smaller than readable")
 
 # ---- Presets ------------------------------------------------------------------
 PRESETS = ('[{name: "Hanami", official: true, active: true, tags: ["dark"], look: {"bar.position": "top"}},'

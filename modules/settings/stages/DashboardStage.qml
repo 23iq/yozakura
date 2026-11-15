@@ -27,7 +27,9 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(250)
+    // (tall enough that the whole dashboard is as wide as the pane: its
+    // text reads, ~0.5 of its size)
+    readonly property real preferredHeight: Space.px(340)
 
     stageHeight: stage.preferredHeight
 

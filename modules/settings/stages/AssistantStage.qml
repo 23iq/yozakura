@@ -37,7 +37,7 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(250)
+    readonly property real preferredHeight: Space.px(320)
 
     stageHeight: stage.preferredHeight
 
@@ -48,11 +48,13 @@ Stage {
         host: "sidebar"
         side: stage.side
         source: Qt.resolvedUrl("../../aicenter/AiCenterPreview.qml")
-        minZoom: 0.62
-        maxZoom: 0.8
+        // its text at a size it reads (the stage's top edge cuts the rest)
+        minZoom: 0.8
+        maxZoom: 0.95
         opacity: stage.on ? 1 : 0.35
         samples: ({
                 "ai.size": stage.size,
+                "ai.space": "assistant",
                 "ai.model": stage.model,
                 "ai.effortLevels": ["low", "medium", "high"],
                 "ai.effort": "high",
@@ -74,7 +76,7 @@ Stage {
                                 "title": I18n.t("prefs.ai.stage.tool"),
                                 "category": "config",
                                 "args": {
-                                    "key": "bar.style",
+                                    "key": "bar.layout.style",
                                     "value": "floating"
                                 },
                                 "status": "done",

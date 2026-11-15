@@ -129,7 +129,9 @@ Item {
             return Math.max(root.margin, Math.round((root.height - height) / 2));
         }
         snapshot: root.snapshot
-        active: root.active && root.visible
+        active: root.active
+        // (its own visibility waits for it to be ready: the host's says)
+        shown: root.visible
         settleMs: root.settleMs
         visible: root.snapshot || part.ready
         // enabled (a disabled kit row reads greyed out: ListRow); the cover

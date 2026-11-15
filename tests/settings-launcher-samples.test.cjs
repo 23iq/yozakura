@@ -49,3 +49,25 @@ test('rows: provider row fields, translated, the AI row asks the query', () => {
         assert.ok(r.key && r.title && r.hint, id + ' has a key, a title and what Enter does');
     }
 });
+
+test('rows: UI words are translated; a badge is your own prefix of that provider', () => {
+    const prefix = id => ({ commands: '!', timers: '', routines: '@@' })[id];
+    const rows = plain(Samples.rows('list', 'te', t, glyph, prefix));
+    assert.equal(rows.commands[0].title, '[launcher.cmd.dnd]');
+    assert.equal(rows.routines[0].title, '[prefs.timers.section.focus]');
+    assert.equal(rows.timers[0].title, '10:00 · [focus.timer_name]');
+    assert.equal(rows.commands[0].badge, '! dnd');
+    assert.equal(rows.routines[0].badge, '@@ focus');
+    // (no prefix of yours: nothing to type, no badge)
+    assert.equal(rows.timers[0].badge, '');
+    assert.equal(plain(Samples.rows('list', 'te', t, glyph)).commands[0].badge, '');
+    // every key a sample row names exists in every language
+    const fs = require('node:fs');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'modules/settings/stages/LauncherSamples.js'), 'utf8');
+    const keys = [...src.matchAll(/"(?:title|subtitle|hint|badge)Key": "([^"]+)"/g)].map(m => m[1]);
+    assert.ok(keys.length > 10);
+    for (const lang of ['en', 'es', 'ru']) {
+        const tr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'translations', lang + '.json'), 'utf8'));
+        for (const k of keys) assert.ok(k in tr, `${lang}: ${k}`);
+    }
+});

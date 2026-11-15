@@ -42,11 +42,11 @@ MiniScreen {
         cut: "ends"
     }
 
-    // (live: a just-built panel can picture blank offscreen, LIVE PREVIEWS)
     LivePanel {
         anchors.fill: parent
         anchors.margins: Math.round(root.u * 5)
         active: root.inline
+        snapshot: true
         nativeWidth: 640
         frame: "modules"
         readableGlyph: 10

@@ -19,7 +19,10 @@ Stage {
 
     readonly property var sink: Audio.sink ?? null
     readonly property var source: Audio.source ?? null
-    // the loudest visualizer bar, while this band is on screen
+    // the loudest visualizer bar, while this band is on screen (Settings in
+    // its own process, performance.separateWindows, runs a second cava for
+    // as long as the Sound tab shows: same config, same runtime file;
+    // accepted, a level meter is worth one short-lived capture)
     readonly property bool metering: band.visible && CavaService.available !== false
     readonly property real level: band.metering && CavaService.values ? Math.min(1, Math.max.apply(null, [0].concat(CavaService.values))) : -1
 

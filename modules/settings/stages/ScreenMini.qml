@@ -5,11 +5,9 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
-import qs.modules.settings
 import qs.modules.settings.live
 import "../SchemaUtil.js" as SchemaUtil
 import "../../bar/panels/PanelLayout.js" as PanelLayout
-import "../live/LiveKeys.js" as ScreenParts
 
 // The shared screen miniature of the settings stages: your screen as the
 // shell draws it, to one scale. The bars, the dock and the island (at rest)
@@ -187,72 +185,13 @@ Item {
         easing.type: Motion.glide.easing
     }
 
-    // Two windows in the space the bar leaves.
-    Item {
-        id: windows
-        readonly property real gap: Math.round(screen.unit * 0.5)
-        visible: opacity > 0
-        opacity: screen.showWindows ? screen.windowsOpacity : 0
-        transform: Translate {
-            y: screen.showWindows ? 0 : Space.m
-            Behavior on y {
-                enabled: Motion.glide.duration > 0
-                NumberAnimation {
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
-        }
-        Behavior on opacity {
-            enabled: Motion.glide.duration > 0
-            NumberAnimation {
-                duration: Motion.glide.duration
-                easing.type: Motion.glide.easing
-            }
-        }
-        // the space the bars leave: glides when a bar or the dock moves,
-        // lands at once when the miniature is resized
-        RectGlide {
-            target: windows
-            frame: screen
-            rect: ({
-                    "x": screen.freeRect.x + windows.gap,
-                    "y": screen.freeRect.y + windows.gap,
-                    "w": screen.freeRect.w - windows.gap * 2,
-                    "h": screen.freeRect.h - windows.gap * 2
-                })
-        }
-
-        Repeater {
-            model: [[0, 0.58], [0.58, 0.42]]
-            delegate: Mark {
-                required property var modelData
-                required property int index
-                x: modelData[0] * windows.width + (index > 0 ? windows.gap / 2 : 0)
-                width: modelData[1] * windows.width - windows.gap / 2
-                height: windows.height
-                radius: Space.smallRadius
-                color: Qt.alpha(Colors.surfaceContainer, 0.62)
-                border.width: Space.hairline
-                border.color: Qt.alpha(index === 0 ? Colors.primary : Colors.outlineVariant, 0.55)
-
-                // a title line and a few text lines
-                Column {
-                    x: windows.gap
-                    y: windows.gap
-                    spacing: Math.round(windows.gap * 0.6)
-                    Repeater {
-                        model: 4
-                        delegate: Mark {
-                            required property int index
-                            width: (index === 0 ? 0.3 : 0.62 - index * 0.08) * windows.width * 0.5
-                            height: Math.max(2, Math.round(screen.unit * 0.18))
-                            color: Qt.alpha(Colors.overSurface, index === 0 ? 0.5 : 0.22)
-                        }
-                    }
-                }
-            }
-        }
+    // Two windows in the space the bars leave.
+    ScreenWindows {
+        frame: screen
+        free: screen.freeRect
+        unit: screen.unit
+        shown: screen.showWindows
+        shownOpacity: screen.windowsOpacity
     }
 
     // The screen frame.
@@ -289,94 +228,16 @@ Item {
         }
     }
 
-    // Each panel: its spot, the picked ring, and a click that picks it.
-    Repeater {
-        model: screen.panelRects
-        delegate: Item {
-            id: panelPart
-            required property var modelData
-            x: modelData.x
-            y: modelData.y
-            width: modelData.w
-            height: modelData.h
-
-            StageSpot {
-                keys: ["bar.layout", "bar.position", "bar.compact", "bar.panels", "bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen", "bar.screenList"]
-                cornerRadius: Space.smallRadius
-            }
-            // the panel picked for editing (ringed), or under the pointer
-            // (a fainter ring: it can be picked)
-            Mark {
-                anchors.fill: parent
-                anchors.margins: -Space.xs
-                readonly property bool picked: screen.selectable && screen.selectedPanel === panelPart.modelData.index
-                opacity: picked ? 1 : (panelArea.containsMouse ? 0.55 : 0)
-                visible: opacity > 0
-                radius: Space.smallRadius + Space.xs
-                color: "transparent"
-                border.width: Space.stroke - 1
-                border.color: Type.accent
-                Behavior on opacity {
-                    enabled: Motion.micro.duration > 0
-                    NumberAnimation {
-                        duration: Motion.micro.duration
-                        easing.type: Motion.micro.easing
-                    }
-                }
-            }
-            MouseArea {
-                id: panelArea
-                objectName: "barPanel:" + panelPart.modelData.index
-                anchors.fill: parent
-                enabled: screen.selectable
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: screen.panelPicked(panelPart.modelData.index)
-            }
-        }
-    }
-
-    // Each module: its spot and, on the Bar tab, a button to its card.
-    Repeater {
-        model: screen.moduleRects
-        delegate: Item {
-            id: modulePart
-            required property var modelData
-            x: modelData.x
-            y: modelData.y
-            width: modelData.w
-            height: modelData.h
-
-            StageSpot {
-                keys: ScreenParts.moduleKeys(modulePart.modelData.id)
-            }
-            MouseArea {
-                id: moduleArea
-                objectName: "barModule:" + modulePart.modelData.id
-                anchors.fill: parent
-                enabled: screen.modulesClickable
-                visible: enabled
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: screen.modulePicked(modulePart.modelData.id)
-
-                // under the pointer: a soft wash (a click goes to its card)
-                Mark {
-                    anchors.fill: parent
-                    radius: Space.smallRadius
-                    color: Qt.alpha(Type.accent, 0.18)
-                    opacity: moduleArea.containsMouse ? 1 : 0
-                    visible: opacity > 0
-                    Behavior on opacity {
-                        enabled: Motion.micro.duration > 0
-                        NumberAnimation {
-                            duration: Motion.micro.duration
-                            easing.type: Motion.micro.easing
-                        }
-                    }
-                }
-            }
-        }
+    // Each panel and module: its spot, the picked ring, the clicks.
+    ScreenTargets {
+        anchors.fill: parent
+        panelRects: screen.panelRects
+        moduleRects: screen.moduleRects
+        selectable: screen.selectable
+        selectedPanel: screen.selectedPanel
+        modulesClickable: screen.modulesClickable
+        onPanelPicked: index => screen.panelPicked(index)
+        onModulePicked: id => screen.modulePicked(id)
     }
 
     // The dock: its spot and ring (the dock itself is in the live layer).

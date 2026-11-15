@@ -19,7 +19,9 @@ import "../live/LiveSamples.js" as LiveSamples
 // activities, the media and notification styles); a state change is the
 // island's own morph. Where it sits on the screen is the canvas' job. A
 // click on the island scrolls to the card of what it shows and flashes it;
-// rows light up their part.
+// rows light up their part. It stands in its card wherever it is (the loupe
+// under the Screen canvas too): the island in the middle of the card's
+// edge, its chips beside or under it.
 Stage {
     id: stage
     objectName: "islandStage"
@@ -39,11 +41,12 @@ Stage {
     // under the island instead of beside it
     readonly property bool narrow: stage.width > 0 && stage.width < Space.px(720)
     // the room along the edge the island gets (the chips beside it take
-    // theirs on a wide stage)
-    readonly property real lane: stage.side ? Space.px(300) : (stage.narrow ? stage.width : stage.width - chips.width - Space.xl * 2)
+    // theirs on a wide stage; an upright island: as tall as it is, no
+    // empty card around a small one)
+    readonly property real lane: stage.side ? Math.max(Space.px(160), live.targetRect.height * stage.zoom + Space.l * 2) : (stage.narrow ? stage.width : stage.width - chips.width - Space.xl * 2)
     // native px -> stage px: the island a little larger than life, a wide
     // state (a notification) still fitting the lane
-    readonly property real zoom: Math.max(0.4, Math.min(1.25, (stage.lane - Space.l * 2) / Math.max(1, stage.side ? Math.max(live.targetRect.height, 300) : Math.max(live.targetRect.width, 560))))
+    readonly property real zoom: Math.max(0.4, Math.min(1.25, stage.side ? (Space.px(320) - Space.l * 2) / Math.max(live.targetRect.height, 200) : (stage.lane - Space.l * 2) / Math.max(1, Math.max(live.targetRect.width, 560))))
     // how far the island reaches from its edge (its target: a state
     // change sizes the stage once, the island morphs into it)
     readonly property real reach: {
@@ -75,10 +78,6 @@ Stage {
 
     stageHeight: stage.preferredHeight
     calm: true
-    // the loupe under the Screen canvas is no second card: the island and
-    // its state chips stand on the page under the canvas
-    backdrop: !stage.narrow
-    framed: !stage.narrow
 
     LiveIsland {
         id: live

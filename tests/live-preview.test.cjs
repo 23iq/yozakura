@@ -141,3 +141,33 @@ test('the OSD and timer samples', () => {
     const t = plain(Samples.timer(1e6));
     assert.ok(t.leftMs < t.totalMs && t.state === 'running');
 });
+
+test('the words a sample shows are translated (English without a translator)', () => {
+    const tr = k => '[' + k + ']';
+    const msg = plain(Samples.messages(5e6, false, tr))[0];
+    assert.equal(msg.body, '[prefs.notif.sample.dinner]');
+    assert.deepEqual(msg.actions.map(a => a.text), ['[prefs.notif.sample.reply]', '[prefs.notif.sample.read]']);
+    const cal = plain(Samples.groups(5e6, false, tr)).Calendar.notifications[0];
+    assert.equal(cal.summary, '[prefs.notif.sample.reminder]');
+    assert.equal(plain(Samples.timer(1e6, tr)).name, '[focus.timer_name]');
+    assert.equal(plain(Samples.island('notification', 5e6, '', null, tr)).notifications[0].body, '[prefs.notif.sample.dinner]');
+    assert.equal(plain(Samples.messages(5e6, false))[0].actions[0].text, 'Reply');
+    // every key exists in every language
+    const fs = require('node:fs');
+    const keys = Object.keys(Samples.TEXT);
+    for (const lang of ['en', 'es', 'ru']) {
+        const d = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'translations', lang + '.json'), 'utf8'));
+        for (const k of keys) assert.ok(k in d, `${lang}: ${k}`);
+    }
+});
+
+// The dashboard on a Settings stage is open while the real one is closed:
+// what it loads only while open follows the dashboard's own isVisible.
+test('the dashboard preview loads its wallpaper thumbnails (isVisible, not GlobalStates)', () => {
+    const fs = require('node:fs');
+    const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    assert.match(read('modules/widgets/dashboard/Dashboard.qml'), /WallpapersTab \{\s*dashboardShown: root\.isVisible/);
+    const cell = read('modules/widgets/dashboard/wallpapers/WallpaperGridCell.qml');
+    assert.match(cell, /cell\.tab\.dashboardShown/);
+    assert.doesNotMatch(cell, /GlobalStates\.dashboardOpen/);
+});

@@ -208,7 +208,7 @@ class DashboardEnv(KitEnv):
         self.h.module("Quickshell.Services.Pipewire", {
             "PwNodePeakMonitor": "QtObject { property var node; property bool enabled: true; property real peak: 0.25 }"})
         self.h.module("qs.modules.widgets.dashboard.metrics", {"MetricsTab": "Item {}"})
-        self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item {}"})
+        self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item { property bool dashboardShown }"})
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])
         self._qmldir(qs / "modules/shell/hosts", "qs.modules.shell.hosts", only=["HostFrame"])
         self._qmldir(qs / "modules/widgets/dashboard", "qs.modules.widgets.dashboard")

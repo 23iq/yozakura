@@ -230,8 +230,9 @@ branches on the language name (`Look`).
   the whole screen (bars, island, dock; the tab's part ringed, the whole
   monitor always in frame; a bar picks it, the
   island / dock open their tab, the bar's modules scroll to their card)
-  with the tab's own stage as a loupe under it (none for a vertical bar or
-  a part that is off), or over it for Widgets & clock and Lock screen;
+  with the tab's own stage as a loupe under it (none for a part that is
+  off; a vertical bar's loupe shows its ends side by side, BarWindows.js),
+  or over it for Widgets & clock and Lock screen;
   each tab's stage is built once and cross-fades. A narrow
   window keeps the stack: stage on top (under the cards, which slide over
   it as it recedes on scroll), a bento (`BentoLayout.js`, 1 to 3 columns,
@@ -446,7 +447,11 @@ costs nothing until opened and gives all its memory back when closed.
 - The last 4 visited pages stay alive, hidden and disabled (PageCache.js);
   a revisit shows the same page at once. Rows of a hidden page point at
   nothing. Keep stages cheap while hidden (no endless animations; a stage
-  that animates should gate on `visible`).
+  that animates should gate on `visible`). Live previews sleep while
+  hidden (LiveHold: a cached page, the kept-alive window, another Screen
+  tab, the home under a page): LivePart, LiveBars and LiveScreen destroy
+  their parts 1.5 s after they hid (pictures stay) and build them again
+  when they show.
 - SettingsPage builds its sections a few per frame and stays hidden until
   every bento column reaches below the viewport (`BentoLayout` floor: the
   cards still to come land out of sight), then enters; it relayouts the
@@ -737,9 +742,13 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
   or `cropOf(item)` (the native rect framed, measured once settled and then
   bound), `fit` / `zoom` / `maxZoom`; inert (`interactive: false`: no pointer,
   hover or keys, so its popups never open); `active` (a hidden page builds
-  nothing); `snapshot` (built, pictured with grabToImage, destroyed: a
-  gallery holds pictures, not objects) + `refreshKey` (a change pictures it
-  again); `mapFromPart(item, rect)` for a page's own overlays; `settleMs`
+  nothing); `shown` / `holdMs` (default its visibility: hidden that long,
+  the part is destroyed, LiveHold); `snapshot` (built, pictured with
+  grabToImage, destroyed: a gallery holds pictures, not objects; a failed
+  grab is tried again) + `refreshKey` (a change pictures it again, once a
+  burst of changes is over: `refreshSoon`, `refreshDelay`); a build still
+  loading after 4 s is started again; `mapFromPart(item, rect)` for a
+  page's own overlays; `settleMs`
   (time to settle before it is measured / pictured; a part whose root has
   a `ready` property is waited for until it is true). Readable:
   `minZoom` and `readableGlyph` (the zoom that draws its smallest text,
@@ -753,7 +762,7 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
 - `LiveGate` (singleton): the build queue. A page shows first (no live part
   is created in the frames that lay it out: opening Bar costs ~40 ms, as
   before), then its parts are built one per frame (`ask(owner, build)`,
-  `forget(owner)` on destruction). Tests and renders that look at a stage
+  `forget(owner)` on destruction; one entry per owner). Tests and renders that look at a stage
   wait for it: `live_previews.wait_built(env)` (settings_render does).
   Until its panels exist LiveBars reports the configured depth
   (PanelLayout.estimateDepth), so nothing moves when they arrive.
@@ -789,7 +798,9 @@ Settings side (`modules/settings/live/`):
   bar Shape cards, laid out on your real screen size with `cut: "ends"`:
   both corners, the gap, the radius, the islands, the first and last
   modules), `snapshot`, `refreshKey`. Readable by default
-  (`readableGlyph: 10`, `cut: "ends"`).
+  (`readableGlyph: 10`, `cut: "ends"`). A snapshot is taken again when its
+  spec changes, a setting a bar reads changes (SettingsStore.valueSet:
+  `revision`) or the colours do; LiveDock likewise.
 - `LiveDock`: the real dock framed on its surface (`overrides`, e.g.
   `dock.theme`, `dock.iconSize`, `dock.indicator`), `surfaceRect` in the
   item; `frame: "app"` frames one running app (the indicator cards), `zoom`
@@ -877,9 +888,8 @@ Showing a part in a stage: a LivePart (or LiveBars / LiveDock / LivePanel)
 in the stage, interaction drawn on top from mapped rects. A picture card:
 the thumb renders the part with its option as an override; galleries of
 the OSD and island styles use `snapshot` with a `refreshKey` of what they
-show. The bar Shape and dock style cards stay live: their snapshots came
-out blank offscreen for some styles (grabToImage of a just-rebuilt panel;
-investigate before using `snapshot` for panels).
+show; so do the bar Shape, workspace indicator, numeral, clock face and
+dock style cards (a gallery holds no live BarContent / DockContent).
 Readable, whatever the monitor (the owner's is 2560 px wide): a picture is
 never the whole part shrunk to the card; it frames what tells the options
 apart at a zoom where the text reads (`readableGlyph`), cutting the rest
@@ -892,12 +902,16 @@ Why live parts and not a look object threaded through every component:
 the shell reads its config in many places; only the keys a picture varies
 need a seam, and a preview of the current value needs none (the part reads
 the live config, so every other setting follows by itself). Why pictures
-for galleries: whole parts stay objects otherwise; strips (workspaces,
-clock) are small and stay live (they follow the workspaces too).
+for galleries: whole parts stay objects otherwise (a bar slider rebuilt
+every live card).
 The Bar stage (BarStage) lays the picked panel out on a screen as wide as
 the stage at up to its true size (`laneWidth`, taken after layout: the page
-sizes stages from their height), measured once at the real width after each
-change (`need`: its groups' natural length): wider bars are shown smaller.
+sizes stages from their height); its groups' natural length (`need`) is
+read from a copy laid out on the real width (never drawn), so the bar shown
+never rescales to be measured: wider bars are shown smaller. A vertical bar
+stands at its true size on a screen as tall as yours, seen through windows
+side by side (BarWindows.js: its top end, its middle when a module sits
+there, its bottom end).
 Test env: `tests/lib/live_previews.py` merges panels_env's import tree and
 fixture desktop into SettingsEnv (one 2560x1440 screen, or
 `YOZAKURA_TEST_SCREEN=WxH`; `settings_render.py --screen 3840x2160`), so every settings

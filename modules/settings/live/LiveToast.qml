@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.services
 import qs.modules.components.preview
 import "LiveSamples.js" as LiveSamples
 import "../../notifications/ToastModel.js" as ToastModel
@@ -30,7 +31,7 @@ Item {
         anchors.fill: parent
         source: Qt.resolvedUrl("../../notifications/CornerToast.qml")
         properties: ({
-                "group": LiveSamples.group(Date.now(), root.grouped),
+                "group": LiveSamples.group(Date.now(), root.grouped, k => I18n.t(k)),
                 "stackUp": root.stackUp
             })
         nativeWidth: root.nativeWidth

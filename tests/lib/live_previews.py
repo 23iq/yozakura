@@ -52,7 +52,7 @@ HOSTED_QMLDIRS = {
 # Dashboard tabs the stage never shows in a test (heavy, I/O): stand-ins.
 HOSTED_STUB_MODULES = {
     "qs.modules.widgets.dashboard.metrics": {"MetricsTab": "Item {}"},
-    "qs.modules.widgets.dashboard.wallpapers": {"WallpapersTab": "Item {}"},
+    "qs.modules.widgets.dashboard.wallpapers": {"WallpapersTab": "Item { property bool dashboardShown }"},
 }
 # The launcher's prefix tabs (dashboard tabs, statically imported by
 # LauncherView; a preview never opens them): light stand-ins, like

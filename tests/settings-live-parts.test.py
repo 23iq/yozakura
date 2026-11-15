@@ -14,6 +14,11 @@ offscreen.
   controls button holding the level, and a bar in a preview never registers
   an inline OSD host.
 * The dock's indicator follows a preview's override (DockIndicator pick).
+* A preview bar claims nothing session-wide: no PomodoroSync, and a
+  fullscreen window covers no weather (WeatherFx.setCovered).
+* A hidden preview is inactive: the cards are pictures; Settings hidden or
+  a page cached hidden keeps no live part (LivePart / LiveBars / LiveScreen,
+  LiveHold), shown again it is built again.
 """
 import sys
 from pathlib import Path
@@ -26,7 +31,7 @@ headless.ensure(gl=True)
 import live_previews  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from settings_env import SettingsEnv  # noqa: E402
-from waits import wait_until  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 env = SettingsEnv("settings-live-parts")
 h = env.h
@@ -47,6 +52,8 @@ import qs.modules.services
 import qs.modules.settings
 import qs.modules.settings.store
 import qs.modules.settings.live
+import qs.modules.theme
+import qs.modules.bar.workspaces
 Window {
     id: w
     width: 1400; height: 1000; visible: true
@@ -74,7 +81,45 @@ Window {
         })(w.contentItem);
         return found;
     }
+    // the Loaders holding an object of that type
+    function loaded(type, from) {
+        var n = 0;
+        (function walk(it) {
+            if (!it) return;
+            if (it.item !== undefined && it.status !== undefined && it.item && String(it.item).indexOf(type) === 0) n++;
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(from || w.contentItem);
+        return n;
+    }
+    // the bars that see a fullscreen window
+    function barsFullscreen() {
+        var n = 0;
+        (function walk(it) {
+            if (!it) return;
+            if (it.activeWindowFullscreen === true && it.styleItem !== undefined) n++;
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(w.contentItem);
+        return n;
+    }
+    // every live preview under `from`: [{snapshot, live, shown}] (LivePart:
+    // its part exists; LiveBars: its panels; LiveScreen: its parts)
+    function liveParts(from) {
+        var out = [];
+        (function walk(it) {
+            if (!it) return;
+            if (it.wanted !== undefined && it.pictured !== undefined)
+                out.push({ "snapshot": it.snapshot, "live": it.item !== null, "shown": it.visible });
+            else if (it.specsJson !== undefined && it.bars !== undefined)
+                out.push({ "snapshot": false, "live": Object.keys(it.bars).length > 0, "shown": it.visible });
+            else if (it.islandScreen !== undefined && it.live !== undefined)
+                out.push({ "snapshot": false, "live": it.dock !== null || it.island !== null, "shown": it.visible });
+            for (var i = 0; i < (it.children || []).length; i++) walk(it.children[i]);
+        })(from || w.contentItem);
+        return out;
+    }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
+    // a control of the page that has the keyboard
+    Item { objectName: "outsideFocus"; width: 1; height: 1; activeFocusOnTab: true }
     // a real dock with an indicator style the config does not have
     LiveDock {
         objectName: "lineDock"
@@ -116,6 +161,12 @@ check(h.eval(resting_view(), "activePlayer === null"), "at rest nothing plays (t
 h.eval(st, 'showing = "media"')
 check(wait_until(lambda: h.eval(resting_view(), "activePlayer !== null && activePlayer.trackTitle === 'Hanami Night'")),
       "music: the sample track")
+# the legacy summary (no hover expansion): the sample track plays
+ev("SettingsStore.set('notch.disableHoverExpansion', true)")
+check(wait_until(lambda: ev('w.findItem("compactPlayer", w.stage("islandStage")) !== null')
+                 and ev('w.findItem("compactPlayer", w.stage("islandStage")).isPlaying') is True),
+      "music, legacy summary: the sample track is playing")
+ev("SettingsStore.set('notch.disableHoverExpansion', false)")
 h.eval(st, 'showing = "notification"')
 check(wait_until(lambda: h.eval(live, "targetRect.height") > rest_h + 40), "a notification grows the island")
 check(wait_until(lambda: ev('w.findItem("islandNotifications", w.stage("islandStage")).visible') is True),
@@ -128,6 +179,13 @@ check(ev("Object.keys(CavaService.consumers).filter(k => CavaService.consumers[k
 part = ev('w.findItem("islandPart", w.stage("islandStage"))')
 check(part is not None and h.eval(part, "width") > 0, "the island's place answers clicks (its card)")
 h.eval(st, 'showing = "rest"')
+# at the end of the edge it still hangs from the middle of its card (where
+# it sits along the screen is the canvas' job)
+ev("SettingsStore.set('notch.align', 'end')")
+check(wait_until(lambda: abs(h.eval(part, "x + width / 2") - h.eval(st, "width / 2")) < 2),
+      "an island at the end of its edge stands in the middle of the stage")
+check(h.eval(st, "backdrop && framed"), "...in a card of its own")
+ev("SettingsStore.set('notch.align', 'center')")
 
 # the Screen canvas: the real island at rest, at its place
 canvas_live = ev('w.findItem("screenMiniLive", w.findItem("sharedCanvas"))')
@@ -146,6 +204,13 @@ ev("SettingsStore.set('notifications.groupByApp', true)")
 select("notifications")
 check(wait_until(lambda: ev('w.findItem("toastCard", w.stage("notifStage")) !== null')), "corner: the real toast card")
 check(wait_until(lambda: ev('w.count("toastSheet", w.stage("notifStage"))') == 2), "...grouped: the app's other two behind it")
+# a short stage (a small window caps it): the small screen beside the
+# toast, all of it in view
+nst = ev('w.stage("notifStage")')
+h.eval(nst, "width = 584; height = 104")
+scr = ev('w.findItem("notifScreen", w.stage("notifStage"))')
+check(h.eval(nst, "stacked") is False and h.eval(scr, "y >= 0 && y + height <= 104"),
+      "corner, a short stage: the small screen beside the toast, in view")
 ev("SettingsStore.set('notifications.presentation', 'notch')")
 check(wait_until(lambda: ev('w.findItem("islandNotifications", w.findItem("notifIsland", w.stage("notifStage"))) !== null')),
       "island: the real island holding the message")
@@ -163,9 +228,20 @@ check(ev("OsdService.inlineHosts") == 0, "a bar in a preview registers no inline
 ev("SettingsStore.set('layout.osd.style', 'pill')")
 check(wait_until(lambda: ev('w.findItem("menuOnStage", w.stage("osdStage")) !== null')), "the menu on the stage")
 
+# ---- a hosted view never takes the keyboard -------------------------------------
+select("dashboard")
+dash = ev('w.findItem("dashboardLive")')
+check(dash is not None and wait_until(lambda: h.eval(dash, "view !== null"), timeout_ms=15000), "dashboard: the stage's view is built")
+ev('w.findItem("outsideFocus").forceActiveFocus()')
+check(ev('w.activeFocusItem !== null && w.activeFocusItem.objectName === "outsideFocus"'), "the page's control has the keyboard")
+h.eval(dash, "view.forceActiveFocus()")
+pump(50)
+check(ev('w.activeFocusItem !== null && w.activeFocusItem.objectName === "outsideFocus"'),
+      "a hosted view that grabs the keyboard gives it back to the page's control")
+
 # ---- the dock's indicator -------------------------------------------------------
 dock = ev('w.findItem("lineDock")')
-check(wait_until(lambda: h.eval(dock, "dock !== null")), "a live dock builds")
+check(wait_until(lambda: h.eval(dock, "dock !== null"), timeout_ms=15000), "a live dock builds")
 src = ev("""(function() {
     var out = [];
     (function walk(it) { if (!it) return; if (it.source !== undefined && String(it.source).indexOf("indicators/") >= 0) out.push(String(it.source));
@@ -174,6 +250,48 @@ src = ev("""(function() {
 })()""").split("\n")
 src = [s for s in src if s]
 check(len(src) > 0 and all("LineIndicator" in s for s in src), f"its indicators are the override's style ({src[:1]})")
+
+# ---- a preview bar claims nothing session-wide --------------------------------
+select("bar")
+check(wait_until(lambda: ev('w.count("barSlot:clock")') > 0), "the Bar page shows real bars with their clock")
+check(ev("w.loaded('PomodoroSync')") == 0, "a preview clock has no PomodoroSync (owns no pomodoro target)")
+ev("CompositorData.anyFullscreen = true")
+pump(300)
+check(ev("w.barsFullscreen()") > 0, "a fullscreen window reaches the preview bars")
+check(ev("Object.keys(WeatherFx.coveredScreens).filter(k => WeatherFx.coveredScreens[k]).length") == 0,
+      "...and none of them covers the weather of a screen")
+ev("CompositorData.anyFullscreen = false")
+
+# the Bar stage keeps its scale and height while a setting changes (its
+# natural length is read from a copy, never by laying the bar shown out wide)
+bst = ev('w.stage("barStage")')
+check(bst is not None and wait_until(lambda: h.eval(bst, "need") > 0), "the Bar stage measured its bar")
+before = (h.eval(bst, "zoom"), h.eval(bst, "height"))
+ev("(function() { var p = JSON.parse(JSON.stringify(w.stage('barStage').panels)); p[0].reserve = !p[0].reserve; SettingsStore.set('bar.panels', p); })()")
+seen = set()
+for _ in range(12):
+    pump(40)
+    seen.add((round(h.eval(bst, "zoom"), 4), round(h.eval(bst, "height"), 1)))
+check(seen == {(round(before[0], 4), round(before[1], 1))}, f"a bar change: the stage never rescales meanwhile ({sorted(seen)})")
+
+# ---- a hidden preview is inactive ------------------------------------------------
+# the Bar page holds live bars (its stage, the canvas) and pictures (the
+# shape / workspace / clock cards: their live parts gone once pictured)
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.snapshot && p.live).length") == 0, timeout_ms=20000),
+      "the cards of the Bar page are pictures (no live part left)")
+check(ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") > 0, "the Bar page's stage and canvas are live")
+# Settings hidden (the kept-alive window, KeepAliveLoader): every part goes
+ev("w.findItem('shell').visible = false")
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") == 0, timeout_ms=6000),
+      "Settings hidden: no live preview left")
+ev("w.findItem('shell').visible = true")
+check(wait_until(lambda: ev("w.liveParts(w.findItem('shell')).filter(p => p.live).length") > 0, timeout_ms=10000),
+      "...shown again: the stage is built again")
+# another page: the Bar page is kept (PageCache), hidden: its parts go
+select("windows")
+pump(2500)
+hidden_live = ev("w.liveParts(w.findItem('shell')).filter(p => p.live && !p.shown).length")
+check(hidden_live == 0, f"a cached hidden page keeps no live preview ({hidden_live})")
 
 if failures:
     print(f"settings-live-parts: {len(failures)} failure(s)")

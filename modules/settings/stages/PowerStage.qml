@@ -51,14 +51,20 @@ Stage {
     }
 
     stageHeight: Space.px(300)
-    // a narrow stage (a pane beside the cards): the gauge over the profiles
-    readonly property bool narrow: stage.width > 0 && stage.width < Space.px(640)
-    readonly property real gaugeSize: stage.narrow ? Math.round(Math.min(stage.width * 0.4, Space.px(170))) : Math.round(stage.height * 0.76)
+    // a narrow stage (a pane beside the cards): the gauge over the profiles,
+    // unless the page gives it less than that needs (a short window): then
+    // side by side, the gauge as tall as the stage allows
+    readonly property bool slim: stage.width > 0 && stage.width < Space.px(640)
+    readonly property real stackedGauge: Math.round(Math.min(stage.width * 0.4, Space.px(170)))
+    readonly property real stackedHeight: Math.round(stage.stackedGauge + Space.l + tiles.height + Space.l * 2)
+    readonly property bool short: stage.height > 0 && stage.height + 1 < stage.stackedHeight
+    readonly property bool narrow: stage.slim && !stage.short
+    readonly property real gaugeSize: stage.narrow ? stage.stackedGauge : Math.round(stage.height * 0.76)
     // the charge line under the percentage (or over the profiles)
     readonly property string timeText: !stage.battery ? "" : stage.charging ? (stage.toFull !== "" ? I18n.t("prefs.power.until_full").replace("%1", stage.toFull) : I18n.t("prefs.power.charging")) : (stage.toEmpty !== "" ? I18n.t("prefs.power.left").replace("%1", stage.toEmpty) : "")
     // the ring holds the icon, the display-size charge and the time left
     readonly property bool ringRoomy: stage.gaugeSize >= Space.px(190)
-    readonly property real preferredHeight: stage.narrow ? Math.round(stage.gaugeSize + Space.l + tiles.height + Space.l * 2) : 0
+    readonly property real preferredHeight: stage.slim ? stage.stackedHeight : 0
 
     Grid {
         anchors.centerIn: parent
@@ -77,7 +83,8 @@ Stage {
                 id: ring
                 objectName: "powerRing"
                 anchors.fill: parent
-                thickness: Space.l
+                // (a small ring keeps its hole)
+                thickness: Math.min(Space.l, Math.round(gauge.width * 0.12))
                 value: stage.charge / 100
                 color: stage.saver ? Type.secondary : (stage.charge <= 15 && !stage.charging ? Type.danger : Type.progress)
             }

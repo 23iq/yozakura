@@ -13,7 +13,8 @@ import "LiveSamples.js" as LiveSamples
 // PreviewContext. Inert: it takes no input. Geometry for the page, in
 // native px of this item: `bars` (LiveBars), `depth(edge)` (bars),
 // `dockOn`, `dockEdge`, `dockDepth`, `dockRect()`, `islandOn`,
-// `islandRect()`.
+// `islandRect()`. Hidden (an ancestor hides it) for LiveHold's moment,
+// every part goes and is built again when it shows.
 Item {
     id: root
 
@@ -27,6 +28,24 @@ Item {
     readonly property alias bars: bars
 
     enabled: false
+
+    // the parts exist (on screen, or only just hidden)
+    readonly property bool live: hold.awake
+    LiveHold {
+        id: hold
+        shown: root.visible
+    }
+    onLiveChanged: {
+        if (root.live) {
+            LiveGate.ask(dockLoader, dockLoader.build);
+            LiveGate.ask(islandLoader, islandLoader.build);
+        } else {
+            LiveGate.forget(dockLoader);
+            LiveGate.forget(islandLoader);
+            dockLoader.source = "";
+            islandLoader.source = "";
+        }
+    }
 
     readonly property Item dock: dockLoader.item as Item
     readonly property bool dockOn: root.showDock && !!root.dock && Config.dock.enabled !== false && !(Config.dock.theme === "integrated" && root.integratedHosted)
@@ -65,6 +84,7 @@ Item {
         anchors.fill: parent
         screen: root.screen
         preview: root.preview
+        active: root.live
     }
 
     Loader {
@@ -73,10 +93,13 @@ Item {
         asynchronous: true
         active: root.showDock && !!root.screen && Config.dock.enabled !== false
         visible: root.dockOn
-        Component.onCompleted: LiveGate.ask(dockLoader, () => dockLoader.setSource(Qt.resolvedUrl("../../dock/DockContent.qml"), {
-                "screen": root.screen,
-                "preview": root.preview
-            }))
+        function build() {
+            if (root.live)
+                dockLoader.setSource(Qt.resolvedUrl("../../dock/DockContent.qml"), {
+                    "screen": root.screen,
+                    "preview": root.preview
+                });
+        }
         Component.onDestruction: LiveGate.forget(dockLoader)
     }
 
@@ -86,10 +109,13 @@ Item {
         asynchronous: true
         active: root.showIsland && !!root.screen && Config.notch.enabled !== false
         visible: root.islandOn
-        Component.onCompleted: LiveGate.ask(islandLoader, () => islandLoader.setSource(Qt.resolvedUrl("../../shell/NotchPreview.qml"), {
-                "screen": root.islandScreen,
-                "preview": islandContext
-            }))
+        function build() {
+            if (root.live)
+                islandLoader.setSource(Qt.resolvedUrl("../../shell/NotchPreview.qml"), {
+                    "screen": root.islandScreen,
+                    "preview": islandContext
+                });
+        }
         Component.onDestruction: LiveGate.forget(islandLoader)
     }
 }

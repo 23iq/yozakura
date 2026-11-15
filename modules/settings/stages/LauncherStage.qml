@@ -27,7 +27,7 @@ Stage {
 
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
-    readonly property real preferredHeight: Space.px(250)
+    readonly property real preferredHeight: Space.px(300)
 
     stageHeight: stage.preferredHeight
 
@@ -43,7 +43,7 @@ Stage {
         samples: ({
                 "launcher.query": stage.query,
                 "launcher.live": Samples.LIVE,
-                "launcher.rows": Samples.rows(stage.style, stage.query, k => I18n.t(k), n => Icons[n] ?? "")
+                "launcher.rows": Samples.rows(stage.style, stage.query, k => I18n.t(k), n => Icons[n] ?? "", id => SettingsStore.get("prefix." + id) ?? "")
             })
     }
 

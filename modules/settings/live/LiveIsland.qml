@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.services
 import qs.modules.components.preview
 import qs.modules.services.activities
 import qs.modules.settings.store
@@ -11,7 +12,9 @@ import "LiveSamples.js" as LiveSamples
 // e.g. {"notch.style": "pill"}.
 // Framing: a window of this item's size at `zoom` (native px -> item px)
 // on the island's edge, centred on it along the edge (a stage, a picture
-// card: the island hangs from the item's edge as from the screen's); or
+// card: the island hangs from the item's edge as from the screen's, in the
+// middle of it wherever it sits along the screen's: that is the canvas'
+// job); or
 // `frame: "screen"`: the whole screen; `frame: "island"`: the island
 // itself and the band from the screen's edge to it (what hangs from the
 // edge, its gap and fillets), fitted, but readable (`readableGlyph`, `cut`
@@ -50,18 +53,20 @@ Item {
         overrides: root.overrides
         samples: {
             const now = Date.now();
-            const timer = root.state === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now)) : null;
-            return LiveSamples.island(root.state, now, SettingsStore.wallpaper || "", timer);
+            const timer = root.state === "timer" && typeof TimerActivity.timerActivity === "function" ? TimerActivity.timerActivity(LiveSamples.timer(now, k => I18n.t(k))) : null;
+            return LiveSamples.island(root.state, now, SettingsStore.wallpaper || "", timer, k => I18n.t(k));
         }
     }
 
-    // the window on the island's edge, centred on its target place
+    // the window on the island's edge, centred on its target place (never
+    // held inside the screen: an island at a corner still stands in the
+    // middle, not against the item's side)
     function window(it) {
         const W = it.width, H = it.height;
         const w = root.width / Math.max(0.01, root.zoom), h = root.height / Math.max(0.01, root.zoom);
         const t = it.targetRect;
-        const cx = Math.max(w / 2, Math.min(W - w / 2, t.x + t.width / 2));
-        const cy = Math.max(h / 2, Math.min(H - h / 2, t.y + t.height / 2));
+        const cx = t.x + t.width / 2;
+        const cy = t.y + t.height / 2;
         switch (it.position) {
         case "bottom":
             return Qt.rect(cx - w / 2, H - h, w, h);

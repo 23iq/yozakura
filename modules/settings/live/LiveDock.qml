@@ -1,12 +1,16 @@
 import QtQuick
+import qs.modules.theme
 import qs.modules.components.preview
+import qs.modules.settings.store
 
 // The real dock (modules/dock/DockContent.qml, by URL: your apps, pins,
 // running indicators, size, spacing and style) framed in a picture or a
 // strip: laid out on a screen `nativeWidth` x `nativeHeight`, framed on the
 // dock's surface with `margin` around it. `overrides` shows config keys
 // with another value (Preview.js), e.g. {"dock.theme": "floating"}.
-// `snapshot` pictures it once and frees it (galleries).
+// `snapshot` pictures it once and frees it (galleries): again when a
+// setting the dock reads changes (`revision`) or the colours do, once a
+// burst of changes is over.
 // `frame: "app"` frames one running app (its button, the dock's depth
 // across): the running indicator cards; no app runs: the whole dock.
 // `zoom` > 0 shows it at that scale (sizes compared side by side), the
@@ -31,6 +35,16 @@ Item {
     // false: nothing is built
     property bool active: true
     property var refreshKey: null
+    // settings a dock reads, changed (a picture is taken again)
+    property int revision: 0
+    readonly property var lookKey: root.snapshot ? JSON.stringify([root.refreshKey, root.revision, String(Colors.primary), String(Colors.background), String(Colors.overBackground), String(Colors.surface)]) : root.refreshKey
+    Connections {
+        target: root.snapshot ? SettingsStore : null
+        function onValueSet(key) {
+            if (/^(dock|theme|apps|general)\./.test(String(key)))
+                root.revision++;
+        }
+    }
     readonly property alias part: part
     readonly property Item dock: part.item
     // the dock's surface in this item
@@ -81,7 +95,7 @@ Item {
         cut: root.cut
         snapshot: root.snapshot
         active: root.active
-        refreshKey: root.refreshKey
+        refreshKey: root.lookKey
         cropOf: dock => {
             if (!dock.surfaceRect)
                 return Qt.rect(0, 0, 0, 0);

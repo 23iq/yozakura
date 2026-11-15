@@ -16,6 +16,12 @@ QtObject {
     property var queue: []
 
     function ask(owner, build) {
+        // (an owner already waiting keeps its place: one build each)
+        const waiting = root.queue.find(e => e.owner === owner);
+        if (waiting) {
+            waiting.build = build;
+            return;
+        }
         root.queue.push({
             "owner": owner,
             "build": build

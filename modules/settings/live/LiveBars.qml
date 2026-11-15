@@ -23,6 +23,8 @@ import "../../bar/panels/PanelLayout.js" as PanelLayout
 // module slot, found by its objectName "barSlot:<id>"). The panels are
 // built after the page shows (LiveGate); until then `depth` is the
 // configured estimate, so nothing around them moves when they arrive.
+// Hidden (an ancestor hides it) for LiveHold's moment, the panels go (a
+// hidden page or window runs no bar) and are built again when it shows.
 Item {
     id: root
 
@@ -34,6 +36,14 @@ Item {
     property var preview: PreviewContext {}
     // only these panel indexes (-1: all)
     property int only: -1
+    // false: no panel is built
+    property bool active: true
+    // the panels exist (active, and on screen or only just hidden)
+    readonly property bool live: root.active && hold.awake
+    LiveHold {
+        id: hold
+        shown: root.visible
+    }
 
     readonly property var panels: PanelLayout.normalize(root.bar).panels
     // rebuilt only when a spec really changes (like PanelHost)
@@ -120,7 +130,7 @@ Item {
 
     Repeater {
         id: repeater
-        model: root.screen ? root.entries : []
+        model: root.screen && root.live ? root.entries : []
         onItemAdded: collect.restart()
         onItemRemoved: collect.restart()
 

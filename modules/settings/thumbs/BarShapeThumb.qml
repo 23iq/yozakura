@@ -13,7 +13,8 @@ import "../live/LivePatch.js" as LivePatch
 // modules), at the zoom where its smallest text is 10 px: the styles
 // differ at a glance and the modules read. A style that cannot sit on the
 // top edge is shown on its own first edge (a rail: its top and bottom);
-// "none" (no bar) is an outline where the bar would be.
+// "none" (no bar) is an outline where the bar would be. Pictures, not live
+// bars: a gallery holds no BarContent.
 MiniScreen {
     id: root
 
@@ -37,6 +38,8 @@ MiniScreen {
         cut: "ends"
         readableGlyph: 10
         maxZoom: 1
+        // a picture (taken again when the bar or the look changes)
+        snapshot: true
         patch: Object.assign(LivePatch.style(root.style), {
             "edge": root.shownEdge
         })

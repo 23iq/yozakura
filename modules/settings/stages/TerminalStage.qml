@@ -31,7 +31,10 @@ Stage {
     // the one thing in the way, if any: [icon, i18n key]
     readonly property var notice: !stage.promptOn ? ["info", "prefs.term.look.off.title"] : (stage.fish === "missing" ? ["warning", "prefs.term.look.fish.missing"] : (stage.needsNerdFont ? ["textAa", "prefs.term.look.nerd.title"] : null))
 
-    stageHeight: Space.px(300)
+    // as tall as the window and its notice (the page caps it on a short
+    // window: the window then shrinks a little and its top is cut)
+    readonly property real preferredHeight: stage.windowHeight > 0 ? Math.ceil(stage.windowHeight + (stage.notice !== null ? notice.height + Space.s + Space.m : 0)) : Space.px(300)
+    stageHeight: stage.preferredHeight
     backdrop: false
 
     Component.onCompleted: {
@@ -48,16 +51,31 @@ Stage {
         }
     }
 
+    // the room the window has: the notice has its own line under it (never
+    // over its text)
+    Item {
+        id: room
+        width: parent.width
+        height: notice.visible ? notice.y - Space.s : parent.height
+        clip: true
+    }
+    // The kitty window is as tall as its lines. A short stage shows it a
+    // little smaller (down to `minFit`), then cuts its top: the prompt, at
+    // the bottom, stays in view.
+    readonly property real minFit: 0.72
+    readonly property real windowHeight: window.item ? window.item.implicitHeight : 0
+    readonly property real fit: stage.windowHeight > 0 ? Math.max(stage.minFit, Math.min(1, room.height / stage.windowHeight)) : 1
     Loader {
         id: window
         objectName: "terminalWindow"
-        // the notice has its own line under the window (never over its text)
-        x: 0
-        y: 0
-        width: parent.width
-        height: notice.visible ? notice.y - Space.s : parent.height
-        // (the kitty window is as tall as its lines: a short stage cuts it)
-        clip: true
+        parent: room
+        // (its width never follows the fit: no layout loop)
+        width: room.width
+        x: Math.round(room.width * (1 - stage.fit) / 2)
+        height: stage.windowHeight > 0 ? stage.windowHeight : room.height
+        scale: stage.fit
+        transformOrigin: Item.TopLeft
+        y: Math.min(0, room.height - stage.windowHeight * stage.fit)
         asynchronous: true
         source: Qt.resolvedUrl("../../terminal/TerminalPreview.qml")
         onLoaded: {
@@ -76,7 +94,7 @@ Stage {
     }
 
     StageSpot {
-        anchors.fill: window
+        anchors.fill: room
         anchors.margins: Space.l
         keys: ["terminal.prompt", "terminal.enabled", "terminal.greeting", "terminal.fastfetchPreset", "terminal.cursorShape", "terminal.cursorBlink"]
     }

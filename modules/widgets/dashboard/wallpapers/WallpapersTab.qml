@@ -18,6 +18,9 @@ FocusScope {
 
     // Propiedades personalizadas para la funcionalidad del componente.
     property string searchText: ""
+    // the dashboard is open (Dashboard.isVisible: a Settings preview of it
+    // counts): thumbnails load only then
+    property bool dashboardShown: GlobalStates.dashboardOpen
     property int selectedIndex: GlobalStates.wallpaperSelectedIndex
 
     // Función para actualizar el índice seleccionado de forma centralizada

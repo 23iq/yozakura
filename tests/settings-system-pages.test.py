@@ -125,13 +125,21 @@ check(cards is not None, "system: the language as picture cards")
 
 # ---- Updates: one action; a lane follows its channel -----------------------
 select("updates")
+# never checked: the state does not claim you are up to date
+state_text = ev('(function() { var c = w.findItem("updatesState"); var out = []; for (var i = 0; i < c.children.length; i++) if (c.children[i].text !== undefined) out.push(c.children[i].text); return out.join(" | "); })()')
+check("up to date" not in state_text.lower() and "Not checked yet" in state_text,
+      f"updates: never checked, the state says so ({state_text})")
 before = ev("UpdateService.checks")
 h.eval(ev('w.findItem("updatesAction")'), "clicked()")
 check(ev("UpdateService.checks") == before + 1, "updates: the action checks now")
 n = steps()
-check(click("updatesLane:beta"), "updates: the beta lane is clickable")
-check(ev("Config.system.updateChannel") == "beta", "updates: a click follows the beta channel")
-check(steps() == n + 1, "updates: one undo step")
+# the lanes picture the Channel row (the one control of the setting)
+click("updatesLane:beta")
+check(ev("Config.system.updateChannel") == "stable" and steps() == n,
+      "updates: a lane is display only (the Channel row is the control)")
+ev("SettingsStore.set('system.updateChannel', 'beta')")
+check(ev('w.findItem("updatesLane:beta").on') is True,
+      "updates: the lane of the channel followed is lit")
 ev("SettingsStore.undo()")
 check(ev("Config.system.updateChannel") == "stable", "updates: undo goes back to stable")
 

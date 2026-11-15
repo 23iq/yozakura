@@ -10,6 +10,7 @@ offscreen with the device fixtures (tests/lib/device_fixtures.py).
   (Left / Right, End = never, also for Dim while later steps are on).
 * The sleep switches write / clear the sleep commands.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -151,6 +152,17 @@ h.eval(ev('w.findItem("sleepToggle:system.idle.general.before_sleep_cmd")'), "to
 check(ev("Config.system.idle.general.before_sleep_cmd") == "", "Lock before sleep off clears the command")
 h.eval(ev('w.findItem("sleepToggle:system.idle.general.before_sleep_cmd")'), "toggled(true)")
 check(ev("Config.system.idle.general.before_sleep_cmd") == "loginctl lock-session", "...on writes the default")
+
+# a short stage (a small window caps it): the gauge beside the profiles, all
+# of it in view, never the top of a ring cut off
+pst = ev('w.findItem("powerStage")')
+if pst is not None:
+    h.eval(pst, "width = 584; height = 104")
+    ring = ev('w.findItem("powerRing")')
+    r = h.eval(ring, "JSON.stringify((function(r) { return [r.y, r.y + r.height]; })(mapToItem(w.findItem('powerStage'), 0, 0, width, height)))")
+    top, bottom = json.loads(r)
+    check(h.eval(pst, "narrow") is False and top >= 0 and bottom <= 104.5,
+          f"power, a short stage: the gauge beside the profiles, in view ({top:.0f}..{bottom:.0f})")
 
 if failures:
     print(f"settings-power: {len(failures)} failure(s)")

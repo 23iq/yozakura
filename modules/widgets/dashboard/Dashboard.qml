@@ -465,6 +465,8 @@ NotchAnimationBehavior {
 
     Component {
         id: wallpapersComponent
-        WallpapersTab {}
+        WallpapersTab {
+            dashboardShown: root.isVisible
+        }
     }
 }

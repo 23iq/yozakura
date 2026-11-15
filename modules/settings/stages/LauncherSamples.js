@@ -6,8 +6,12 @@
 // searched in memory); the providers that would run something (files,
 // commands, the AI...) answer with one sample row each, in the configured
 // order. Row fields are LauncherProvider's; `icon` is an Icons name, the
-// `...Key` fields are i18n keys and a title of "$query" is the query
-// itself (the AI row asks it). Pure; tests/settings-launcher-samples.test.cjs.
+// `...Key` fields are i18n keys (UI words are translated; names of files
+// and sums are data), a title of "$query" is the query itself (the AI row
+// asks it) and `titleFormat` holds the translated title as "{}"; a badge is
+// what you would type: your prefix of that provider (`badgePrefix`, the
+// row has none when you have none) and `badgeArg`.
+// Pure; tests/settings-launcher-samples.test.cjs.
 
 var ROWS = {
     "calculator": {
@@ -18,30 +22,34 @@ var ROWS = {
         "emphasis": true
     },
     "commands": {
-        "title": "Do not disturb",
+        "titleKey": "launcher.cmd.dnd",
         "subtitleKey": "launcher.provider.commands",
         "icon": "bellSlash",
-        "badge": "> dnd",
+        "badgePrefix": "commands",
+        "badgeArg": "dnd",
         "hintKey": "launcher.run"
     },
     "timers": {
-        "title": "10 min · tea",
+        "titleKey": "focus.timer_name",
+        "titleFormat": "10:00 · {}",
         "subtitleKey": "launcher.provider.timers",
         "icon": "timer",
-        "badge": "t 10m tea",
+        "badgePrefix": "timers",
+        "badgeArg": "10m",
         "hintKey": "launcher.run"
     },
     "specials": {
-        "title": "Focus",
+        "titleKey": "focus.title",
         "subtitleKey": "launcher.provider.specials",
         "icon": "cube",
         "hintKey": "specials.launcher.hint"
     },
     "routines": {
-        "title": "Focus mode",
+        "titleKey": "prefs.timers.section.focus",
         "subtitleKey": "launcher.provider.routines",
         "icon": "lightning",
-        "badge": "@ focus",
+        "badgePrefix": "routines",
+        "badgeArg": "focus",
         "hintKey": "launcher.run"
     },
     "wallpapers": {
@@ -85,8 +93,25 @@ function query(appNames, style) {
 
 // {providerId: [row]}: one row per provider with a sample (none for a
 // grid: an empty search lists the apps only). `t(key)` translates,
-// `glyph(name)` maps an Icons name to its glyph.
-function rows(style, q, t, glyph) {
+// `glyph(name)` maps an Icons name to its glyph, `prefix(providerId)` is
+// your prefix of that provider (Config.prefix; none: no badge).
+function title(r, q, t) {
+    if (r.title === "$query")
+        return q;
+    if (!r.titleKey)
+        return r.title;
+    var word = t(r.titleKey);
+    return r.titleFormat ? r.titleFormat.replace("{}", word) : word;
+}
+function badge(r, t, prefix) {
+    if (r.badgeKey)
+        return t(r.badgeKey);
+    if (!r.badgePrefix)
+        return r.badge || "";
+    var p = typeof prefix === "function" ? String(prefix(r.badgePrefix) || "") : "";
+    return p ? p + " " + r.badgeArg : "";
+}
+function rows(style, q, t, glyph, prefix) {
     var out = {};
     if (style === "grid")
         return out;
@@ -94,10 +119,10 @@ function rows(style, q, t, glyph) {
         var r = ROWS[id];
         out[id] = [{
                 "key": "sample-" + id,
-                "title": r.title === "$query" ? q : r.title,
+                "title": title(r, q, t),
                 "subtitle": r.subtitleKey ? t(r.subtitleKey) : (r.subtitle || ""),
                 "icon": glyph(r.icon),
-                "badge": r.badgeKey ? t(r.badgeKey) : (r.badge || ""),
+                "badge": badge(r, t, prefix),
                 "hint": t(r.hintKey),
                 "emphasis": r.emphasis === true
             }];

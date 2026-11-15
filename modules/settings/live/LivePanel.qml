@@ -1,6 +1,8 @@
 import QtQuick
 import qs.config
+import qs.modules.theme
 import qs.modules.components.preview
+import qs.modules.settings.store
 import "../../bar/panels/PanelLayout.js" as PanelLayout
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 
@@ -16,7 +18,9 @@ import "../../bar/panels/PanelStyles.js" as PanelStyles
 //         overrides: ({ "workspaces.indicatorStyle": "branch" })
 //     }
 //
-// `snapshot` pictures it once and frees the live panel (galleries).
+// `snapshot` pictures it once and frees the live panel (galleries): again
+// when its spec changes, when a setting a bar reads changes (`revision`) or
+// the colours do, once a burst of changes is over (LivePart.refreshSoon).
 Item {
     id: root
 
@@ -46,6 +50,16 @@ Item {
     // false: nothing is built
     property bool active: true
     property var refreshKey: null
+    // settings a bar reads, changed (a picture is taken again)
+    property int revision: 0
+    readonly property var lookKey: root.snapshot ? JSON.stringify([root.refreshKey, root.revision, String(Colors.primary), String(Colors.background), String(Colors.overBackground), String(Colors.surface)]) : root.refreshKey
+    Connections {
+        target: root.snapshot ? SettingsStore : null
+        function onValueSet(key) {
+            if (/^(bar|workspaces|theme|dock|notch|weather|general)\./.test(String(key)))
+                root.revision++;
+        }
+    }
     readonly property alias part: part
     readonly property bool ready: part.ready
 
@@ -90,7 +104,7 @@ Item {
         fit: root.fit
         snapshot: root.snapshot
         active: root.active
-        refreshKey: root.refreshKey
+        refreshKey: root.lookKey
         cropOf: bars => {
             // (a part being torn down has lost its functions)
             if (typeof bars.panelRect !== "function")
@@ -147,8 +161,8 @@ Item {
             return Qt.rect(x0 - root.margin, Math.max(0, r.y - root.margin), x1 - x0 + root.margin * 2, r.height + root.margin * 2);
         }
     }
-    // a new spec is a new panel (a re-evaluation that changed nothing is not)
+    // a new spec is a new panel (a re-evaluation that changed nothing is
+    // not), built again once a burst of changes is over
     readonly property string specJson: JSON.stringify(root.spec)
-    onSpecJsonChanged: if (part.built)
-        part.retake()
+    onSpecJsonChanged: part.refreshSoon()
 }

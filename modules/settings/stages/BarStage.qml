@@ -9,16 +9,19 @@ import qs.modules.settings.live
 import "../PanelsModel.js" as PanelsModel
 import "../SchemaUtil.js" as SchemaUtil
 import "../live/LiveKeys.js" as LiveKeys
+import "BarWindows.js" as BarWindows
 
 // Stage of the Bar page: the bar picked for editing, as wide as the page
 // and at a readable scale. It is the shell's own panel (live/LiveBars: the
 // real BarContent with every module of the registry, the real icons,
 // workspace indicator, clock face and colours), laid out on a screen as
 // wide as the page allows at up to its true size: the space between the
-// groups shrinks, nothing else does. Not a shrunk desktop: where the bar
-// sits is the Edge row's job. A click on a module scrolls to its card and
-// flashes it (the clock to Clock, the workspaces to Workspaces, any other
-// to On the bar); rows light up their part.
+// groups shrinks, nothing else does. A vertical bar stands at its true size
+// on a screen as tall as yours, shown as windows side by side: its top end,
+// its middle (when something sits there) and its bottom end. Not a shrunk
+// desktop: where the bar sits is the Edge row's job. A click on a module
+// scrolls to its card and flashes it (the clock to Clock, the workspaces to
+// Workspaces, any other to On the bar); rows light up their part.
 Stage {
     id: stage
     objectName: "barStage"
@@ -35,48 +38,44 @@ Stage {
     // a strip as wide as the page (SettingsPage)
     readonly property bool pageWide: true
 
-    // The screen the bar is laid out on: as wide as the stage at the
-    // bar's true size, wider when its modules need more room (measured on
-    // the real screen's width after every change of the bar), never wider
-    // than the real screen.
     readonly property real pad: Space.m
     readonly property real maxZoom: 1
-    property real need: 0
     // the width the bar is laid out for: follows the stage once its layout
     // settled (a page may size the stage from its height: no binding loop)
     property real laneWidth: 0
     onWidthChanged: Qt.callLater(() => stage.laneWidth = stage.width)
     Component.onCompleted: stage.laneWidth = stage.width
-    // laid out on the real width while its natural length is measured
-    property bool measuring: true
-    readonly property real nativeW: stage.vertical ? Math.max(1, (stage.laneWidth - stage.pad * 2) / stage.maxZoom) : (stage.measuring ? LiveTarget.width : Math.min(LiveTarget.width, Math.max((stage.laneWidth - stage.pad * 2) / stage.maxZoom, stage.need)))
-    readonly property real zoom: stage.nativeW > 0 ? Math.min(stage.maxZoom, (stage.laneWidth - stage.pad * 2) / stage.nativeW) : 1
+
+    // A horizontal bar: the screen it is laid out on, as wide as the stage
+    // at the bar's true size, wider when its groups need more room (their
+    // natural length, read from a copy laid out on the real width: the bar
+    // shown never changes scale to be measured), never wider than the real
+    // screen.
+    // (kept while the copy is built again after a change)
+    readonly property real measured: {
+        const b = measureBars.bars[stage.current];
+        const s = b ? b.styleItem : null;
+        return s && s.startReach + s.endReach + s.centerReach > 0 ? Math.ceil(s.startReach + s.endReach + s.centerReach * 2 + Space.xl * 4) : 0;
+    }
+    property real need: 0
+    onMeasuredChanged: if (stage.measured > 0)
+        stage.need = stage.measured
+    // A vertical bar: a screen as tall as yours, the bar's band and a
+    // little of the screen beside it
+    readonly property real sideRoom: Space.px(36)
+    readonly property real nativeW: stage.vertical ? stage.barDepth + stage.sideRoom * 2 : Math.min(LiveTarget.width, Math.max((stage.laneWidth - stage.pad * 2) / stage.maxZoom, stage.need))
+    readonly property real nativeH: stage.vertical ? LiveTarget.height : Math.max(stage.barDepth, 1)
+    readonly property real zoom: stage.vertical ? stage.maxZoom : (stage.nativeW > 0 ? Math.min(stage.maxZoom, (stage.laneWidth - stage.pad * 2) / stage.nativeW) : 1)
     readonly property real barDepth: bars.depth(stage.currentEdge)
-    readonly property real preferredHeight: stage.vertical ? Space.px(240) : Math.round(stage.barDepth * stage.zoom + stage.pad * 2)
+    readonly property real preferredHeight: stage.vertical ? Space.px(260) : Math.round(stage.barDepth * stage.zoom + stage.pad * 2)
 
     stageHeight: stage.preferredHeight
 
-    // measure again after any change of the bar
-    readonly property string signature: JSON.stringify([stage.panels[stage.current] || null, stage.laneWidth])
-    onSignatureChanged: stage.remeasure()
-    function remeasure() {
-        stage.measuring = true;
-        measure.restart();
-    }
-    Timer {
-        id: measure
-        interval: 150
-        onTriggered: {
-            const b = bars.bars[stage.current];
-            const s = b ? b.styleItem : null;
-            if (!s)
-                return;
-            // the groups at their natural length, and a gap between them
-            stage.need = Math.ceil(s.startReach + s.endReach + s.centerReach * 2 + Space.xl * 4);
-            stage.measuring = false;
-            Qt.callLater(stage.refresh);
-        }
-    }
+    // A vertical bar's windows ([{y, len}] native, along the bar: set by
+    // refresh, from where its modules are) and where each stands in the
+    // stage ([{x, y, w, h}])
+    property var windows: []
+    readonly property var windowRects: BarWindows.place(stage.windows, stage.width, stage.height, stage.nativeW * stage.zoom, stage.zoom, Space.xl)
 
     // the modules, in stage px (after each layout)
     property var moduleRects: []
@@ -84,18 +83,37 @@ Stage {
         // (torn down with the page: nothing to measure)
         if (typeof bars.modules !== "function")
             return;
-        stage.moduleRects = bars.modules().map(m => {
+        const mods = bars.modules().map(m => {
             const p = m.item.mapToItem(bars, 0, 0);
             return {
                 "id": m.id,
-                "x": sandbox.x + p.x * stage.zoom,
-                "y": sandbox.y + p.y * stage.zoom,
-                "w": m.item.width * stage.zoom,
-                "h": m.item.height * stage.zoom
+                "x": p.x,
+                "y": p.y,
+                "w": m.item.width,
+                "h": m.item.height
             };
         });
+        const spans = stage.vertical ? BarWindows.windows(stage.nativeH, Math.max(1, (stage.height - stage.pad * 2) / stage.zoom), mods) : [];
+        if (JSON.stringify(spans) !== JSON.stringify(stage.windows))
+            stage.windows = spans;
+        stage.moduleRects = stage.vertical ? BarWindows.mapModules(mods, stage.windows, stage.windowRects, stage.zoom) : mods.map(m => ({
+                    "id": m.id,
+                    "x": sandbox.x + m.x * stage.zoom,
+                    "y": sandbox.y + m.y * stage.zoom,
+                    "w": m.w * stage.zoom,
+                    "h": m.h * stage.zoom
+                }));
     }
-    onZoomChanged: Qt.callLater(stage.refresh)
+    // measured again once a change has laid out
+    readonly property string signature: JSON.stringify([stage.panels[stage.current] || null, stage.laneWidth, stage.height])
+    onSignatureChanged: relayout.restart()
+    onZoomChanged: relayout.restart()
+    onNeedChanged: relayout.restart()
+    Timer {
+        id: relayout
+        interval: 150
+        onTriggered: stage.refresh()
+    }
     HoverHandler {
         onHoveredChanged: if (hovered)
             stage.refresh()
@@ -103,8 +121,21 @@ Stage {
     Connections {
         target: bars
         function onBarsChanged() {
-            stage.remeasure();
+            relayout.restart();
         }
+    }
+
+    // the copy a horizontal bar is measured on (never drawn)
+    LiveBars {
+        id: measureBars
+        objectName: "barStageMeasure"
+        width: LiveTarget.width
+        height: Math.max(stage.barDepth, 1)
+        opacity: 0
+        visible: !stage.vertical
+        screen: LiveTarget.screen
+        only: stage.current
+        enabled: false
     }
 
     Item {
@@ -115,12 +146,11 @@ Stage {
         Item {
             id: sandbox
             width: stage.nativeW
-            // a horizontal bar: its band; a vertical one: the top of it
-            height: stage.vertical ? (crop.height - stage.pad) / stage.zoom : Math.max(stage.barDepth, 1)
+            height: stage.nativeH
             scale: stage.zoom
             transformOrigin: Item.TopLeft
-            x: stage.pad
-            y: stage.vertical ? stage.pad : (crop.height - height * stage.zoom) / 2
+            x: stage.vertical ? 0 : stage.pad
+            y: stage.vertical ? 0 : (crop.height - height * stage.zoom) / 2
 
             LiveBars {
                 id: bars
@@ -130,6 +160,44 @@ Stage {
                 only: stage.current
                 // the real panel, as a picture: no input of its own
                 enabled: false
+            }
+        }
+
+        // a vertical bar: its windows, side by side (the bar itself is
+        // drawn only through them)
+        Repeater {
+            model: stage.vertical ? stage.windowRects : []
+            delegate: Item {
+                id: win
+                required property var modelData
+                required property int index
+                readonly property var span: stage.windows[win.index] || ({
+                        "y": 0,
+                        "len": 0
+                    })
+                x: win.modelData.x
+                y: win.modelData.y
+                width: win.modelData.w
+                height: win.modelData.h
+
+                ShaderEffectSource {
+                    anchors.fill: parent
+                    sourceItem: sandbox
+                    hideSource: true
+                    live: true
+                    sourceRect: Qt.rect(0, win.span.y, stage.nativeW, win.span.len)
+                    textureSize: Qt.size(Math.max(1, Math.ceil(win.width * 2)), Math.max(1, Math.ceil(win.height * 2)))
+                    smooth: true
+                }
+                // the window's edge: a piece of the screen, cut where the
+                // bar goes on
+                Mark {
+                    anchors.fill: parent
+                    radius: Look.radius("small", win.height)
+                    color: "transparent"
+                    border.width: Space.hairline
+                    border.color: Type.hairline
+                }
             }
         }
 

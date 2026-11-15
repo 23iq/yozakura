@@ -17,6 +17,7 @@ import "../../components/preview/Preview.js" as Preview
 
 Item {
     id: compactPlayer
+    objectName: "compactPlayer"
 
     required property var player
     required property bool notchHovered
@@ -24,7 +25,8 @@ Item {
     // ("" at rest: notch.noMediaDisplay shows) instead of the session's
     property var preview: null
 
-    property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
+    // (a preview's sample track is a plain object: its `isPlaying`)
+    property bool isPlaying: Preview.on(preview) ? !!player?.isPlaying : player?.playbackState === MprisPlaybackState.Playing
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
     property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
@@ -106,7 +108,8 @@ Item {
     }
 
     Timer {
-        running: compactPlayer.isPlaying && compactPlayer.visible
+        // (a preview's sample holds still: it has no positionChanged)
+        running: compactPlayer.isPlaying && compactPlayer.visible && !Preview.on(compactPlayer.preview)
         interval: 1000
         repeat: true
         // MPRIS positions do not notify: tick them (PositionSlider follows).

@@ -12,8 +12,11 @@ import qs.modules.settings.store
 // mark, the installed version, when it last looked and "Check now"; a
 // newer release: its version and "What's new". Under it the three
 // channels as lanes (stable releases, pre-releases, every commit), the
-// one followed lit with your version on it; a click on a lane follows it
-// (one undo step). With checks off the state says so.
+// one followed lit with your version on it: a picture of the Channel row
+// beside it (that row is the control; a setting is never two controls on a
+// page). With checks off the state says so; never checked, it
+// does not claim you are up to date. A short stage (a small window) drops
+// the big mark and the lanes' captions: everything stays in view.
 Stage {
     id: stage
 
@@ -46,10 +49,13 @@ Stage {
         }
     ]
 
-    stageHeight: Space.px(300)
+    readonly property real preferredHeight: Space.px(280)
+    stageHeight: stage.preferredHeight
     // a short stage: the state on the left, the lanes stacked on the right
     // (stacked under each other they would run over the action)
-    readonly property real laneHeight: Math.round(stage.u * 3.4)
+    readonly property bool tight: stage.height > 0 && stage.height < Space.px(150)
+    readonly property real laneHeight: Math.round(stage.u * (stage.tight ? 2.4 : 3.4))
+    readonly property bool checked: stage.lastCheck > 0
     readonly property bool sideBySide: summary.implicitHeight + stage.laneHeight + stage.u * 1.2 + stage.height * 0.12 + Space.m > stage.height
 
     // the state and its one action
@@ -62,6 +68,7 @@ Stage {
 
         Mark {
             anchors.horizontalCenter: parent.horizontalCenter
+            visible: !stage.tight
             width: Math.round(stage.u * 3.6)
             height: width
             color: stage.newer ? Type.accent : Qt.alpha(Type.accent, 0.16)
@@ -78,7 +85,7 @@ Stage {
             anchors.horizontalCenter: parent.horizontalCenter
             role: "display"
             font.pixelSize: Math.round(stage.u * 1.25)
-            text: stage.newer ? I18n.t("prefs.updates.available", stage.latest) : I18n.t("prefs.updates.stage.up_to_date")
+            text: stage.newer ? I18n.t("prefs.updates.available", stage.latest) : I18n.t(stage.checked || !stage.service ? "prefs.updates.stage.up_to_date" : "prefs.updates.never_checked")
         }
         KitText {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -88,8 +95,10 @@ Stage {
                     return I18n.t("prefs.updates.stage.off").replace("%1", stage.current);
                 if (stage.checking)
                     return I18n.t("prefs.updates.checking");
-                const when = stage.lastCheck > 0 ? I18n.t("prefs.updates.last_check", Qt.formatDateTime(new Date(stage.lastCheck), "d MMM, HH:mm")) : I18n.t("prefs.updates.never_checked");
-                return I18n.t("prefs.updates.current", stage.current) + " · " + when;
+                // (never checked: the title says so already)
+                if (!stage.checked)
+                    return I18n.t("prefs.updates.current", stage.current);
+                return I18n.t("prefs.updates.current", stage.current) + " · " + I18n.t("prefs.updates.last_check", Qt.formatDateTime(new Date(stage.lastCheck), "d MMM, HH:mm"));
             }
         }
         Chip {
@@ -108,7 +117,7 @@ Stage {
         keys: ["system.updateServiceEnabled"]
     }
 
-    // the channels as lanes; a click follows one
+    // the channels as lanes (display only: the Channel row picks)
     Grid {
         id: lanesRow
         objectName: "updatesLanes"
@@ -126,7 +135,7 @@ Stage {
                 width: Math.round(stage.width * (stage.sideBySide ? 0.36 : 0.26))
                 height: stage.laneHeight
                 radius: Look.radius("box", height)
-                color: lane.on ? Qt.alpha(Type.accent, 0.16) : Qt.alpha(Colors.surfaceContainer, area.containsMouse ? 0.95 : 0.8)
+                color: lane.on ? Qt.alpha(Type.accent, 0.16) : Qt.alpha(Colors.surfaceContainer, 0.8)
                 border.width: lane.on ? Math.max(2, Math.round(stage.u * 0.1)) : Space.hairline
                 border.color: lane.on ? Type.accent : Qt.alpha(Colors.outlineVariant, 0.7)
                 Row {
@@ -147,18 +156,20 @@ Stage {
                             text: I18n.t(lane.modelData.label)
                         }
                         KitText {
+                            visible: !stage.tight
                             role: "caption"
                             color: Type.muted
                             text: I18n.t(lane.modelData.tag)
                         }
                     }
                 }
-                // your version, pinned to the lane you follow
+                // your version, on the lane you follow (inside it: never over
+                // the lane above)
                 Mark {
                     visible: lane.on
                     anchors.right: parent.right
                     anchors.rightMargin: Math.round(stage.u * 0.6)
-                    y: -height / 2
+                    anchors.verticalCenter: parent.verticalCenter
                     width: versionText.implicitWidth + stage.u * 0.8
                     height: Math.round(stage.u * 1.2)
                     radius: Look.radius("chip", height)
@@ -171,14 +182,6 @@ Stage {
                         color: Type.accentInk
                         text: stage.current
                     }
-                }
-                MouseArea {
-                    id: area
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: lane.on ? Qt.ArrowCursor : Qt.PointingHandCursor
-                    onClicked: if (!lane.on)
-                        SettingsStore.transaction("prefs.undo.channel_changed", () => SettingsStore.set("system.updateChannel", lane.modelData.id))
                 }
             }
         }
