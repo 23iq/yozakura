@@ -285,6 +285,9 @@ Singleton {
 
     // File converter window (modules/converter; tools menu, `<app> run converter`)
     property bool converterWindowVisible: false
+    // it has the keyboard focus (ConverterWindow); bumped: raise the open one
+    property bool converterWindowActive: false
+    property int converterRaiseRequest: 0
 
     // Settings Window state
     property bool settingsWindowVisible: false

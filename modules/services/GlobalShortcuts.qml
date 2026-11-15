@@ -121,7 +121,12 @@ QtObject {
             case "powermenu": toggleSimpleModule("powermenu"); break;
             case "tools": toggleSimpleModule("tools"); break;
             case "keybinds": toggleSimpleModule("keybinds"); break;
-            case "converter": GlobalStates.converterWindowVisible = !GlobalStates.converterWindowVisible; break;
+            // open; raise it when open behind other windows; close it when focused
+            case "converter":
+                if (!GlobalStates.converterWindowVisible) GlobalStates.converterWindowVisible = true;
+                else if (GlobalStates.converterWindowActive) GlobalStates.converterWindowVisible = false;
+                else GlobalStates.converterRaiseRequest++;
+                break;
             case "desktop-edit": DesktopWidgets.toggleEditMode(); break;
             case "config": toggleSettings(); break;
             case "onboarding": OnboardingService.toggle(); break;

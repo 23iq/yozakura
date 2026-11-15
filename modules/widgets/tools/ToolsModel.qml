@@ -82,7 +82,11 @@ Item {
             GlobalStates.mirrorWindowVisible = !GlobalStates.mirrorWindowVisible;
             return;
         case "converter":
-            GlobalStates.converterWindowVisible = true;
+            // already open (maybe behind other windows): raise it
+            if (GlobalStates.converterWindowVisible)
+                GlobalStates.converterRaiseRequest++;
+            else
+                GlobalStates.converterWindowVisible = true;
             break;
         default:
             return;

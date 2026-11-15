@@ -107,6 +107,14 @@ Singleton {
         });
     }
 
+    // Raise and focus a window (address as in clients.values).
+    function focusWindow(address) {
+        if (!address) return;
+        BackendService.notify("compositor.dispatch", {
+            args: ["window", "focus", String(address)]
+        });
+    }
+
     function moveToWorkspaceSilent(address, workspace) {
         if (!address || !workspace) return;
         BackendService.notify("compositor.dispatch", {
