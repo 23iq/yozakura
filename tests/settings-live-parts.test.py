@@ -283,6 +283,14 @@ for _ in range(12):
     pump(40)
     seen.add((round(h.eval(bst, "zoom"), 4), round(h.eval(bst, "height"), 1)))
 check(seen == {(round(before[0], 4), round(before[1], 1))}, f"a bar change: the stage never rescales meanwhile ({sorted(seen)})")
+# the measuring copy goes once the bar held still (one live bar while idle),
+# and is built again by a change, the stage keeping its scale meanwhile
+copy_live = "Object.keys(w.findItem('barStageMeasure', w.stage('barStage')).bars).length"
+check(wait_until(lambda: ev(copy_live) == 0, timeout_ms=10000), "an idle Bar stage keeps no measuring copy")
+check(h.eval(bst, "need") > 0 and abs(h.eval(bst, "zoom") - before[0]) < 1e-4, "...and keeps its measure")
+ev("(function() { var p = JSON.parse(JSON.stringify(w.stage('barStage').panels)); p[0].reserve = !p[0].reserve; SettingsStore.set('bar.panels', p); })()")
+check(wait_until(lambda: ev(copy_live) > 0, timeout_ms=10000), "a bar change measures on a copy again")
+check(abs(h.eval(bst, "zoom") - before[0]) < 1e-4, "...the stage keeping its scale")
 
 # ---- a hidden preview is inactive ------------------------------------------------
 # the Bar page holds live bars (its stage, the canvas) and pictures (the

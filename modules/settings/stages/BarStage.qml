@@ -58,8 +58,21 @@ Stage {
         return s && s.startReach + s.endReach + s.centerReach > 0 ? Math.ceil(s.startReach + s.endReach + s.centerReach * 2 + Space.xl * 4) : 0;
     }
     property real need: 0
-    onMeasuredChanged: if (stage.measured > 0)
-        stage.need = stage.measured
+    onMeasuredChanged: {
+        if (stage.measured <= 0)
+            return;
+        stage.need = stage.measured;
+        measureRest.restart();
+    }
+    // The copy lives while the bar changes (a slider drag re-lays it out,
+    // never rebuilds it) and goes once its measure held still a moment: an
+    // idle Bar tab keeps one live bar, not two. A change builds it again.
+    property bool measuring: true
+    Timer {
+        id: measureRest
+        interval: 2000
+        onTriggered: stage.measuring = false
+    }
     // A vertical bar: a screen as tall as yours, the bar's band and a
     // little of the screen beside it
     readonly property real sideRoom: Space.px(36)
@@ -106,7 +119,11 @@ Stage {
     }
     // measured again once a change has laid out
     readonly property string signature: JSON.stringify([stage.panels[stage.current] || null, stage.laneWidth, stage.height])
-    onSignatureChanged: relayout.restart()
+    onSignatureChanged: {
+        relayout.restart();
+        stage.measuring = true;
+        measureRest.restart();
+    }
     onZoomChanged: relayout.restart()
     onNeedChanged: relayout.restart()
     Timer {
@@ -133,6 +150,7 @@ Stage {
         height: Math.max(stage.barDepth, 1)
         opacity: 0
         visible: !stage.vertical
+        active: !stage.vertical && stage.measuring
         screen: LiveTarget.screen
         only: stage.current
         enabled: false
