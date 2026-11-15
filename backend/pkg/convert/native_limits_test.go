@@ -2,7 +2,9 @@ package convert
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
 	"hash/crc32"
 	"os"
 	"path/filepath"
@@ -59,5 +61,58 @@ func TestNativeImageSizeCap(t *testing.T) {
 	err := ConvertNative(src, "png", filepath.Join(dir, "o.jpg"), "jpg", QualityBalanced)
 	if err == nil || !strings.Contains(err.Error(), "too large") {
 		t.Fatalf("huge canvas: %v", err)
+	}
+}
+
+// Numbers past int64 stay exact; strings a YAML 1.1 reader would take for
+// a bool or a number are quoted.
+func TestDataEdgeValues(t *testing.T) {
+	got, err := roundTrip(t, "yaml", "big: 123456789012345678901234567890\nneg: -0x_FF\nsmall: 7\n", "json")
+	if err != nil || !strings.Contains(got, `"big": 123456789012345678901234567890`) || !strings.Contains(got, `"neg": -255`) ||
+		!strings.Contains(got, `"small": 7`) {
+		t.Fatalf("yaml->json: %v %s", err, got)
+	}
+	got, err = roundTrip(t, "csv", "a,b,c\nyes,No,1:20\n", "yaml")
+	if err != nil || !strings.Contains(got, `a: "yes"`) || !strings.Contains(got, `b: "No"`) || !strings.Contains(got, `c: "1:20"`) {
+		t.Fatalf("csv->yaml: %v %s", err, got)
+	}
+}
+
+// A data file over the native cap is refused before it is read.
+func TestNativeInputSizeCap(t *testing.T) {
+	src := filepath.Join(t.TempDir(), "big.json")
+	f, _ := os.Create(src)
+	_ = f.Truncate(maxNativeInput + 1)
+	f.Close()
+	err := ConvertNative(src, "json", filepath.Join(t.TempDir(), "o.yaml"), "yaml", QualityBalanced)
+	if err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+// A native step that panics fails the job; one that hangs is left behind
+// on cancel and at its timeout.
+func TestNativeStepIsContained(t *testing.T) {
+	work := t.TempDir()
+	run := func(ctx context.Context, st Step) error {
+		st.Out = "out"
+		p := &Plan{Work: work, Out: filepath.Join(work, "out"), Steps: []Step{st}}
+		return p.Run(ctx, nil)
+	}
+	err := run(context.Background(), Step{Native: func() error { panic("decoder bug") }})
+	if err == nil || !strings.Contains(err.Error(), "decoder bug") {
+		t.Fatalf("panic: %v", err)
+	}
+	block := make(chan struct{})
+	defer close(block)
+	hang := func() error { <-block; return nil }
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(50*time.Millisecond, cancel)
+	start := time.Now()
+	if err := run(ctx, Step{Native: hang}); !errors.Is(err, context.Canceled) || time.Since(start) > 5*time.Second {
+		t.Fatalf("cancel: %v after %s", err, time.Since(start))
+	}
+	if err := run(context.Background(), Step{Native: hang, Timeout: 50 * time.Millisecond}); !errors.Is(err, errNativeTimeout) {
+		t.Fatalf("timeout: %v", err)
 	}
 }

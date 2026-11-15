@@ -46,7 +46,7 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		}
 		if st.Native != nil {
 			onProgress(-1)
-			if err := st.Native(); err != nil {
+			if err := runNative(ctx, st); err != nil {
 				return err
 			}
 			continue
