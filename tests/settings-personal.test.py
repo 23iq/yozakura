@@ -212,7 +212,7 @@ check(ev("Config.overview.style") == "strip", "overview: the strip card picks th
 ev("SettingsStore.undo()")
 
 # ---- Terminal -----------------------------------------------------------------
-ev("TerminalLookService.presets = [{id: 'plain', name: 'Plain'}, {id: 'sakura-powerline', name: 'Sakura'}]")
+ev("TerminalLookService.presets = [{id: 'plain', name: 'Plain', description: 'term.prompt.plain.desc'}, {id: 'sakura-powerline', name: 'Sakura', description: 'term.prompt.sakura-powerline.desc'}]")
 ev("TerminalLookService.fetchPresets = [{id: 'sakura', name: 'Sakura'}]")
 select("terminal")
 check(wait_until(lambda: h.eval(item("terminalWindow"), "status === Loader.Ready")), "terminal: the stage is the terminal window")

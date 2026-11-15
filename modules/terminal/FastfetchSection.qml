@@ -214,7 +214,7 @@ Column {
             role: "caption"
             wrapMode: Text.WordWrap
             visible: !!root.presetInfo
-            text: root.presetInfo ? I18n.t(root.presetInfo.description) : ""
+            text: root.presetInfo && root.presetInfo.description ? I18n.t(root.presetInfo.description) : ""
         }
     }
 

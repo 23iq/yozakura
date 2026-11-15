@@ -27,7 +27,7 @@ Stage {
     readonly property var fetch: TerminalLookService.fetchPreviews[FetchModel.previewKey(String(SettingsStore.get("terminal.fastfetchPreset") || ""), String(SettingsStore.get("terminal.fastfetchLogo") || ""), String(SettingsStore.get("terminal.fastfetchLogoPath") || ""))]
     readonly property string fish: TermModel.fishState(TerminalLookService.status)
     readonly property var presetInfo: (TerminalLookService.presets || []).find(p => p.id === TerminalLookService.prompt) ?? null
-    readonly property bool needsNerdFont: !!stage.presetInfo && stage.presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
+    readonly property bool needsNerdFont: !!(stage.presetInfo && stage.presetInfo.nerdFont) && !TerminalLookService.nerdFontAvailable
     // the one thing in the way, if any: [icon, i18n key]
     readonly property var notice: !stage.promptOn ? ["info", "prefs.term.look.off.title"] : (stage.fish === "missing" ? ["warning", "prefs.term.look.fish.missing"] : (stage.needsNerdFont ? ["textAa", "prefs.term.look.nerd.title"] : null))
 

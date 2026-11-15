@@ -750,6 +750,7 @@ QtObject {
     property string engine: "starship"
     property string prompt: "sakura-powerline"
     property bool fishInstalled: true
+    property bool nerdFontAvailable: true
     property string fontFamily: "monospace"
     property real fontPixelSize: 15
     property var fetchPresets: []

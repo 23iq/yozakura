@@ -289,8 +289,9 @@ def _terminal_look() -> str:
     from terminal_env import PRESETS, sample_previews
     previews = {f"starship:{k}": v for k, v in sample_previews().items()}
     # fastfetch looks with what they print (the sakura logo is the default)
-    looks = [{"id": "sakura", "name": "Sakura", "logo": True}, {"id": "boxed", "name": "Boxed", "logo": True},
-             {"id": "minimal", "name": "Minimal", "logo": False}]
+    looks = [{"id": "sakura", "name": "Sakura", "description": "term.fetch.preset.sakura.desc", "logo": True},
+             {"id": "boxed", "name": "Boxed", "description": "term.fetch.preset.boxed.desc", "logo": True},
+             {"id": "minimal", "name": "Minimal", "description": "term.fetch.preset.minimal.desc", "logo": False}]
     pink, mute = "#f5adff", "#9f8c8d"
     info = [[{"text": "user", "fg": pink, "bold": True}, {"text": "@yozakura"}],
             [{"text": "os    ", "fg": mute}, {"text": "Arch Linux"}],
