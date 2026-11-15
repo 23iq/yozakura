@@ -4687,7 +4687,6 @@
   "prefs.updates.stage.stable": "Tested releases",
   "prefs.updates.stage.beta": "What comes next",
   "prefs.updates.stage.git": "Every commit",
-  "prefs.undo.channel_changed": "Update channel changed",
   "prefs.updates.section.ocr": "Text recognition",
   "prefs.about.card.version": "Version",
   "prefs.about.card.places": "Places",

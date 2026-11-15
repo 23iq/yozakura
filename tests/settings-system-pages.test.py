@@ -133,9 +133,13 @@ before = ev("UpdateService.checks")
 h.eval(ev('w.findItem("updatesAction")'), "clicked()")
 check(ev("UpdateService.checks") == before + 1, "updates: the action checks now")
 n = steps()
-check(click("updatesLane:beta"), "updates: the beta lane is clickable")
-check(ev("Config.system.updateChannel") == "beta", "updates: a click follows the beta channel")
-check(steps() == n + 1, "updates: one undo step")
+# the lanes picture the Channel row (the one control of the setting)
+click("updatesLane:beta")
+check(ev("Config.system.updateChannel") == "stable" and steps() == n,
+      "updates: a lane is display only (the Channel row is the control)")
+ev("SettingsStore.set('system.updateChannel', 'beta')")
+check(ev('w.findItem("updatesLane:beta").on') is True,
+      "updates: the lane of the channel followed is lit")
 ev("SettingsStore.undo()")
 check(ev("Config.system.updateChannel") == "stable", "updates: undo goes back to stable")
 

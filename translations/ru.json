@@ -4725,7 +4725,6 @@
   "prefs.updates.stage.stable": "Проверенные версии",
   "prefs.updates.stage.beta": "Что будет дальше",
   "prefs.updates.stage.git": "Каждый коммит",
-  "prefs.undo.channel_changed": "Канал обновлений изменён",
   "prefs.updates.section.ocr": "Распознавание текста",
   "prefs.about.card.version": "Версия",
   "prefs.about.card.places": "Места",
