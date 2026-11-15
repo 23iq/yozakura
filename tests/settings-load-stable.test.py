@@ -108,9 +108,14 @@ Window {
 }""")
 
 
-def record(action, ms: int = 700) -> list[dict]:
+def record(action, ms: int = 700, until_shown: bool = False) -> list[dict]:
+    """Frames for `ms` after the action; with `until_shown`, for `ms` after
+    the page first shows (up to 5 s on a loaded runner): the check is that
+    nothing moves once the page is visible, not how fast it builds."""
     h.eval(win, "log = []; recording = true")
     action()
+    if until_shown:
+        wait_until(lambda: h.eval(win, "log.some(s => s.opacity > 0)"), timeout_ms=5000)
     pump(ms)
     h.eval(win, "recording = false")
     return json.loads(h.eval(win, "JSON.stringify(log)"))
@@ -146,8 +151,8 @@ check(all(f["opacity"] == 0 for f in frames), "open: no page is built behind hom
 
 shell = h.find(win, "shell")
 for cat in ("appearance", "wallpapers", "system", "desktop", "notch", "bar"):
-    # (a long page under a loaded machine can take most of a second to show)
-    frames = record(lambda cat=cat: h.eval(shell, f'select("{cat}")'), 1500)
+    # (a long page under a loaded machine can take a second or more to show)
+    frames = record(lambda cat=cat: h.eval(shell, f'select("{cat}")'), 1200, until_shown=True)
     rows_stable(f"switch to {cat}", frames)
     check(
         wait_until(lambda: h.eval(win, 'findItem("settingsPage").opacity * findItem("settingsPageView").opacity') == 1),
