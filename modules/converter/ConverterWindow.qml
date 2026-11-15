@@ -20,7 +20,8 @@ FloatingWindow {
     implicitWidth: Space.controlXL * 6
     implicitHeight: Space.controlXL * 6
     minimumSize: Qt.size(Space.controlXL * 4, Space.controlXL * 4)
-    title: I18n.t("converter.title")
+    // a unique token for a moment while raising (see raise())
+    title: root._raiseToken !== "" ? root._raiseToken : I18n.t("converter.title")
     color: "transparent"
     // parked: hidden for a moment to map it again after an output loss
     visible: GlobalStates.converterWindowVisible && !root._parked
@@ -30,6 +31,7 @@ FloatingWindow {
     property bool _lost: false
     property real _hiddenAt: 0
     property real _outputsChangedAt: 0
+    property string _raiseToken: ""
 
     Connections {
         target: Quickshell
@@ -79,15 +81,34 @@ FloatingWindow {
         Qt.callLater(() => root._parked = false);
     }
 
-    // Bring the open window to the current workspace and focus it.
+    // Bring the open window to the current workspace and focus it. The
+    // compositor's window list is matched by a title nothing else has: the
+    // window takes a one-off token as its title until it is found (any
+    // other toplevel may be called "Converter"), then gets its own back.
     function raise() {
-        const ws = YozdService.focusedMonitor?.activeWorkspace?.id || YozdService.focusedWorkspace?.id || 0;
-        const client = (YozdService.clients.values || []).find(c => c.title === root.title);
-        if (!client)
-            return;
-        if (ws && client.workspace?.id !== ws)
-            YozdService.moveToWorkspaceSilent(client.address, ws);
-        YozdService.focusWindow(client.address);
+        root._raiseToken = Model.raiseToken(Brand.appId, Date.now());
+        raiseSearch.attempts = 0;
+        raiseSearch.restart();
+    }
+
+    Timer {
+        id: raiseSearch
+        property int attempts: 0
+        interval: 100
+        repeat: true
+        onTriggered: {
+            const client = Model.windowTitled(YozdService.clients.values, root._raiseToken);
+            if (client) {
+                const ws = YozdService.focusedMonitor?.activeWorkspace?.id || YozdService.focusedWorkspace?.id || 0;
+                if (ws && client.workspace?.id !== ws)
+                    YozdService.moveToWorkspaceSilent(client.address, ws);
+                YozdService.focusWindow(client.address);
+            }
+            if (client || ++attempts >= 20) {
+                stop();
+                root._raiseToken = "";
+            }
+        }
     }
 
     Connections {
