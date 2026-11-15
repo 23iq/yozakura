@@ -19,9 +19,11 @@ import (
 )
 
 const convertUsage = `Usage:
-  {bin} convert <file>... [--to <format>] [--out <dir>] [--quality small|balanced|best] [--json]
+  {bin} convert [options] [--] <file>...   options: --to <format> --out <dir>
+                                   --quality small|balanced|best --json
                                    Convert files (default target: the one the converter proposes);
-                                   results go next to each file, never over an existing one
+                                   results go next to each file, never over an existing one;
+                                   after --, every argument is a file
   {bin} convert formats [<file>]   Every format and the installed engines, or what a file
                                    converts to (* = proposed, - = needs a tool)
   {bin} run converter              Open the converter window
@@ -32,15 +34,22 @@ type convertEnv struct {
 	svc   *convertsvc.Service
 	tick  time.Duration
 	tools func() *conv.Tools
-	// interrupted closes on SIGINT / SIGTERM: the jobs are cancelled and
-	// cleaned up before the command exits (nil = never)
+	// interrupted closes on SIGINT / SIGTERM / SIGHUP: the jobs are
+	// cancelled and cleaned up before the command exits (nil = never)
 	interrupted <-chan struct{}
+	// open builds the real env on first need: help and the completion
+	// helper (run on every Tab) never sweep the cache nor kill stale
+	// process groups
+	open func() convertEnv
 }
 
 func defaultConvertEnv() convertEnv {
-	s := convertsvc.NewService(paths.New().CacheDir)
-	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	return convertEnv{svc: s, tick: 100 * time.Millisecond, tools: s.Tools, interrupted: ctx.Done()}
+	return convertEnv{open: func() convertEnv {
+		s := convertsvc.NewService(paths.New().CacheDir)
+		// SIGHUP: the terminal closed; helpers must not outlive the command
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+		return convertEnv{svc: s, tick: 100 * time.Millisecond, tools: s.Tools, interrupted: ctx.Done()}
+	}}
 }
 
 // runConvert implements `yozakura convert`; it converts in this process
@@ -57,17 +66,25 @@ func runConvert(args []string, env convertEnv, out, errOut io.Writer) int {
 	case "help", "--help", "-h":
 		fmt.Fprint(out, branded(convertUsage))
 		return 0
-	case "formats":
-		return convertFormats(args[1:], env, out, errOut)
 	case "__formats":
 		fmt.Fprintln(out, strings.Join(conv.IDs(), "\n"))
 		return 0
+	}
+	if env.open != nil {
+		env = env.open()
+	}
+	if args[0] == "formats" {
+		return convertFormats(args[1:], env, out, errOut)
 	}
 	var files []string
 	var to, outDir, quality string
 	asJSON := false
 	for i := 0; i < len(args); i++ {
 		a := args[i]
+		if a == "--" {
+			files = append(files, args[i+1:]...)
+			break
+		}
 		val := func() (string, bool) {
 			if k, v, ok := strings.Cut(a, "="); ok && strings.HasPrefix(k, "--") {
 				return v, true
@@ -100,7 +117,7 @@ func runConvert(args []string, env convertEnv, out, errOut io.Writer) int {
 			}
 			quality = v
 		case strings.HasPrefix(a, "-") && a != "-":
-			fmt.Fprintf(errOut, "Error: unknown flag %s\n", a)
+			fmt.Fprintf(errOut, "Error: unknown flag %s (a file named so goes after --)\n", a)
 			return usage()
 		default:
 			files = append(files, a)
