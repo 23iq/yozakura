@@ -38,3 +38,16 @@ test('the capsule lies along a side edge', () => {
     const h = S.capsule(8), v = S.capsule(8, true);
     assert.deepEqual(JSON.parse(JSON.stringify(v)), { w: h.h, h: h.w });
 });
+
+// The live notch reads one theme with NotchContent (edge gap), ActivityHost
+// and NotchSilhouette: Config.notchTheme. Only a preview (a registry style
+// as an override) derives it from the style; a hand-edited style outside the
+// registry must not mix an attached silhouette with the island's gap.
+test('the live notch theme is Config.notchTheme; a preview derives it', () => {
+    const fs = require('node:fs');
+    const read = f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    const notch = read('modules/notch/Notch.qml');
+    assert.match(notch, /property string theme: Preview\.on\(preview\) \? NotchStyles\.legacyTheme\(notchStyle\) : Config\.notchTheme/);
+    for (const f of ['modules/notch/NotchContent.qml', 'modules/bar/activities/ActivityHost.qml', 'modules/notch/NotchSilhouette.qml'])
+        assert.match(read(f), /Config\.notchTheme/, f);
+});

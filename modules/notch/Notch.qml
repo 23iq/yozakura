@@ -66,8 +66,11 @@ Item {
     // a small capsule until something happens or the pointer arrives
     readonly property string notchStyle: Preview.pick(preview, "notch.style", Config.notchStyle)
     readonly property var styleSpec: NotchStyles.spec(notchStyle)
-    // "default" (attached) | "island" (Config.notchTheme)
-    readonly property string theme: NotchStyles.legacyTheme(notchStyle)
+    // "default" (attached) | "island": live, Config.notchTheme (the theme
+    // NotchContent, ActivityHost and NotchSilhouette read too, so a
+    // hand-edited style outside the registry stays one look); a preview's
+    // style is a registry id (NotchPreview derives it the same way)
+    readonly property string theme: Preview.on(preview) ? NotchStyles.legacyTheme(notchStyle) : Config.notchTheme
     readonly property var restingView: stackViewInternal.currentItem
     readonly property bool pillCollapsed: NotchStyles.collapsed(styleSpec, {
         hovered: hoverIntent,
