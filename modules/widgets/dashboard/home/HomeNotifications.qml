@@ -68,6 +68,7 @@ Group {
 
                     IconButton {
                         objectName: "clearGroup"
+                        accessibleName: I18n.t("a11y.dismiss")
                         anchors.fill: parent
                         visible: entry.hovered
                         icon: Icons.cancel
@@ -86,6 +87,7 @@ Group {
         IconButton {
             id: clearAll
             objectName: "clearAll"
+            tooltip: I18n.t("dashboard.stage.clear_all")
             anchors.right: parent.right
             size: "s"
             icon: Icons.broom

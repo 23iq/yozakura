@@ -15,6 +15,13 @@ import qs.modules.components.kit
 // `mono` labels, `maxLabelWidth` (> 0: the label elides in the middle).
 // `quiet`: no box at rest (a toolbar of chips), `danger`: a destructive or
 // failing state (error tint), `dense`: the short height of inline pills.
+// `focusable`: reachable by Tab (Enter / Space click, a fading focus ring).
+// `action`: a push button (an action, or a caret that opens a menu) rather
+// than a toggle, for assistive tech (primary chips and chips with a
+// trailingIcon are buttons too). `muted`: an option that cannot be used as
+// it is (a tool is missing): no box at rest and a muted label (Type.muted,
+// still readable), yet clickable so it can explain itself. `spinning`:
+// the icon turns (work in progress).
 StyledRect {
     id: root
 
@@ -32,28 +39,48 @@ StyledRect {
     property bool dense: false
     property bool highlighted: false
     property bool showLabel: true
+    property bool focusable: false
+    property bool action: false
+    property bool muted: false
+    property bool spinning: false
     readonly property bool hasImage: root.image.toString() !== ""
     readonly property real compactWidth: lead.implicitWidth + Space.m * 2
     readonly property real fullWidth: lead.implicitWidth + (root.text !== "" ? Space.s + label.implicitWidth : 0) + Space.m * 2
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive && !root.danger), root.active, root.hovered && root.enabled, root.danger)
-    readonly property bool boxed: Look.boxedControls && !(root.quiet && root.look === "normal") && (root.look === "normal" || root.look === "hover")
-    readonly property color ink: Type.inkColor(KitStates.ink(root.look))
+    readonly property bool isButton: root.action || root.primary || root.trailingIcon !== ""
+    readonly property bool ghost: (root.quiet || root.muted) && root.look === "normal"
+    readonly property bool boxed: Look.boxedControls && !root.ghost && (root.look === "normal" || root.look === "hover")
+    readonly property color ink: root.muted && root.look === "normal" ? Type.muted : Type.inkColor(KitStates.ink(root.look))
 
     signal clicked
     signal closeClicked
 
+    activeFocusOnTab: root.focusable && root.enabled
+    Keys.onPressed: event => {
+        if (root.focusable && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)) {
+            root.clicked();
+            event.accepted = true;
+        }
+    }
+
     implicitHeight: root.dense ? Space.chip - Space.s : Space.chip
     implicitWidth: row.implicitWidth + Space.m * 2
-    variant: KitStates.variant(root.look, root.quiet ? "transparent" : "common")
+    variant: KitStates.variant(root.look, root.quiet || root.muted ? "transparent" : "common")
     backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
-    enableBorder: !root.boxed && !root.active && !root.primary && !root.quiet
+    enableBorder: !root.boxed && !root.active && !root.primary && !root.quiet && !root.muted
     radius: Look.chipRadius(height)
     opacity: root.enabled ? 1 : 0.38
 
-    Accessible.role: Accessible.CheckBox
+    Accessible.role: root.isButton ? Accessible.Button : Accessible.CheckBox
     Accessible.name: root.text
+    Accessible.checkable: !root.isButton
     Accessible.checked: root.active
+    Accessible.focusable: root.focusable
+    Accessible.onPressAction: {
+        if (root.enabled)
+            root.clicked();
+    }
 
     ControlBox {
         shown: root.boxed
@@ -80,6 +107,15 @@ StyledRect {
                 icon: root.icon
                 role: "secondary"
                 color: root.ink
+
+                RotationAnimation on rotation {
+                    running: root.spinning && root.visible && Motion.base > 0
+                    from: 0
+                    to: 360
+                    duration: 1000
+                    loops: Animation.Infinite
+                    onStopped: glyph.rotation = 0
+                }
             }
 
             Image {
@@ -146,5 +182,10 @@ StyledRect {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.closeClicked()
+    }
+
+    FocusRing {
+        radius: root.radius + Space.stroke
+        shown: root.focusable && root.activeFocus
     }
 }

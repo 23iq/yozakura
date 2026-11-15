@@ -3,7 +3,8 @@ one of its trailing controls (a HoverHandler, not a MouseArea the controls
 cover), a Dropdown near the bottom of its window opens its list above
 the control instead of off-screen, and an IconButton's tooltip (the kit
 Tooltip) opens below the button, or above it at the bottom of the window
-(a dock), inside the window either way."""
+(a dock), inside the window either way. Its accessible name is
+`accessibleName`, else the tooltip."""
 import sys
 from pathlib import Path
 
@@ -29,6 +30,7 @@ Window {
                options: [{ value: "a", text: "Alpha" }, { value: "b", text: "Beta" }] }
     IconButton { objectName: "tipTop"; x: 300; y: 100; icon: Icons.gear; tooltip: "Settings" }
     IconButton { objectName: "tipLow"; x: 300; y: 300 - height; icon: Icons.gear; tooltip: "Pin to dock" }
+    IconButton { objectName: "named"; x: 0; y: 200; icon: Icons.gear; tooltip: "Tip"; accessibleName: "Open settings" }
 }"""
 
 env = KitEnv("kit-hover")
@@ -80,5 +82,11 @@ for name, below in (("tipTop", True), ("tipLow", False)):
     assert top >= 0 and top + tip_h <= 300 + 1, (name, "inside the window", top, tip_h)
     move(10, 10)
     wait_until(lambda t=tip: not t.property("visible"))
+
+
+# the accessible name: accessibleName first, else the tooltip
+assert h.eval(h.find(win, "named"), "Accessible.name") == "Open settings"
+assert h.eval(h.find(win, "tipTop"), "Accessible.name") == "Settings"
+assert h.eval(trail, "Accessible.name") == ""
 
 print("kit-hover: ok")

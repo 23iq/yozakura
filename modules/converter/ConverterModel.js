@@ -1,0 +1,460 @@
+.pragma library
+
+// Pure logic of the converter window (tests/converter-model.test.cjs).
+// Shapes come from the backend `convert` service (backend/pkg/svc/convert):
+// a probe File {path, name, size, kind, format, formatLabel, targets:
+// [{id, label, kind, available, needs, popular, lossy}], default, error}
+// and a Job {id, path, from, to, state, progress, output, error}.
+// A row is a File plus `target` (the chosen format id) and `job` (the
+// latest Job of its conversion, or null).
+
+// Kinds in the order the picker groups them, with their icon names
+// (Icons.<name>) and label keys.
+var KINDS = [
+    { "id": "image", "icon": "fileImage", "label": "converter.kind.image" },
+    { "id": "audio", "icon": "fileAudio", "label": "converter.kind.audio" },
+    { "id": "video", "icon": "fileVideo", "label": "converter.kind.video" },
+    { "id": "document", "icon": "fileDoc", "label": "converter.kind.document" },
+    { "id": "ebook", "icon": "bookOpen", "label": "converter.kind.ebook" },
+    { "id": "data", "icon": "database", "label": "converter.kind.data" }
+];
+
+function kindInfo(id) {
+    for (var i = 0; i < KINDS.length; i++) {
+        if (KINDS[i].id === id)
+            return KINDS[i];
+    }
+    return { "id": id || "", "icon": "file", "label": "converter.kind.other" };
+}
+
+// Rows after adding probed files: a path already listed is not added twice;
+// each new row proposes the backend's default target.
+function addFiles(rows, files) {
+    var out = (rows || []).slice();
+    var seen = {};
+    out.forEach(function (r) {
+        seen[r.path] = true;
+    });
+    (files || []).forEach(function (f) {
+        if (!f || !f.path || seen[f.path])
+            return;
+        seen[f.path] = true;
+        out.push(Object.assign({}, f, {
+            "target": f.error ? "" : (f.default || ""),
+            "job": null
+        }));
+    });
+    return out;
+}
+
+function removeRow(rows, path) {
+    return (rows || []).filter(function (r) {
+        return r.path !== path;
+    });
+}
+
+function targetOf(row, id) {
+    var t = (row && row.targets) || [];
+    for (var i = 0; i < t.length; i++) {
+        if (t[i].id === id)
+            return t[i];
+    }
+    return null;
+}
+
+// A row that may still change its target: not converting (a pending row
+// waits for its start reply), not converted.
+function editable(row) {
+    var s = row && row.job ? row.job.state : "";
+    return s !== "pending" && s !== "queued" && s !== "running" && s !== "done";
+}
+
+// A row whose conversion is under way (Stop instead of Remove).
+function working(row) {
+    var s = row && row.job ? row.job.state : "";
+    return s === "pending" || s === "queued" || s === "running";
+}
+
+// Rows with `path`'s target set to id (when it is one of its targets and
+// the row is editable: a pending / converting / converted row keeps it).
+function setTarget(rows, path, id) {
+    return (rows || []).map(function (r) {
+        if (r.path !== path || !editable(r) || !targetOf(r, id))
+            return r;
+        return Object.assign({}, r, {
+            "target": id,
+            "job": null
+        });
+    });
+}
+
+// Every editable row of `kind` that offers id gets it.
+function setKindTarget(rows, kind, id) {
+    return (rows || []).map(function (r) {
+        if (r.kind !== kind || !editable(r) || !targetOf(r, id))
+            return r;
+        return Object.assign({}, r, {
+            "target": id,
+            "job": null
+        });
+    });
+}
+
+// Every kind with rows: [{kind, count, target}] where target is the shared
+// target ("" when the rows differ). Order: KINDS. The list shows a header
+// per kind; its "all to" control only where count > 1.
+function kindGroups(rows) {
+    var by = {};
+    (rows || []).forEach(function (r) {
+        if (!r.kind || r.error)
+            return;
+        var g = by[r.kind] || (by[r.kind] = {
+            "kind": r.kind,
+            "count": 0,
+            "target": r.target
+        });
+        g.count++;
+        if (g.target !== r.target)
+            g.target = "";
+    });
+    var out = [];
+    KINDS.forEach(function (k) {
+        if (by[k.id])
+            out.push(by[k.id]);
+    });
+    return out;
+}
+
+// The list's keys: rows grouped by kind (KINDS order, unknown files last),
+// a "h:<kind>" header before each kind, "r:<path>" per row. Keys only
+// change when files come or go, so rows keep their items.
+function entryKeys(rows) {
+    var groups = {};
+    kindGroups(rows).forEach(function (g) {
+        groups[g.kind] = true;
+    });
+    var out = [];
+    var order = KINDS.map(function (k) {
+        return k.id;
+    });
+    order.forEach(function (kind) {
+        var list = (rows || []).filter(function (r) {
+            return r.kind === kind && !r.error;
+        });
+        if (list.length === 0)
+            return;
+        if (groups[kind])
+            out.push("h:" + kind);
+        list.forEach(function (r) {
+            out.push("r:" + r.path);
+        });
+    });
+    (rows || []).forEach(function (r) {
+        if (r.error || order.indexOf(r.kind) === -1)
+            out.push("r:" + r.path);
+    });
+    return out;
+}
+
+function rowByPath(rows, path) {
+    var list = rows || [];
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].path === path)
+            return list[i];
+    }
+    return null;
+}
+
+// The targets every row of a kind offers (for the "all of this kind"
+// picker): the first row's list, keeping only ids all rows have.
+function commonTargets(rows, kind) {
+    var list = (rows || []).filter(function (r) {
+        return r.kind === kind && !r.error;
+    });
+    if (list.length === 0)
+        return [];
+    return list[0].targets.filter(function (t) {
+        return list.every(function (r) {
+            return targetOf(r, t.id) !== null;
+        });
+    });
+}
+
+// The picker's sections: popular targets first (big chips), then the rest
+// grouped by kind. [{kind: "" | <kind>, popular: bool, items}]
+function pickerSections(targets) {
+    var popular = [];
+    var rest = {};
+    (targets || []).forEach(function (t) {
+        if (t.popular)
+            popular.push(t);
+        else
+            (rest[t.kind] = rest[t.kind] || []).push(t);
+    });
+    var out = [];
+    if (popular.length > 0)
+        out.push({
+            "kind": "",
+            "popular": true,
+            "items": popular
+        });
+    KINDS.forEach(function (k) {
+        if (rest[k.id])
+            out.push({
+                "kind": k.id,
+                "popular": false,
+                "items": rest[k.id]
+            });
+    });
+    return out;
+}
+
+// What a row shows: "ready" | "unavailable" (target needs a tool) |
+// "invalid" (probe error) | "queued" | "running" | "done" | "failed" |
+// "cancelled".
+function rowState(row) {
+    if (!row)
+        return "invalid";
+    if (row.error)
+        return "invalid";
+    if (row.job)
+        return row.job.state;
+    var t = targetOf(row, row.target);
+    if (!t)
+        return "invalid";
+    return t.available ? "ready" : "unavailable";
+}
+
+// Rows the Convert action starts: ready ones, and failed / cancelled ones
+// again.
+function startable(rows) {
+    return (rows || []).filter(function (r) {
+        var s = rowState(r);
+        return s === "ready" || s === "failed" || s === "cancelled";
+    });
+}
+
+function startItems(rows) {
+    return startable(rows).map(function (r) {
+        return {
+            "path": r.path,
+            "target": r.target
+        };
+    });
+}
+
+// Apply a job event to the row holding that job id (only): the backend
+// replays every job it still knows, and an old job of the same file must
+// never take over a row. Returns the new rows (the same array when no row
+// holds the id).
+function applyJob(rows, job) {
+    if (!job || !job.id)
+        return rows;
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].job && rows[i].job.id === job.id) {
+            var out = rows.slice();
+            out[i] = Object.assign({}, rows[i], {
+                "job": job
+            });
+            return out;
+        }
+    }
+    return rows;
+}
+
+// A row waiting for the reply of start request `batch`.
+function pendingIn(row, batch) {
+    return !!row && !!row.job && row.job.state === "pending" && row.job.batch === batch;
+}
+
+// The jobs of start request `batch`'s reply take over the rows that request
+// marked pending (same path and target), in order. Rows of another request
+// (in flight too, or a path removed and added again meanwhile) never take
+// this reply's jobs.
+function attachJobs(rows, jobs, batch) {
+    var out = (rows || []).slice();
+    (jobs || []).forEach(function (job) {
+        for (var i = 0; i < out.length; i++) {
+            var r = out[i];
+            if (pendingIn(r, batch) && r.path === job.path && r.target === job.to) {
+                out[i] = Object.assign({}, r, {
+                    "job": job
+                });
+                return;
+            }
+        }
+    });
+    return out;
+}
+
+// The rows of start request `batch` go back to ready (the call failed);
+// other requests' pending rows stay.
+function clearPending(rows, batch) {
+    return (rows || []).map(function (r) {
+        return pendingIn(r, batch) ? Object.assign({}, r, {
+            "job": null
+        }) : r;
+    });
+}
+
+// Codes whose message is a tool's or parser's own words: shown as is.
+var DETAIL_CODES = {
+    "tool_failed": true,
+    "bad_input": true
+};
+
+// The translation suffix (converter.error.<code>) of a probe error: its
+// code (backend File.code), unknown_format for a row without one.
+function errorKey(code) {
+    return code ? String(code) : "unknown_format";
+}
+
+// A backend error as {key, args, text}: key is the translation suffix
+// (converter.error.<key>, its %1.. = args) taken from the error's stable
+// code; key "" when there is no code (an old daemon, a broken socket) or
+// the code's message is the detail itself (a tool's own words): text is
+// then shown as is. Never matched on the English message.
+function errorInfo(code, error, args) {
+    var c = String(code || "");
+    var text = String(error || "");
+    var list = Array.isArray(args) ? args.map(String) : [];
+    if (c === "" || DETAIL_CODES[c])
+        return {
+            "key": "",
+            "args": list,
+            "text": text
+        };
+    return {
+        "key": c,
+        "args": list,
+        "text": text
+    };
+}
+
+// The window was hidden from outside at `hiddenAt` (ms): an output going
+// away (QtWayland unmaps the surface with it) when the outputs changed
+// within `window` ms of the hide, before or after it; otherwise the user
+// closed it.
+function outputLoss(hiddenAt, outputsChangedAt, window) {
+    return outputsChangedAt > 0 && Math.abs(hiddenAt - outputsChangedAt) <= window;
+}
+
+// A window title no other toplevel has: the converter wears it for a
+// moment so the compositor's window list names it unambiguously.
+function raiseToken(appId, now) {
+    return String(appId || "app") + "-converter-" + String(now) + "-" + Math.floor(Math.random() * 1e9);
+}
+
+// The client (YozdService.clients.values) titled exactly `title`, or null.
+function windowTitled(clients, title) {
+    if (!title)
+        return null;
+    var list = clients || [];
+    for (var i = 0; i < list.length; i++) {
+        if (list[i] && list[i].title === title)
+            return list[i];
+    }
+    return null;
+}
+
+// "file:///a%20b/%23c.png" for a local path (each segment percent-encoded).
+function fileUri(path) {
+    return "file://" + String(path || "").split("/").map(encodeURIComponent).join("/");
+}
+
+// Mark the rows start request `batch` (a token per request) covers as
+// pending until its reply hands them their jobs.
+function markPending(rows, items, batch) {
+    var paths = {};
+    (items || []).forEach(function (it) {
+        paths[it.path] = true;
+    });
+    return (rows || []).map(function (r) {
+        return paths[r.path] ? Object.assign({}, r, {
+            "job": {
+                "id": "",
+                "batch": batch,
+                "state": "pending",
+                "progress": -1,
+                "path": r.path,
+                "to": r.target
+            }
+        }) : r;
+    });
+}
+
+function busy(rows) {
+    return (rows || []).some(function (r) {
+        var s = rowState(r);
+        return s === "queued" || s === "running" || s === "pending";
+    });
+}
+
+// The quality control matters when a row will convert to a lossy target.
+function needsQuality(rows) {
+    return startable(rows).some(function (r) {
+        var t = targetOf(r, r.target);
+        return t !== null && t.lossy;
+    });
+}
+
+// 1536 -> "1.5 KB"; one decimal below 10, none above.
+function formatSize(bytes) {
+    if (!(bytes > 0))
+        return "0 B";
+    var units = ["B", "KB", "MB", "GB", "TB"];
+    var i = 0;
+    var v = bytes;
+    while (v >= 1024 && i < units.length - 1) {
+        v /= 1024;
+        i++;
+    }
+    var r = i === 0 || v >= 10 ? Math.round(v) : Math.round(v * 10) / 10;
+    return r + " " + units[i];
+}
+
+// Thumbnails: formats Qt's image reader shows directly.
+var THUMBS = ["png", "jpg", "gif", "bmp", "webp", "svg", "tiff", "ico"];
+
+function hasThumb(row) {
+    return !!row && THUMBS.indexOf(row.format) !== -1;
+}
+
+function dirOf(path) {
+    var s = String(path || "");
+    var i = s.lastIndexOf("/");
+    return i > 0 ? s.substring(0, i) : "/";
+}
+
+function baseName(path) {
+    var s = String(path || "");
+    return s.substring(s.lastIndexOf("/") + 1);
+}
+
+// Local paths of dropped URLs ("file:///a%20b.png" -> "/a b.png").
+function localPaths(urls) {
+    var out = [];
+    (urls || []).forEach(function (u) {
+        var s = String(u);
+        if (s.indexOf("file://") !== 0)
+            return;
+        var p = s.substring(7);
+        var slash = p.indexOf("/");
+        if (slash > 0)
+            p = p.substring(slash);
+        try {
+            p = decodeURIComponent(p);
+        } catch (e) {}
+        out.push(p);
+    });
+    return out;
+}
+
+// Chooser output (one path per line) -> paths.
+function chooserPaths(text) {
+    return String(text || "").split("\n").map(function (l) {
+        return l.trim();
+    }).filter(function (l) {
+        return l.indexOf("/") === 0;
+    });
+}

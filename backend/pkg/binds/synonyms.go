@@ -92,4 +92,5 @@ var actionKeywords = map[string]string{
 	"focus-toggle":             "focus pomodoro deep work concentrate фокус концентрация помодоро",
 	"timer-stop":               "alarm stop silence timer остановить будильник таймер",
 	"utilities.timer":          "timer countdown pomodoro таймер помодоро",
+	"converter":                "convert file format image audio video pdf mp3 png конвертер конвертировать формат файл",
 }

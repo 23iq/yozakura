@@ -11,7 +11,7 @@ import (
 // topCommands are completed after the binary name (keep in sync with showHelp).
 var topCommands = []string{
 	"config", "preset", "special", "binds", "cmd", "timer", "stopwatch", "remind", "focus", "routine", "task", "completion", "run", "toggle", "launch", "terminal", "lock", "reload", "quit", "screen", "suspend",
-	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "providers", "extras", "term", "display", "keyboard", "ipc", "install", "remove",
+	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "providers", "convert", "extras", "term", "display", "keyboard", "ipc", "install", "remove",
 	"colorpicker", "lockwall", "thumbs", "dthumbs", "update", "doctor", "refresh", "onboarding", "help", "version", "goodbye",
 }
 
@@ -29,6 +29,8 @@ const (
 	greetSubs    = "on off preset logo presets preview help"
 	updateSubs   = "channel --channel --check --allow-downgrade --help"
 	channelNames = "stable beta git"
+	convertFlags = "--to --out --quality --json"
+	qualities    = "small balanced best"
 )
 
 // Completion scripts complete config keys and values from the live catalog
@@ -91,6 +93,14 @@ _{bin}() {
         else COMPREPLY=($(IFS=' ' compgen -W "--channel --check --allow-downgrade" -- "$cur")); fi ;;
     remind)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{remindSubs}" -- "$cur")) ;;
+    convert)
+        case ${COMP_WORDS[COMP_CWORD-1]} in
+        --to) COMPREPLY=($({bin} convert __formats 2>/dev/null | compgen -W "$(cat)" -- "$cur")) ;;
+        --out) COMPREPLY=($(compgen -d -- "$cur")) ;;
+        --quality) COMPREPLY=($(IFS=' ' compgen -W "{qualities}" -- "$cur")) ;;
+        *) if [[ $cur == -* ]]; then COMPREPLY=($(IFS=' ' compgen -W "{convertFlags}" -- "$cur"))
+           else COMPREPLY=($(compgen -f -- "$cur")); (( COMP_CWORD == 2 )) && COMPREPLY+=($(compgen -W formats -- "$cur")); fi ;;
+        esac ;;
     wallpaper|lockwall)
         COMPREPLY=($(compgen -f -- "$cur")) ;;
     esac
@@ -137,6 +147,13 @@ _{bin}() {
         elif [[ $words[3] == channel || $words[CURRENT-1] == --channel ]]; then compadd -- {channelNames}
         else compadd -- --channel --check --allow-downgrade; fi ;;
     remind) (( CURRENT == 3 )) && compadd -- {remindSubs} ;;
+    convert)
+        case $words[CURRENT-1] in
+        --to) compadd -- ${(f)"$({bin} convert __formats 2>/dev/null)"} ;;
+        --out) _directories ;;
+        --quality) compadd -- {qualities} ;;
+        *) (( CURRENT == 3 )) && compadd -- formats; compadd -- {convertFlags}; _files ;;
+        esac ;;
     wallpaper|lockwall) _files ;;
     esac
 }
@@ -187,6 +204,12 @@ complete -c {bin} -n '__{bin}_at remind "" 2' -a '{remindSubs}'
 complete -c {bin} -n '__{bin}_at cmd "" 2' -a '(begin; {bin} cmd __ids 2>/dev/null; echo list; end)'
 complete -c {bin} -n '__fish_seen_subcommand_from cmd; and test (count (__{bin}_args)) -eq 3' -a '({bin} cmd __args (__{bin}_args)[3] 2>/dev/null)'
 complete -c {bin} -n '__fish_seen_subcommand_from wallpaper lockwall' -F
+complete -c {bin} -n '__{bin}_at convert "" 2' -a formats
+complete -c {bin} -n '__fish_seen_subcommand_from convert' -F
+complete -c {bin} -n '__fish_seen_subcommand_from convert' -l to -x -a '({bin} convert __formats 2>/dev/null)'
+complete -c {bin} -n '__fish_seen_subcommand_from convert' -l out -x -a '(__fish_complete_directories)'
+complete -c {bin} -n '__fish_seen_subcommand_from convert' -l quality -x -a '{qualities}'
+complete -c {bin} -n '__fish_seen_subcommand_from convert' -l json
 `
 
 // completionScript renders the script for a shell.
@@ -219,6 +242,8 @@ func completionScript(shell string) (string, error) {
 		"{updateSubs}", updateSubs,
 		"{channelNames}", channelNames,
 		"{greetSubs}", greetSubs,
+		"{convertFlags}", convertFlags,
+		"{qualities}", qualities,
 	).Replace(tpl), nil
 }
 

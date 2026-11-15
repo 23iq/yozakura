@@ -283,6 +283,12 @@ Singleton {
     // Mirror Tool state
     property bool mirrorWindowVisible: false
 
+    // File converter window (modules/converter; tools menu, `<app> run converter`)
+    property bool converterWindowVisible: false
+    // it has the keyboard focus (ConverterWindow); bumped: raise the open one
+    property bool converterWindowActive: false
+    property int converterRaiseRequest: 0
+
     // Settings Window state
     property bool settingsWindowVisible: false
     property int settingsTargetWorkspaceId: 0
@@ -465,7 +471,7 @@ Singleton {
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "indicator", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
         "lockscreen": ["position", "style", "tone", "blur", "showMedia", "showVisualizer", "showStatus", "pamService"],
         "desktop": ["enabled", "iconSize", "spacingVertical", "textColor", "wallpaperTransition", "wallpaperTransitionDuration", "wallpaperFolders", "wallpaperMode", "panoramaParallax", "depthLayering", "depthClock", "depthClockStyle", "depthClockPosition", "depthClockVideo", "depthClockInk", "blurWallpaperOnOverview", "widgetsEnabled", "widgets", "widgetGrid", "widgetVariant"],
-        "system": ["idle", "ocr", "disks", "language", "updateServiceEnabled", "updateChannel", "polkitAgent", "clipboard", "pomodoro", "timers", "focus"],
+        "system": ["idle", "ocr", "disks", "language", "updateServiceEnabled", "updateChannel", "polkitAgent", "clipboard", "pomodoro", "timers", "focus", "converter"],
         "voice": ["enabled", "model", "language", "activation", "useGpu", "maxSeconds", "idleTimeout", "vadAutoStop", "vadSilenceMs", "vadSensitivity", "noSpeechTimeout", "serverVad", "typingMethod", "punctuation", "trailingSpace", "aiAutoSend", "previewMs"],
         "layout": ["launcher", "dashboard", "sheet", "backdrop", "powermenu", "tools", "aiquick", "panels", "cheatsheet", "osd"],
         "notifications": ["notchStyle", "presentation", "position", "screens", "timeout", "maxVisible", "groupByApp", "strips", "historySize", "sound", "rules", "dnd"],

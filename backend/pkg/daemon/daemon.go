@@ -30,6 +30,7 @@ import (
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
+	convertsvc "yozakura/backend/pkg/svc/convert"
 	"yozakura/backend/pkg/svc/displays"
 	"yozakura/backend/pkg/svc/exclusive"
 	"yozakura/backend/pkg/svc/extras"
@@ -80,6 +81,7 @@ type Daemon struct {
 	compositor *compositor.Service
 	displays   *displays.Service
 	extras     *extras.Service
+	convert    *convertsvc.Service
 	appHooks   *apphookssvc.Service
 	caffeine   *caffeine.Service
 	gamemode   *gamemode.Service
@@ -241,6 +243,11 @@ func New() (*Daemon, error) {
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
 	d.notify = notifySvc
+
+	// File converter: probe, bounded conversion queue, clipboard paste/copy;
+	// a job ending with no window open is announced as a notification.
+	d.convert = convertsvc.NewService(d.paths.CacheDir, func(sp notifysvc.SendParams) { _, _ = notifySvc.Send(sp) })
+	d.convert.Register(d.srv)
 
 	// Extras & apps catalog: detection, serial install queue, progress events.
 	// a catalog post "apphook:<id>" connects the app through the apphooks
@@ -542,6 +549,10 @@ func (d *Daemon) shutdown() {
 	if d.windows != nil {
 		// the separate Settings / wizard go with the shell
 		d.windows.Close()
+	}
+	if d.convert != nil {
+		// cancels conversions, removes their work dirs and office profile
+		d.convert.Stop()
 	}
 	if d.extras != nil {
 		// drops queued installs; a running pacman/AUR one is left running

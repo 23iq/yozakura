@@ -72,5 +72,11 @@ var data = {
     },
     "clipboard": {
         "tmpfs": false
+    },
+    // File converter (modules/converter): "" = results next to each source
+    "converter": {
+        "outputDir": "",
+        "quality": "balanced",
+        "openFolder": false
     }
 }

@@ -79,6 +79,7 @@ FocusScope {
 
     IconButton {
         id: button
+        Accessible.ignored: true
         anchors.horizontalCenter: parent.horizontalCenter
         icon: root.icon
         size: root.size

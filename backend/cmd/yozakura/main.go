@@ -106,6 +106,8 @@ func main() {
 			os.Exit(runTerminal(args[1:], defaultTerminalEnv(), os.Stderr))
 		case "term":
 			os.Exit(runTerm(args[1:], ipcTerm{newClient()}, os.Stdout, os.Stderr))
+		case "convert":
+			os.Exit(runConvert(args[1:], defaultConvertEnv(), os.Stdout, os.Stderr))
 		case "extras":
 			os.Exit(runExtras(args[1:], ipcExtras{newClient(), socketPath()}, os.Stdout, os.Stderr))
 		case "task", "tasks":
@@ -785,6 +787,9 @@ Commands:
                                      ({bin} keyboard help)
     providers [list|test <p>|ollama] AI chat providers: connected ones and their models,
                                      test one, installed Ollama models ({bin} providers help)
+    convert <file>... [--to F] [--out D]
+                                     Convert files (images, audio, video, documents, data)
+    convert formats [<file>]         Formats, installed engines, what a file converts to
     extras [list|install <id>...|status <id>]
                                      Apps and tools the shell can install ({bin} extras help)
     term [list|set <preset>|preview <preset>|status|off]

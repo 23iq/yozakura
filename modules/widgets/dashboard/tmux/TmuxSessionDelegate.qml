@@ -69,6 +69,7 @@ Item {
                     IconButton {
                         required property string modelData
                         required property int index
+                        accessibleName: I18n.t(index === 0 ? "common.cancel" : "a11y.confirm")
                         readonly property int current: row.isInDeleteMode ? row.tab.deleteButtonIndex : row.tab.renameButtonIndex
 
                         size: "s"

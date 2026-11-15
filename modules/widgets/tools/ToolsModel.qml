@@ -23,7 +23,7 @@ Item {
         {
             "type": "separator"
         },
-        root.entry("picker", Icons.picker, "tools.color_picker"), root.entry("ocr", Icons.textT, "tools.ocr"), root.entry("qr", Icons.qrCode, "tools.qr"), root.entry("lens", Icons.google, "tools.google_lens"), root.entry("mirror", GlobalStates.mirrorWindowVisible ? Icons.webcamSlash : Icons.webcam, "tools.mirror")]
+        root.entry("picker", Icons.picker, "tools.color_picker"), root.entry("ocr", Icons.textT, "tools.ocr"), root.entry("qr", Icons.qrCode, "tools.qr"), root.entry("lens", Icons.google, "tools.google_lens"), root.entry("mirror", GlobalStates.mirrorWindowVisible ? Icons.webcamSlash : Icons.webcam, "tools.mirror"), root.entry("converter", Icons.swap, "tools.converter")]
     readonly property var actions: root.items.filter(i => i.type !== "separator")
 
     signal done
@@ -81,6 +81,13 @@ Item {
         case "mirror":
             GlobalStates.mirrorWindowVisible = !GlobalStates.mirrorWindowVisible;
             return;
+        case "converter":
+            // already open (maybe behind other windows): raise it
+            if (GlobalStates.converterWindowVisible)
+                GlobalStates.converterRaiseRequest++;
+            else
+                GlobalStates.converterWindowVisible = true;
+            break;
         default:
             return;
         }

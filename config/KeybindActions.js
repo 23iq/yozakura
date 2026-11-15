@@ -96,6 +96,7 @@ var ACTION_CATALOG = [
     { id: BrandActions.action("screenshot"), label: "Take Screenshot", category: BrandActions.displayName, group: "screenshots", dispatcher: "exec", argument: BrandActions.command("run", "screenshot") },
     { id: BrandActions.action("screenrecord"), label: "Screen Record", category: BrandActions.displayName, group: "screenshots", dispatcher: "exec", argument: BrandActions.command("run", "screenrecord") },
     { id: BrandActions.action("lens"), label: "Open Lens", category: BrandActions.displayName, group: "screenshots", dispatcher: "exec", argument: BrandActions.command("run", "lens") },
+    { id: BrandActions.action("converter"), label: "Open File Converter", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "converter") },
     { id: BrandActions.action("reload"), label: "Reload " + BrandActions.displayName, category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("reload") },
     { id: BrandActions.action("quit"), label: "Quit " + BrandActions.displayName, category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("quit") },
     { id: BrandActions.action("keybinds"), label: "Show Keybinds", category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("run", "keybinds") },

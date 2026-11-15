@@ -97,6 +97,15 @@ off in a running session starts it at once. Set
 `hyprpolkitagent` instead (the previous behaviour; the shell's own agent
 then stays idle).
 
+**File converter tools.** The package brings ffmpeg, ImageMagick and zenity
+(images, audio, video, the file chooser). Documents, PDFs and SVGs need
+optional tools the converter looks for at runtime; formats whose tool is
+missing are muted and say "Needs ...". Add the ones you want to your
+packages: `pandoc` (Markdown and markup, "pandoc"), `libreoffice` (Office
+documents, "LibreOffice"), `poppler-utils` (PDF to images or text,
+"poppler") and `librsvg` (SVG, "librsvg"), e.g.
+`environment.systemPackages = with pkgs; [ pandoc libreoffice poppler-utils librsvg ];`.
+
 Without the module (a nix profile install on another distribution), the
 package alone works too. System services are then up to the host
 distribution.

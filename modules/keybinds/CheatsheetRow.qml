@@ -40,6 +40,7 @@ ListRow {
 
             IconButton {
                 id: edit
+                accessibleName: I18n.t("binds.edit_in_settings")
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
                 icon: Icons.pencil

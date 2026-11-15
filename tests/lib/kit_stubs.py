@@ -55,7 +55,7 @@ TYPES = {
              "property int padding: 0; signal actionTriggered; spacing: 12 }",
     "IconButton": "Item { property string icon; property string size: 'm'; property bool active: false; "
                   "property bool primary: false; property bool highlighted: false; property bool danger: false; "
-                  "property string tooltip; signal clicked; "
+                  "property string tooltip; property string accessibleName; signal clicked; "
                   "implicitWidth: size === 's' ? 36 : 40; implicitHeight: implicitWidth }",
     "Chip": "Item { property string icon; property string text; property bool active: false; property bool primary: false; property bool showLabel: true; readonly property real fullWidth: width; readonly property real compactWidth: width; "
             "property url image; property string trailingIcon; property bool closable; property bool mono; property real maxLabelWidth; "

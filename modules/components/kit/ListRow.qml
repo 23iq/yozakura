@@ -28,6 +28,8 @@ StyledRect {
     readonly property bool hovered: hover.hovered || root.highlighted
     readonly property string look: KitStates.look(false, root.selected, root.hovered && root.enabled)
     readonly property bool boxed: Look.boxedControls && root.look === "hover"
+    // Where the title and subtitle start (a line under the row lines up with them)
+    readonly property real textX: row.x + textColumn.x
 
     signal clicked
     signal doubleClicked
@@ -83,6 +85,7 @@ StyledRect {
         }
 
         Column {
+            id: textColumn
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             spacing: 1

@@ -145,6 +145,7 @@ Item {
 
         IconButton {
             objectName: "settingsButton"
+            tooltip: I18n.t("prefs.title")
             anchors.verticalCenter: parent.verticalCenter
             icon: Icons.gear
             active: GlobalStates.settingsWindowVisible

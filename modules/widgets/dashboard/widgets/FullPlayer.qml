@@ -197,6 +197,7 @@ HostWidget {
             enabled: player.hasActivePlayer
 
             IconButton {
+                accessibleName: I18n.t("a11y.shuffle_repeat")
                 visible: player.roomy
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"
@@ -217,6 +218,7 @@ HostWidget {
                 }
             }
             IconButton {
+                accessibleName: I18n.t("island.previous")
                 anchors.verticalCenter: parent.verticalCenter
                 size: player.roomy ? "m" : "s"
                 icon: Icons.previous
@@ -225,6 +227,7 @@ HostWidget {
             }
             IconButton {
                 objectName: "playerPlay"
+                accessibleName: I18n.t(player.isPlaying ? "a11y.pause" : "a11y.play")
                 anchors.verticalCenter: parent.verticalCenter
                 size: player.roomy ? "m" : "s"
                 primary: true
@@ -232,6 +235,7 @@ HostWidget {
                 onClicked: MprisController.togglePlaying()
             }
             IconButton {
+                accessibleName: I18n.t("island.next")
                 anchors.verticalCenter: parent.verticalCenter
                 size: player.roomy ? "m" : "s"
                 icon: Icons.next
@@ -239,6 +243,7 @@ HostWidget {
                 onClicked: MprisController.next()
             }
             IconButton {
+                accessibleName: I18n.t("a11y.switch_player")
                 visible: player.roomy
                 anchors.verticalCenter: parent.verticalCenter
                 size: "s"

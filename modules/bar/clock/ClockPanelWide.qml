@@ -122,6 +122,7 @@ Column {
                     spacing: Space.l
 
                     IconButton {
+                        accessibleName: I18n.t("timers.reset")
                         anchors.verticalCenter: parent.verticalCenter
                         enabled: pomo.active
                         icon: Icons.arrowCounterClockwise
@@ -136,6 +137,7 @@ Column {
                         onClicked: pomo.main()
                     }
                     IconButton {
+                        accessibleName: I18n.t("a11y.skip")
                         anchors.verticalCenter: parent.verticalCenter
                         enabled: pomo.running
                         icon: Icons.skipForward

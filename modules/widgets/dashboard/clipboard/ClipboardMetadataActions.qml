@@ -19,6 +19,7 @@ Column {
 
     IconButton {
         objectName: "metadataOpen"
+        tooltip: I18n.t("common.open")
         size: "s"
         icon: Icons.popOpen
         visible: !!actions.item && (actions.item.isFile || actions.item.isImage || ClipboardUtils.isUrl(actions.content))
@@ -31,6 +32,7 @@ Column {
     IconButton {
         id: dragButton
         objectName: "metadataDrag"
+        tooltip: I18n.t("a11y.drag_out")
         size: "s"
         icon: Icons.handGrab
         highlighted: dragArea.containsMouse

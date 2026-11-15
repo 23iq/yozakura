@@ -185,6 +185,7 @@ Item {
             IconButton {
                 id: more
                 objectName: "presetMenuButton"
+                accessibleName: I18n.t("prefs.presets.more_actions")
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 size: "xs"

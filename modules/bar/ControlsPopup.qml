@@ -52,6 +52,7 @@ BarPopup {
 
         LevelRow {
             id: volumeRow
+            name: I18n.t("a11y.mute_volume")
             icon: popup.volumeIcon(Audio.sink?.audio)
             muted: Audio.sink?.audio?.muted ?? false
             value: Audio.sink?.audio?.volume ?? 0
@@ -75,6 +76,7 @@ BarPopup {
 
         LevelRow {
             id: micRow
+            name: I18n.t("a11y.mute_mic")
             icon: Audio.source?.audio?.muted ? Icons.micSlash : Icons.mic
             muted: Audio.source?.audio?.muted ?? false
             value: Audio.source?.audio?.volume ?? 0
@@ -98,6 +100,7 @@ BarPopup {
 
         LevelRow {
             id: brightnessRow
+            name: I18n.t("osd.brightness")
             icon: Icons.sun
             value: popup.brightnessMonitor?.brightness ?? 0.5
             onMoved: v => popup.setBrightness(v)
@@ -121,6 +124,7 @@ BarPopup {
         id: row
 
         property string icon: ""
+        property string name: ""
         property bool muted: false
         property alias value: slider.value
         signal moved(real value)
@@ -130,6 +134,7 @@ BarPopup {
         spacing: Space.s
 
         IconButton {
+            accessibleName: row.name
             size: "s"
             icon: row.icon
             onClicked: row.iconClicked()

@@ -91,7 +91,7 @@ Singleton {
             params = DryRunBackend.readParams(method, params);
             if (callback !== undefined) {
                 const cb = callback;
-                callback = (result, error) => cb(error ? result : DryRunBackend.overlay(root._dry, method, result), error);
+                callback = (result, error, code, errorArgs) => cb(error ? result : DryRunBackend.overlay(root._dry, method, result), error, code, errorArgs);
             }
         }
         const id = root.nextId++;
@@ -296,7 +296,9 @@ Singleton {
                     if (typeof msg.id === "number" && msg.id !== 0) {
                         const cb = root.pending[msg.id];
                         delete root.pending[msg.id];
-                        if (cb) cb(msg.result, msg.error);
+                        // code / errorArgs: the error's stable cause and the
+                        // arguments of its translation (absent on most errors)
+                        if (cb) cb(msg.result, msg.error, msg.code, msg.errorArgs);
                     }
                 } catch (e) {
                     console.warn("BackendService: failed to parse response:", e);

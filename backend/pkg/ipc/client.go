@@ -63,10 +63,22 @@ func (c *Client) Call(method string, params any) (json.RawMessage, error) {
 		return nil, err
 	}
 	if resp.Error != "" {
-		return nil, fmt.Errorf("%s", resp.Error)
+		return nil, &RemoteError{Message: resp.Error, Code: resp.Code, Args: resp.ErrorArgs}
 	}
 	return resp.Result, nil
 }
+
+// RemoteError is a failed call's message with its optional code (see
+// Response); Error() is the message alone, as before codes existed.
+type RemoteError struct {
+	Message string
+	Code    string
+	Args    []string
+}
+
+func (e *RemoteError) Error() string       { return e.Message }
+func (e *RemoteError) ErrorCode() string   { return e.Code }
+func (e *RemoteError) ErrorArgs() []string { return e.Args }
 
 // CallFireAndForget sends a request without waiting for the response.
 // Used by short-lived CLI dispatch where the daemon responds on a different

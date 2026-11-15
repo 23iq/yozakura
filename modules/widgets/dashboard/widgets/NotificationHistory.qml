@@ -89,6 +89,7 @@ HostWidget {
                     Component {
                         id: dismiss
                         IconButton {
+                            accessibleName: I18n.t("a11y.dismiss")
                             size: "s"
                             icon: Icons.cancel
                             onClicked: Notifications.discardNotifications(entry.notifs.map(n => n.id))

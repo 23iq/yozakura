@@ -112,6 +112,7 @@ Item {
 
         IconButton {
             objectName: "notificationDismiss"
+            accessibleName: I18n.t("a11y.dismiss")
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: -root.dismissOutset
             Layout.rightMargin: -root.dismissOutset

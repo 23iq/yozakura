@@ -133,6 +133,7 @@ Group {
                     }
                     IconButton {
                         objectName: "removeLayout"
+                        accessibleName: I18n.t("prefs.keyboard.remove")
                         anchors.verticalCenter: parent.verticalCenter
                         visible: root.layouts.length > 1
                         focusable: true

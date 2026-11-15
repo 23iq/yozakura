@@ -437,6 +437,18 @@
       "argument": "yozakura run lens"
     },
     {
+      "id": "yozakura.converter",
+      "labels": {
+        "en": "Open File Converter",
+        "es": "Abrir el convertidor de archivos",
+        "ru": "Открыть конвертер файлов"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run converter"
+    },
+    {
       "id": "yozakura.reload",
       "labels": {
         "en": "Reload the shell",
@@ -1672,6 +1684,15 @@
       ],
       "key": "A",
       "action": "yozakura.lens"
+    },
+    {
+      "path": "system.converter",
+      "modifiers": [
+        "SUPER",
+        "ALT"
+      ],
+      "key": "C",
+      "action": "yozakura.converter"
     },
     {
       "path": "system.reload",

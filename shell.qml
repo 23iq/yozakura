@@ -37,6 +37,8 @@ import qs.modules.onboarding
 import qs.modules.polkit
 import qs.modules.specials
 import "modules/tools"
+// the converter window loads by URL; this import lets the scanner reach its directory
+import "modules/converter"
 import "modules/settings/SettingsScreen.js" as SettingsScreen
 
 ShellRoot {
@@ -315,6 +317,14 @@ ShellRoot {
         id: mirrorLoader
         active: SuspendManager.wakeReady && GlobalStates.mirrorWindowVisible
         source: "modules/tools/MirrorWindow.qml"
+    }
+
+    // File converter (tools menu, `<app> run converter`): a floating window
+    // loaded by URL on open, so nothing of it is compiled at startup.
+    // Conversions run in the backend `convert` service.
+    Loader {
+        active: SuspendManager.wakeReady && GlobalStates.converterWindowVisible
+        source: "modules/converter/ConverterWindow.qml"
     }
 
     // Settings: created asynchronously on the first open (a large tree with

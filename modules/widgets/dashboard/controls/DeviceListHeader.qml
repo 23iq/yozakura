@@ -62,6 +62,7 @@ Item {
             IconButton {
                 id: action
                 required property var modelData
+                accessibleName: action.modelData.tooltip ?? ""
                 size: "s"
                 icon: action.modelData.icon
                 enabled: action.modelData.enabled !== false

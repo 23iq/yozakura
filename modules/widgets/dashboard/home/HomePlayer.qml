@@ -106,6 +106,7 @@ Group {
                         visible: root.hasPlayer
 
                         IconButton {
+                            accessibleName: I18n.t("island.previous")
                             size: "s"
                             icon: Icons.previous
                             enabled: MprisController.canGoPrevious
@@ -114,6 +115,7 @@ Group {
 
                         IconButton {
                             objectName: "playButton"
+                            accessibleName: I18n.t(MprisController.isPlaying ? "a11y.pause" : "a11y.play")
                             size: "s"
                             primary: true
                             icon: MprisController.isPlaying ? Icons.pause : Icons.play
@@ -122,6 +124,7 @@ Group {
                         }
 
                         IconButton {
+                            accessibleName: I18n.t("island.next")
                             size: "s"
                             icon: Icons.next
                             enabled: MprisController.canGoNext

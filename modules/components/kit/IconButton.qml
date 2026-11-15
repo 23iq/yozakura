@@ -15,7 +15,10 @@ import qs.modules.components.kit
 // `pulse()` pops the glyph (an icon that changed meaning: play / pause).
 // `danger`: a destructive action (error tint and glyph while hovered or
 // active; with `primary` the filled error action). `tooltip` shows a hint
-// on hover.
+// on hover. The accessible name is `accessibleName`, else the tooltip (the
+// glyph is a private-use code point): every instance names one of them
+// (the iconbutton-names audit), a purely decorative one sets
+// `Accessible.ignored: true`.
 StyledRect {
     id: root
 
@@ -27,6 +30,7 @@ StyledRect {
     property bool focusable: false
     property bool danger: false
     property string tooltip: ""
+    property string accessibleName: ""
     property real glyphScale: 1
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
@@ -64,7 +68,12 @@ StyledRect {
     scale: root.pressed ? 0.94 : 1
 
     Accessible.role: Accessible.Button
-    Accessible.name: root.icon
+    Accessible.name: root.accessibleName !== "" ? root.accessibleName : root.tooltip
+    Accessible.focusable: root.focusable
+    Accessible.onPressAction: {
+        if (root.enabled)
+            root.clicked();
+    }
 
     Behavior on opacity {
         enabled: Motion.micro.duration > 0
