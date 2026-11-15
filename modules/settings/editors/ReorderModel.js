@@ -27,14 +27,3 @@ function stepIndex(from, dir, movable) {
         return from;
     return Math.max(0, Math.min(movable - 1, from + dir));
 }
-
-// `keys` with `key` moved to index `to` (a copy).
-function moved(keys, key, to) {
-    var out = (keys || []).slice();
-    var from = out.indexOf(key);
-    if (from < 0)
-        return out;
-    out.splice(from, 1);
-    out.splice(Math.max(0, Math.min(out.length, to)), 0, key);
-    return out;
-}

@@ -1,14 +1,12 @@
 .pragma library
 .import "../../globals/BrandActions.js" as BrandActions
+.import "StepPick.js" as StepPick
 
 // Pure model of the idle timeline (editors/IdleTimeline.qml): the idle
 // listeners (system.idle.listeners: [{timeout, onTimeout, onResume}]) read
 // as four steps - dim the screen, lock, turn the screen off, sleep - each at
 // a time or never. Listeners that are none of these are kept as they are.
 // Node-tested (tests/settings-power.test.cjs).
-
-// the app's CLI (never a literal name: the brand)
-var APP = BrandActions.appId;
 
 // The steps in timeline order, how a listener's command is recognised, and
 // the listener a step gets when it is turned on again.
@@ -17,8 +15,8 @@ var STEPS = [
         "id": "dim",
         "match": /brightness/,
         "listener": {
-            "onTimeout": APP + " brightness 10 -s",
-            "onResume": APP + " brightness -r"
+            "onTimeout": BrandActions.command("brightness", "10", "-s"),
+            "onResume": BrandActions.command("brightness", "-r")
         }
     },
     {
@@ -33,15 +31,15 @@ var STEPS = [
         // niri: `niri msg action power-off-monitors`
         "match": /screen off|dpms off|dpms,? ?off|power-off-monitors/,
         "listener": {
-            "onTimeout": APP + " screen off",
-            "onResume": APP + " screen on"
+            "onTimeout": BrandActions.command("screen", "off"),
+            "onResume": BrandActions.command("screen", "on")
         }
     },
     {
         "id": "sleep",
         "match": /suspend|hibernate|sleep/,
         "listener": {
-            "onTimeout": APP + " suspend"
+            "onTimeout": BrandActions.command("suspend")
         }
     }
 ];
@@ -197,23 +195,7 @@ function nudge(steps, id, dir) {
         return dir < 0 ? hi : null;
     if (dir > 0 && cur >= hi)
         return r.max === null ? null : cur;
-    var next = cur;
-    if (dir > 0) {
-        for (var i = 0; i < NICE.length; i++) {
-            if (NICE[i] > cur) {
-                next = NICE[i];
-                break;
-            }
-        }
-    } else {
-        for (var j = NICE.length - 1; j >= 0; j--) {
-            if (NICE[j] < cur) {
-                next = NICE[j];
-                break;
-            }
-        }
-    }
-    return clampTo(steps, id, next);
+    return clampTo(steps, id, StepPick.stepFrom(NICE, cur, dir));
 }
 
 // Pixel centres `xs` (in timeline order) pushed apart to at least `gap`

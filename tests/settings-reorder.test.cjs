@@ -7,7 +7,6 @@ const path = require('node:path');
 const { loadLibrary } = require('./lib/qmljs.cjs');
 
 const M = loadLibrary(path.join(__dirname, '..', 'modules/settings/editors/ReorderModel.js'));
-const plain = v => JSON.parse(JSON.stringify(v));
 
 test('a drag lands on the slot boundary nearest the pointer, among the movable rows', () => {
     assert.equal(M.slotAt(0, 40, 5), 0);
@@ -35,10 +34,3 @@ test('Up / Down move one place, never past the movable rows', () => {
     assert.equal(M.stepIndex(4, -1, 3), 4, 'a fixed row does not move');
 });
 
-test('moved: a copy with the key at its new index', () => {
-    const keys = ['a', 'b', 'c', 'd'];
-    assert.deepEqual(plain(M.moved(keys, 'a', 2)), ['b', 'c', 'a', 'd']);
-    assert.deepEqual(plain(M.moved(keys, 'd', 0)), ['d', 'a', 'b', 'c']);
-    assert.deepEqual(plain(M.moved(keys, 'x', 0)), keys, 'an unknown key changes nothing');
-    assert.deepEqual(keys, ['a', 'b', 'c', 'd'], 'the input is not changed');
-});
