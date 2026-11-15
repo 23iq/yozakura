@@ -37,21 +37,34 @@ Window {
         })(w.contentItem);
         return [n, total, live];
     }
+    // the gallery's capture paused (the window hidden)
+    function stalled() {
+        var found = false;
+        (function walk(it) {
+            if (it.stalled === true && it.building !== undefined) found = true;
+            for (var i = 0; i < it.children.length && !found; i++) walk(it.children[i]);
+        })(w.contentItem);
+        return found;
+    }
     SettingsShell { objectName: "shell"; anchors.fill: parent }
 }""")
 shell = h.find(win, "shell")
 QTest.qWaitForWindowActive(win, 3000)
 h.eval(shell, 'select("lockscreen")')
 ok = env.wait_page(win)
-QTest.qWait(1200)
-win.hide()
-QTest.qWait(3000)
-win.show()
-QTest.qWaitForWindowExposed(win, 3000)
 
 
 def counts():
     return [int(x) for x in str(h.eval(win, "counts().join(',')")).split(",")]
+
+
+# mid-way: the first picture taken, the next live view just made (its
+# capture waits for the reveal to settle, so the window hides before it)
+midway = wait_until(lambda: counts()[0] >= 1 and counts()[0] < counts()[1] and counts()[2] == 1, timeout_ms=20000)
+win.hide()
+paused = wait_until(lambda: h.eval(win, "stalled()") is True, timeout_ms=5000)
+win.show()
+QTest.qWaitForWindowExposed(win, 3000)
 
 
 done = wait_until(lambda: counts()[1] > 0 and counts()[0] == counts()[1], timeout_ms=20000)
@@ -59,6 +72,10 @@ n, total, live = counts()
 failures = []
 if not ok:
     failures.append("the Lock screen page was not built")
+if not midway:
+    failures.append(f"the gallery was caught mid-way ({counts()})")
+if not paused:
+    failures.append("the capture in progress paused while the window was hidden")
 if not done:
     failures.append(f"every style is pictured after the window shows again ({n}/{total})")
 if live > 1:

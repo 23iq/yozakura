@@ -54,7 +54,7 @@ def ev(expr):
 
 ev("SettingsStore.set('bar.compact', true)")
 ev("SettingsStore.set('voice.language', 'es')")
-QTest.qWait(1700)  # past the merge window: separate steps
+env.end_undo_step(win)  # past the merge window: separate steps
 h.eval(shell, 'select("changes")')
 QTest.qWait(400)
 check(ev('w.findItem("changesBand") !== null'), "changes: the band")
