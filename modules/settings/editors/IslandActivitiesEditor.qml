@@ -147,6 +147,7 @@ Item {
                     ToggleControl {
                         anchors.verticalCenter: parent.verticalCenter
                         checked: !!row.item && row.item.enabled
+                        Accessible.name: row.title
                         onToggled: v => root.write(Registry.setField(root.list, row.item.id, "enabled", v))
                     }
                 }

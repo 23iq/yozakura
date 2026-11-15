@@ -16,7 +16,9 @@ import "../controls/PictureGrid.js" as PictureGrid
 // and where the colours come from (a link to Theme & colours: they are
 // shown and changed there, not here). Given a height (`fillHeight`): a film
 // strip ending in the Folders chip, or a grid of whole rows when taller
-// than two rows of thumbnails.
+// than two rows of thumbnails. Keyboard: the library is one Tab stop (the
+// wallpaper on screen); the arrows, Home and End move between pictures,
+// Space / Enter sets one.
 Item {
     id: root
 
@@ -57,6 +59,18 @@ Item {
     function pick(path) {
         if (root.manager && path !== root.current)
             root.manager.setWallpaper(path);
+    }
+    // moves the keyboard focus to picture `i` (kept in the library), in view
+    function focusAt(i) {
+        const view = root.grid ? gridView : list;
+        const n = root.paths.length;
+        if (n === 0)
+            return;
+        const at = Math.max(0, Math.min(n - 1, i));
+        view.positionViewAtIndex(at, root.grid ? GridView.Contain : ListView.Contain);
+        const item = view.itemAtIndex(at);
+        if (item)
+            item.forceActiveFocus(Qt.TabFocusReason);
     }
 
     // clips the strip a ring's width outside it: the chosen picture's ring
@@ -211,12 +225,31 @@ Item {
         ChoiceCard {
             id: card
             required property string modelData
+            required property int index
+            // a row of the grid (or the strip) for Up / Down
+            readonly property int lineStep: root.grid ? root.perRow : 1
             objectName: "wallpaper:" + root.fileName(card.modelData)
             width: root.thumbW
             previewHeight: root.thumbH
             inset: true
             selected: card.modelData === root.current
-            title: card.hovered ? root.fileName(card.modelData) : ""
+            title: card.hovered || card.activeFocus ? root.fileName(card.modelData) : ""
+            // one Tab stop for the library: the wallpaper on screen (else the first)
+            activeFocusOnTab: card.index === Math.max(0, root.paths.indexOf(root.current))
+            Accessible.name: root.fileName(card.modelData)
+            Keys.onLeftPressed: root.focusAt(card.index - 1)
+            Keys.onRightPressed: root.focusAt(card.index + 1)
+            Keys.onUpPressed: root.focusAt(card.index - card.lineStep)
+            Keys.onDownPressed: root.focusAt(card.index + card.lineStep)
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Home)
+                    root.focusAt(0);
+                else if (event.key === Qt.Key_End)
+                    root.focusAt(root.paths.length - 1);
+                else
+                    return;
+                event.accepted = true;
+            }
             onClicked: root.pick(card.modelData)
 
             Art {

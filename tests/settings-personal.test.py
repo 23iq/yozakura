@@ -24,6 +24,7 @@ import headless  # noqa: E402
 
 headless.ensure(gl=True)
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
@@ -104,6 +105,18 @@ check(b is not None, "wallpaper: a thumbnail per picture")
 h.eval(b, "clicked()")
 check(ev("GlobalStates.wallpaperManager.currentWallpaper") == WALLS[1], "wallpaper: a click on a thumbnail sets it")
 check(h.eval(item("wallpaper:wallpaper-02.png"), "selected") is True, "wallpaper: ...and rings it")
+# one Tab stop (the wallpaper on screen), arrows between pictures, Space sets
+check([h.eval(item(f"wallpaper:wallpaper-0{i}.png"), "activeFocusOnTab") for i in (1, 2, 3)] == [False, True, False],
+      "wallpaper: the library is one Tab stop, on the wallpaper on screen")
+check(h.eval(item("wallpaper:wallpaper-02.png"), "Accessible.name") == "wallpaper-02.png", "wallpaper: a thumbnail is named")
+h.eval(item("wallpaper:wallpaper-02.png"), "forceActiveFocus()")
+QTest.keyClick(win, Qt.Key_Right)
+check(h.eval(item("wallpaper:wallpaper-03.png"), "activeFocus") is True, "wallpaper: Right moves the focus to the next picture")
+QTest.keyClick(win, Qt.Key_Space)
+check(ev("GlobalStates.wallpaperManager.currentWallpaper") == WALLS[2], "wallpaper: ...Space sets it")
+QTest.keyClick(win, Qt.Key_Home)
+check(h.eval(item("wallpaper:wallpaper-01.png"), "activeFocus") is True, "wallpaper: Home goes to the first")
+h.eval(item("wallpaper:wallpaper-02.png"), "clicked()")
 n = steps()
 h.eval(item("card:panorama"), "clicked()")
 check(ev("Config.desktop.wallpaperMode") == "panorama" and steps() == n + 1, "wallpaper: Panorama is one undo step")

@@ -78,6 +78,8 @@ ColumnLayout {
             visible: search.text !== ""
             icon: Icons.cancel
             size: "xs"
+            tooltip: I18n.t("common.clear")
+            Accessible.name: I18n.t("common.clear")
             onClicked: KeybindsStore.editorQuery = ""
         }
     }

@@ -28,6 +28,7 @@ RowLayout {
         color: Colors.overBackground
     }
     ToggleControl {
+        Accessible.name: root.label
         checked: root.checked
         onToggled: value => root.toggled(value)
     }

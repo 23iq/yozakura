@@ -30,7 +30,13 @@ Column {
         label: I18n.t("prefs.timers.pomo_focus")
         keys: ["system.pomodoro.workTime"]
         NumberControl {
+            id: workStep
             objectName: "pomodoroWorkStep"
+            Accessible.role: Accessible.SpinBox
+            Accessible.name: I18n.t("prefs.timers.pomo_focus")
+            Accessible.description: workStep.value + " " + workStep.unit
+            Accessible.onIncreaseAction: workStep.step(1)
+            Accessible.onDecreaseAction: workStep.step(-1)
             value: root.work
             from: 5
             to: 240
@@ -44,7 +50,13 @@ Column {
         label: I18n.t("prefs.timers.pomo_break")
         keys: ["system.pomodoro.restTime"]
         NumberControl {
+            id: restStep
             objectName: "pomodoroRestStep"
+            Accessible.role: Accessible.SpinBox
+            Accessible.name: I18n.t("prefs.timers.pomo_break")
+            Accessible.description: restStep.value + " " + restStep.unit
+            Accessible.onIncreaseAction: restStep.step(1)
+            Accessible.onDecreaseAction: restStep.step(-1)
             value: root.rest
             from: 1
             to: 120
@@ -59,6 +71,7 @@ Column {
         keys: ["system.pomodoro.autoStart"]
         Switch {
             objectName: "pomodoroAutoSwitch"
+            Accessible.name: I18n.t("prefs.timers.pomo_auto")
             checked: root.auto
             onToggled: v => SettingsStore.set("system.pomodoro.autoStart", v)
         }

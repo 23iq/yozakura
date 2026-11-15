@@ -66,6 +66,7 @@ Column {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 checked: item.on
+                Accessible.name: I18n.t(item.modelData.label)
                 onToggled: v => SettingsStore.set(item.modelData.key, v ? item.modelData.command : "")
             }
         }

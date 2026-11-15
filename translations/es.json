@@ -4769,5 +4769,6 @@
   "prefs.windows.border_role.tertiary": "Terciario",
   "prefs.windows.border_role.error": "Rojo",
   "prefs.windows.border_role.outline": "Contorno",
-  "prefs.windows.border_role.overBackground": "Texto"
+  "prefs.windows.border_role.overBackground": "Texto",
+  "prefs.wall.use_main": "Usar el fondo principal"
 }

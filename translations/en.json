@@ -4769,5 +4769,6 @@
   "prefs.windows.border_role.tertiary": "Tertiary",
   "prefs.windows.border_role.error": "Red",
   "prefs.windows.border_role.outline": "Outline",
-  "prefs.windows.border_role.overBackground": "Text"
+  "prefs.windows.border_role.overBackground": "Text",
+  "prefs.wall.use_main": "Use the main wallpaper"
 }

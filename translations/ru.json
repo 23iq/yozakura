@@ -4809,5 +4809,6 @@
   "prefs.windows.border_role.tertiary": "Третичный",
   "prefs.windows.border_role.error": "Красный",
   "prefs.windows.border_role.outline": "Контур",
-  "prefs.windows.border_role.overBackground": "Текст"
+  "prefs.windows.border_role.overBackground": "Текст",
+  "prefs.wall.use_main": "Использовать основные обои"
 }
