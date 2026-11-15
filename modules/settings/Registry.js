@@ -200,12 +200,21 @@ var PAGES = {
 };
 
 // Home tile scenes (HomeTile, loaded by URL once home has shown), by
-// destination id.
-// Home tiles drawn as a scene (the others are their icon on a plate,
-// HomeTile.glyph): only where a picture reads at tile size.
+// destination id: a small live picture of the destination's subject drawn
+// in the tile's frame (`tile` is the HomeTile; the scene fills
+// the room it is given, beside the name on a wide tile, above it on a
+// squarer one). A destination without one, or a tile too small for its
+// scene, shows its icon on a plate (HomeTile.glyph).
 var SCENES = {
+    "screen": "home/LayoutScene.qml",
     "look": "home/LookScene.qml",
-    "screen": "home/LayoutScene.qml"
+    "panels": "home/PanelsScene.qml",
+    "windows": "home/WindowsScene.qml",
+    "notifications": "home/NotificationsScene.qml",
+    "devices": "home/DevicesScene.qml",
+    "assistant": "home/AssistantScene.qml",
+    "keys": "home/KeysScene.qml",
+    "system": "home/SystemScene.qml"
 };
 
 function scene(id) {

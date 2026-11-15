@@ -12,9 +12,11 @@ import "Registry.js" as Registry
 import "../services/KeyboardModel.js" as KeyboardModel
 
 // One destination on the home bento (a kit Card in the language's own
-// box). Screen and Look are scenes (home/<X>Scene.qml): your screen as a
-// small monitor on the card, the UI font and the palette; every other tile
-// is its icon on a plate at the top left. At the foot of each: its name and
+// box). Each draws a small live scene of its subject (Registry.SCENES,
+// home/<X>Scene.qml): beside the name on a wide tile (with the icon on a
+// plate over the name, but for the Screen hero), above it on a squarer one;
+// without a scene, or room for one, the icon on a plate at the top left
+// (`glyph`). At the foot of each: its name and
 // one live status line (HomeStatus.js) that never wraps; the line's room is
 // there from the first frame, the words fade in when home is warm. Where
 // the language has instruments (device), a lit LED sits in the corner.
@@ -30,15 +32,23 @@ Card {
     property bool live: true
     readonly property string kind: destination.id
     readonly property string sceneFile: Registry.scene(tile.kind)
-    // no scene: the icon on a plate at the top left
-    readonly property bool glyph: tile.sceneFile === ""
-    // The screen monitor beside the name where the tile is wide enough for
-    // both (side by side: the name and its line centred on the left, the
-    // monitor as tall as the card holds, centred in the rest), else above it.
+    readonly property bool hero: tile.kind === "screen"
+    // Where the scene goes. Side by side on a wide tile (the hero: the name
+    // and its line centred on the left, the monitor as tall as the card
+    // holds; a one-row tile: icon and name on the left, the scene on the
+    // right half); above the name on a squarer one.
     readonly property real monitorAspect: 16 / 9
-    readonly property real sideLabelWidth: Math.max(Space.px(190), body.width * 0.28)
-    readonly property real sideMonitorWidth: Math.min(body.width - tile.sideLabelWidth - Space.xl, body.height * tile.monitorAspect)
-    readonly property bool side: tile.kind === "screen" && tile.sideMonitorWidth >= Space.px(320)
+    readonly property real sideLabelWidth: tile.hero ? Math.max(Space.px(190), body.width * 0.28) : Math.max(Space.px(140), Math.round(body.width * 0.42))
+    readonly property real sideSceneWidth: body.width - tile.sideLabelWidth - (tile.hero ? Space.xl : Space.l)
+    readonly property real sideMonitorWidth: Math.min(tile.sideSceneWidth, body.height * tile.monitorAspect)
+    readonly property bool side: tile.sceneFile !== "" && (tile.hero ? tile.sideMonitorWidth >= Space.px(320) : body.width >= body.height * 2.2 && tile.sideSceneWidth >= Space.px(96))
+    // the room above the name of a squarer tile
+    readonly property real stackRoom: body.height - label.height - Space.m
+    // A scene where it reads; else (no scene, or a tile too small for
+    // one) the destination's icon on a plate, the graceful fallback.
+    readonly property bool glyph: tile.sceneFile === "" || !(tile.side || tile.stackRoom >= Space.px(32))
+    // the plate: alone on a glyph tile, beside the scene of a one-row one
+    readonly property bool plateShown: tile.glyph || (tile.side && !tile.hero)
     readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
@@ -99,7 +109,7 @@ Card {
         Mark {
             id: plate
             objectName: "homeTileIcon"
-            visible: tile.glyph
+            visible: tile.plateShown
             // a small tile: never into the name under it
             width: Math.round(Math.max(Type.iconSize("title") * 1.8, Math.min(Type.iconSize("title") * 2.4, body.height - label.height - Space.m)))
             height: width
@@ -125,23 +135,23 @@ Card {
         Scene {
             objectName: "homeTileScene"
             visible: !tile.glyph
-            // side by side: the room right of the name, the monitor centred in it
-            x: tile.side ? tile.sideLabelWidth + Space.xl : 0
-            width: tile.side ? body.width - x : body.width
-            height: tile.side ? body.height : Math.max(0, body.height - label.height - Space.m)
+            // side by side: the room right of the name; else above it
+            x: tile.side ? body.width - tile.sideSceneWidth : 0
+            width: tile.side ? tile.sideSceneWidth : body.width
+            height: tile.side ? body.height : Math.max(0, tile.stackRoom)
         }
 
         Column {
             id: label
-            y: tile.side ? Math.round((body.height - height) / 2) : body.height - height
+            y: tile.side && tile.hero ? Math.round((body.height - height) / 2) : body.height - height
             width: tile.side ? tile.sideLabelWidth : body.width
-            spacing: tile.side ? Space.xs : Space.hairline
+            spacing: tile.side && tile.hero ? Space.xs : Space.hairline
 
             KitText {
                 width: parent.width
                 role: "title"
                 // the hero tile's name a step up, beside its picture
-                font.pixelSize: tile.side ? Math.round(Type.size("title") * 1.3) : Type.size("title")
+                font.pixelSize: tile.side && tile.hero ? Math.round(Type.size("title") * 1.3) : Type.size("title")
                 text: I18n.t(tile.destination.title)
                 // a narrow tile: the name wraps, whole ("Notifications &
                 // focus"), never cut
