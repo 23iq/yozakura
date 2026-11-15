@@ -176,6 +176,10 @@ def build(preset: str, mode: str, ai_stub: str, language: str = "") -> Path:
     palette = json.loads((REPO / "tests/fixtures/aicenter-palettes.json").read_text())[mode]
     colors = "pragma Singleton\nimport QtQuick\nQtObject {\n" + "\n".join(f'    property color {k}: "{v}"' for k, v in palette.items()) + "\n}\n"
     (qs / "modules/theme/Colors.qml").write_text(colors)
+    # The decorative signatures read services this scene does not have
+    # (kit Segmented draws the brush one): inert, as in qmlharness.
+    (qs / "modules/components/signatures/Signatures.qml").write_text(
+        "pragma Singleton\nimport QtQuick\nQtObject { property bool quiet: true; property bool brush: false; property bool petals: false }\n")
     _qmldirs(qs)
     # Config (qs.config)
     shutil.rmtree(qs / "config", ignore_errors=True)
@@ -254,6 +258,11 @@ QtObject {
         let o = Config;
         for (const part of key.split(".")) o = o ? o[part] : undefined;
         return o;
+    }
+    // (a change made outside the Settings window: no undo step there)
+    function setElsewhere(key, value) {
+        set(key, value);
+        sets[sets.length - 1].elsewhere = true;
     }
     function set(key, value) {
         sets = sets.concat([{key: key, value: value}]);

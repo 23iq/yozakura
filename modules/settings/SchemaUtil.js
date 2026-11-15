@@ -234,6 +234,49 @@ function conditionKeys(cond) {
     return out;
 }
 
+// Every entry of a schema page is reachable in the settings window, in one
+// of two places:
+//   * a row of the tab's cards (`inCards`): the important options;
+//   * a row of the tab's folded "More settings" card at the page's end
+//     (`isAdvanced`: an entry, or a whole section, flagged `advanced: true`;
+//     a section that starts folded, `collapsed: true`, counts as advanced).
+// Search indexes both; a jump to an advanced row opens the More card.
+function isAdvanced(entry, section) {
+    if (!entry)
+        return false;
+    return !!entry.advanced || !!(section && (section.advanced || section.collapsed));
+}
+
+// A row of the tab's cards (not one of its More card).
+function inCards(entry, section) {
+    return !!entry && !isAdvanced(entry, section);
+}
+
+// Reachable in the window: a card row or a row of the More card. (Every
+// entry is; kept as the one predicate search, Reset page and the Changes
+// page use, so a future "not in the window" rule has one place to live.)
+function inWindow(entry, section) {
+    return !!entry;
+}
+
+// The More card of a category: [{section, entries}] of its advanced
+// entries, in schema order, grouped by the section they belong to (the
+// group label is that section's title).
+function moreGroups(category) {
+    var out = [];
+    ((category && category.sections) || []).forEach(function (sec) {
+        var list = (sec.entries || []).filter(function (e) {
+            return isAdvanced(e, sec);
+        });
+        if (list.length > 0)
+            out.push({
+                "section": sec,
+                "entries": list
+            });
+    });
+    return out;
+}
+
 // [{entry, section, category}] in render order.
 function flatten(categories) {
     var out = [];
@@ -251,7 +294,9 @@ function flatten(categories) {
     return out;
 }
 
-// Search index generated from the schema. `tr` translates an i18n key.
+// Search index of the window generated from the schema: every entry with a
+// label, the More card's (advanced) ones too, marked `advanced` (a jump to
+// one opens the More card). `tr` translates an i18n key.
 // Legacy (not yet migrated) categories contribute their `topics`.
 function buildSearchIndex(categories, tr) {
     var t = tr || function (k) {
@@ -272,7 +317,7 @@ function buildSearchIndex(categories, tr) {
         (cat.sections || []).forEach(function (sec) {
             var secTitle = sec.title ? t(sec.title) : "";
             (sec.entries || []).forEach(function (entry) {
-                if (!entry.label)
+                if (!entry.label || !inWindow(entry, sec))
                     return;
                 var label = t(entry.label);
                 out.push({
@@ -283,6 +328,7 @@ function buildSearchIndex(categories, tr) {
                     "context": secTitle ? catTitle + " › " + secTitle : catTitle,
                     "icon": cat.icon,
                     "key": entry.key || "",
+                    "advanced": isAdvanced(entry, sec),
                     "compositor": entry.compositor || sec.compositor || "",
                     "visibleWhen": entry.visibleWhen || null,
                     "haystack": [label, entry.keywords || "", entry.description ? t(entry.description) : "", entry.key || "", secTitle].join(" ").toLowerCase()
@@ -361,8 +407,11 @@ function score(query, item) {
             return -1;
         total += s;
     }
-    return total - label.length * 0.1 + (item.entryId ? 0 : 5);
+    // (a row of the More card ranks a little under an equal card row)
+    return total - label.length * 0.1 + (item.entryId ? 0 : 5) - (item.advanced ? ADVANCED_PENALTY : 0);
 }
+
+var ADVANCED_PENALTY = 4;
 
 function fuzzy(q, target) {
     var qi = 0, run = 0, best = 0, s = 0;

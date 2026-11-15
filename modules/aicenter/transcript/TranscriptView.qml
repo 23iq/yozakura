@@ -5,13 +5,20 @@ import qs.modules.services
 import qs.modules.aicenter.common
 import qs.modules.theme
 import qs.modules.components.kit
+import "../../components/preview/Preview.js" as Preview
 
 // The conversation of any engine: an HTTP chat (`session`, a ChatSession)
 // or a CLI agent session (`agentId`). Styles: "compact" (Assistant) and
 // "detailed" (Code: tool calls as cards). Keeps the scroll position per
 // session and follows streaming output (ai.behavior.autoScroll).
+// Preview (`preview`, a PreviewContext; Settings' Assistant stage, through
+// AiCenterPreview): `session` is a sample ({rows: ListModel}); the view sits
+// at its end and never touches the Ai service (no scroll memory, no undo).
 Item {
     id: root
+
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
 
     property var session: null          // ChatSession (HTTP)
     property string agentId: ""         // agent session id (CLI)
@@ -23,12 +30,14 @@ Item {
     readonly property string kind: agentId ? "agent" : "chat"
     readonly property var timeline: agentId && Ai.agents ? Ai.agents.timeline(agentId) : null
     readonly property int count: model.rows.count
+    // the conversation's own height (a preview panel sized to it)
+    readonly property real contentHeight: list.contentHeight + list.topMargin + list.bottomMargin
 
     property TranscriptModel model: TranscriptModel {
         kind: root.kind
         source: root.agentId ? (root.timeline ? root.timeline.model : null) : (root.session ? root.session.rows : null)
         showThinking: BarLook.showThinking
-        undoStates: Ai.undoStates
+        undoStates: root.inPreview ? ({}) : Ai.undoStates
     }
 
     // Scroll position per session (Ai.drafts), restored when switching back:
@@ -38,10 +47,16 @@ Item {
     property bool restoringScroll: false
     property real scrollPosition: -1
     function saveScroll() {
+        if (root.inPreview)
+            return;
         if (scrollKey && Ai.drafts && !restoringScroll)
             Ai.drafts.setScroll(scrollKey, scrollPosition);
     }
     function restoreScroll() {
+        if (root.inPreview) {
+            Qt.callLater(list.positionViewAtEnd);
+            return;
+        }
         saveScroll();
         scrollKey = root.persistKey || Ai.sessionKey;
         restoringScroll = true;
@@ -61,7 +76,7 @@ Item {
     onPersistKeyChanged: restoreScroll()
     Component.onDestruction: saveScroll()
     Connections {
-        target: Ai
+        target: root.inPreview ? null : Ai
         function onSessionKeyChanged() {
             if (!root.persistKey)
                 root.restoreScroll();

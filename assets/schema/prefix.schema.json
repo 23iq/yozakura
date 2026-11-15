@@ -12,11 +12,11 @@
       "default": "cc",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for clipboard history."
     },
@@ -26,11 +26,11 @@
       "default": "ee",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for the emoji picker."
     },
@@ -40,11 +40,11 @@
       "default": "tt",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for tmux sessions."
     },
@@ -54,11 +54,11 @@
       "default": "ww",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for wallpapers."
     },
@@ -68,11 +68,11 @@
       "default": "nn",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for notes."
     },
@@ -82,11 +82,11 @@
       "default": "=",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix that shows only calculator, unit and currency results (e.g. \"= 5 kg in lb\")."
     },
@@ -96,11 +96,11 @@
       "default": ">",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for shell commands from assets/commands/commands.json (e.g. \"> preset Neon Tokyo\", \"> dnd\")."
     },
@@ -110,11 +110,11 @@
       "default": "ff",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for file search in the home directory (fd or plocate)."
     },
@@ -124,11 +124,11 @@
       "default": "?",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix that sends the query to the AI quick ask."
     },
@@ -138,11 +138,11 @@
       "default": "t",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix for timers, reminders and the stopwatch (e.g. \"t 10m tea\", \"t 18:00 call mom\", \"t sw\")."
     },
@@ -152,11 +152,11 @@
       "default": "@",
       "x-settings": {
         "category": "launcher",
-        "section": "providers",
-        "label": "prefs.launcher.providers",
+        "section": "searches",
+        "label": "prefs.launcher.searches",
         "entry": "launcher.providers",
-        "entryTitle": "Search providers",
-        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+        "entryTitle": "What it searches",
+        "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
       },
       "description": "Prefix that searches only saved routines (e.g. \"@backup\"; empty lists them all)."
     },
@@ -193,11 +193,11 @@
           },
           "x-settings": {
             "category": "launcher",
-            "section": "providers",
-            "label": "prefs.launcher.providers",
+            "section": "searches",
+            "label": "prefs.launcher.searches",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "What it searches",
+            "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Order of result groups when no prefix is typed (provider ids).",
           "uniqueItems": true
@@ -208,11 +208,11 @@
           "default": [],
           "x-settings": {
             "category": "launcher",
-            "section": "providers",
-            "label": "prefs.launcher.providers",
+            "section": "searches",
+            "label": "prefs.launcher.searches",
             "entry": "launcher.providers",
-            "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+            "entryTitle": "What it searches",
+            "keywords": "providers enable disable on off search order prefix apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Launcher providers (and prefix tabs) that are turned off.",
           "items": {

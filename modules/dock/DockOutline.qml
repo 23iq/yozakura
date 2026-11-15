@@ -172,10 +172,6 @@ Canvas {
             root.requestPaint();
         }
     }
-    Connections {
-        target: Config.theme.srBg
-        function onBorderChanged() {
-            root.requestPaint();
-        }
-    }
+    // (the border follows theme.srBg.border through borderData)
+    onBorderDataChanged: root.requestPaint()
 }

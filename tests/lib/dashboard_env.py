@@ -178,8 +178,8 @@ def global_states(wallpaper: dict) -> str:
     function clearLauncherState() {}"""
     qml = global_states_qml(wallpaper).replace("property bool settingsWindowVisible: true", extra)
     # The bento player tints itself with the wallpaper.
-    return qml.replace("function nextWallpaper() {}", "function nextWallpaper() {}\n"
-                       "        function getLockscreenFramePath(p) { return thumbs[p] || p }")
+    return qml.replace('function getLockscreenFramePath(p) { return "" }',
+                       "function getLockscreenFramePath(p) { return thumbs[p] || p }")
 
 
 class DashboardEnv(KitEnv):
@@ -208,7 +208,7 @@ class DashboardEnv(KitEnv):
         self.h.module("Quickshell.Services.Pipewire", {
             "PwNodePeakMonitor": "QtObject { property var node; property bool enabled: true; property real peak: 0.25 }"})
         self.h.module("qs.modules.widgets.dashboard.metrics", {"MetricsTab": "Item {}"})
-        self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item {}"})
+        self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item { property bool dashboardShown }"})
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])
         self._qmldir(qs / "modules/shell/hosts", "qs.modules.shell.hosts", only=["HostFrame"])
         self._qmldir(qs / "modules/widgets/dashboard", "qs.modules.widgets.dashboard")

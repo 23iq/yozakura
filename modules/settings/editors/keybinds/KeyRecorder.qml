@@ -43,6 +43,13 @@ ColumnLayout {
     property bool sawKey: false
 
     readonly property var draftMods: KeyNames.normalizeMods(chipMods)
+    // the keys so far while recording (the held / toggled modifiers and a
+    // typed key name), shared through KeybindsStore.recordingDraft
+    readonly property var draft: recording ? ({
+            "modifiers": draftMods,
+            "key": keyName.text.trim()
+        }) : null
+    onDraftChanged: KeybindsStore.recordingDraft = draft
     readonly property var clashRows: BindModel.rowsUsing(KeybindsStore.rows, combo.modifiers, combo.key, exceptUid)
     readonly property var clashNative: nativeUsing(combo.modifiers, combo.key)
     readonly property string clashText: clashList(clashRows, clashNative)
@@ -111,8 +118,12 @@ ColumnLayout {
 
     onRecordingChanged: if (!manualOnly)
         KeybindsStore.holdCompositorBinds(recording)
-    Component.onDestruction: if (recording && !manualOnly)
-        KeybindsStore.holdCompositorBinds(false)
+    Component.onDestruction: {
+        if (recording && !manualOnly)
+            KeybindsStore.holdCompositorBinds(false);
+        if (recording)
+            KeybindsStore.recordingDraft = null;
+    }
 
     Connections {
         target: KeybindsStore
@@ -214,11 +225,11 @@ ColumnLayout {
                 loops: Animation.Infinite
                 ColorAnimation {
                     to: Ui.alpha(Colors.primary, 0.35)
-                    duration: 700
+                    duration: Motion.pan.duration
                 }
                 ColorAnimation {
                     to: Colors.primary
-                    duration: 700
+                    duration: Motion.pan.duration
                 }
             }
         }

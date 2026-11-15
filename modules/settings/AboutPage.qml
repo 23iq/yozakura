@@ -4,80 +4,138 @@ import Quickshell
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.settings.stages
+import qs.modules.settings.store
 import qs.config
 import qs.modules.globals
 
-// About: name, version, a couple of useful shortcuts and the legal row.
-Item {
+// About, composed like the other pages: the identity scene on the stage
+// (a plain card fill, no wallpaper: About is not a desktop page; the mark glowing, the name, the version, one line about
+// it), then one row of cards: the version and its updates, the useful
+// places (setup again, the config folder, the source) and the legal notes.
+// The cards have the schema cards' padding and text edge (Look.rowInset);
+// a card header is its title alone, translated text wraps.
+FittedFrame {
     id: page
+    stackable: true
+    stackedHeight: cards.y + cards.height + page.pad
+    hasHint: false
 
     required property var category
 
-    Column {
-        anchors.centerIn: parent
-        width: Math.min(parent.width - Space.xxl * 2, Space.px(520))
-        spacing: Space.xl
-
-        // The mark: the brand glyph in the language's control box (no
-        // accent: it is not a state).
-        Item {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: Space.controlXL
-            height: Space.controlXL
-
-            ControlBox {
-                radius: Look.squareControls ? Space.controlRadius : Space.surfaceRadius
-            }
-            Image {
-                anchors.centerIn: parent
-                width: Math.round(parent.width * 0.6)
-                height: width
-                source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
-                sourceSize.width: width * 2
-                sourceSize.height: height * 2
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    brightness: 1.0
-                    colorization: 1.0
-                    colorizationColor: Type.text
-                }
-            }
-        }
+    // the identity scene
+    Stage {
+        id: scene
+        readonly property bool fittedHero: true
+        objectName: "aboutScene"
+        calm: true
+        readonly property real room: page.height - Space.s - page.gap - page.rowH - page.pad
+        // as wide as the row of cards under it: one column edge for both
+        x: page.margin
+        y: Space.s
+        height: Math.round(Math.max(Space.px(160), Math.min(scene.room, (page.width - page.margin * 2) * 9 / 16, Space.px(560))))
+        width: page.width - page.margin * 2
 
         Column {
-            width: parent.width
-            spacing: Space.xs
+            anchors.centerIn: parent
+            width: parent.width * 0.8
+            spacing: Space.m
 
+            // the mark, with a soft glow
+            Item {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.round(scene.height * 0.32)
+                height: width
+                Image {
+                    id: logo
+                    anchors.fill: parent
+                    source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
+                    sourceSize.width: width * 2
+                    sourceSize.height: height * 2
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        brightness: 1.0
+                        colorization: 1.0
+                        colorizationColor: Type.accent
+                        shadowEnabled: true
+                        shadowColor: Type.accent
+                        shadowBlur: 1.0
+                        shadowOpacity: 0.6
+                    }
+                }
+            }
             KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 role: "display"
-                tabular: false
                 text: Brand.displayName
             }
             KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
+                role: "body"
+                wrapMode: Text.WordWrap
+                text: I18n.t("prefs.about.blurb")
+            }
+        }
+    }
+
+    // the row of cards
+    Flow {
+        id: cards
+        objectName: "aboutRow"
+        x: page.margin
+        // stacked (narrow window): under the hint, one card a line
+        // (a tall window: right under the scene, never at a far foot)
+        y: page.stacked ? scene.y + scene.height + page.gap : Math.min(page.rowY, scene.y + scene.height + page.gap)
+        width: page.width - page.margin * 2
+        spacing: page.gap
+        // whole pixels: three fractional widths can add up past the row and
+        // wrap the last card out of sight
+        readonly property real cardW: page.stacked ? width : Math.floor((width - spacing * 2) / 3)
+
+        // the version and its updates
+        Card {
+            width: cards.cardW
+            height: page.rowH
+            padding: Look.boxPadding + Space.s
+            readonly property bool fittedCard: true
+            Title {
+                text: I18n.t("prefs.about.card.version")
+            }
+            Inset {
+                role: "display"
+                font.pixelSize: Type.size("display") * 0.8
+                text: Config.version
+            }
+            Inset {
                 role: "secondary"
-                text: I18n.t("prefs.about.version", Config.version)
+                wrapMode: Text.WordWrap
+                text: UpdateService.updateAvailable === true && (UpdateService.lastDetectedVersion ?? "") !== "" ? I18n.t("prefs.updates.available", UpdateService.lastDetectedVersion) : I18n.t("prefs.updates.stage.up_to_date")
+            }
+            PillButton {
+                x: Look.rowInset
+                objectName: "aboutUpdates"
+                icon: "downloadSimple"
+                text: I18n.t("prefs.about.updates")
+                onClicked: SettingsStore.navigate("updates")
             }
         }
 
-        KitText {
-            width: parent.width
-            horizontalAlignment: Text.AlignHCenter
-            role: "body"
-            wrapMode: Text.WordWrap
-            text: I18n.t("prefs.about.blurb")
-        }
-
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
+        // useful places
+        Card {
+            width: cards.cardW
+            height: page.rowH
+            padding: Look.boxPadding + Space.s
+            readonly property bool fittedCard: true
+            Title {
+                text: I18n.t("prefs.about.card.places")
+            }
             spacing: Space.s
-
             PillButton {
+                x: Look.rowInset
                 objectName: "aboutRunSetup"
                 icon: "seal"
                 text: I18n.t("onboarding.run_again")
@@ -87,19 +145,64 @@ Item {
                 }
             }
             PillButton {
+                x: Look.rowInset
                 icon: "folder"
                 text: I18n.t("prefs.about.open_config")
                 onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Config.configDir]))
             }
             PillButton {
+                x: Look.rowInset
                 icon: "code"
                 text: I18n.t("prefs.about.source")
                 onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Brand.repoUrl]))
             }
         }
 
-        LegalNotice {
-            width: parent.width
+        // the legal notes (NOTICE opens inside the card)
+        Card {
+            id: legalCard
+            width: cards.cardW
+            height: page.rowH
+            padding: Look.boxPadding + Space.s
+            readonly property bool fittedCard: true
+            Title {
+                text: I18n.t("prefs.about.card.legal")
+            }
+            Inset {
+                role: "display"
+                font.pixelSize: Type.size("display") * 0.8
+                text: "AGPL-3.0"
+            }
+            Inset {
+                role: "secondary"
+                wrapMode: Text.WordWrap
+                text: I18n.t("prefs.about.free")
+            }
+            Flickable {
+                x: Look.rowInset
+                width: legalCard.contentWidth - Look.rowInset * 2
+                height: Math.max(Space.xl, legalCard.height - legalCard.padding * 2 - y)
+                contentWidth: width
+                contentHeight: legal.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                LegalNotice {
+                    id: legal
+                    width: parent.width
+                }
+            }
         }
+    }
+
+    // a card's title, as on the other pages' cards: at the row inset, the
+    // card's content on its line (no value beside it: the content says it)
+    component Title: Inset {
+        role: "title"
+        wrapMode: Text.WordWrap
+    }
+    // a line of a card at the row inset (the schema cards' text edge)
+    component Inset: KitText {
+        x: Look.rowInset
+        width: (parent ? parent.width : 0) - Look.rowInset * 2
     }
 }

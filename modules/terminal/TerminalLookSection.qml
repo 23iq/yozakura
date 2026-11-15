@@ -28,7 +28,7 @@ Column {
     readonly property string fish: TermModel.fishState(root.status)
     readonly property bool promptOn: !!(root.term && root.term.enabled)
     readonly property var presetInfo: TerminalLookService.presets.find(p => p.id === root.prompt) ?? null
-    readonly property bool needsNerdFont: !!root.presetInfo && root.presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
+    readonly property bool needsNerdFont: !!(root.presetInfo && root.presetInfo.nerdFont) && !TerminalLookService.nerdFontAvailable
     // No install method here (not Arch): only the manual hint.
     readonly property bool nerdInstallable: ExtrasService.cardState("nerd-font") !== "unavailable"
     readonly property string engineExtra: TermModel.engineExtra(root.engine)

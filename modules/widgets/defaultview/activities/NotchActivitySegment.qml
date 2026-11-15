@@ -96,7 +96,7 @@ Item {
         ActivityIndicator {
             kind: segment.showItem ? segment.showItem.indicator : "glyph"
             icon: segment.showItem ? segment.showItem.icon : ""
-            image: segment.showItem ? segment.showItem.image : ""
+            image: segment.showItem && segment.showItem.image ? segment.showItem.image : ""
             progress: segment.showItem && segment.showItem.progress !== undefined ? segment.showItem.progress : -1
             accent: segment.accent(segment.showItem)
             size: kind === "glyph" ? Math.round(segment.indicatorSize * 0.95) : segment.indicatorSize

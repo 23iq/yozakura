@@ -27,7 +27,7 @@ Item {
     readonly property var options: root.view ? root.view.options : null
 
     readonly property ToastGroup toast: ToastGroup {
-        group: Notifications.popupGroupsByAppName[root.key] ?? null
+        group: (root.view ? root.view.groups : Notifications.popupGroupsByAppName)[root.key] ?? null
     }
 
     property bool expanded: false

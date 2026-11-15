@@ -129,6 +129,7 @@ ev("KeyStore.keyCache = ({ollama: {api_key: 'enabled', endpoint: 'http://old-gpu
 wait_until(lambda: ev("Config.ai.ollama.endpoint") == "http://old-gpu:11434")
 assert ev("Config.ai.ollama.endpoint") == "http://old-gpu:11434", "its endpoint moves to ai.ollama.endpoint"
 assert ev("KeyStore.keyCache.ollama === undefined"), "the fake key is deleted"
+assert ev("SettingsStore.sets[SettingsStore.sets.length - 1].elsewhere") is True, "the migration is no Settings undo step"
 ev("Config.ai.ollama.endpoint = ''")
 
 # ── open from the picker footer: step 1 grid ────────────────────────────
@@ -247,6 +248,8 @@ type_into("connectUrl", "http://gpu:11434")
 click(find("connectSave"))
 wait_until(lambda: ev("Config.ai.ollama.endpoint") == "http://gpu:11434")
 assert ev("Config.ai.ollama.endpoint") == "http://gpu:11434"
+assert ev("SettingsStore.sets[SettingsStore.sets.length - 1].elsewhere") is True, \
+    "a provider saved from the AI panel is no Settings undo step (setElsewhere)"
 assert not sheet_open()
 ev("Ai.openProviderSettings('ollama')")
 wait_until(sheet_open)
@@ -270,6 +273,7 @@ type_into("connectKey", "mm-key")
 click(find("connectSave"))
 wait_until(lambda: ev("JSON.stringify(Config.ai.providers.hidden)") == "[]")
 assert ev("JSON.stringify(Config.ai.providers.hidden)") == "[]", "connecting a hidden provider shows it again"
+assert ev("SettingsStore.sets[SettingsStore.sets.length - 1].elsewhere") is True, "...made elsewhere"
 assert ev("KeyStore.getKey('minimax')") == "mm-key"
 
 # ── a not-connected picker row opens its form ───────────────────────────
@@ -285,6 +289,15 @@ assert sheet_open() and find("tile_openai") is not None, "Esc goes back to the g
 QTest.keyClick(view, Qt.Key_Escape)
 wait_until(lambda: not sheet_open())
 assert not sheet_open(), "then closes the sheet"
+
+# ── the Settings window's sheet records its changes as steps there ──────
+ev("Config.ai.providers.hidden = []")
+ev("Ai.providers.disconnect('ollama', true)")
+assert ev("JSON.stringify(Config.ai.providers.hidden)") == '["ollama"]'
+assert ev("SettingsStore.sets[SettingsStore.sets.length - 1].elsewhere") is None, \
+    "fromWindow: a Settings step (SettingsStore.set)"
+ev("Ai.providers.disconnect('lmstudio')")
+assert ev("SettingsStore.sets[SettingsStore.sets.length - 1].elsewhere") is True, "else elsewhere"
 
 bad = [m for m in errors if "assets/aiproviders" not in m]
 assert not bad, "\n".join(bad[:10])

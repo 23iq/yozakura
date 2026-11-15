@@ -11,14 +11,19 @@ import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
 import qs.config
+import "../components/preview/Preview.js" as Preview
 
 Button {
     id: root
+    // found by previews (settings: the indicator cards frame a running app)
+    objectName: "dockApp:" + (root.appToplevel?.appId ?? "")
 
     required property var appToplevel
     property int lastFocused: -1
     property real iconSize: Config.dock?.iconSize ?? 40
     property string dockPosition: "bottom"
+    // A settings preview (DockItems.preview): its looks, null live
+    property var preview: null
 
     // Position helpers
     readonly property bool isBottom: dockPosition === "bottom"
@@ -31,7 +36,7 @@ Button {
     readonly property bool appIsActive: !isSeparator && (appToplevel?.toplevels?.some(t => t.activated === true) ?? false)
     readonly property bool appIsRunning: !isSeparator && (appToplevel?.toplevelCount ?? 0) > 0
 
-    readonly property bool showIndicators: !isSeparator && (Config.dock?.showRunningIndicators ?? true) && appIsRunning
+    readonly property bool showIndicators: !isSeparator && Preview.pick(root.preview, "dock.showRunningIndicators", Config.dock?.showRunningIndicators ?? true) && appIsRunning
     readonly property int instanceCount: (isSeparator || !appToplevel) ? 0 : appToplevel.toplevelCount
 
     enabled: !isSeparator
@@ -114,6 +119,7 @@ Button {
 
                 DockIndicator {
                     edge: root.dockPosition
+                    preview: root.preview
                     count: root.showIndicators ? root.instanceCount : 0
                     focused: root.appIsActive
                 }

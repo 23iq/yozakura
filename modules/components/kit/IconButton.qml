@@ -115,9 +115,10 @@ StyledRect {
         shown: root.focusable && root.activeFocus
     }
 
-    StyledToolTip {
-        tooltipText: root.tooltip
-        show: root.hovered && root.tooltip !== ""
+    Tooltip {
+        objectName: "iconButtonTooltip"
+        text: root.tooltip
+        shown: root.hovered && root.tooltip !== ""
     }
 
     SequentialAnimation {

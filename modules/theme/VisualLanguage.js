@@ -141,8 +141,15 @@ function apply(lang, variant, cfg) {
 //             LED on the matte tile), well {fill, opacity, edge}: the inset
 //             screen behind a readout, label {mono, tracking}: section
 //             labels in the mono font, letter spacing as a share of the size
+// card: the bento surfaces of the settings window (kit Card) over the
+//       window's ambient wallpaper (kit Ambient): {fill, fillOpacity,
+//       edge (hairline alpha), shadow (alpha), ambient (how much of the
+//       blurred wallpaper the window shows around the cards, 0..1),
+//       highlight (white alpha of a lit top edge: glass frost, device's
+//       machined edge), shade (dark alpha of the bottom edge: a bevel)}
 var KIT = {
     "ink": {
+        card: { fill: "surfaceContainerLow", fillOpacity: 0.58, edge: 0.10, shadow: 0.34, ambient: 1 },
         screen: { gap: "xl", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         weather: { drop: "glint", alpha: 0.9 },
@@ -154,6 +161,7 @@ var KIT = {
         light: { edge: 0.3, wash: 0, dim: 0.12, lantern: 0.26 }
     },
     "glass": {
+        card: { fill: "surface", fillOpacity: 0.42, edge: 0.16, shadow: 0.30, ambient: 1, highlight: 0.22 },
         screen: { gap: "m", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         weather: { drop: "bead", alpha: 1 },
@@ -165,6 +173,7 @@ var KIT = {
         light: { edge: 0.8, wash: 0.36, dim: 0.18, lantern: 0.34 }
     },
     "tiles": {
+        card: { fill: "surfaceContainer", fillOpacity: 1, edge: 0, shadow: 0.30, ambient: 0.6 },
         screen: { gap: "s", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         weather: { drop: "flat", alpha: 0.9 },
@@ -176,6 +185,7 @@ var KIT = {
         light: { edge: 0.5, wash: 0.3, dim: 0.18, lantern: 0.3 }
     },
     "device": {
+        card: { fill: "surfaceContainer", fillOpacity: 1, edge: 0.09, shadow: 0.40, ambient: 0.5, highlight: 0.07, shade: 0.3 },
         screen: { gap: "s", boxPadding: "m" },
         bar: { surfacePill: false, weight: 0 },
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0.09, highlight: 0.05, shade: 0.24, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
@@ -195,6 +205,7 @@ var KIT = {
         }
     },
     "classic": {
+        card: { fill: "surfaceContainer", fillOpacity: 0.86, edge: 0, shadow: 0.30, ambient: 0.7 },
         screen: { gap: "m", boxPadding: "m" },
         bar: { surfacePill: true, weight: 500 },
         weather: { drop: "bead", alpha: 0.85 },
@@ -241,6 +252,13 @@ function kit(lang, glassOn) {
     for (var k in spec)
         out[k] = spec[k];
     out.window = null;
+    if (spec.card) {
+        var c = {};
+        for (var ck in spec.card)
+            c[ck] = spec.card[ck];
+        c.fillOpacity = Math.max(c.fillOpacity, 0.92);
+        out.card = c;
+    }
     if (spec.float) {
         var f = {};
         for (var fk in spec.float)

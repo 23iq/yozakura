@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.aicenter.common
 import qs.modules.components.kit
 import qs.config
+import "../../components/preview/Preview.js" as Preview
 
 // [Assistant | Code] … usage, history, new, size, gear (Code), changes (Code), close.
 // The engine chip lives in the composer strip (ComposerStatus).
@@ -22,9 +23,14 @@ RowLayout {
     signal historyToggled
     signal settingsToggled
     signal changesToggled
+    // a Settings picture (AiCenterPreview's PreviewContext): the space and
+    // size are its samples ("ai.space", "ai.size"), never the live
+    // assistant's, and no button acts; null live
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
 
-    readonly property bool code: GlobalStates.aiSpace === "code"
-    readonly property string size: GlobalStates.assistantFullscreen ? "fullscreen" : (GlobalStates.assistantWide ? "wide" : "compact")
+    readonly property bool code: Preview.sample(root.preview, "ai.space", GlobalStates.aiSpace) === "code"
+    readonly property string size: root.inPreview ? Preview.sample(root.preview, "ai.size", "compact") : (GlobalStates.assistantFullscreen ? "fullscreen" : (GlobalStates.assistantWide ? "wide" : "compact"))
 
     spacing: Space.xs / 2
 
@@ -41,6 +47,7 @@ RowLayout {
     }
 
     SpaceSwitch {
+        preview: root.preview
         iconsOnly: root.width < (root.code ? 400 : 330)
     }
     Item {
@@ -68,7 +75,8 @@ RowLayout {
         size: "xs"
         icon: Icons.notePencil
         tooltip: (root.code ? I18n.t("ai.new_task") : I18n.t("ai.new_chat")) + " (Ctrl+N)"
-        onClicked: Ai.newConversation()
+        onClicked: if (!root.inPreview)
+            Ai.newConversation()
     }
     IconButton {
         size: "xs"
@@ -92,12 +100,14 @@ RowLayout {
         objectName: "headerSize"
         icon: root.size === "fullscreen" ? Icons.arrowsInSimple : Icons.arrowsOutSimple
         tooltip: I18n.t(root.size === "compact" ? "ai.wide" : (root.size === "wide" ? "ai.fullscreen" : "ai.compact")) + " (Ctrl+W)"
-        onClicked: root.cycleSize()
+        onClicked: if (!root.inPreview)
+            root.cycleSize()
     }
     IconButton {
         size: "xs"
         icon: Icons.cancel
         tooltip: I18n.t("ai.close") + " (Esc)"
-        onClicked: GlobalStates.hideAssistant()
+        onClicked: if (!root.inPreview)
+            GlobalStates.hideAssistant()
     }
 }

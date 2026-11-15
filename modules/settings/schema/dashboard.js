@@ -9,6 +9,8 @@ var category = {
     "title": "prefs.cat.dashboard",
     "description": "prefs.cat.dashboard.desc",
     "keywords": "dashboard tabs widgets hub panel memory",
+    "stage": "DashboardStage",
+    "row": [{ "id": "home", "weight": 1.3 }, { "id": "tabs", "weight": 0.8 }],
     "sections": [
         {
             "id": "home",
@@ -17,6 +19,8 @@ var category = {
                 {
                     "key": "layout.dashboard.home",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "DashHomeThumb",
                     "options": [
                         {
                             "value": "stage",
@@ -69,7 +73,7 @@ var category = {
                 {
                     "key": "layout.dashboard.tabs",
                     "type": "custom",
-                    "component": "DashboardTabsEditor",
+                    "component": "DashboardTabsList",
                     "label": "prefs.dashboard.tabs",
                     "description": "prefs.dashboard.tabs.desc",
                     "keywords": "dashboard tabs order hide show reorder widgets wallpapers metrics rail"

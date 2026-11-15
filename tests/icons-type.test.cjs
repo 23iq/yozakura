@@ -80,3 +80,12 @@ test('the editorial role uses its font, else the system serif alias', () => {
     assert.equal(T.editorialFamily({ editorial: 'Fraunces' }), 'Fraunces');
     assert.equal(defaults.type.editorial, '');
 });
+
+test('every icon of the map draws a glyph (no empty string)', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'modules/theme/Icons.qml'), 'utf8');
+    const icons = [...src.matchAll(/readonly property string (\w+): "([^"]*)"/g)];
+    assert.ok(icons.length > 200);
+    for (const [, name, glyph] of icons) assert.notEqual(glyph, '', name);
+    // Phosphor's power glyph (the power menu, the OSD stage, "turn on")
+    assert.match(src, /property string power: "\\uE3DA"/);
+});

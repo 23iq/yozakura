@@ -83,6 +83,7 @@ Item {
                         visible: root.objects
 
                         SectionLabel {
+                            role: "group"
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.entry.itemLabel ? I18n.t(root.entry.itemLabel, card.index + 1) : "#" + (card.index + 1)
                         }
@@ -104,6 +105,7 @@ Item {
                             }
                             ListIconButton {
                                 iconName: "trash"
+                                danger: true
                                 label: I18n.t("prefs.common.remove")
                                 onClicked: root.changed(SchemaUtil.listRemove(root.items, card.index))
                             }
@@ -238,6 +240,7 @@ Item {
                             id: stringRemove
                             anchors.verticalCenter: parent.verticalCenter
                             iconName: "trash"
+                            danger: true
                             label: I18n.t("prefs.common.remove")
                             onClicked: root.changed(SchemaUtil.listRemove(root.items, card.index))
                         }

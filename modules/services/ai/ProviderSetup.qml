@@ -73,18 +73,29 @@ QtObject {
         BackendService.call(call.method, call.params, (res, err) => cb(Connect.summarize(id, res, err)));
     }
 
+    // A config write: a step of the Settings window's history only when
+    // the Settings window asked for it (`fromWindow`); the AI panel, the
+    // setup wizard and the migration change it elsewhere.
+    function _put(key, value, fromWindow) {
+        if (fromWindow === true)
+            SettingsStore.set(key, value);
+        else
+            SettingsStore.setElsewhere(key, value);
+    }
+
     // Stores a provider's connection and shows it in the picker again.
     // done(errorText) is called with "" once everything is stored, or with
-    // the keystore error (nothing else is changed then).
-    function save(id, key, url, curl, done) {
+    // the keystore error (nothing else is changed then). `fromWindow`: the
+    // Settings window saves it (an undo step there).
+    function save(id, key, url, curl, done, fromWindow) {
         if (Connect.validate(id, key, url))
             return false;
         const plan = Connect.savePlan(id, key, url, curl);
         const finish = () => {
             if (plan.config)
-                SettingsStore.set(plan.config.key, plan.config.value);
+                root._put(plan.config.key, plan.config.value, fromWindow);
             if (hidden.indexOf(id) >= 0)
-                SettingsStore.set("ai.providers.hidden", hidden.filter(h => h !== id));
+                root._put("ai.providers.hidden", hidden.filter(h => h !== id), fromWindow);
             if (plan.config && catalog)
                 Qt.callLater(() => root.catalog.probeLocal(true));
             if (done)
@@ -106,16 +117,17 @@ QtObject {
 
     // Removes a key; a local provider cannot be "disconnected" while its
     // server runs, so it is hidden from the picker instead.
-    function disconnect(id) {
+    function disconnect(id, fromWindow) {
         const p = Presets.preset(id);
         if (p && p.local) {
             if (hidden.indexOf(id) < 0)
-                SettingsStore.set("ai.providers.hidden", hidden.concat([id]));
+                root._put("ai.providers.hidden", hidden.concat([id]), fromWindow);
             return;
         }
         KeyStore.deleteKey(id);
     }
 
+    // (the Settings window's provider visibility list: a step there)
     function setHidden(id, hide) {
         const has = hidden.indexOf(id) >= 0;
         if (hide && !has)
@@ -133,7 +145,7 @@ QtObject {
         if (!plan.remove)
             return;
         if (plan.endpoint)
-            SettingsStore.set("ai.ollama.endpoint", plan.endpoint);
+            root._put("ai.ollama.endpoint", plan.endpoint, false);
         KeyStore.deleteKey("ollama");
     }
 

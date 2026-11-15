@@ -10,18 +10,25 @@ import "../ConfigWrite.js" as ConfigWrite
 import "../SettingsDefaults.js" as SettingsDefaults
 import "../CompositorGate.js" as CompositorGate
 import "../ResetModel.js" as ResetModel
-import "../schema/Advanced.js" as Advanced
+import "../UndoModel.js" as UndoModel
 import "../schema/Categories.js" as Categories
 import "../DisabledReason.js" as DisabledReason
 
-// Read/write access to settings keys for the schema renderer.
+// Read/write access to settings keys for the settings window and the setup
+// wizard.
 //
-// Change flow (compatible with the legacy panels): the first edit of a
-// staged domain takes the GlobalStates snapshot (mark*Changed pauses
-// auto-save), every edit is applied live to Config so the whole shell
-// previews it, and the ChangesBar applies (writes the JSON files) or
-// discards (restores the snapshot). Domains without a snapshot list and
-// wallpaper keys (wallpapers.json) are written immediately.
+// Change flow (modules/settings/AGENTS.md, CHANGE FLOW):
+//   set()       live: the value goes into Config at once (the whole shell
+//               follows) and is persisted by the domain's own coalesced
+//               auto-save (ConfigFile: at most a few writes per second
+//               while a slider moves). The change is kept on the session
+//               undo history (undo / redo, the window's undo pill).
+//   stageSet()  the setup wizard only: staged like the old Apply flow (the
+//               GlobalStates snapshot of the domain is taken and its
+//               auto-save paused; a separate wizard process relays it to
+//               the main shell through the daemon's `preview` service), so
+//               the wizard's choices are written by apply() when it ends.
+// Wallpaper keys (wallpapers.json) always go to the wallpaper manager.
 Singleton {
     id: root
 
@@ -29,50 +36,60 @@ Singleton {
     readonly property var compositorDomains: ["compositor"]
     readonly property var shellDomains: Object.keys(GlobalStates._shellSections || {})
 
+    // The wizard's staged changes wait for apply() / discard().
     readonly property bool hasChanges: GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
 
     // Set by the settings window to flash an entry after a search jump.
     property string highlightedEntry: ""
-
-    // Simple / All view (schema/Advanced.js): All also shows the entries
-    // flagged `advanced`. Remembered in general.settingsShowAll (saved at
-    // once, never staged). A search jump reveals its advanced entry in
-    // Simple until the page changes; changed advanced entries stay shown.
-    readonly property bool showAll: Config.general.settingsShowAll === true
-    property var revealed: ({})
-
-    function setShowAll(value) {
-        root.revealed = {};
-        root.set("general.settingsShowAll", !!value);
+    // a card reached from a click on the stage (SettingsPage.reveal)
+    property string highlightedSection: ""
+    // The row under the pointer or keyboard focus: its keys light up the
+    // part of the page's stage they change (StageSpot). [] = none.
+    property var focusKeys: []
+    // The bar panel being edited (several bars): the Bar stage picks it
+    // with a click, the bars editor edits it.
+    property int selectedPanel: 0
+    // The wallpaper on screen as a file URL ("" while there is none): the
+    // window's ambient background, the stages and the picture tiles.
+    readonly property string wallpaper: {
+        const m = GlobalStates.wallpaperManager;
+        if (!m)
+            return "";
+        const path = m.effectiveWallpaper ?? m.currentWallpaper ?? "";
+        const shown = path && m.getDisplaySource ? m.getDisplaySource(path) : path;
+        return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
     }
+    // The same wallpaper as sharp as it is: the picture itself (a video:
+    // its frame), not the small thumbnail; for what shows it big (the
+    // stages' screens). Decode it at the size shown (sourceSize).
+    readonly property string wallpaperSharp: {
+        const m = GlobalStates.wallpaperManager;
+        if (!m)
+            return "";
+        const path = m.effectiveWallpaper ?? m.currentWallpaper ?? "";
+        const shown = path && m.getColorSource ? m.getColorSource(path) : path;
+        return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
+    }
+    property var _focusOwner: null
+    // the row (or the inspector) that owns focusKeys now, null: none
+    readonly property var focusOwner: root._focusOwner
 
-    function revealEntry(entryId) {
-        if (!entryId || root.revealed[entryId])
+    // A row is pointed at (hovered / focused) or no longer: the last one
+    // pointed at owns focusKeys; leaving clears them only if it still does.
+    function point(owner, keys) {
+        root._focusOwner = owner;
+        root.focusKeys = keys || [];
+    }
+    function unpoint(owner) {
+        if (root._focusOwner !== owner)
             return;
-        const next = Object.assign({}, root.revealed);
-        next[entryId] = true;
-        root.revealed = next;
-    }
-
-    function clearRevealed() {
-        if (Object.keys(root.revealed).length > 0)
-            root.revealed = {};
-    }
-
-    // Shown in the current view: an advanced entry the user changed stays
-    // in Simple too, so a changed value is never out of sight.
-    function inView(entry) {
-        return Advanced.shown(entry, root.showAll, root.revealed) || root.isModified(entry);
-    }
-
-    function sectionInView(section) {
-        const entries = (section && section.entries) || [];
-        return entries.length === 0 || entries.some(e => root.inView(e));
+        root._focusOwner = null;
+        root.focusKeys = [];
     }
 
     signal navigateRequested(string categoryId, string sectionId, string entryId)
-    // A settings control (or reset) changed `key`: lets an editor react to
-    // user actions only, never to config changes from elsewhere.
+    // A settings control (or reset / undo) changed `key`: lets an editor
+    // react to user actions only, never to config changes from elsewhere.
     signal valueSet(string key, var value)
 
     function navigate(categoryId, sectionId, entryId) {
@@ -95,6 +112,9 @@ Singleton {
                 return m.activeColorPreset;
             if (k.prop === "wallPath")
                 return m.wallpaperDir;
+            // the wallpaper on screen (the strip's pick: an undo step)
+            if (k.prop === "current")
+                return m.currentWallpaper;
             return undefined;
         }
         const domain = Config[k.domain];
@@ -116,7 +136,11 @@ Singleton {
         return SettingsDefaults.get(key);
     }
 
-    function stage(domain) {
+    function isStaged(domain) {
+        return themeDomains.indexOf(domain) !== -1 || compositorDomains.indexOf(domain) !== -1 || shellDomains.indexOf(domain) !== -1;
+    }
+
+    function _stage(domain) {
         if (themeDomains.indexOf(domain) !== -1)
             GlobalStates.markThemeChanged();
         else if (compositorDomains.indexOf(domain) !== -1)
@@ -125,53 +149,191 @@ Singleton {
             GlobalStates.markShellChanged();
     }
 
-    function isStaged(domain) {
-        return themeDomains.indexOf(domain) !== -1 || compositorDomains.indexOf(domain) !== -1 || shellDomains.indexOf(domain) !== -1;
+    function _setWallpaper(prop, value) {
+        const m = root.wallpaperManager;
+        if (!m)
+            return;
+        if (prop === "matugenScheme")
+            m.setMatugenScheme(value);
+        else if (prop === "activeColorPreset")
+            m.setColorPreset(value);
+        else if (prop === "wallPath" && m.setWallpaperDir)
+            m.setWallpaperDir(value);
+        else if (prop === "current" && m.setWallpaper)
+            m.setWallpaper(value);
     }
 
-    function set(key, value) {
-        if (!key || SchemaUtil.equal(get(key), value))
-            return;
+    // One value into Config (or the wallpaper manager); `staged`: the
+    // wizard's staging. false: unknown key.
+    function _write(key, value, staged) {
         const k = SchemaUtil.splitKey(key);
         if (SchemaUtil.storeOf(key) === "wallpaper") {
-            const m = root.wallpaperManager;
-            if (!m)
-                return;
-            if (k.prop === "matugenScheme")
-                m.setMatugenScheme(value);
-            else if (k.prop === "activeColorPreset")
-                m.setColorPreset(value);
-            else if (k.prop === "wallPath" && m.setWallpaperDir)
-                m.setWallpaperDir(value);
-            return;
+            root._setWallpaper(k.prop, value);
+            return true;
         }
         // Nested JsonObject children (e.g. ai.quickAsk.enabled) are assigned
         // in place; a `property var` object on the way is replaced by an
-        // updated copy (e.g. bar.layout.style). The snapshot of a staged
-        // domain is taken before its first change (stage).
-        if (ConfigWrite.assign(Config, key, value, root.stage) === "") {
+        // updated copy (e.g. bar.layout.style).
+        if (ConfigWrite.assign(Config, key, value, staged ? root._stage : (d => {})) === "") {
             console.warn("SettingsStore: unknown config domain for", key);
+            return false;
+        }
+        if (staged) {
+            // A separate wizard process: the main shell previews the staged
+            // value (daemon `preview` relay, PreviewSink.qml).
+            if (ProcessRole.secondary && isStaged(k.domain))
+                BackendService.call("preview.set", {
+                    "owner": ProcessRole.role,
+                    "key": key,
+                    "value": SchemaUtil.plain(value)
+                });
+            return true;
+        }
+        // Live: the domain's auto-save persists it. Only while the wizard
+        // holds this domain's auto-save for its staged choices (or a service
+        // holds every domain) is the write explicit, so a live change is
+        // never held back.
+        const paused = typeof Config.autoSavePausedFor === "function" ? Config.autoSavePausedFor(k.domain) : Config.pauseAutoSave;
+        if (paused)
+            root._save(k.domain);
+        return true;
+    }
+
+    // Writes one domain's file now (Config.saveDomain: every domain has one,
+    // tests/settings-save-path.test.cjs). false: no way to write it.
+    function _save(domain) {
+        return Config.saveDomain(domain);
+    }
+
+    // ---- live changes + undo ------------------------------------------
+    // A change made in the settings window: live, and a step of its history.
+    function set(key, value) {
+        root._set(key, value, true);
+    }
+    // A live change made elsewhere (the AI panel, a project's settings):
+    // never a step of the window's history (Ctrl+Z in Settings never takes
+    // back what another surface did).
+    function setElsewhere(key, value) {
+        root._set(key, value, false);
+    }
+    function _set(key, value, recorded) {
+        if (!key)
             return;
-        }
-        // A separate Settings window (ProcessRole): the main shell previews
-        // a staged value live (daemon `preview` relay, PreviewSink.qml);
-        // other values reach it through the file it reloads.
-        if (ProcessRole.secondary && isStaged(k.domain))
-            BackendService.call("preview.set", root._owned({
-                "key": key,
-                "value": SchemaUtil.plain(value)
-            }));
-        // One writer: the domain's own auto-save persists the edit (debounced
-        // by ConfigFile). Only while auto-save is paused for staged changes
-        // is the write explicit, so a non-staged setting is never held back.
-        if (!isStaged(k.domain) && Config.pauseAutoSave) {
-            const saver = Config["save" + k.domain.charAt(0).toUpperCase() + k.domain.slice(1)];
-            if (typeof saver === "function")
-                saver();
-        }
+        const before = SchemaUtil.plain(get(key));
+        if (SchemaUtil.equal(before, value))
+            return;
+        if (!root._write(key, value, false))
+            return;
+        // What the config holds now (a typed property may have converted
+        // it): the value an undo expects to find. The wallpaper manager
+        // answers later (a separate window relays it), so its keys keep the
+        // value asked for.
+        const after = root._async(key) ? SchemaUtil.plain(value) : root._current(key);
+        if (recorded && !SchemaUtil.equal(before, after))
+            root._record(key, before, after);
         root.valueSet(key, value);
     }
 
+    // The setup wizard: staged until apply() / discard() (never on the undo
+    // history).
+    function stageSet(key, value) {
+        if (!key || SchemaUtil.equal(get(key), value))
+            return;
+        if (root._write(key, value, true))
+            root.valueSet(key, value);
+    }
+
+    // The window's session history (UndoHistory.qml: steps, coalescing,
+    // the pill's last step, transactions); its API is forwarded here.
+    UndoHistory {
+        id: history
+        write: (key, value) => {
+            if (root._write(key, value, false))
+                root.valueSet(key, value);
+        }
+        current: root._current
+        trusted: root._async
+        labels: root.labelIndex
+    }
+    readonly property alias undoStack: history.undoStack
+    readonly property alias redoStack: history.redoStack
+    readonly property bool canUndo: history.canUndo
+    readonly property bool canRedo: history.canRedo
+    readonly property alias lastStep: history.lastStep
+    // key -> label of the entry that edits it.
+    readonly property var labelIndex: UndoModel.labelIndex(Categories.categories)
+
+    // Only what the open window changes is its history: a write made
+    // elsewhere (the AI panel, a project's settings) uses setElsewhere().
+    function _record(key, before, after) {
+        if (GlobalStates.settingsWindowVisible)
+            history.record(key, before, after);
+    }
+    // (the render tool names a step for the pill)
+    function _announce(step, kind) {
+        history.announce(step, kind);
+    }
+
+    // Keys whose value is not known synchronously (the wallpaper manager):
+    // the undo checks trust them.
+    function _async(key) {
+        return SchemaUtil.storeOf(key) === "wallpaper";
+    }
+    function _current(key) {
+        return SchemaUtil.plain(root.get(key));
+    }
+
+    function clearHistory() {
+        history.clear();
+    }
+
+    Connections {
+        target: Config
+        ignoreUnknownSignals: true
+        function onDomainReloaded(name) {
+            history.domainReloaded(name);
+        }
+    }
+    Connections {
+        target: GlobalStates
+        function onSettingsWindowVisibleChanged() {
+            if (!GlobalStates.settingsWindowVisible)
+                history.clear();
+        }
+    }
+
+    // Changes made by `fn` are one undo step labelled `label` (an i18n key):
+    // a reset, a macro slider, an editor that writes several keys.
+    function transaction(label, fn) {
+        history.transaction(label, fn);
+    }
+
+    // The next change is a new step even within the merge window (tests).
+    function sealSteps() {
+        history.seal();
+    }
+
+    // Undoes the newest step (a step changed elsewhere since is dropped on
+    // the way). true: undone.
+    function undo() {
+        return history.undo();
+    }
+    function redo() {
+        return history.redo();
+    }
+    // The undo pill: only the step it names, while it is the newest.
+    function undoStep(id) {
+        return history.undoStep(id);
+    }
+    function redoStep(id) {
+        return history.redoStep(id);
+    }
+    // The History menu: back to before the step `id` (it and every newer one).
+    function undoTo(id) {
+        return history.undoTo(id);
+    }
+
+    // ---- modified / reset ---------------------------------------------
     function isModified(entry) {
         if (!entry || !SchemaUtil.isResettable(entry))
             return false;
@@ -184,9 +346,7 @@ Singleton {
         return false;
     }
 
-    function reset(entry) {
-        if (!SchemaUtil.isResettable(entry))
-            return;
+    function _resetKeys(entry) {
         const keys = SchemaUtil.entryKeys(entry);
         for (let i = 0; i < keys.length; i++) {
             const def = defaultValue(keys[i]);
@@ -195,8 +355,14 @@ Singleton {
         }
     }
 
-    // Entries of a page a reset / the modified count may touch: visible ones
-    // of the running compositor only (ResetModel.js).
+    function reset(entry) {
+        if (!SchemaUtil.isResettable(entry))
+            return;
+        root.transaction(entry.label || "", () => root._resetKeys(entry));
+    }
+
+    // Entries of a page a reset / the modified count may touch: the window's
+    // own rows that are visible on the running compositor (ResetModel.js).
     function activeItems(category) {
         return ResetModel.activeItems(category, root.resetContext);
     }
@@ -211,58 +377,21 @@ Singleton {
         return n;
     }
 
+    // "Reset page": one undo step.
     function resetCategory(category) {
         const all = activeItems(category);
-        for (let i = 0; i < all.length; i++)
-            reset(all[i].entry);
+        root.transaction("prefs.undo.reset_page", () => {
+            for (let i = 0; i < all.length; i++) {
+                if (SchemaUtil.isResettable(all[i].entry))
+                    root._resetKeys(all[i].entry);
+            }
+        });
     }
 
-    // Keys a reset of `category` would change that no Apply / Discard
-    // covers (domains without a snapshot list save immediately).
-    function irreversibleKeys(category) {
-        return ResetModel.unstagedKeys(activeItems(category), isModified, isStaged);
-    }
-
-    // One schema section of a page (its header's reset button).
-    function sectionModifiedCount(section) {
-        return section ? modifiedCount({
-            "sections": [section]
-        }) : 0;
-    }
-
-    // A page or section the user asked to reset that touches values with no
-    // Apply / Discard: the window asks first (SettingsShell). Anything else
-    // resets at once.
-    property var pendingReset: null
-    property int pendingResetCount: 0
-
-    function requestReset(scope) {
-        const n = scope ? irreversibleKeys(scope).length : 0;
-        if (n === 0) {
-            if (scope)
-                resetCategory(scope);
-            return;
-        }
-        pendingResetCount = n;
-        pendingReset = scope;
-    }
-
-    function requestResetSection(section) {
-        if (section)
-            requestReset({
-                "sections": [section]
-            });
-    }
-
-    function confirmReset() {
-        const scope = pendingReset;
-        pendingReset = null;
-        if (scope)
-            resetCategory(scope);
-    }
-
-    function cancelReset() {
-        pendingReset = null;
+    // ---- what the window shows ----------------------------------------
+    // Reachable in the window (a card row or a row of the More card).
+    function inWindow(entry, section) {
+        return SchemaUtil.inWindow(entry, section);
     }
 
     function visible(entry) {
@@ -272,6 +401,14 @@ Singleton {
         return SchemaUtil.evalCondition(entry.visibleWhen, root.get);
     }
 
+    // A section has at least one card row to show right now (`more`: one
+    // row of the More card, its advanced entries).
+    function sectionShown(section, more) {
+        if (!section || !CompositorGate.allows(section.compositor, YozdService.compositorName))
+            return false;
+        return (section.entries || []).some(e => (more === true ? SchemaUtil.isAdvanced(e, section) : SchemaUtil.inCards(e, section)) && root.visible(e));
+    }
+
     function enabled(entry) {
         return SchemaUtil.evalCondition(entry.enabledWhen, root.get);
     }
@@ -279,15 +416,15 @@ Singleton {
     // key -> the schema entry that edits it (DisabledReason names it).
     readonly property var entryByKey: DisabledReason.entryIndex(Categories.categories)
 
-    // {text, fix: {key, value, on} | null} for a greyed entry, else null.
+    // {text, fix: {key, value, on} | null} for an unusable entry, else null.
     function disabledNote(entry) {
         return DisabledReason.explain(entry, root.get, k => root.entryByKey[k] || null, k => I18n.t(k));
     }
 
+    // ---- the wizard's staging -----------------------------------------
     function apply() {
-        // A separate window: the main shell writes the files (its Config
-        // holds the staged values and its own edits, as one in-process
-        // Config would), the window follows them (PreviewSink).
+        // A separate wizard process: the main shell writes the files (its
+        // Config holds the staged values), the window follows them.
         if (ProcessRole.secondary) {
             PreviewSink.applyOwn();
             return;
@@ -307,9 +444,12 @@ Singleton {
         GlobalStates.discardCompositorChanges();
     }
 
-    // preview.* params of a separate window: who staged them.
-    function _owned(params) {
-        params.owner = ProcessRole.role;
-        return params;
+    // Writes every coalesced auto-save still waiting (before a preset
+    // command reads the files). The wizard's staging is applied first.
+    function flush() {
+        if (root.hasChanges)
+            root.apply();
+        if (typeof Config.flushWrites === "function")
+            Config.flushWrites();
     }
 }

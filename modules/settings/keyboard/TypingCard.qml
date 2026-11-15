@@ -13,6 +13,8 @@ KeyboardCard {
 
     property int repeatRate: 25
     property int repeatDelay: 600
+    // the try-it field (the fitted page has its own over the keyboard)
+    property bool showTry: true
 
     signal rateMoved(int value)
     signal delayMoved(int value)
@@ -24,6 +26,7 @@ KeyboardCard {
     DisplayRow {
         width: parent.width
         separator: false
+        compact: root.headless
         label: I18n.t("prefs.keyboard.repeat_rate")
         hint: I18n.t("prefs.keyboard.repeat_rate.desc")
         SliderControl {
@@ -39,6 +42,7 @@ KeyboardCard {
 
     DisplayRow {
         width: parent.width
+        compact: root.headless
         label: I18n.t("prefs.keyboard.repeat_delay")
         hint: I18n.t("prefs.keyboard.repeat_delay.desc")
         SliderControl {
@@ -54,8 +58,9 @@ KeyboardCard {
     }
 
     Item {
+        visible: root.showTry
         width: parent.width
-        height: 106
+        height: root.showTry ? 106 : 0
         Divider {
             x: Look.rowInset
             width: parent.width - Look.rowInset * 2

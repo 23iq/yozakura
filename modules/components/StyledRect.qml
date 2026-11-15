@@ -292,7 +292,7 @@ ClippingRectangle {
         height: root.height
         visible: root.visible
         opacity: root.opacity
-        active: (WeatherFx.active || WeatherFx.scopes > 0) && root.glassSurface !== "" && WeatherFx.hosts(root.glassSurface)
+        active: WeatherFx.active && root.glassSurface !== "" && WeatherFx.hosts(root.glassSurface)
         sourceComponent: WeatherOverlay {
             surface: root
         }

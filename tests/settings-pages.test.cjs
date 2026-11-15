@@ -10,6 +10,7 @@ const qmljs = require('./lib/qmljs.cjs');
 const repo = path.join(__dirname, '..');
 const Categories = qmljs.loadLibrary(path.join(repo, 'modules/settings/schema/Categories.js'));
 const shell = fs.readFileSync(path.join(repo, 'modules/settings/SettingsPageHost.qml'), 'utf8');
+const Registry = qmljs.loadLibrary(path.join(repo, 'modules/settings/Registry.js'));
 
 // key -> [category ids] of every entry that reads/writes it.
 function owners() {
@@ -17,6 +18,9 @@ function owners() {
     for (const cat of Categories.categories) {
         for (const sec of cat.sections || []) {
             for (const e of sec.entries) {
+                // a `part` edits a key another entry owns (declared there)
+                if (e.part === true)
+                    continue;
                 const keys = new Set(e.keys || []);
                 if (e.key)
                     keys.add(e.key);
@@ -37,8 +41,11 @@ test('every sidebar entry resolves to a page', () => {
         for (const id of g.categories) {
             const c = Categories.resolve(id);
             assert.ok(c && c.id === id, id);
-            if (c.page)
-                assert.match(shell, new RegExp(`"${c.page}":`), `${id}: page ${c.page} is not mapped in SettingsPageHost`);
+            if (c.page) {
+                const p = Registry.page(c.page);
+                assert.ok(p, `${id}: page ${c.page} is not in Registry.PAGES`);
+                assert.ok(fs.existsSync(path.join(repo, 'modules/settings', p.file)), p.file);
+            }
             else
                 assert.ok(c.sections && c.sections.length > 0, `${id} has no sections`);
         }
@@ -58,6 +65,7 @@ test('ids of merged pages open the page that took them over', () => {
     assert.equal(Categories.resolve('surfaces').id, 'appearance');
     assert.equal(Categories.resolve('bar-classic').id, 'bar');
     assert.equal(Categories.resolve('sidebar').id, 'ai');
+    assert.equal(Categories.resolve('popups').id, 'notifications');
 });
 
 test('a setting is declared on one page only', () => {
@@ -70,9 +78,11 @@ test('settings live on the page of the element they control', () => {
     const expect = {
         'layout.dashboard.tabs': 'dashboard',
         'performance.dashboardPersistTabs': 'dashboard',
-        'layout.osd.style': 'osd',
+        'layout.osd.style': 'menus',
         'theme.popup.entry': 'menus',
-        'system.timers.notchStyle': 'notch',
+        'system.timers.notchStyle': 'timers',
+        'notifications.notchStyle': 'notifications',
+        'system.ocr.eng': 'system',
         'compositor.motionProfile': 'appearance',
         'compositor.motionDurationScale': 'appearance',
         'theme.animDuration': 'appearance',
@@ -88,6 +98,15 @@ test('settings live on the page of the element they control', () => {
     };
     for (const [key, page] of Object.entries(expect))
         assert.deepEqual(own[key], [page], key);
+});
+
+test('a part declares the keys it writes (Reset page and search cover them)', () => {
+    const windows = Categories.byId('windows');
+    const corners = windows.sections.flatMap(s => s.entries).find(e => e.id === 'windows.corners');
+    assert.equal(corners.part, true);
+    assert.deepEqual([...corners.keys].sort(), ['compositor.rounding', 'compositor.syncRoundness']);
+    // the owner stays Look
+    assert.deepEqual(owners()['compositor.rounding'], ['appearance']);
 });
 
 test('page titles are unique', () => {

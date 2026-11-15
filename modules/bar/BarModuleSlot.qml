@@ -20,6 +20,9 @@ import "modules" as BarFileModules
 // direct child of the bar's RowLayout/ColumnLayout.
 Loader {
     id: slot
+    // Found by settings previews (live/LiveBars: a click on a module goes
+    // to its card), so a new module needs no settings-side code
+    objectName: "barSlot:" + moduleId
 
     required property var barRoot
     required property string moduleId
@@ -159,6 +162,7 @@ Loader {
             orientation: slot.vertical ? "vertical" : "horizontal"
             bar: QtObject {
                 property var screen: slot.barRoot ? slot.barRoot.screen : null
+                property var preview: slot.barRoot ? slot.barRoot.preview : null
             }
             startRadius: slot.startRadius
             endRadius: slot.endRadius

@@ -1,0 +1,318 @@
+// Settings home and page bento: column counts and packing of the home tiles
+// (HomeLayout.js), arrow-key moves between tiles, the masonry of a page's
+// cards (BentoLayout.js) and the live status line of each tile
+// (HomeStatus.js), in every language.
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const { loadLibrary } = require('./lib/qmljs.cjs');
+
+const dir = path.join(__dirname, '..', 'modules/settings');
+const HomeLayout = loadLibrary(path.join(dir, 'HomeLayout.js'));
+const BentoLayout = loadLibrary(path.join(dir, 'BentoLayout.js'));
+const HomeStatus = loadLibrary(path.join(dir, 'HomeStatus.js'));
+const SceneModel = loadLibrary(path.join(dir, 'home/SceneModel.js'));
+const Categories = loadLibrary(path.join(dir, 'schema/Categories.js'));
+const plain = v => JSON.parse(JSON.stringify(v));
+const tr = lang => require(`../translations/${lang}.json`);
+
+test('home is six columns, four, then two when narrow, with hysteresis; rows stretch to fill', () => {
+    assert.equal(HomeLayout.columns(1100, 150, 4), 6);
+    assert.equal(HomeLayout.columns(700, 150, 6), 4);
+    assert.equal(HomeLayout.columns(500, 150, 4), 2);
+    // near a switch point the grid keeps its columns (no flip-flop)
+    assert.equal(HomeLayout.columns(880, 150, 6), 6);
+    assert.equal(HomeLayout.columns(880, 150, 4), 4);
+    assert.equal(HomeLayout.columns(0, 150, 6), 2);
+    // 3 rows and 2 gaps of 12 fill 556 px
+    assert.equal(Math.round(HomeLayout.rowUnit(556, 3, 12, 20) * 3 + 2 * 12), 556);
+    // never under the minimum (home scrolls then)
+    assert.equal(HomeLayout.rowUnit(100, 3, 12, 150), 150);
+});
+
+test('home tiles pack without overlap or holes, the heaviest first', () => {
+    const tiles = Categories.home();
+    for (const cols of [2, 4, 6]) {
+        const { cells, rows } = HomeLayout.pack(tiles, cols);
+        assert.equal(cells.length, 9);
+        const grid = Array.from({ length: rows }, () => Array(cols).fill(null));
+        for (const c of cells) {
+            assert.ok(c.col + c.w <= cols, `${c.id} inside ${cols} columns`);
+            for (let y = c.row; y < c.row + c.h; y++)
+                for (let x = c.col; x < c.col + c.w; x++) {
+                    assert.equal(grid[y][x], null, `${c.id} overlaps ${grid[y][x]} (${cols} columns)`);
+                    grid[y][x] = c.id;
+                }
+        }
+        grid.forEach((line, y) => line.forEach((v, x) => assert.ok(v, `hole at ${x},${y} in ${cols} columns`)));
+        assert.equal(cells[0].id, 'screen');
+        assert.deepEqual([cells[0].col, cells[0].row], [0, 0]);
+    }
+    // six columns: Screen two thirds wide and two rows tall, Look beside it
+    const six = HomeLayout.pack(tiles, 6).cells;
+    assert.deepEqual([six[0].w, six[0].h], [4, 2]);
+    assert.deepEqual([six[1].id, six[1].col, six[1].w, six[1].h], ['look', 4, 2, 2]);
+});
+
+test('the search field starts and ends on tile edges, short of the last column', () => {
+    const tiles = Categories.home();
+    // six columns of 168 with gaps of 24: Windows' left edge (column 2) to
+    // Keyboard's right edge (column 4)
+    assert.deepEqual(plain(HomeLayout.searchSpan(HomeLayout.pack(tiles, 6).cells, 6, 168, 24, 160)), { x: 384, width: 552 });
+    // a wider brand never runs under the field
+    const wide = HomeLayout.searchSpan(HomeLayout.pack(tiles, 6).cells, 6, 168, 24, 400);
+    assert.ok(wide.x >= 400 + 24);
+    assert.deepEqual(plain(HomeLayout.searchSpan(HomeLayout.pack(tiles, 4).cells, 4, 168, 24, 160)), { x: 192, width: 360 });
+    // two columns: no span (the field fills the room between)
+    assert.equal(HomeLayout.searchSpan(HomeLayout.pack(tiles, 2).cells, 2, 300, 24, 160), null);
+});
+
+test('arrow keys move to the next tile that way', () => {
+    const { cells } = HomeLayout.pack(Categories.home(), 6);
+    const at = id => cells.findIndex(c => c.id === id);
+    assert.equal(cells[HomeLayout.neighbour(cells, at('screen'), 'right')].id, 'look');
+    assert.equal(cells[HomeLayout.neighbour(cells, at('screen'), 'down')].id, 'panels');
+    assert.equal(cells[HomeLayout.neighbour(cells, at('look'), 'down')].id, 'notifications');
+    assert.equal(HomeLayout.neighbour(cells, at('screen'), 'left'), at('screen'));
+    assert.equal(HomeLayout.neighbour(cells, at('screen'), 'up'), at('screen'));
+});
+
+test('page cards: 1 to 3 columns, masonry without overlap', () => {
+    assert.equal(BentoLayout.columns(300, 340), 1);
+    assert.equal(BentoLayout.columns(800, 340), 2);
+    assert.equal(BentoLayout.columns(2000, 340), 3);
+    const items = [{ span: 2, height: 100 }, { span: 1, height: 50 }, { span: 1, height: 200 }, { span: 1, height: 30 }];
+    const { places, height, floor } = BentoLayout.place(items, 3, 10);
+    assert.deepEqual(plain(places[0]), { col: 0, span: 2, y: 0 });
+    assert.deepEqual(plain(places[1]), { col: 2, span: 1, y: 0 });
+    // the next card goes under the shortest column
+    assert.equal(places[2].col, 2);
+    assert.equal(places[2].y, 60);
+    assert.equal(places[3].y, 110);
+    // under the wide card, with the column beside it free on its line, the
+    // last one takes both columns (no hole beside it)
+    assert.deepEqual(plain(places[3]), { col: 0, span: 2, y: 110 });
+    assert.equal(height, 260);
+    // the shortest column ends at 140: a next card lands at or below it
+    assert.equal(floor, 140);
+    // a short column beside the tall one only: no stretch (a blank one
+    // column wide stays)
+    assert.deepEqual([...BentoLayout.place(items, 3, 10).extra], [0, 0, 0, 0]);
+    // two short columns side by side: both reach the tallest end
+    assert.deepEqual([...BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 50 }, { span: 1, height: 300 }], 3, 10).extra], [200, 250, 0]);
+    // a span wider than the grid is clamped
+    assert.equal(BentoLayout.place([{ span: 2, height: 10 }], 1, 0).places[0].span, 1);
+});
+
+test('a page of wide cards uses two columns, not an empty third', () => {
+    assert.equal(BentoLayout.fit(3, [2, 2, 2]), 2);
+    assert.equal(BentoLayout.fit(3, [2, 1, 2]), 2);
+    assert.equal(BentoLayout.fit(3, [2, 1, 1, 2, 1]), 3);
+    assert.equal(BentoLayout.fit(1, [2]), 1);
+    // one narrow card: one column (centred), not a row of empty ones
+    assert.equal(BentoLayout.fit(3, [1]), 1);
+    assert.equal(BentoLayout.fit(3, [1, 1]), 2);
+    assert.equal(BentoLayout.fit(3, [2]), 2);
+});
+
+test('a section with picture cards or an editor spans two columns', () => {
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'switch' }] }), 1);
+    // a picture choice of more than three options: two columns
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards', options: [1, 2, 3] }] }), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'select', display: 'cards', options: [1, 2, 3, 4] }] }), 2);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarStyleCards' }] }), 2);
+    // an editor is one column unless it needs the width
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'WindowGapsEditor' }] }), 1);
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarLayoutEditor' }] }), 2);
+    assert.equal(BentoLayout.spanOf({ span: 3, entries: [] }), 3);
+    // an out-of-window editor does not widen the card
+    assert.equal(BentoLayout.spanOf({ entries: [{ type: 'custom', component: 'BarLayoutEditor', advanced: true }] }, e => !e.advanced), 1);
+});
+
+test('every tile has a live status line in every language', () => {
+    const values = {
+        'bar.position': 'top', 'bar.panels': [], 'notch.enabled': true, 'dock.enabled': true,
+        'theme.language': 'ink', 'wallpaper.matugenScheme': 'scheme-tonal-spot', 'compositor.gapsIn': 6,
+        'compositor.borderSize': 2,
+    };
+    for (const lang of ['en', 'es', 'ru']) {
+        const t = tr(lang);
+        const ctx = { get: k => values[k], tr: k => t[k] || `?${k}`, wallpapers: 12, preset: '' };
+        for (const g of Categories.home()) {
+            const line = HomeStatus.line(g.id, ctx);
+            assert.ok(line && line.indexOf('?') < 0, `${lang} ${g.id}: ${line}`);
+        }
+    }
+    const en = tr('en');
+    const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
+    assert.equal(HomeStatus.line('screen', ctx), 'Top bar · island · dock');
+    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6\u00a0px · border 2\u00a0px');
+    // an "auto" presentation follows the bar and the island (both on top: the island)
+    assert.equal(HomeStatus.line('notifications', ctx), 'In the island');
+    // corner toasts and their corner, an "auto" one resolved as the shell does
+    assert.equal(HomeStatus.line('notifications', { ...ctx, get: k => k === 'notifications.presentation' ? 'corner' : values[k] }), 'Corner toasts · top right');
+    // the former status tiles' live values, in plain words
+    // one short line: the network and the volume; the monitor only alone
+    assert.equal(HomeStatus.line('devices', { ...ctx, network: 'Sakura 5G', volume: 0.62, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), 'Sakura 5G · Volume 62\u00a0%');
+    assert.equal(HomeStatus.line('devices', { ...ctx, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), '2560×1440 · 144 Hz');
+    // the first letter is capitalised
+    assert.equal(HomeStatus.line('system', { ...ctx, update: false }), 'Up to date');
+    assert.equal(HomeStatus.line('system', { ...ctx, language: 'English', update: false }), 'English · up to date');
+    // the language before the version (the scene prints the version)
+    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', language: 'English', update: false }), 'English · up to date');
+    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', update: true }), '1.3.9 · update ready');
+    assert.equal(HomeStatus.line('assistant', ctx), 'Ready to chat');
+    values['ai.defaultModel'] = 'claude-opus';
+    assert.equal(HomeStatus.line('assistant', ctx), 'claude-opus');
+    // "provider:model": the provider by its name
+    values['ai.defaultModel'] = 'ollama:llama3.2';
+    assert.equal(HomeStatus.line('assistant', ctx), 'Ollama · llama3.2');
+    values['ai.enabled'] = false;
+    assert.equal(HomeStatus.line('assistant', ctx), 'Off');
+    values['keyboard.layouts'] = [{ layout: 'us' }, { layout: 'ru' }];
+    assert.equal(HomeStatus.line('keys', ctx), 'US, RU');
+    assert.equal(HomeStatus.line('keys', { ...ctx, layoutName: c => ({ us: 'English (US)', ru: 'Russian' })[c] }), 'English (US), Russian');
+    assert.equal(HomeStatus.line('panels', ctx), 'Island launcher');
+    // the island off: "auto" falls back as the shell does
+    assert.equal(HomeStatus.line('panels', { ...ctx, get: k => k === 'notch.enabled' ? false : values[k] }), 'Spotlight launcher');
+    values['notifications.dnd.enabled'] = true;
+    assert.equal(HomeStatus.line('notifications', ctx), 'Do Not Disturb is on');
+    values['bar.panels'] = [{}, {}];
+    values['dock.enabled'] = false;
+    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island · dock off');
+    values['notch.enabled'] = false;
+    values['dock.enabled'] = true;
+    values['dock.theme'] = 'integrated';
+    assert.equal(HomeStatus.line('screen', ctx), '2 bars · island off · dock in the bar');
+});
+
+test('a status line drops its last parts until it fits one line', () => {
+    const measure = s => s.length * 10;
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 500), 'Top bar · island · dock');
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 170), 'Top bar · island');
+    assert.equal(HomeStatus.fit('Top bar · island · dock', measure, 20), 'Top bar');
+    assert.equal(HomeStatus.fit('', measure, 20), '');
+});
+
+test('every home scene is registered by its full path (the audit sees it) and exists', () => {
+    const fs = require('node:fs');
+    const Registry = loadLibrary(path.join(dir, 'Registry.js'));
+    // every destination draws a scene of its subject (the icon on a plate
+    // is the fallback of a tile too small for it)
+    for (const { id } of Categories.home()) {
+        const f = Registry.scene(id);
+        assert.ok(f, `${id} has a scene`);
+        assert.ok(fs.existsSync(path.join(dir, f)), f);
+    }
+    const files = fs.readdirSync(path.join(dir, 'home')).filter(f => f.endsWith('Scene.qml'));
+    const listed = Object.values(Registry.SCENES).map(f => f.replace('home/', ''));
+    assert.deepEqual(files.sort(), listed.sort());
+});
+
+test('tile scenes: windows tiled by layout inside the gaps, without overlap', () => {
+    const inside = (r, w, h, outer) => r.x >= outer && r.y >= outer && r.y + r.h <= h - outer;
+    for (const layout of ['dwindle', 'master']) {
+        const rs = plain(SceneModel.windows(layout, 160, 100, 2, 4));
+        assert.equal(rs.filter(r => r.active).length, 1, layout);
+        for (const r of rs)
+            assert.ok(inside(r, 160, 100, 4) && r.x + r.w <= 156, `${layout} ${JSON.stringify(r)}`);
+        for (let i = 0; i < rs.length; i++)
+            for (let j = i + 1; j < rs.length; j++) {
+                const a = rs[i], b = rs[j];
+                assert.ok(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, `${layout} ${i}/${j}`);
+            }
+    }
+    // scrolling: columns run past the right edge
+    const cols = plain(SceneModel.windows('scrolling', 160, 100, 2, 4));
+    assert.ok(cols[cols.length - 1].x + cols[cols.length - 1].w > 160);
+    // a real gap stays visible, none stays none
+    assert.equal(SceneModel.scaled(0, 100), 0);
+    assert.equal(SceneModel.scaled(2, 100), 1);
+    assert.equal(SceneModel.scaled(36, 100), 10);
+});
+
+test('tile scenes: keycaps follow the layout family, the second layout beside them', () => {
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'us' }, 5)), [['Q', 'W', 'E', 'R', 'T'], ['A', 'S', 'D', 'F', 'G']]);
+    assert.deepEqual(plain(SceneModel.keyRows('de', 6))[0].join(''), 'QWERTZ');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'fr' }, 3))[0].join(''), 'AZE');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'ru' }, 4))[1].join(''), 'ФЫВА');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'us', variant: 'colemak' }, 4))[1].join(''), 'ARST');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'xx' }, 2))[0], ['Q', 'W']);
+});
+
+test('tile scenes: device gauges from what the machine has', () => {
+    const icons = new Proxy({}, { get: (_, k) => String(k) });
+    const g = plain(SceneModel.gauges({
+        battery: { available: true, percent: 76, charging: false },
+        network: { name: 'Sakura 5G', strength: 86 },
+        volume: 0.62,
+        bluetooth: { enabled: true, connected: 2 },
+    }, icons));
+    assert.deepEqual(g.map(x => x.id), ['battery', 'network', 'volume', 'bluetooth']);
+    assert.deepEqual(g.map(x => x.text), ['76%', '86%', '62%', '2']);
+    assert.equal(g[0].icon, 'batteryHigh');
+    // a desktop: no battery, the cable, no sound device, Bluetooth off
+    const d = plain(SceneModel.gauges({ network: { ethernet: true }, volume: -1, bluetooth: { enabled: false } }, icons));
+    assert.deepEqual(d.map(x => [x.id, x.icon, x.value]), [['network', 'ethernet', 1], ['bluetooth', 'bluetoothOff', 0]]);
+});
+
+test('scenes read the same resolved state as the status line', () => {
+    const get = v => k => v[k];
+    assert.equal(HomeStatus.launcherHost({ get: get({ 'notch.enabled': false }) }), 'spotlight');
+    assert.equal(HomeStatus.launcherHost({ get: get({}) }), 'notch');
+    const n = plain(HomeStatus.notificationState({ get: get({ 'notifications.presentation': 'corner', 'notifications.dnd.enabled': true }) }));
+    assert.deepEqual(n, { dnd: true, presentation: 'corner', position: 'top-right' });
+});
+
+test('the page order: plain rows, then big controls, the lead ones first in each', () => {
+    const secs = [
+        { id: 'a', entries: [{ type: 'custom' }] },
+        { id: 'b', entries: [{ type: 'toggle' }] },
+        { id: 'c', entries: [{ type: 'selector', display: 'cards' }] },
+        { id: 'd', entries: [{ type: 'slider' }] },
+    ];
+    assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'])], [3, 1, 2, 0]);
+    assert.deepEqual([...BentoLayout.order(secs, [])], [1, 3, 0, 2]);
+    // one column (two panes, or no stage): the lead cards, then the schema order
+    assert.deepEqual([...BentoLayout.order(secs, ['c', 'd'], null, true)], [2, 3, 0, 1]);
+    assert.deepEqual([...BentoLayout.order(secs, [], null, true)], [0, 1, 2, 3]);
+});
+
+test('a narrow card fills the hole a wide one leaves; fixed columns stay', () => {
+    // a short card, then a wide one: the third column is free under the
+    // short one and a narrow card goes there, not under the wide one
+    const items = [{ span: 1, height: 50 }, { span: 2, height: 300 }, { span: 1, height: 100 }, { span: 1, height: 100 }];
+    const r = BentoLayout.place(items, 3, 10);
+    assert.deepEqual(plain(r.places[1]), { col: 1, span: 2, y: 0 });
+    assert.deepEqual(plain(r.places[2]), { col: 0, span: 1, y: 60 });
+    assert.deepEqual(plain(r.places[3]), { col: 0, span: 1, y: 170 });
+    // a card that grows keeps its column
+    const grown = items.map((it, i) => i === 0 ? { span: 1, height: 400 } : it);
+    const kept = BentoLayout.place(grown, 3, 10, r.places);
+    assert.equal(kept.places[2].col, 0);
+    assert.equal(kept.places[3].col, 0);
+});
+
+test('a lone card of a band takes the free columns beside it', () => {
+    // two cards on the top line of three columns: the second takes the third
+    const two = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 80 }], 3, 10);
+    assert.deepEqual(plain(two.places[0]), { col: 0, span: 1, y: 0 });
+    assert.deepEqual(plain(two.places[1]), { col: 1, span: 2, y: 0 });
+    // a card under a wide one, the other column free on its line: both
+    const r = BentoLayout.place([{ span: 2, height: 100 }, { span: 1, height: 80 }], 2, 10);
+    assert.deepEqual(plain(r.places[1]), { col: 0, span: 2, y: 110 });
+    // a column busy beside it: it stays narrow
+    const busy = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 300 }, { span: 1, height: 50 }], 2, 10);
+    assert.deepEqual(plain(busy.places[2]), { col: 0, span: 1, y: 110 });
+    // fixed places keep their widened span
+    const kept = BentoLayout.place([{ span: 1, height: 100 }, { span: 1, height: 120 }], 3, 10, two.places);
+    assert.equal(kept.places[1].span, 2);
+});
+
+test('the master switch card heads the page', () => {
+    const secs = [
+        { id: 'a', entries: [{ type: 'toggle', key: 'x.a' }] },
+        { id: 'b', entries: [{ type: 'selector', display: 'cards', key: 'x.style' }, { type: 'toggle', key: 'notch.enabled' }] },
+    ];
+    assert.equal(BentoLayout.order(secs, [])[0], 1);
+});

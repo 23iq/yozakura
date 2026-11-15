@@ -10,6 +10,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
+import "../components/preview/Preview.js" as Preview
 
 StyledRect {
     id: root
@@ -18,14 +19,16 @@ StyledRect {
     property string orientation: "horizontal"
 
     readonly property bool isVertical: orientation === "vertical"
-    readonly property bool isIntegrated: (Config.dock?.theme ?? "default") === "integrated"
+    // (a settings preview, bar.preview, may show it without the config)
+    readonly property var preview: bar ? (bar.preview ?? null) : null
+    readonly property bool isIntegrated: Preview.pick(preview, "dock.theme", Config.dock?.theme ?? "default") === "integrated"
     readonly property string dockPosition: Config.dock?.position ?? "center"
 
     // Compact sizing for integrated dock
     readonly property int iconSize: 18
     readonly property int itemSpacing: 2
 
-    visible: (Config.dock?.enabled ?? false) && isIntegrated
+    visible: Preview.pick(preview, "dock.enabled", Config.dock?.enabled ?? false) && isIntegrated
 
     variant: "bg"
     

@@ -5,7 +5,9 @@ import qs.modules.components.kit
 // under it. A `confirm` action (shutdown, reboot, log out) fires only after
 // a full hold: a HoldToConfirm ring fills around the button while the mouse
 // or Enter / Space is held; plain actions fire on click / Enter at once.
-// Keyboard focus shows the hover look (`highlighted`).
+// Keyboard focus shows the hover look (`highlighted`). `danger`: a
+// destructive action (shut down, delete, discard): the error tint and ink
+// while hovered or held, never the accent.
 FocusScope {
     id: root
 
@@ -16,6 +18,7 @@ FocusScope {
     property string labelRole: "caption"
     property bool active: false
     property bool confirm: false
+    property bool danger: false
     property bool highlighted: root.activeFocus
     readonly property bool hovered: mouse.containsMouse
     readonly property alias hold: hold
@@ -80,6 +83,7 @@ FocusScope {
         icon: root.icon
         size: root.size
         active: root.active
+        danger: root.danger
         highlighted: root.highlighted || mouse.containsMouse
         scale: mouse.pressed ? 0.94 : 1
     }
@@ -101,7 +105,7 @@ FocusScope {
         anchors.topMargin: Space.l
         anchors.horizontalCenter: parent.horizontalCenter
         role: root.labelRole
-        color: root.highlighted || mouse.containsMouse ? Type.text : Type.color(root.labelRole)
+        color: root.highlighted || mouse.containsMouse ? (root.danger ? Type.danger : Type.text) : Type.color(root.labelRole)
         text: root.text
     }
 

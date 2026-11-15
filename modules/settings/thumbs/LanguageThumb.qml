@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.settings.previews
 import "../Ui.js" as Ui
 import "../../theme/VisualLanguage.js" as VisualLanguage
 
@@ -10,7 +9,7 @@ import "../../theme/VisualLanguage.js" as VisualLanguage
 // from that language's kit spec (VisualLanguage.KIT): its groups (fill,
 // outline, radius, dividers) and its controls (fill, round or square; the
 // device language turns a knob).
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

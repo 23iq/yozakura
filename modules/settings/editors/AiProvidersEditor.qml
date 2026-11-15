@@ -13,8 +13,13 @@ ColumnLayout {
 
     ConnectSheet {
         objectName: "settingsConnectSheet"
+        inSettings: true
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
         embedded: true
+    }
+    // in a tall card: the sheet from the top
+    Item {
+        Layout.fillHeight: true
     }
 }

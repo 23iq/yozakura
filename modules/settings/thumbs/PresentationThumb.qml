@@ -2,14 +2,13 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.settings.previews
 import "../Ui.js" as Ui
 
 // Card picture of where notifications show (notifications.presentation):
 // grown from the island (notch), a toast in the corner, or paper strips
 // hanging from the top edge (strips). Auto draws the island and the corner
 // faintly with a wand: the bar's style decides.
-ScreenBackdrop {
+ThumbGround {
     id: root
 
     property var entry

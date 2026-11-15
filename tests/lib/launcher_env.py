@@ -119,18 +119,34 @@ def _icon_theme() -> str:
         return "hicolor"
 
 
+def _tile(path: Path, hue: int) -> bool:
+    """A plain rounded tile (no icon theme on this machine)."""
+    from PySide6.QtGui import QColor, QImage, QPainter
+
+    img = QImage(64, 64, QImage.Format.Format_ARGB32)
+    img.fill(0)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setBrush(QColor.fromHsv(hue % 360, 140, 220))
+    p.setPen(QColor(0, 0, 0, 0))
+    p.drawRoundedRect(4, 4, 56, 56, 14, 14)
+    p.end()
+    return img.save(str(path))
+
+
 def resolve_icons(apps: list[dict], out_dir: Path) -> list[dict]:
-    """Icon theme names -> PNG files (the harness has no image://icon provider,
-    and a Python one deadlocks Qt's pixmap reader thread)."""
+    """Icon theme names -> PNG files, always (the async `image://icon` of the
+    harness' Python provider deadlocks Qt's pixmap reader thread): the theme's
+    icon, else a plain tile."""
     QIcon.setThemeName(_icon_theme())
     out_dir.mkdir(parents=True, exist_ok=True)
     res = []
-    for a in apps:
+    for i, a in enumerate(apps):
         icon = QIcon.fromTheme(a.get("icon", ""))
         if icon.isNull():
             icon = QIcon.fromTheme("application-x-executable")
         path = out_dir / (a["id"] + ".png")
-        if not icon.isNull() and icon.pixmap(64, 64).save(str(path)):
+        if (not icon.isNull() and icon.pixmap(64, 64).save(str(path))) or _tile(path, i * 97 + 20):
             a = {**a, "icon": str(path)}
         res.append(a)
     return res

@@ -51,8 +51,11 @@ Item {
             return;
         if (action === "primary") {
             const old = primary;
-            SettingsStore.set("wallpaper.wallPath", dir);
-            setExtras(extraList.filter(p => p !== dir).concat(old && old !== dir ? [old] : []));
+            // one undo step: the new main folder and the old one kept
+            SettingsStore.transaction("prefs.wall.folders", () => {
+                SettingsStore.set("wallpaper.wallPath", dir);
+                setExtras(extraList.filter(p => p !== dir).concat(old && old !== dir ? [old] : []));
+            });
             message = I18n.t("prefs.wall.folder_primary_set", dir);
         } else if (folders.indexOf(dir) !== -1) {
             message = I18n.t("prefs.wall.folder_exists");

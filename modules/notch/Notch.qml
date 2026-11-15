@@ -9,12 +9,17 @@ import qs.config
 import qs.modules.shell.hosts
 import "styles/NotchStyles.js" as NotchStyles
 import "NotchShape.js" as NotchShape
+import "../components/preview/Preview.js" as Preview
 
 Item {
     id: notchContainer
 
     property bool unifiedEffectActive: false
     z: 1000
+    // A settings preview (PreviewContext, components/preview; NotchPreview):
+    // its looks (notch.style, notch.position) and samples
+    // ("notifications"); null live
+    property var preview: null
 
     property Component defaultViewComponent
     property Component launcherViewComponent
@@ -55,11 +60,17 @@ Item {
     readonly property bool screenNotchOpen: HostRouter.notchOpen(visibilities)
     // Screen this notch is on (notifications.screens filter)
     property string screenName: ""
-    readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(screenName)
+    readonly property bool hasActiveNotifications: Preview.sample(preview, "notifications", Notifications.notchPopupList).length > 0 && (Preview.on(preview) || Notifications.showsOnScreen(screenName))
 
     // notch.style (styles/NotchStyles.js); a collapsing style (pill) sits as
     // a small capsule until something happens or the pointer arrives
-    readonly property var styleSpec: NotchStyles.spec(Config.notchStyle)
+    readonly property string notchStyle: Preview.pick(preview, "notch.style", Config.notchStyle)
+    readonly property var styleSpec: NotchStyles.spec(notchStyle)
+    // "default" (attached) | "island": live, Config.notchTheme (the theme
+    // NotchContent, ActivityHost and NotchSilhouette read too, so a
+    // hand-edited style outside the registry stays one look); a preview's
+    // style is a registry id (NotchPreview derives it the same way)
+    readonly property string theme: Preview.on(preview) ? NotchStyles.legacyTheme(notchStyle) : Config.notchTheme
     readonly property var restingView: stackViewInternal.currentItem
     readonly property bool pillCollapsed: NotchStyles.collapsed(styleSpec, {
         hovered: hoverIntent,
@@ -80,7 +91,7 @@ Item {
     readonly property real targetContentWidth: (stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitWidth : 0) + contentPadding * 2
     readonly property real targetContentHeight: (stackViewInternal.currentItem ? stackViewInternal.currentItem.implicitHeight : 0) + contentPadding * 2
     // Depth of the resting notch away from its edge
-    readonly property real thickness: Config.notchTheme === "default" ? BarMetrics.notchRestHeight : BarMetrics.notchIslandHeight
+    readonly property real thickness: theme === "default" ? BarMetrics.notchRestHeight : BarMetrics.notchIslandHeight
 
     function pushView(view) {
         // StackView records whether the item has an explicit size on load.
@@ -120,14 +131,14 @@ Item {
         }
     }
 
-    readonly property string position: Config.notchPosition ?? "top"
+    readonly property string position: Preview.pick(preview, "notch.position", Config.notchPosition ?? "top")
     // On a side edge the notch stands upright: content stacks along the
     // edge and views open toward the screen center
     readonly property bool vertical: NotchShape.vertical(position)
 
     // Concave screen corners (attached style only), along the edge
     readonly property int cornerSize: Config.roundness > 0 ? Config.roundness + 4 : 0
-    readonly property int totalCornerWidth: Config.notchTheme === "default" ? cornerSize * 2 : 0
+    readonly property int totalCornerWidth: theme === "default" ? cornerSize * 2 : 0
 
     readonly property real bodyWidth: isExpanded ? Math.max(targetContentWidth, 290) : targetContentWidth
     readonly property var outerSize: NotchShape.size(position, {
@@ -181,6 +192,7 @@ Item {
         width: parent.implicitWidth
         height: parent.implicitHeight
         position: notchContainer.position
+        attached: notchContainer.theme === "default"
         unifiedEffectActive: notchContainer.unifiedEffectActive
         open: notchContainer.screenNotchOpen || notchContainer.hasActiveNotifications
         tightEdge: notchContainer.hasActiveNotifications && !!stackViewInternal.currentItem && stackViewInternal.depth === 1

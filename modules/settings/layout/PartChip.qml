@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.settings
 import qs.modules.components.kit
 
 // One part (bar, notch, dock) of the layout builder's screen mock: a chip
@@ -33,39 +34,19 @@ Item {
     signal released(string partId, real cx, real cy)
 
     objectName: "partChip_" + partId
-    x: rect.x
-    y: rect.y
-    width: rect.w
-    height: rect.h
     z: dragging ? 10 : (selected ? 2 : 1)
 
     readonly property color tint: chip.partId === "notch" ? Colors.secondary : chip.partId === "dock" ? Colors.tertiary : Colors.primary
 
-    Behavior on x {
-        enabled: !chip.dragging
-        NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
-    }
-    Behavior on y {
-        enabled: !chip.dragging
-        NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
-    }
-    Behavior on width {
-        NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
-    }
-    Behavior on height {
-        NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
+    // at its rect: glides on a config change, lands at once on a resize
+    // of the mock (never rubber-bands), glides back after a drag
+    RectGlide {
+        target: chip
+        rect: chip.rect
+        frame: chip.parent
+        hold: chip.dragging
+        duration: Motion.morph.duration
+        easing: Motion.morph.easing
     }
 
     Rectangle {
@@ -145,9 +126,7 @@ Item {
             const p = mouse.mapToItem(chip.parent, event.x, event.y);
             const cx = p.x;
             const cy = p.y;
-            // Back to the config's rect (the drop may move it there)
-            chip.x = Qt.binding(() => chip.rect.x);
-            chip.y = Qt.binding(() => chip.rect.y);
+            // back to the config's rect (RectGlide; the drop may move it there)
             if (wasDragging)
                 chip.released(chip.partId, cx, cy);
         }

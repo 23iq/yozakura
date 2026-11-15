@@ -25,7 +25,6 @@ h.copy("modules/components/SettleGate.qml", "qs/modules/components", siblings=Fa
 h.module("qs.modules.components", {})
 h.singleton("qs.modules.globals", "GlobalStates", """QtObject {
     property bool settingsWindowVisible: false
-    property bool settingsCloseConfirm: false
     property string settingsTargetScreenName: ""
     property int settingsTargetWorkspaceId: 0
 }""")

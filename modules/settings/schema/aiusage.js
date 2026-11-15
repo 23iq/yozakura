@@ -1,7 +1,7 @@
 .pragma library
 
 // AI > usage and subscription limits (spliced into schema/ai.js after the
-// model/effort/context sections). Entry format: see modules/settings/AGENTS.md.
+// model/effort/context sections; shown on the Providers tab, Categories.js). Entry format: see modules/settings/AGENTS.md.
 
 function opt(value, label) {
     return { "value": value, "label": label };

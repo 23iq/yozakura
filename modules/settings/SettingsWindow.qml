@@ -163,18 +163,11 @@ FloatingWindow {
         }
     }
 
-    // Unsaved staged changes are never dropped silently: a close request
-    // (close button, keybind, window manager) keeps the window and asks.
+    // Every change is already applied and saved: a close needs no question.
     Connections {
         target: GlobalStates
         function onSettingsTargetScreenNameChanged() {
             settingsWindow.retarget();
-        }
-        function onSettingsWindowVisibleChanged() {
-            if (!GlobalStates.settingsWindowVisible && SettingsStore.hasChanges) {
-                GlobalStates.settingsCloseConfirm = true;
-                GlobalStates.settingsWindowVisible = true;
-            }
         }
     }
 

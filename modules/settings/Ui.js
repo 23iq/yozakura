@@ -15,16 +15,36 @@ function mix(a, b, t) {
     return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
 }
 
-// "300 ms", "1.2 s", "12 px"; special values ({value, label}) win.
-function formatValue(value, unit, special, tr) {
+// "300 ms", "1.2 s", "12 px", "15 %" (unit "fraction": 0.15); special values
+// ({value, label}) win.
+// `max`: the top of the control's range; a duration in ms that may run to
+// 5 s or more reads in seconds all along ("0.5 s" ... "30 s", one unit), a
+// shorter one in ms below a second.
+function formatValue(value, unit, special, tr, max) {
     for (var i = 0; special && i < special.length; i++) {
         if (special[i].value === value)
             return tr ? tr(special[i].label) : special[i].label;
     }
+    // a fraction (0.15 of the screen) reads as a percentage
+    if (unit === "fraction")
+        return Math.round(value * 100) + " %";
     var v = Math.round(value * 100) / 100;
-    if (unit === "ms" && v >= 1000)
+    if (unit === "ms" && (v >= 1000 || (max >= 5000 && v > 0)))
         return (Math.round(v / 100) / 10) + " s";
     return unit ? v + " " + unit : String(v);
+}
+
+// A slider's value text: formatValue, except a unitless fraction (a range
+// inside 0..1, e.g. a preview scale of 0.15) reads as a percentage ("15 %"),
+// never as a raw float.
+function formatLevel(value, from, to, unit, special, tr) {
+    for (var i = 0; special && i < special.length; i++) {
+        if (special[i].value === value)
+            return tr ? tr(special[i].label) : special[i].label;
+    }
+    if (!unit && from >= 0 && to <= 1 && to > from)
+        return Math.round(value * 100) + " %";
+    return formatValue(value, unit, special, tr, to);
 }
 
 // Heuristic monospace detection for font family names (Qt only lists
@@ -120,4 +140,14 @@ function invoke(obj, name, args) {
     if (obj && typeof obj[name] === "function")
         return obj[name].apply(obj, args || []);
     return undefined;
+}
+
+// Connect `fn` to the signal `name` of an object known only at runtime (a
+// Loader's item loaded by URL). False when it has no such signal.
+function on(obj, name, fn) {
+    if (obj && obj[name] && typeof obj[name].connect === "function") {
+        obj[name].connect(fn);
+        return true;
+    }
+    return false;
 }

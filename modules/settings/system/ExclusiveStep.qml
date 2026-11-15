@@ -56,7 +56,8 @@ Item {
             visible: text !== ""
             role: "secondary"
             text: root.detail
-            wrapMode: Text.WrapAnywhere
+            // prose breaks between words; a path or command anywhere
+            wrapMode: root.mono ? Text.WrapAnywhere : Text.Wrap
             font.family: root.mono ? "monospace" : Type.bodyFont
         }
     }

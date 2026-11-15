@@ -13,7 +13,6 @@ var sections = [
             {
                 "key": "theme.lighting.mode",
                 "type": "selector",
-                "preview": "LightingPreview",
                 "label": "prefs.lighting.mode",
                 "description": "prefs.lighting.mode.desc",
                 "options": [

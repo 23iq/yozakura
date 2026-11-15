@@ -77,7 +77,9 @@ QtObject {
     property var workspaceOccupationMap: ({ "1": true, "2": true, "3": true, "4": true })
     property var workspaceWindowsMap: (""" + _windows_map() + """)
     property var workspaceUrgentMap: ({})
-    function monitorHasFullscreen(m) { return false; }
+    // (a test sets it: every monitor has a fullscreen window)
+    property bool anyFullscreen: false
+    function monitorHasFullscreen(m) { return anyFullscreen; }
     function refreshSpecialWorkspaces() {}
 }
 """
@@ -86,6 +88,8 @@ QtObject {
 ACTIVITY_SERVICE = """pragma Singleton
 QtObject {
     property string presentation: "notch"; property int count: 0; property var items: []
+    property var activities: []; property var tasks: []; property var privacy: []; property bool showSpeed: true
+    function activate(a, b, s) {} function transferAction(t, a) {} function iconUrl(n) { return "" }
     property var transfers: [{ id: "dl1", source: "browserDownloads", kind: "download", state: "running",
         title: "archlinux-2026.10.01-x86_64.iso", processed: 503316480, total: 1181116006, rate: 8388608,
         units: "bytes", startedAt: 1 }]
@@ -199,7 +203,8 @@ QtObject {{
     property var focusedMonitor: monitor
     property var focusedClient: ({{ address: "0xf1", "class": "{WINDOWS[0][0]}", title: {json.dumps(WINDOWS[0][2])}, workspace: {{ id: {ACTIVE_WS} }} }})
     property var monitors: ({{ values: [monitor] }})
-    property var workspaces: ({{ values: [1, 2, 3, 4, 5, 6].map(i => ({{ id: i, name: String(i) }})) }})
+    // a QtObject like the real list holder (Connections target it)
+    property QtObject workspaces: QtObject {{ property var values: [1, 2, 3, 4, 5, 6].map(i => ({{ id: i, name: String(i) }})) }}
     property var clients: ({{ values: {_toplevels()} }})
     property var toplevels: ({{ values: {_toplevels()} }})
     function monitorFor(s) {{ return monitor }}

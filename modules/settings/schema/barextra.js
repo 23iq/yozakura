@@ -68,6 +68,7 @@ var sections = [
     },
     {
         "id": "expert",
+        "advanced": true,
         "title": "prefs.bar.section.expert",
         "entries": [
             {

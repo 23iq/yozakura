@@ -36,6 +36,18 @@ test('snap rounds float noise to the decimals of the step', () => {
     assert.equal(Ui.snap(0.35, 0.1, 1, 0.05), 0.35);
 });
 
+test('a long duration reads in one unit; a short one in ms below a second', () => {
+    // "Show for" (0 .. 30 s): seconds all along, never "500 ms" next to "1.5 s"
+    assert.equal(Ui.formatValue(500, 'ms', [], null, 30000), '0.5 s');
+    assert.equal(Ui.formatValue(5000, 'ms', [], null, 30000), '5 s');
+    assert.equal(Ui.formatValue(0, 'ms', [{ value: 0, label: 'never' }], null, 30000), 'never');
+    // a short range keeps ms under a second
+    assert.equal(Ui.formatValue(250, 'ms', [], null, 1500), '250 ms');
+    assert.equal(Ui.formatValue(1200, 'ms', [], null, 1500), '1.2 s');
+    assert.equal(Ui.formatValue(250, 'ms'), '250 ms');
+    assert.equal(Ui.formatValue(12, 'px'), '12 px');
+});
+
 test('special values below min are reachable by stepping', () => {
     const sp = [{ value: -1, label: 'auto' }];
     assert.equal(Ui.stepValue(5, -1, 5, 100, 1, sp), -1);
@@ -75,15 +87,6 @@ test('reset only touches visible entries of the running compositor', () => {
     assert.deepEqual(plain(ids('', { 'dock.enabled': true })), ['bar.compact', 'dock.height']);
 });
 
-test('unstagedKeys lists modified keys of domains without a snapshot', () => {
-    const items = SchemaUtil.flatten([{ sections: [{ id: 's', entries: [
-        { key: 'bar.compact' }, { key: 'general.x' }, { key: 'wallpaper.matugenScheme' }, { key: 'weather.unit' },
-    ] }] }]);
-    const staged = d => d === 'bar';
-    const modified = e => e.key !== 'weather.unit';
-    assert.deepEqual(plain(ResetModel.unstagedKeys(items, modified, staged)), ['general.x']);
-});
-
 test('search skips hidden and other-compositor entries and tells duplicates apart', () => {
     const cats = [{
         id: 'c', title: 't', icon: 'x', sections: [
@@ -111,4 +114,21 @@ test('wallpaper defaults come from one source', () => {
     assert.equal(Defaults.get('wallpaper.matugenScheme'), WallpaperDefaults.MATUGEN_SCHEME);
     assert.equal(Defaults.get('wallpaper.activeColorPreset'), WallpaperDefaults.ACTIVE_COLOR_PRESET);
     assert.equal(Defaults.get('wallpaper.wallPath'), undefined);
+});
+
+test('Ui.on connects a runtime object\'s signal, or says it cannot', () => {
+    const seen = [];
+    const sig = { connect: fn => seen.push(fn) };
+    const fn = () => 1;
+    assert.equal(Ui.on({ closed: sig }, 'closed', fn), true);
+    assert.equal(seen[0], fn);
+    assert.equal(Ui.on({}, 'closed', fn), false);
+    assert.equal(Ui.on(null, 'closed', fn), false);
+});
+
+test('a unitless fraction slider reads as a percentage', () => {
+    assert.equal(Ui.formatLevel(0.15, 0.05, 0.5, '', [], null), '15 %');
+    assert.equal(Ui.formatLevel(12, 0, 40, 'px', [], null), '12 px');
+    assert.equal(Ui.formatLevel(3, 1, 10, '', [], null), '3');
+    assert.equal(Ui.formatLevel(0, 0, 1, '', [{ value: 0, label: 'Off' }], null), 'Off');
 });

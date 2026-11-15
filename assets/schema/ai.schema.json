@@ -7,7 +7,7 @@
   "x-file": "config/ai.json",
   "properties": {
     "enabled": {
-      "title": "Enable the AI center",
+      "title": "Assistant",
       "type": "boolean",
       "default": true,
       "description": "Sidebar, quick ask and how answers are shown.",
@@ -39,7 +39,7 @@
       "description": "Extra chat models added to the model picker."
     },
     "defaultModel": {
-      "title": "Default engine (Assistant)",
+      "title": "Answers come from",
       "type": "string",
       "default": "",
       "description": "Engine of new Assistant chats, e.g. anthropic:claude-sonnet-4-5, ollama:qwen3 or agent:codex. Empty uses your last choice.",
@@ -101,7 +101,7 @@
       "description": "The assistant sidebar starts pinned open.",
       "x-settings": {
         "category": "ai",
-        "section": "sidebar",
+        "section": "bar_behavior",
         "label": "prefs.sidebar.pinned",
         "control": "toggle",
         "keywords": "assistant sidebar pin pinned startup keep open visible"
@@ -128,7 +128,7 @@
       "maximum": 2400
     },
     "showThinking": {
-      "title": "Show model thinking",
+      "title": "Show thinking",
       "type": "boolean",
       "default": true,
       "description": "Show the reasoning stream of models that expose it (collapsed when done).",
@@ -606,14 +606,14 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "title": "Quick ask in the notch",
+          "title": "Use quick ask",
           "type": "boolean",
           "default": true,
           "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
           "x-settings": {
             "category": "ai",
             "section": "quickask",
-            "label": "ai.quick_enabled",
+            "label": "prefs.ai.quick_use",
             "control": "toggle",
             "keywords": "quick ask notch"
           }
@@ -904,7 +904,7 @@
           "description": "Size of the AI bar when the shell starts. Switch with the size button or Ctrl+W.",
           "x-settings": {
             "category": "ai",
-            "section": "bar_appearance",
+            "section": "size",
             "label": "prefs.ai.default_size",
             "control": "selector",
             "keywords": "size compact wide fullscreen width layout"
@@ -927,7 +927,7 @@
           "description": "Bubbles on the right, or flat blocks like the answers.",
           "x-settings": {
             "category": "ai",
-            "section": "bar_appearance",
+            "section": "messages",
             "label": "prefs.ai.message_style",
             "control": "selector",
             "keywords": "message bubble flat chat style"
@@ -1235,7 +1235,8 @@
             "section": "bar_strip",
             "label": "prefs.ai.strip_engine",
             "control": "toggle",
-            "keywords": "status strip engine model effort"
+            "keywords": "status strip engine model effort",
+            "advanced": true
           }
         },
         "effort": {
@@ -1248,7 +1249,8 @@
             "section": "bar_strip",
             "label": "prefs.ai.strip_effort",
             "control": "toggle",
-            "keywords": "status strip reasoning effort thinking level"
+            "keywords": "status strip reasoning effort thinking level",
+            "advanced": true
           }
         },
         "context": {
@@ -1261,7 +1263,8 @@
             "section": "bar_strip",
             "label": "prefs.ai.strip_context",
             "control": "toggle",
-            "keywords": "status strip context window tokens"
+            "keywords": "status strip context window tokens",
+            "advanced": true
           }
         },
         "cost": {
@@ -1274,7 +1277,8 @@
             "section": "bar_strip",
             "label": "prefs.ai.strip_cost",
             "control": "toggle",
-            "keywords": "status strip cost tokens price"
+            "keywords": "status strip cost tokens price",
+            "advanced": true
           }
         },
         "limit": {
@@ -1287,7 +1291,8 @@
             "section": "bar_strip",
             "label": "prefs.ai.strip_limit",
             "control": "toggle",
-            "keywords": "status strip subscription limit usage"
+            "keywords": "status strip subscription limit usage",
+            "advanced": true
           }
         }
       },
@@ -1304,7 +1309,7 @@
           "description": "Level for models you have not set yourself; a level chosen in a chat is remembered for that model.",
           "x-settings": {
             "category": "ai",
-            "section": "model_effort",
+            "section": "center",
             "label": "prefs.ai.effort_default",
             "control": "selector",
             "keywords": "reasoning effort thinking default level budget"
@@ -1340,7 +1345,7 @@
           "description": "The context meter turns amber and offers Compact from this fill level.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_warn",
             "control": "slider",
             "step": 5,
@@ -1360,7 +1365,7 @@
           "description": "The context meter turns red from this fill level.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_critical",
             "control": "slider",
             "step": 1,
@@ -1380,7 +1385,7 @@
           "description": "Before sending, summarise older messages of an API/Ollama chat when the window is nearly full. Agents compact themselves.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.auto_compact",
             "control": "toggle",
             "keywords": "auto compact compaction summarize summary context history"
@@ -1393,7 +1398,7 @@
           "description": "Fill level that triggers automatic compaction.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.auto_compact_at",
             "control": "slider",
             "step": 1,
@@ -1417,7 +1422,7 @@
           "description": "How many of your last messages (with their answers) stay verbatim when compacting.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.keep_turns",
             "control": "number",
             "keywords": "compact keep recent turns messages verbatim",
@@ -1435,7 +1440,7 @@
           "description": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.compact_model",
             "control": "text",
             "keywords": "compact summary model cheap fast"
@@ -1448,7 +1453,7 @@
           "description": "Window size per model, for models the built-in table does not know or gets wrong.",
           "x-settings": {
             "category": "ai",
-            "section": "context",
+            "section": "center",
             "label": "prefs.ai.context_overrides",
             "control": "list",
             "keywords": "context window override model size tokens custom",
@@ -1469,7 +1474,7 @@
           "description": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "local",
+            "section": "defaults",
             "label": "prefs.ai.ollama_num_ctx",
             "control": "number",
             "step": 1024,
@@ -1494,7 +1499,7 @@
           "description": "Where Ollama is probed and asked. Empty uses http://127.0.0.1:11434.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "local",
+            "section": "defaults",
             "label": "prefs.ai.ollama_endpoint",
             "control": "text",
             "keywords": "ollama endpoint url host port server remote local",
@@ -1509,7 +1514,7 @@
           "description": "How long a model stays in memory after a reply (5m, 1h, -1 = forever, 0 = unload at once). Empty uses Ollama's default.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "local",
+            "section": "defaults",
             "label": "prefs.ai.ollama_keep_alive",
             "control": "text",
             "keywords": "ollama keep alive unload memory vram minutes",
@@ -1532,7 +1537,7 @@
           "description": "LM Studio's local server. Empty uses http://127.0.0.1:1234/v1.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "local",
+            "section": "defaults",
             "label": "prefs.ai.lmstudio_endpoint",
             "control": "text",
             "keywords": "lm studio lmstudio endpoint url server port local",
@@ -1555,7 +1560,7 @@
           "description": "Longest time one chat request may take, streaming included.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "requests",
+            "section": "defaults",
             "label": "prefs.ai.providers.timeout",
             "control": "number",
             "step": 30,
@@ -1581,7 +1586,7 @@
           "description": "Extra attempts after a network error, rate limit or overloaded server, only before any text arrived.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "requests",
+            "section": "defaults",
             "label": "prefs.ai.providers.retries",
             "control": "number",
             "keywords": "retry retries rate limit 429 overloaded network error",
@@ -1629,7 +1634,7 @@
           "description": "While the AI bar is open, Ollama and LM Studio are checked again at this interval (they are always checked when the model picker opens). No model is loaded.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "local",
+            "section": "defaults",
             "label": "prefs.ai.providers.probe_interval",
             "control": "number",
             "step": 15,
@@ -1655,7 +1660,7 @@
           "description": "Extra HTTP headers sent to the Custom (OpenAI-compatible) provider, e.g. a proxy's auth header.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "requests",
+            "section": "defaults",
             "label": "prefs.ai.providers.headers",
             "control": "list",
             "keywords": "custom endpoint headers proxy auth authorization openai compatible",
@@ -1670,7 +1675,7 @@
           "description": "Sends the optional HTTP-Referer and X-Title headers so requests show up under this app in OpenRouter.",
           "x-settings": {
             "category": "ai-providers",
-            "section": "requests",
+            "section": "defaults",
             "label": "prefs.ai.providers.openrouter_attribution",
             "control": "toggle",
             "keywords": "openrouter referer title attribution headers app",
@@ -1714,7 +1719,7 @@
           }
         },
         "planFirst": {
-          "title": "Plan first by default",
+          "title": "Plan first",
           "type": "boolean",
           "default": false,
           "description": "The agent writes a plan you can edit before it changes any file",
@@ -1727,7 +1732,7 @@
           }
         },
         "inPlace": {
-          "title": "Work in the current branch by default",
+          "title": "Work in place",
           "type": "boolean",
           "default": false,
           "description": "Off: every task gets its own git worktree and branch, your checkout stays untouched",
@@ -1746,7 +1751,7 @@
           "description": "Further tasks wait in the queue",
           "x-settings": {
             "category": "ai-code",
-            "section": "queue",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.max_parallel",
             "control": "number",
             "keywords": "parallel concurrent slots queue",
@@ -1763,7 +1768,7 @@
           "description": "Continues a task when its agent hits a usage limit; none = wait for the reset",
           "x-settings": {
             "category": "ai-code",
-            "section": "queue",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.fallback",
             "control": "selector",
             "keywords": "fallback limit usage rate agent"
@@ -1782,14 +1787,14 @@
           }
         },
         "notifications": {
-          "title": "Desktop notifications",
+          "title": "Notify me",
           "type": "boolean",
           "default": true,
           "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
           "x-settings": {
             "category": "ai-code",
             "section": "notifications",
-            "label": "prefs.ai.tasks.notify",
+            "label": "prefs.ai.tasks.notify_me",
             "control": "toggle",
             "keywords": "notification desktop alert"
           }
@@ -1862,7 +1867,7 @@
           "description": "Auto: columns when the bar is wide, a list otherwise",
           "x-settings": {
             "category": "ai-code",
-            "section": "board",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.layout",
             "control": "selector",
             "keywords": "board columns list kanban layout"
@@ -1924,7 +1929,7 @@
           "description": "Newest finished tasks in the Done section",
           "x-settings": {
             "category": "ai-code",
-            "section": "board",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.done_limit",
             "control": "number",
             "step": 5,
@@ -1948,7 +1953,7 @@
           "description": "Show the review of a task as soon as it is ready when no other task is open",
           "x-settings": {
             "category": "ai-code",
-            "section": "review",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.auto_open_review",
             "control": "toggle",
             "keywords": "review open automatically finished"
@@ -1961,7 +1966,7 @@
           "description": "Ask once more before a task is committed to your branch",
           "x-settings": {
             "category": "ai-code",
-            "section": "review",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.confirm_accept",
             "control": "toggle",
             "keywords": "confirm accept commit"
@@ -1974,7 +1979,7 @@
           "description": "Ask before a task's worktree and branch are deleted",
           "x-settings": {
             "category": "ai-code",
-            "section": "review",
+            "section": "more_tasks",
             "label": "prefs.ai.tasks.confirm_discard",
             "control": "toggle",
             "keywords": "confirm discard delete worktree"
@@ -2006,8 +2011,8 @@
           "default": true,
           "description": "Badges in the model picker: tools, vision, reasoning, context size.",
           "x-settings": {
-            "category": "ai",
-            "section": "model_effort",
+            "category": "ai-providers",
+            "section": "defaults",
             "label": "prefs.ai.picker_capabilities",
             "control": "toggle",
             "keywords": "model picker capabilities badges tools vision thinking context"
@@ -2019,8 +2024,8 @@
           "default": true,
           "description": "Show the models in one section per provider.",
           "x-settings": {
-            "category": "ai",
-            "section": "model_effort",
+            "category": "ai-providers",
+            "section": "defaults",
             "label": "prefs.ai.picker_group",
             "control": "toggle",
             "keywords": "model picker group provider sections"
@@ -2032,8 +2037,8 @@
           "default": true,
           "description": "List them at the end of the picker with a Connect button.",
           "x-settings": {
-            "category": "ai",
-            "section": "model_effort",
+            "category": "ai-providers",
+            "section": "defaults",
             "label": "prefs.ai.picker_unconnected",
             "control": "toggle",
             "keywords": "model picker providers not connected connect api key"
@@ -2045,8 +2050,8 @@
           "default": true,
           "description": "The models you used last, above the full list.",
           "x-settings": {
-            "category": "ai",
-            "section": "model_effort",
+            "category": "ai-providers",
+            "section": "defaults",
             "label": "prefs.ai.picker_recent",
             "control": "toggle",
             "keywords": "model picker recent last used"
@@ -2065,7 +2070,7 @@
           "default": true,
           "description": "Show a button that opens the Usage screen (tokens, costs and subscription limits).",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_header_button",
             "control": "toggle",
@@ -2078,7 +2083,7 @@
           "default": true,
           "description": "Read your Claude Pro/Max usage (5-hour and weekly windows) with the Claude Code login, at most every 5 minutes while the AI bar is open. Read only.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_claude_limits",
             "control": "toggle",
@@ -2091,7 +2096,7 @@
           "default": true,
           "description": "Notify once per window when a subscription limit reaches the warning and critical levels.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_notify",
             "control": "toggle",
@@ -2104,7 +2109,7 @@
           "default": 80,
           "description": "Limits turn amber (and notify) from this share of the window.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_warn_at",
             "control": "slider",
@@ -2124,7 +2129,7 @@
           "default": 90,
           "description": "Limits turn red and send a second notification from this share of the window.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_critical_at",
             "control": "slider",
@@ -2139,12 +2144,12 @@
           "maximum": 100
         },
         "limitWindow": {
-          "title": "Limit shown in the strip",
+          "title": "Limit in the status line",
           "type": "string",
           "default": "auto",
-          "description": "Which subscription window the strip shows for Claude Code and Codex. Automatic picks the fullest one.",
+          "description": "Which subscription window the status line shows for Claude Code and Codex. Automatic picks the fullest one.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_limit_window",
             "control": "selector",
@@ -2169,9 +2174,9 @@
           "title": "Tokens next to the cost",
           "type": "boolean",
           "default": true,
-          "description": "The strip shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
+          "description": "The status line shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_strip_tokens",
             "control": "toggle",
@@ -2188,7 +2193,7 @@
           "default": "symbol",
           "description": "Costs are in US dollars (provider list prices).",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_currency",
             "control": "selector",
@@ -2209,7 +2214,7 @@
           "default": 2,
           "description": "Smaller amounts show as “<$0.01”.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_decimals",
             "control": "slider",
@@ -2228,7 +2233,7 @@
           "default": "today",
           "description": "Period selected when the Usage screen opens.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_default_range",
             "control": "selector",
@@ -2251,7 +2256,7 @@
           "default": true,
           "description": "Small per-day charts on the Usage screen (week and month).",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_sparklines",
             "control": "toggle",
@@ -2264,7 +2269,7 @@
           "default": [],
           "description": "Provider ids left out of the Usage screen (they are still recorded), e.g. ollama.",
           "x-settings": {
-            "category": "ai",
+            "category": "ai-providers",
             "section": "usage_limits",
             "label": "prefs.ai.usage_hidden",
             "control": "list",

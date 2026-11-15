@@ -182,6 +182,12 @@ class Harness:
         if not keep:
             atexit.register(shutil.rmtree, self.root, True)
             _ROOTS.append(self.root)
+        # The live-preview lens (pure JS) shell parts import by relative path
+        # (`Preview.pick`, `Preview.sample`): where a tree of hand-written
+        # modules expects it
+        lens = self.root / "qs/modules/components/preview/Preview.js"
+        lens.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(REPO / "modules/components/preview/Preview.js", lens)
         # Inert stand-ins for the decorative signatures (modules/components/
         # signatures); envs that exercise the real ones mirror the files over them.
         self.module("qs.modules.components.signatures", {
@@ -277,10 +283,32 @@ class Harness:
             text = re.sub(r"^\s*pragma Singleton\s*\n", "", text, count=1)
         for old, new in (replace or {}).items():
             text = text.replace(old, new)
+        text = self._rehome_imports(src, text, target_dir)
         out.write_text(text)
         self._copied.add(src)
         self._copy_deps(src, text, target_dir, siblings)
         return out
+
+    def _rehome_imports(self, src: Path, text: str, target_dir: Path) -> str:
+        """A relative import of a repo file that would land outside the
+        harness tree from `target_dir` (a file deep in the repo copied flat,
+        e.g. `import "../../components/preview/Preview.js"`) is copied to
+        <target_dir>/_ext/<repo path> and the import pointed at it."""
+        for ref in set(_REL_IMPORT.findall(text)):
+            p = (src.parent / ref).resolve()
+            try:
+                inside = (target_dir / ref).resolve()
+                if not p.is_file() or REPO not in p.parents or self.root in inside.parents:
+                    continue
+            except OSError:
+                continue
+            alt = "_ext/" + p.relative_to(REPO).as_posix()
+            dst = target_dir / alt
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(p, dst)
+            self._copied.add(p)
+            text = text.replace(f'"{ref}"', f'"{alt}"')
+        return text
 
     def _copy_deps(self, src: Path, text: str, target_dir: Path, siblings: bool) -> None:
         here = src.parent

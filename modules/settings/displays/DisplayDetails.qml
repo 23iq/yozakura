@@ -15,6 +15,7 @@ import qs.modules.components.kit
 // every change is a `patch` the page merges into the draft layout.
 Group {
     id: root
+    labelRole: "group"
 
     property var config: null
     property var output: null

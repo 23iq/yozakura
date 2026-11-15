@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import "../controls/PictureGrid.js" as PictureGrid
 import qs.modules.components.kit
 
 // Palette role picker: one swatch per entry option ({value: role | "auto",
@@ -18,11 +19,17 @@ Item {
     readonly property var current: SettingsStore.get(entry ? entry.key : "")
     readonly property var options: entry ? (entry.options || []) : []
 
+    // the picture grid's balanced rows (9 roles: 5 + 4, never 4 + 4 + 1),
+    // each swatch centred in an equal cell
+    readonly property int columns: PictureGrid.columns(root.width, Space.m, root.options.length, Space.px(76))
+    readonly property real cell: PictureGrid.cardWidth(root.width, Space.m, root.columns, Space.px(76))
+
     implicitHeight: flow.implicitHeight
 
-    Flow {
+    Grid {
         id: flow
         width: parent.width
+        columns: root.columns
         spacing: Space.m
 
         Repeater {
@@ -35,8 +42,8 @@ Item {
                 readonly property bool auto: modelData.value === "auto"
                 readonly property color fill: auto ? Colors.primaryFixed : (Colors[modelData.value] ?? Colors.outline)
                 objectName: "swatch:" + modelData.value
-                width: 64
-                height: 66
+                width: root.cell
+                height: ring.height + Space.s + nameText.height
                 activeFocusOnTab: true
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: I18n.t(modelData.label)
@@ -45,7 +52,6 @@ Item {
 
                 Rectangle {
                     id: ring
-                    anchors.horizontalCenter: parent.horizontalCenter
                     width: 40
                     height: 40
                     radius: 20
@@ -83,12 +89,15 @@ Item {
                 }
 
                 KitText {
+                    id: nameText
                     role: "caption"
                     anchors.top: ring.bottom
                     anchors.topMargin: Space.s
                     width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
+                    // a long name on two lines, whole
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideNone
                     text: I18n.t(swatch.modelData.label)
                     font.weight: swatch.selected ? Font.DemiBold : Font.Normal
                     color: swatch.selected ? Colors.overBackground : Colors.overSurfaceVariant

@@ -5,6 +5,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.modules.theme
 import qs.config
+import "../../components/preview/Preview.js" as Preview
 
 // Rounded cava bars with a primary -> tertiary palette gradient.
 // Size is fixed by the parent; bars only change their own height, so the
@@ -25,11 +26,17 @@ Item {
     property real idleOpacity: 0.35
     // The owner's visualizer setting (the lock screen has its own).
     property bool configEnabled: Config.notch?.visualizer ?? true
+    // A settings preview (MediaSummary.preview): still bars at the sample
+    // "levels" (0..1 each), never cava; null live
+    property var preview: null
+    readonly property bool still: Preview.on(root.preview)
 
     // An active battery saver keeps it from registering, so cava can stop.
-    readonly property bool active: configEnabled && playing && shown && visible && CavaService.available && !BatterySaver.active
+    readonly property bool active: !still && configEnabled && playing && shown && visible && CavaService.available && !BatterySaver.active
+    // Drawn lit (playing): live, or a preview of a playing track
+    readonly property bool lit: active || (still && configEnabled && playing)
     readonly property real barWidth: Math.max(1, (width - spacing * (barCount - 1)) / barCount)
-    readonly property var levels: active ? CavaService.levels(barCount) : []
+    readonly property var levels: still ? (lit ? (Preview.sample(root.preview, "levels", null) || []).slice(0, barCount) : []) : (active ? CavaService.levels(barCount) : [])
     // Levels as drawn: eased once per cava frame instead of a height
     // Behavior. A Behavior retargeted by every frame keeps an animation
     // running nonstop, which repaints the window at the output refresh rate
@@ -88,12 +95,17 @@ Item {
         return Qt.rgba(startColor.r + (endColor.r - startColor.r) * t, startColor.g + (endColor.g - startColor.g) * t, startColor.b + (endColor.b - startColor.b) * t, 1);
     }
 
-    onActiveChanged: CavaService.setConsumer(_consumerKey, active)
+    // (a preview never registers: it claims nothing session-wide)
+    onActiveChanged: if (!still)
+        CavaService.setConsumer(_consumerKey, active)
     Component.onCompleted: {
+        if (still)
+            return;
         _consumerKey = "notch-visualizer-" + Date.now().toString(36) + Math.random().toString(36).slice(2);
         CavaService.setConsumer(_consumerKey, active);
     }
-    Component.onDestruction: CavaService.setConsumer(_consumerKey, false)
+    Component.onDestruction: if (!still)
+        CavaService.setConsumer(_consumerKey, false)
 
     Repeater {
         model: root.barCount
@@ -110,7 +122,7 @@ Item {
             height: Math.max(bar.width, Math.min(root.height, bar.level * root.height))
             radius: bar.width / 2
             color: root.barColor(bar.index)
-            opacity: root.active ? 0.95 : root.idleOpacity
+            opacity: root.lit ? 0.95 : root.idleOpacity
             antialiasing: true
 
             Behavior on opacity {

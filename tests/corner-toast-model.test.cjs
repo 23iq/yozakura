@@ -73,3 +73,10 @@ test('sheetOpacity: the stack reads, each sheet a little quieter', () => {
     assert.ok(M.sheetOpacity(9) >= 0.3);
     assert.ok(Math.abs(M.sheetOpacity(0) - 0.85) < 1e-9);
 });
+
+test('a toast is as wide as the base, wider with a body font past 14 px', () => {
+    assert.equal(M.toastWidth(380, 14), 380);
+    assert.equal(M.toastWidth(380, 12), 380);
+    assert.equal(M.toastWidth(380, 21), 570);
+    assert.equal(M.toastWidth(380, 0), 380);
+});

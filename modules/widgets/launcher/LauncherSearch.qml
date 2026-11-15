@@ -7,17 +7,25 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.config
 import "Providers.js" as Providers
+import "../../components/preview/Preview.js" as Preview
 import "ResultStyles.js" as ResultStyles
 
 // The launcher's search tab: the search field, the provider results
 // (LauncherResults) and keyboard handling. Enter runs the selected result,
 // Shift+Enter (or right click) expands its options, Tab completes a command
 // or sends the query to the AI quick ask, Esc closes.
+// Preview (`preview`, LauncherView passes it): the query is the sample
+// "launcher.query", the selection "launcher.selected" (default the first
+// row); the result style and the detail pane follow overrides of
+// layout.launcher.resultStyle / .preview; nothing is written to
+// GlobalStates and nothing runs (LauncherResults).
 Item {
     id: view
 
-    readonly property string searchText: GlobalStates.launcherSearchText
-    property int selectedIndex: GlobalStates.launcherSelectedIndex
+    property var preview: null
+    readonly property bool previewing: Preview.on(view.preview)
+    readonly property string searchText: view.previewing ? Preview.sample(view.preview, "launcher.query", "") : GlobalStates.launcherSearchText
+    property int selectedIndex: view.previewing ? Preview.sample(view.preview, "launcher.selected", 0) : GlobalStates.launcherSelectedIndex
     property int expandedIndex: -1
     property int optionIndex: 0
     property var expandedOptions: []
@@ -27,9 +35,10 @@ Item {
 
     // Result look (layout.launcher.resultStyle): list, cards or the app grid
     // (other providers' results fall back to list; options need the list).
-    readonly property string styleName: ResultStyles.effective(Config.layout.launcher.resultStyle, items)
+    readonly property string styleName: ResultStyles.effective(Preview.pick(view.preview, "layout.launcher.resultStyle", Config.layout.launcher.resultStyle), items)
     readonly property bool gridActive: styleName === "grid" && expandedIndex < 0
-    readonly property bool previewOpen: Config.layout.launcher.preview && expandedIndex < 0 && preview.available
+    readonly property bool detailOn: Preview.pick(view.preview, "layout.launcher.preview", Config.layout.launcher.preview) === true
+    readonly property bool previewOpen: view.detailOn && expandedIndex < 0 && detail.available
     readonly property int resultsWidth: previewOpen ? Metrics.launcherLeftPanelW : width
 
     function gridKey(dir) {
@@ -45,7 +54,8 @@ Item {
     }
 
     function focusSearchInput() {
-        input.focusInput();
+        if (!view.previewing)
+            input.focusInput();
     }
 
     function close() {
@@ -59,7 +69,8 @@ Item {
         else
             i = Math.max(-1, Math.min(i, n - 1));
         view.selectedIndex = i;
-        GlobalStates.launcherSelectedIndex = i;
+        if (!view.previewing)
+            GlobalStates.launcherSelectedIndex = i;
     }
 
     function collapse() {
@@ -113,11 +124,17 @@ Item {
         collapse();
         results.search(searchText);
         list.contentY = 0;
-        Qt.callLater(() => list.enableScrollAnimation = true);
+        // (the view may be gone by then: a settings preview torn down)
+        Qt.callLater(() => {
+            if (list)
+                list.enableScrollAnimation = true;
+        });
     }
 
     // Async results (files, rates) keep the selection valid.
     onItemsChanged: {
+        if (view.previewing)
+            return;
         if (selectedIndex >= items.length)
             select(items.length - 1);
         else if (selectedIndex < 0 && searchText.length > 0 && items.length > 0)
@@ -128,6 +145,7 @@ Item {
 
     LauncherResults {
         id: results
+        preview: view.preview
         onCloseRequested: view.close()
         onSearchRequested: t => GlobalStates.launcherSearchText = t
         Component.onCompleted: results.search(view.searchText)
@@ -138,7 +156,7 @@ Item {
         objectName: "launcherSearchInput"
         width: parent.width
         anchors.top: parent.top
-        text: GlobalStates.launcherSearchText
+        text: view.searchText
         placeholderText: I18n.t("launcher.search")
         glyph: view.modeIcon !== "" ? view.modeIcon : Icons.magnifyingGlass
         hints: Providers.hintPrefixes(Config.prefix, Config.prefix.launcher.disabled)
@@ -148,6 +166,8 @@ Item {
         disableCursorNavigation: view.gridActive
 
         onSearchTextChanged: text => {
+            if (view.previewing)
+                return;
             if (GlobalStates.launcherSearchText !== text)
                 GlobalStates.launcherSearchText = text;
             view.select(text.length > 0 ? 0 : -1);
@@ -284,11 +304,11 @@ Item {
         anchors.topMargin: Space.m
         anchors.left: resultsBox.right
         anchors.leftMargin: Space.m
-        opacity: preview.opacity
+        opacity: detail.opacity
     }
 
     PreviewPane {
-        id: preview
+        id: detail
         objectName: "launcherPreview"
         anchors.top: rule.bottom
         anchors.topMargin: Space.l
@@ -296,7 +316,7 @@ Item {
         anchors.left: split.right
         anchors.leftMargin: Space.l
         anchors.right: parent.right
-        selection: Config.layout.launcher.preview ? view.current : null
+        selection: view.detailOn ? view.current : null
         host: results
         onActionTriggered: option => view.run(view.selectedIndex, option)
         opacity: view.previewOpen ? 1 : 0

@@ -12,8 +12,8 @@
       "default": "card",
       "description": "A full card, or one compact line that unfolds on hover.",
       "x-settings": {
-        "category": "notch",
-        "section": "activities",
+        "category": "notifications",
+        "section": "presentation",
         "label": "prefs.notifications.notch_style",
         "control": "selector",
         "keywords": "notification notch compact card one line",
@@ -61,7 +61,7 @@
       ],
       "x-enumLabels": {
         "auto": "Auto",
-        "notch": "Notch",
+        "notch": "Island",
         "corner": "Corner",
         "strips": "Strips"
       }
@@ -73,7 +73,7 @@
       "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
       "x-settings": {
         "category": "notifications",
-        "section": "presentation",
+        "section": "where",
         "label": "prefs.notif.position",
         "control": "selector",
         "keywords": "corner position top bottom left right center",
@@ -127,7 +127,7 @@
       "description": "Monitors that show notifications.",
       "x-settings": {
         "category": "notifications",
-        "section": "presentation",
+        "section": "where",
         "label": "prefs.notif.screens",
         "control": "screens",
         "keywords": "monitor screen display multi-monitor where"
@@ -353,7 +353,7 @@
           "description": "A short chime when a toast appears (never during Do Not Disturb).",
           "x-settings": {
             "category": "notifications",
-            "section": "sound",
+            "section": "behaviour",
             "label": "prefs.notif.sound",
             "control": "toggle",
             "keywords": "sound chime beep audio play"
@@ -366,7 +366,7 @@
           "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
           "x-settings": {
             "category": "notifications",
-            "section": "sound",
+            "section": "behaviour",
             "label": "prefs.label.notification_sound_file",
             "control": "path",
             "keywords": "sound file custom wav ogg chime",
@@ -419,14 +419,14 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "title": "Do Not Disturb",
+          "title": "Silence notifications now",
           "type": "boolean",
           "default": false,
           "description": "Hide toasts and sounds; everything still lands in the history.",
           "x-settings": {
             "category": "notifications",
             "section": "dnd",
-            "label": "prefs.notif.dnd",
+            "label": "prefs.notif.dnd_now",
             "control": "toggle",
             "keywords": "do not disturb dnd silence quiet focus mute all"
           }
@@ -468,7 +468,7 @@
               "description": "Start time, 24-hour HH:MM.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_from",
                 "control": "text",
                 "keywords": "start begin from time hour",
@@ -486,7 +486,7 @@
               "description": "End time; earlier than the start means the next morning.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_to",
                 "control": "text",
                 "keywords": "end until to time hour",
@@ -523,7 +523,7 @@
               "description": "Days the window starts on.",
               "x-settings": {
                 "category": "notifications",
-                "section": "dnd",
+                "section": "dnd_schedule",
                 "label": "prefs.notif.schedule_days",
                 "control": "multiselect",
                 "keywords": "days week weekdays weekend monday sunday",

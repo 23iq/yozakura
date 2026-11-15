@@ -18,15 +18,23 @@ import qs.modules.widgets.dashboard.home
 import qs.modules.widgets.dashboard.stage
 import qs.config
 import "DashboardTabs.js" as DashboardTabs
+import "../../components/preview/Preview.js" as Preview
 
+// Preview (`preview`, a PreviewContext; Settings' dashboard stage): shown
+// at once, on the tab of the sample "dashboard.tab" (a stable index,
+// DashboardTabs.js; default the widgets tab), the home of an override of
+// layout.dashboard.home; it never writes GlobalStates, hides popups or
+// takes the tab shortcuts. Its widgets show your live services.
 NotchAnimationBehavior {
     id: root
 
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
     property int leftPanelWidth
     property string screenName: ""
 
     property var state: QtObject {
-        property int currentTab: GlobalStates.dashboardCurrentTab
+        property int currentTab: root.inPreview ? Preview.sample(root.preview, "dashboard.tab", 0) : GlobalStates.dashboardCurrentTab
     }
 
     // Stable tab indices (DashboardTabs.js) in header order; hidden tabs are left out.
@@ -38,7 +46,7 @@ NotchAnimationBehavior {
     readonly property int headerGap: Look.groupGap
     // layout.dashboard.home: the widgets tab shows the stage, the composed
     // home or the bento grid (unknown values: the stage).
-    readonly property string home: DashboardTabs.homeOf(Config.layout.dashboard.home)
+    readonly property string home: DashboardTabs.homeOf(Preview.pick(root.preview, "layout.dashboard.home", Config.layout.dashboard.home))
     readonly property bool homeBento: home === "bento"
     // Nothing plays on the stage home: its hero shows the time large.
     property bool stageIdle: false
@@ -147,15 +155,18 @@ NotchAnimationBehavior {
     focus: true
 
     // Usar el comportamiento estándar de animaciones del notch
-    isVisible: GlobalStates.dashboardOpen
+    isVisible: root.inPreview || GlobalStates.dashboardOpen
 
     // Navegar a la pestaña seleccionada cuando se abre el dashboard
     Component.onCompleted: {
-        root.state.currentTab = GlobalStates.dashboardCurrentTab;
+        if (!root.inPreview)
+            root.state.currentTab = GlobalStates.dashboardCurrentTab;
     }
 
     // Focus search input when dashboard opens to different tabs
     onIsVisibleChanged: {
+        if (root.inPreview)
+            return;
         if (isVisible) {
             // Check if current item supports focus, otherwise default logic for launcher
             if (stack.currentItem && stack.currentItem.focusSearchInput) {
@@ -186,6 +197,7 @@ NotchAnimationBehavior {
     // Escuchar cambios en dashboardCurrentTab para navegar automáticamente
     Connections {
         target: GlobalStates
+        enabled: !root.inPreview
         function onDashboardCurrentTabChanged() {
             if (GlobalStates.dashboardCurrentTab !== root.state.currentTab) {
                 stack.navigateToTab(GlobalStates.dashboardCurrentTab);
@@ -233,11 +245,12 @@ NotchAnimationBehavior {
                 id: stack
                 anchors.fill: parent
 
-                property int currentIndex: GlobalStates.dashboardCurrentTab
+                property int currentIndex: root.state.currentTab
 
                 // Update internal index when global changes
                 Connections {
                     target: GlobalStates
+                    enabled: !root.inPreview
                     function onDashboardCurrentTabChanged() {
                         stack.navigateToTab(GlobalStates.dashboardCurrentTab);
                     }
@@ -370,7 +383,7 @@ NotchAnimationBehavior {
     Shortcut {
         id: nextTabShortcut
         sequence: "Ctrl+Tab"
-        enabled: GlobalStates.dashboardOpen
+        enabled: !root.inPreview && GlobalStates.dashboardOpen
 
         onActivated: {
             stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, 1));
@@ -380,7 +393,7 @@ NotchAnimationBehavior {
     Shortcut {
         id: prevTabShortcut
         sequence: "Ctrl+Shift+Tab"
-        enabled: GlobalStates.dashboardOpen
+        enabled: !root.inPreview && GlobalStates.dashboardOpen
 
         onActivated: {
             stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, -1));
@@ -452,6 +465,8 @@ NotchAnimationBehavior {
 
     Component {
         id: wallpapersComponent
-        WallpapersTab {}
+        WallpapersTab {
+            dashboardShown: root.isVisible
+        }
     }
 }

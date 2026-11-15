@@ -12,6 +12,7 @@ import qs.config
 import "BarLayout.js" as BarLayout
 import "panels/PanelLayout.js" as PanelLayout
 import "panels/PanelStyles.js" as PanelStyles
+import "../components/preview/Preview.js" as Preview
 
 // One bar panel: auto-hide, hover hitbox, edge placement and module groups.
 // What the panel looks like is its style component (panels/styles/, picked
@@ -25,6 +26,10 @@ Item {
     property var panel: null
     // The panel the notch and single-bar features (integrated dock) pair with
     property bool isPrimary: true
+    // A settings preview of this panel (PreviewContext, components/preview):
+    // always revealed, nothing session-wide; modules read it as `bar.preview`.
+    // Null in the live shell.
+    property var preview: null
 
     readonly property var spec: panel ? panel : PanelLayout.fromLegacy(Config.bar)
     readonly property string panelId: spec.id
@@ -65,11 +70,12 @@ Item {
     readonly property bool activeWindowFullscreen: CompositorData.monitorHasFullscreen(compositorMonitor)
 
     // The weather overlays of this screen rest under a fullscreen window
-    onActiveWindowFullscreenChanged: if (screen)
+    onActiveWindowFullscreenChanged: if (screen && !preview)
         WeatherFx.setCovered(screen.name, activeWindowFullscreen)
 
     // Whether auto-hide should be active (not pinned, or fullscreen forces it)
-    readonly property bool shouldAutoHide: !pinned || activeWindowFullscreen
+    // (a preview always shows the panel)
+    readonly property bool shouldAutoHide: !preview && (!pinned || activeWindowFullscreen)
 
     onShouldAutoHideChanged: {
         if (!shouldAutoHide) {
@@ -223,7 +229,8 @@ Item {
     }
 
     // Integrated dock configuration (classic/islands host it in the middle)
-    readonly property bool integratedDockEnabled: (Config.dock && Config.dock.enabled !== undefined ? Config.dock.enabled : false) && (Config.dock && Config.dock.theme !== undefined ? Config.dock.theme : "default") === "integrated" && panelStyle === "classic" && isPrimary
+    // (a settings preview may show the dock style the user has not chosen)
+    readonly property bool integratedDockEnabled: Preview.pick(preview, "dock.enabled", Config.dock && Config.dock.enabled !== undefined ? Config.dock.enabled : false) && Preview.pick(preview, "dock.theme", Config.dock && Config.dock.theme !== undefined ? Config.dock.theme : "default") === "integrated" && panelStyle === "classic" && isPrimary
     // Map dock position for integrated based on orientation
     readonly property string integratedDockPosition: {
         const pos = (Config.dock && Config.dock.position !== undefined ? Config.dock.position : "center");

@@ -14,6 +14,9 @@ var MODULES = [
     {
         "id": "launcher",
         "icon": "apps",
+        // its button shows the launcher logo (bar.launcherIcon, else the
+        // app's logo): settings draw that, not `icon`
+        "logo": true,
         "label": "prefs.bar.module.launcher"
     },
     {

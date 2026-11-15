@@ -21,6 +21,14 @@ function vertical(pos) {
     return p === "left" || p === "right";
 }
 
+// Space between the screen edge and the notch: a floating style (theme
+// "island") keeps 4 px off the edge; a top / bottom notch also clears the
+// screen frame (`frame` px), a side one already sits past the bar / dock /
+// frame on its edge (EdgeLayout.notchRect).
+function edgeGap(theme, pos, frame) {
+    return (theme === "island" ? 4 : 0) + (vertical(pos) ? 0 : (frame || 0));
+}
+
 // Corner radii {tl, tr, bl, br}: `edgeR` on the two corners touching the
 // screen edge, `outerR` on the two facing the screen center.
 function radii(pos, edgeR, outerR) {

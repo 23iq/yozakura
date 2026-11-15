@@ -58,7 +58,9 @@ check(len(calls("exclusive.status")) >= 1 and len(calls("exclusive.plan")) >= 1,
 check(h.find(win, "gate").property("shown") is True and h.find(win, "gate").property("shownNiri") is False,
       "compositor-bound entries show only on their compositor")
 check(ev("title", h.find(win, "exclusiveStatus")) == "Make Yozakura the only shell", "off state: invitation title")
-check(vis("exclusiveSteps") and not vis("exclusiveActive"), "off state lists the steps")
+check(not vis("exclusiveSteps") and vis("exclusiveDetails") and not vis("exclusiveActive"), "off state folds the steps under What changes")
+ev("clicked()", h.find(win, "exclusiveDetails"))
+check(vis("exclusiveSteps"), "What changes lists the steps")
 check("waybar.service, mako.service, hypridle.service" == ev("detail", h.find(win, "unitsStep")), "units step names the detected units")
 check("DP-1 2560x1440@144" in ev("detail", h.find(win, "importStep")) and "us,ru" in ev("detail", h.find(win, "importStep")), "import step names monitors and layouts")
 check(vis("exclusiveEnable") and not vis("exclusiveRestore"), "Enable shown, Restore hidden")

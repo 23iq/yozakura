@@ -6,14 +6,19 @@ import qs.modules.settings.editors
 import qs.modules.components.kit
 
 // Exclusive mode (Hyprland): the shell becomes the only one on the session.
-// Off: what will change, with the real detected units/monitors, then a
-// confirmation. On: where the backup is, what was disabled, and Restore.
+// Off: one short sentence and a neutral "Make exclusive" (a risky change is
+// never the accent); what will change, with the real detected units /
+// monitors, folds out under "What changes"; then a confirmation whose
+// button is the danger action. On: where the backup is, what was disabled,
+// and Restore.
 Item {
     id: root
 
     property var entry
     // "" | "enable" | "restore": which confirmation is open
     property string confirming: ""
+    // the steps of "What changes" folded out
+    property bool details: false
     readonly property var plan: ExclusiveService.plan ?? ({})
     readonly property var units: ExclusiveService.active ? (ExclusiveService.status.disabledUnits ?? []) : (root.plan.units ?? [])
     readonly property string userFile: root.plan.userFile ?? "user.lua"
@@ -46,14 +51,14 @@ Item {
             icon: ExclusiveService.active ? "shieldCheck" : "shield"
             tone: ExclusiveService.blocked !== "" ? "warn" : (ExclusiveService.active ? "ok" : "muted")
             title: ExclusiveService.active ? I18n.t("prefs.exclusive.on.title") : I18n.t("prefs.exclusive.off.title")
-            detail: ExclusiveService.blocked !== "" ? ExclusiveService.blocked : (ExclusiveService.active ? I18n.t("prefs.exclusive.on.detail") : I18n.t("prefs.exclusive.off.detail"))
+            detail: ExclusiveService.blocked !== "" ? ExclusiveService.blocked : (ExclusiveService.active ? I18n.t("prefs.exclusive.on.detail") : I18n.t("prefs.exclusive.off.short"))
 
             PillButton {
                 objectName: "exclusiveEnable"
                 visible: !ExclusiveService.active && root.confirming === ""
                 enabled: ExclusiveService.blocked === "" && !ExclusiveService.busy
-                kind: "filled"
-                icon: "lightning"
+                kind: "tonal"
+                icon: "shield"
                 text: I18n.t("prefs.exclusive.enable")
                 onClicked: {
                     ExclusiveService.loadPlan();
@@ -71,11 +76,29 @@ Item {
             }
         }
 
+        // "What changes": the steps, folded away until asked for
+        PillButton {
+            objectName: "exclusiveDetails"
+            visible: !ExclusiveService.active
+            x: Math.max(0, Look.rowInset - Space.m)
+            kind: "ghost"
+            icon: root.details ? "caretUp" : "caretDown"
+            text: I18n.t("prefs.exclusive.details")
+            onClicked: root.details = !root.details
+        }
+
         Column {
             objectName: "exclusiveSteps"
             width: parent.width
             spacing: Space.m
-            visible: !ExclusiveService.active
+            visible: !ExclusiveService.active && (root.details || root.confirming === "enable")
+
+            KitText {
+                width: parent.width
+                role: "secondary"
+                wrapMode: Text.WordWrap
+                text: I18n.t("prefs.exclusive.off.detail")
+            }
 
             ExclusiveStep {
                 width: parent.width
@@ -136,7 +159,7 @@ Item {
         }
 
         KitText {
-            visible: !ExclusiveService.active
+            visible: !ExclusiveService.active && (root.details || root.confirming === "enable")
             width: parent.width
             role: "caption"
             text: I18n.t("prefs.exclusive.safety")
@@ -147,6 +170,7 @@ Item {
         // card in glass, a tile in tiles) with the one primary action.
         Group {
             objectName: "exclusiveConfirm"
+            labelRole: "group"
             visible: root.confirming !== ""
             width: parent.width
             divider: true
@@ -162,7 +186,7 @@ Item {
                 width: parent.width
                 role: "secondary"
                 text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.body", ExclusiveService.status.backup ?? "") : I18n.t("prefs.exclusive.confirm.enable.body")
-                wrapMode: Text.WrapAnywhere
+                wrapMode: Text.Wrap
             }
             Row {
                 spacing: Space.s
@@ -172,12 +196,16 @@ Item {
                     text: I18n.t("common.cancel")
                     onClicked: root.confirming = ""
                 }
-                PillButton {
+                // the risky step itself: the danger action (restore is the
+                // safe way back: the plain primary)
+                Chip {
                     objectName: "exclusiveConfirmButton"
-                    kind: "filled"
+                    primary: true
+                    danger: root.confirming !== "restore"
                     enabled: !ExclusiveService.busy
-                    icon: root.confirming === "restore" ? "clockCounterClockwise" : "lightning"
+                    icon: root.confirming === "restore" ? Icons.clockCounterClockwise : Icons.shieldWarning
                     text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.go") : I18n.t("prefs.exclusive.confirm.enable.go")
+                    Accessible.role: Accessible.Button
                     onClicked: {
                         const run = root.confirming === "restore" ? ExclusiveService.restore : ExclusiveService.enable;
                         root.confirming = "";

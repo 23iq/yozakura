@@ -80,48 +80,62 @@ Item {
         }
     }
 
+    // a narrow row (a row card): no variant picker, no code line
+    readonly property bool narrow: row.width < Space.px(420)
+
     LayoutBadge {
         id: badge
-        x: 52
+        x: row.narrow ? Space.xxl + Space.m : 52
         anchors.verticalCenter: parent.verticalCenter
         code: row.code
         lit: row.active
     }
 
     Column {
+        id: names
         anchors.left: badge.right
         anchors.leftMargin: Space.l
         anchors.right: variantBox.left
         anchors.rightMargin: Space.l
         anchors.verticalCenter: parent.verticalCenter
         spacing: Space.xs
+        // the name has the column's whole width (xkb data: it elides only
+        // where even that is short); the "Active" chip sits on the line
+        // under it, after the code, so it never reaches the dropdown
+        KitText {
+            objectName: "layoutName"
+            width: Math.min(implicitWidth, names.width)
+            elide: Text.ElideRight
+            text: row.description || row.code
+            font.weight: Font.DemiBold
+        }
         Row {
+            id: codeLine
+            width: names.width
             spacing: Space.s
+            visible: !row.narrow || row.active
             KitText {
-                text: row.description || row.code
-                font.weight: Font.DemiBold
+                id: codeText
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(0, Math.min(implicitWidth, codeLine.width - (activeChip.visible ? activeChip.width + codeLine.spacing : 0)))
+                elide: Text.ElideRight
+                role: "caption"
+                visible: !row.narrow
+                text: row.code + (row.variant !== "" ? "  ·  " + row.variant : "")
+                color: Colors.overSurfaceVariant
             }
-            Rectangle {
+            // the layout in use: the kit's active chip (the accent marks
+            // what is active; a raw amber badge was off the palette)
+            Chip {
+                id: activeChip
+                objectName: "layoutActive"
                 visible: row.active
                 anchors.verticalCenter: parent.verticalCenter
-                width: activeLabel.implicitWidth + 14
-                height: 18
-                radius: 9
-                color: Ui.alpha(Colors.tertiary, 0.2)
-                KitText {
-                    id: activeLabel
-                    role: "caption"
-                    anchors.centerIn: parent
-                    text: I18n.t("prefs.keyboard.active")
-                    font.weight: Font.DemiBold
-                    color: Colors.tertiary
-                }
+                dense: true
+                active: true
+                Accessible.role: Accessible.StaticText
+                text: I18n.t("prefs.keyboard.active")
             }
-        }
-        KitText {
-            role: "caption"
-            text: row.code + (row.variant !== "" ? "  ·  " + row.variant : "")
-            color: Colors.overSurfaceVariant
         }
     }
 
@@ -135,7 +149,7 @@ Item {
         VariantCombo {
             id: combo
             objectName: "variantCombo"
-            visible: row.variantChoices.length > 1
+            visible: row.variantChoices.length > 1 && !row.narrow
             variants: row.variantChoices
             chosen: row.variant
             onPicked: v => row.variantPicked(v)
@@ -146,7 +160,7 @@ Item {
         id: removeButton
         objectName: "removeButton"
         anchors.right: parent.right
-        anchors.rightMargin: Space.xl
+        anchors.rightMargin: row.narrow ? 0 : Space.xl
         anchors.verticalCenter: parent.verticalCenter
         width: 34
         height: 34

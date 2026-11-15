@@ -16,7 +16,11 @@ Popup {
     property string family: ""
     property bool monoOnly: false
     property string query: ""
+    // Listed only while open: a page with four font rows does not scan the
+    // installed families four times when it opens.
     readonly property var families: {
+        if (!picker.visible)
+            return [];
         const q = query.trim().toLowerCase();
         return Qt.fontFamilies().filter(f => (!monoOnly || Ui.looksMonospace(f)) && (q === "" || f.toLowerCase().indexOf(q) !== -1));
     }
