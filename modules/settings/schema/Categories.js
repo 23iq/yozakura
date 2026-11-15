@@ -37,14 +37,15 @@
 // Settings information architecture: the window's destinations and their
 // tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The window opens on a home screen (SettingsHome): a 3x3 grid of equal
-// tiles, one per destination (HOME). A destination (`groups`) holds one or
-// more categories, shown as tabs at the top of its page (`categories`,
-// first = default tab). A category is one of:
+// The window opens on a home screen (SettingsHome): a bento of tiles, one
+// per destination, sized by weight (HOME, HOME_SIZES). A destination
+// (`groups`) holds one or more categories, shown as tabs at the top of its
+// page (`categories`, first = default tab). A category is one of:
 //   * schema-driven: has `sections` (see bar.js) - rendered by
-//     SettingsPage.qml as a hero (its `stage`, Registry.STAGES) over a
-//     bento of cards (one per section); entries flagged `advanced: true`
-//     are not in the window (SchemaUtil.inWindow);
+//     SettingsPage.qml: its stage (`stage`, Registry.STAGES) beside or over
+//     a bento of cards (one per section); entries flagged `advanced: true`
+//     are rows of the tab's folded More settings card (SchemaUtil.inCards /
+//     isAdvanced; search finds them too);
 //   * a page: has `page` - a hand-written page loaded by URL
 //     (Registry.PAGES).
 // Every category is listed in exactly one destination. `resolve(id)`

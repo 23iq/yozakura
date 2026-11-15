@@ -42,7 +42,7 @@ function rows(cat, get) {
     const out = [];
     for (const s of cat.sections || [])
         for (const e of s.entries || [])
-            if (SchemaUtil.inWindow(e, s) && (!get || SchemaUtil.evalCondition(e.visibleWhen, get)))
+            if (SchemaUtil.inCards(e, s) && (!get || SchemaUtil.evalCondition(e.visibleWhen, get)))
                 out.push({ e, s });
     return out;
 }
@@ -134,7 +134,7 @@ test('no card holds a single plain row, no plain row repeats its card title', ()
             if (cat.page)
                 continue;
             for (const s of cat.sections || []) {
-                const shown = (s.entries || []).filter(e => SchemaUtil.inWindow(e, s));
+                const shown = (s.entries || []).filter(e => SchemaUtil.inCards(e, s));
                 if (shown.length === 1 && plainRow(shown[0]))
                     assert.fail(`${cat.id}: the card ${s.id} holds only ${shown[0].key || shown[0].id}`);
                 const title = s.title ? (tr[s.title] || s.title).toLowerCase() : '';
@@ -152,7 +152,7 @@ test('row labels and card titles are in sentence case', () => {
     const en = LANGS[0][1];
     for (const cat of Categories.categories)
         for (const s of cat.sections || []) {
-            const keys = (s.title ? [s.title] : []).concat((s.entries || []).filter(e => SchemaUtil.inWindow(e, s) && e.label).map(e => e.label));
+            const keys = (s.title ? [s.title] : []).concat((s.entries || []).filter(e => SchemaUtil.inCards(e, s) && e.label).map(e => e.label));
             for (const k of keys) {
                 const words = String(en[k] || '').split(/\s+/).slice(1).map(w => w.replace(/^[«(“"]+|[»)”",.:]+$/g, ''));
                 const bad = words.filter(w => /^\p{Lu}\p{Ll}/u.test(w) && !PROPER.has(w));
