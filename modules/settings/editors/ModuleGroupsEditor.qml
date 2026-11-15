@@ -471,10 +471,9 @@ Item {
             spacing: Space.s
             opacity: chip.slot ? 0.45 : 1
 
-            Icon {
-                role: "caption"
+            ModuleIcon {
                 anchors.verticalCenter: parent.verticalCenter
-                icon: Icons[chip.info.icon] ?? ""
+                info: chip.info
                 color: chip.group === "available" ? Colors.overSurfaceVariant : Colors.primary
             }
             KitText {
