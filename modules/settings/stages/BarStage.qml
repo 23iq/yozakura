@@ -51,11 +51,15 @@ Stage {
     // natural length, read from a copy laid out on the real width: the bar
     // shown never changes scale to be measured), never wider than the real
     // screen.
-    readonly property real need: {
+    // (kept while the copy is built again after a change)
+    readonly property real measured: {
         const b = measureBars.bars[stage.current];
         const s = b ? b.styleItem : null;
-        return s ? Math.ceil(s.startReach + s.endReach + s.centerReach * 2 + Space.xl * 4) : 0;
+        return s && s.startReach + s.endReach + s.centerReach > 0 ? Math.ceil(s.startReach + s.endReach + s.centerReach * 2 + Space.xl * 4) : 0;
     }
+    property real need: 0
+    onMeasuredChanged: if (stage.measured > 0)
+        stage.need = stage.measured
     // A vertical bar: a screen as tall as yours, the bar's band and a
     // little of the screen beside it
     readonly property real sideRoom: Space.px(36)
