@@ -118,13 +118,14 @@ test('search is generated from the schema', () => {
     const ids = q => SchemaUtil.search(index, q).map(r => r.entryId || r.categoryId);
     assert.ok(ids('kanji').includes('workspaces.numeralStyle'));
     assert.equal(ids('wallpaper folder')[0], 'desktop.wallpaperFolders');
-    // the macro row (Look > Feel) leads; the knob it moves is not a window row
+    // the macro row (Look > Feel) leads; the knob it moves is a row of the
+    // More card, found after it
     assert.equal(ids('roundness')[0], 'macro.roundness');
-    assert.ok(!ids('roundness').includes('theme.roundness'));
+    assert.ok(ids('roundness').includes('theme.roundness'));
     assert.ok(ids('matugen').includes('wallpaper.matugenScheme'));
     assert.ok(ids('blur').includes('windows'), 'legacy topics are searchable');
     assert.deepEqual(plain(ids('zzzzqqq')), []);
-    // Every window entry with a label is indexed (SchemaUtil.inWindow).
+    // Every entry with a label is indexed (card rows and More card rows).
     const labelled = SchemaUtil.flatten(Categories.categories).filter(x => x.entry.label && SchemaUtil.inWindow(x.entry, x.section)).length;
     assert.equal(index.filter(i => i.entryId).length, labelled);
 });

@@ -1,7 +1,7 @@
 .pragma library
 
 // The pages SettingsPageHost keeps alive: [{id, item}], most recently
-// visited first, at most `keep`. Pure (tests/settings-page-cache.test.cjs).
+// visited first, at most `keep`. Pure (tests/settings-undo.test.cjs).
 
 function find(pages, id) {
     for (var i = 0; i < pages.length; i++) {

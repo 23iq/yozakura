@@ -36,11 +36,11 @@ test('changed settings are grouped by page with now / default values', () => {
     const shown = groups.find(g => g.categoryId === 'bar').rows.find(r => r.entryId === 'workspaces.shown');
     assert.equal(shown.now, '4');
     assert.equal(shown.label, tr('prefs.bar.ws_shown'));
-    // theme.roundness is not a window row (the Roundness macro is): listed,
-    // with nothing to open
+    // theme.roundness is a row of Look's More card (the Roundness macro
+    // is the card row): listed, and it opens there
     const round = groups.flatMap(g => g.rows).find(r => r.entryId === 'theme.roundness');
-    assert.ok(round, 'an out-of-window setting that differs is listed');
-    assert.equal(round.jump, false);
+    assert.ok(round, 'a More card setting that differs is listed');
+    assert.equal(round.jump, true);
     assert.equal(shown.jump, true);
     const dock = groups.find(g => g.categoryId === 'dock').rows[0];
     assert.equal(dock.now, tr('common.left'));

@@ -18,7 +18,8 @@ var LIMIT = 0.8;
 // `px(v)` = Space.px. `bare`: without the segments' glyphs (the estimate
 // SettingRow stacks a segmented by).
 function need(entry, measure, px, tr, bare) {
-    if (!entry || entry.advanced)
+    // (an advanced entry counts too: the More card's rows share a column)
+    if (!entry)
         return 0;
     var t = entry.type;
     if (t === "slider" || t === "macro")
@@ -56,7 +57,7 @@ function need(entry, measure, px, tr, bare) {
 function readout(entries, text) {
     var w = 0;
     (entries || []).forEach(function (e) {
-        if (!e || e.advanced || e.type !== "number")
+        if (!e || e.type !== "number")
             return;
         var samples = [e.min, e.max];
         (e.specialValues || []).forEach(function (s) {

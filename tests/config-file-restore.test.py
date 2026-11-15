@@ -33,6 +33,8 @@ h.module("Quickshell.Io", {
     "FileViewError": "QtObject { enum Value { Success, Unknown, FileNotFound, PermissionDenied, NotAFile } }",
     "FileView": """QtObject {
     property string path
+    property bool blockWrites
+    property bool wroteBlocking
     property bool atomicWrites
     property bool watchChanges
     property QtObject adapter
@@ -47,6 +49,7 @@ h.module("Quickshell.Io", {
     function reload() {}
     function writeAdapter() {
         writes++;
+        wroteBlocking = blockWrites;
         content = JSON.stringify({ "roundness": adapter.roundness, "font": adapter.font });
     }
 }""",
@@ -102,6 +105,8 @@ w0 = h.eval(f, "writes")
 h.eval(f, "flushPending()")
 check(h.eval(f, "writes") == w0 + 1 and '"roundness":24' in h.eval(f, "content"), "flushPending writes the waiting edit now")
 check(h.eval(f, "saveTimer.running") is False, "...and nothing waits any more")
+check(h.eval(f, "wroteBlocking") is True and h.eval(f, "blockWrites") is False,
+      "...as a blocking write (the preset command reads it right after), then non-blocking again")
 h.eval(s, "replace(%s)" % BEFORE)
 check(h.eval(f, "adapter.roundness") == 8, "the restore then wins")
 check(h.eval(f, "saveTimer.running") is False and h.eval(f, "writes") == w0 + 1,

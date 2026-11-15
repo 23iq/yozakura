@@ -1,6 +1,7 @@
-// What the settings window shows (SchemaUtil.inWindow): entries and sections
-// flagged `advanced` (and folded expert blocks) are not rows of the window
-// and not found by its search, but stay in the schema (catalog, CLI, MCP).
+// What the settings window shows: the important entries are rows of the
+// tab's cards (SchemaUtil.inCards); entries and sections flagged `advanced`
+// (and folded expert blocks) are rows of the tab's folded More settings
+// card (SchemaUtil.moreGroups). Every entry is reachable and searchable.
 // Greyed rows explain themselves (modules/settings/DisabledReason.js).
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
@@ -27,28 +28,63 @@ const cat = () => ({
 });
 const all = Categories.categories;
 const entries = () => SchemaUtil.flatten(all).map(x => x.entry);
-const windowItems = () => SchemaUtil.flatten(all).filter(x => SchemaUtil.inWindow(x.entry, x.section));
+// the rows of the tabs' cards (the budgets below count these)
+const windowItems = () => SchemaUtil.flatten(all).filter(x => SchemaUtil.inCards(x.entry, x.section));
 
-test('advanced entries, advanced sections and folded blocks are not in the window', () => {
+test('advanced entries, advanced sections and folded blocks are rows of the More card', () => {
     const c = cat();
-    const shown = SchemaUtil.flatten([c]).filter(x => SchemaUtil.inWindow(x.entry, x.section)).map(x => x.entry.key);
-    assert.deepEqual(plain(shown), ['bar.a']);
+    const cards = SchemaUtil.flatten([c]).filter(x => SchemaUtil.inCards(x.entry, x.section)).map(x => x.entry.key);
+    assert.deepEqual(plain(cards), ['bar.a']);
+    const more = SchemaUtil.moreGroups(c).map(g => [g.section.id, g.entries.map(e => e.key)]);
+    assert.deepEqual(plain(more), [['main', ['bar.b']], ['expert', ['bar.c']], ['fold', ['bar.d']]]);
+    // every entry is reachable: in a card or in the More card, never both
+    for (const x of SchemaUtil.flatten([c]))
+        assert.ok(SchemaUtil.inWindow(x.entry, x.section) && SchemaUtil.inCards(x.entry, x.section) !== SchemaUtil.isAdvanced(x.entry, x.section), x.entry.key);
 });
 
-test('the window search finds window rows only; the schema keeps every entry', () => {
+test('the window search finds card rows and the More card rows (a card row first)', () => {
     const index = SchemaUtil.buildSearchIndex([cat()], k => k);
-    const keys = index.filter(i => i.entryId).map(i => i.entryId);
-    assert.deepEqual(plain(keys), ['bar.a']);
+    const items = index.filter(i => i.entryId);
+    assert.deepEqual(plain(items.map(i => [i.entryId, i.advanced])), [['bar.a', false], ['bar.b', true], ['bar.c', true], ['bar.d', true]]);
     const real = SchemaUtil.buildSearchIndex(all, k => en[k] || k);
-    assert.ok(!SchemaUtil.search(real, 'Bar reveal strip', 5).some(r => r.entryId === 'bar.hoverRegionHeight'), 'an out-of-window entry is not found');
-    assert.ok(SchemaUtil.search(real, 'clock face', 5).some(r => r.entryId === 'bar.moduleOptions.clock.face'), 'a window row is found');
-    assert.ok(entries().some(e => e.key === 'bar.hoverRegionHeight'), 'the entry stays in the schema (catalog)');
+    const hit = SchemaUtil.search(real, 'Bar reveal strip', 5).find(r => r.entryId === 'bar.hoverRegionHeight');
+    assert.ok(hit && hit.advanced === true, 'an advanced entry is found, marked for the More card');
+    assert.ok(SchemaUtil.search(real, 'clock face', 5).some(r => r.entryId === 'bar.moduleOptions.clock.face'), 'a card row is found');
+    // equal matches: the card row ranks over the More card's
+    const twin = [{ entryId: 'a', label: 'Gap', haystack: 'gap', advanced: true }, { entryId: 'b', label: 'Gap', haystack: 'gap' }];
+    assert.equal(SchemaUtil.search(twin, 'gap', 2)[0].entryId, 'b');
 });
 
-test('Reset page touches window rows only', () => {
+test('Reset page touches every row of the page, the More card included', () => {
     const ctx = { compositor: 'hyprland', get: () => undefined };
     const keys = ResetModel.activeItems(cat(), ctx).map(it => it.entry.key);
-    assert.deepEqual(plain(keys), ['bar.a']);
+    assert.deepEqual(plain(keys), ['bar.a', 'bar.b', 'bar.c', 'bar.d']);
+});
+
+test('every schema entry is reachable in the window and every labelled one is searchable', () => {
+    const index = SchemaUtil.buildSearchIndex(all, k => en[k] || k);
+    const found = new Set(index.filter(i => i.entryId).map(i => i.categoryId + '/' + i.entryId));
+    let cards = 0, more = 0;
+    for (const c of all) {
+        // a hand-written page draws its own entries (Presets): not here
+        if (c.page)
+            continue;
+        const inMore = new Set();
+        for (const g of SchemaUtil.moreGroups(c))
+            g.entries.forEach(e => inMore.add(e));
+        for (const s of c.sections || [])
+            for (const e of s.entries || []) {
+                const id = SchemaUtil.entryId(e);
+                // rendered by SettingsPage: a row of a card (SettingsSection
+                // keeps inCards entries) or of the More card (moreGroups)
+                const card = SchemaUtil.inCards(e, s);
+                assert.ok(card !== inMore.has(e), `${c.id}/${id}: a card row or a More row, exactly one`);
+                card ? cards++ : more++;
+                if (e.label)
+                    assert.ok(found.has(c.id + '/' + id), `${c.id}/${id}: searchable`);
+            }
+    }
+    assert.ok(cards > 100 && more > 0, `${cards} card rows, ${more} More rows`);
 });
 
 test('the window stays small: about 150 rows when every page is curated', () => {
@@ -197,7 +233,7 @@ test('inverted toggles are toggles', () => {
         assert.equal(e.type, 'toggle', e.key);
 });
 
-test('a window row only waits on keys some window row edits (nothing becomes unreachable)', () => {
+test('a card row only waits on keys some row of the window edits (nothing becomes unreachable)', () => {
     const edited = new Set();
     for (const c of Categories.categories)
         for (const s of c.sections || [])

@@ -88,3 +88,17 @@ test('page cache: a revisit moves the page to the front, the oldest beyond `keep
     assert.equal(Cache.find(pages, 'look'), null);
     assert.equal(Cache.find(pages, 'bar').name, 'bar', 'a kept page is the same object');
 });
+
+test('the History menu names a step by its id: depthOf finds how deep it lies', () => {
+    let stack = [];
+    stack = Undo.pushResult(stack, Object.assign(one('bar.a', 1, 2), { id: 1 }), 0, eq).stack;
+    stack = Undo.pushResult(stack, Object.assign(one('bar.b', 1, 2), { id: 2 }), 5000, eq).stack;
+    stack = Undo.pushResult(stack, Object.assign(one('bar.c', 1, 2), { id: 3 }), 10000, eq).stack;
+    assert.equal(Undo.depthOf(stack, 3), 0, 'the newest');
+    assert.equal(Undo.depthOf(stack, 1), 2);
+    assert.equal(Undo.depthOf(stack, 7), -1, 'a step that is gone');
+    // a merge keeps its step's id (a drag still running stays the same step)
+    stack = Undo.pushResult(stack, Object.assign(one('bar.c', 2, 3), { id: 4 }), 10500, eq).stack;
+    assert.equal(Undo.depthOf(stack, 3), 0);
+    assert.equal(Undo.depthOf(stack, 4), -1);
+});

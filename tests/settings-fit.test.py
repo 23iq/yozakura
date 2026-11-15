@@ -1,18 +1,21 @@
 """Every settings page and home lay out cleanly at the default window
 (1180x780), offscreen, with the device fixtures (tests/lib/device_fixtures.py).
 
-A page is its cards beside a sticky stage (two panes; only where the
-desktop is the subject) or one centred column of cards without one, with a
-one-line hint (modules/settings/AGENTS.md, PAGE COMPOSITION). For home and every tab this checks, with
-tests/lib/settings_probe.py:
+A page is the destination grid (modules/settings/AGENTS.md, PAGE
+COMPOSITION): in a wide window two panes (the cards in the left column, the
+stage sticky in the right one with the inspector under it) or, without a
+stage, the cards in both columns; in a narrow window (or a list page) the
+stage on top and the cards under it; the folded More settings card last.
+For home and every tab this checks, with tests/lib/settings_probe.py:
 
 * no two sibling cards, no two rows of a card, no two header parts, the
   stage / hint / first card and no two home tiles (nor a tile's name /
   status and its scene) intersect;
 * no text is elided or painted outside its box or its card;
 * every option of a picture-card selector is within reach;
-* the stage takes at most a third of the page; only desktop pages have
-  a desktop stage.
+* a stage on top takes at most a third of the page (unless it asks for
+  more), one beside the cards fits the view; only desktop pages have a
+  desktop stage.
 
 Then again after interactions: gates toggled, the island off, several
 bars, other selector options, an editor that grows, a long value; and no

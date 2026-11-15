@@ -71,6 +71,8 @@ Singleton {
         return shown ? (String(shown).startsWith("/") ? "file://" + shown : String(shown)) : "";
     }
     property var _focusOwner: null
+    // the row (or the inspector) that owns focusKeys now, null: none
+    readonly property var focusOwner: root._focusOwner
 
     // A row is pointed at (hovered / focused) or no longer: the last one
     // pointed at owns focusKeys; leaving clears them only if it still does.
@@ -110,6 +112,9 @@ Singleton {
                 return m.activeColorPreset;
             if (k.prop === "wallPath")
                 return m.wallpaperDir;
+            // the wallpaper on screen (the strip's pick: an undo step)
+            if (k.prop === "current")
+                return m.currentWallpaper;
             return undefined;
         }
         const domain = Config[k.domain];
@@ -154,6 +159,8 @@ Singleton {
             m.setColorPreset(value);
         else if (prop === "wallPath" && m.setWallpaperDir)
             m.setWallpaperDir(value);
+        else if (prop === "current" && m.setWallpaper)
+            m.setWallpaper(value);
     }
 
     // One value into Config (or the wallpaper manager); `staged`: the
@@ -195,19 +202,21 @@ Singleton {
     // Writes one domain's file now (Config.saveDomain: every domain has one,
     // tests/settings-save-path.test.cjs). false: no way to write it.
     function _save(domain) {
-        if (typeof Config.saveDomain === "function")
-            return Config.saveDomain(domain);
-        const saver = Config["save" + domain.charAt(0).toUpperCase() + domain.slice(1)];
-        if (typeof saver !== "function") {
-            console.warn("SettingsStore: no save path for", domain);
-            return false;
-        }
-        saver();
-        return true;
+        return Config.saveDomain(domain);
     }
 
     // ---- live changes + undo ------------------------------------------
+    // A change made in the settings window: live, and a step of its history.
     function set(key, value) {
+        root._set(key, value, true);
+    }
+    // A live change made elsewhere (the AI panel, a project's settings):
+    // never a step of the window's history (Ctrl+Z in Settings never takes
+    // back what another surface did).
+    function setElsewhere(key, value) {
+        root._set(key, value, false);
+    }
+    function _set(key, value, recorded) {
         if (!key)
             return;
         const before = SchemaUtil.plain(get(key));
@@ -220,7 +229,7 @@ Singleton {
         // answers later (a separate window relays it), so its keys keep the
         // value asked for.
         const after = root._async(key) ? SchemaUtil.plain(value) : root._current(key);
-        if (!SchemaUtil.equal(before, after))
+        if (recorded && !SchemaUtil.equal(before, after))
             root._record(key, before, after);
         root.valueSet(key, value);
     }
@@ -234,70 +243,35 @@ Singleton {
             root.valueSet(key, value);
     }
 
-    // Window history: [{id, label, changes: [{key, before, after}], time}].
-    // It lives while the window is open: closing the window clears it, in
-    // process as in a separate window process (which quits), because what
-    // changes while it is closed (dashboard, CLI, presets) is not recorded
-    // and would make old steps write stale values. A preset command clears
-    // it too (PresetStudio), and so does a reload of a domain that changed
-    // a value the history expects (another process, `config set`, a preset
-    // applied elsewhere: _domainReloaded). An undo or redo whose keys no
-    // longer hold the values it expects is dropped, never written.
-    property var undoStack: []
-    property var redoStack: []
-    readonly property bool canUndo: undoStack.length > 0
-    readonly property bool canRedo: redoStack.length > 0
-    // The last step recorded, undone or redone, for the undo pill:
-    // {id (the step's), label, kind: "changed" | "undone" | "redone",
-    // serial}; null: nothing to offer (the pill hides).
-    property var lastStep: null
-    property int _serial: 0
-    property int _ids: 0
+    // The window's session history (UndoHistory.qml: steps, coalescing,
+    // the pill's last step, transactions); its API is forwarded here.
+    UndoHistory {
+        id: history
+        write: (key, value) => {
+            if (root._write(key, value, false))
+                root.valueSet(key, value);
+        }
+        current: root._current
+        trusted: root._async
+        labels: root.labelIndex
+    }
+    readonly property alias undoStack: history.undoStack
+    readonly property alias redoStack: history.redoStack
+    readonly property bool canUndo: history.canUndo
+    readonly property bool canRedo: history.canRedo
+    readonly property alias lastStep: history.lastStep
     // key -> label of the entry that edits it.
     readonly property var labelIndex: UndoModel.labelIndex(Categories.categories)
-    // An open transaction: changes made inside it are one step.
-    property var _txn: null
-    property int _txnDepth: 0
-    property bool _replaying: false
 
+    // Only what the open window changes is its history: a write made
+    // elsewhere (the AI panel, a project's settings) uses setElsewhere().
     function _record(key, before, after) {
-        // Only what the open window changes is its history (the dashboard,
-        // the AI service and the wizard write through here too).
-        if (root._replaying || !GlobalStates.settingsWindowVisible)
-            return;
-        if (root._txn) {
-            root._txn.changes = UndoModel.addChange(root._txn.changes, key, before, after);
-            return;
-        }
-        root._push({
-            "label": UndoModel.labelFor(root.labelIndex, key),
-            "changes": UndoModel.addChange([], key, before, after)
-        });
+        if (GlobalStates.settingsWindowVisible)
+            history.record(key, before, after);
     }
-
-    function _push(step) {
-        step.id = root._ids + 1;
-        const r = UndoModel.pushResult(root.undoStack, step, Date.now(), SchemaUtil.equal);
-        if (r.outcome === "none")
-            return;
-        if (r.outcome === "added")
-            root._ids = step.id;
-        root.undoStack = r.stack;
-        root.redoStack = [];
-        // A change taken back within the coalescing window (a switch
-        // flipped twice): its step is gone, nothing is announced and the
-        // pill that named it hides.
-        root._announce(r.outcome === "cancelled" ? null : r.step, "changed");
-    }
-
+    // (the render tool names a step for the pill)
     function _announce(step, kind) {
-        root._serial++;
-        root.lastStep = step ? {
-            "id": step.id,
-            "label": step.label || "",
-            "kind": kind,
-            "serial": root._serial
-        } : null;
+        history.announce(step, kind);
     }
 
     // Keys whose value is not known synchronously (the wallpaper manager):
@@ -310,124 +284,48 @@ Singleton {
     }
 
     function clearHistory() {
-        root.undoStack = [];
-        root.redoStack = [];
-        root._announce(null, "");
-    }
-
-    // A domain was reloaded from disk: when that changed a value the
-    // history expects, its steps no longer describe the config and all of
-    // them go (a later undo would bring back a stale value). Our own write
-    // coming back, or a change to keys the history never touched, keeps it.
-    function _domainReloaded(name) {
-        if (root.undoStack.length === 0 && root.redoStack.length === 0)
-            return;
-        const only = k => SchemaUtil.splitKey(k).domain === name;
-        if (!UndoModel.consistent(root.undoStack, root.redoStack, root._current, SchemaUtil.equal, only))
-            root.clearHistory();
+        history.clear();
     }
 
     Connections {
         target: Config
         ignoreUnknownSignals: true
         function onDomainReloaded(name) {
-            root._domainReloaded(name);
+            history.domainReloaded(name);
         }
     }
     Connections {
         target: GlobalStates
         function onSettingsWindowVisibleChanged() {
             if (!GlobalStates.settingsWindowVisible)
-                root.clearHistory();
+                history.clear();
         }
     }
 
     // Changes made by `fn` are one undo step labelled `label` (an i18n key):
     // a reset, a macro slider, an editor that writes several keys.
     function transaction(label, fn) {
-        if (root._txnDepth === 0)
-            root._txn = {
-                "label": label,
-                "changes": []
-            };
-        root._txnDepth++;
-        try {
-            fn();
-        } finally {
-            root._txnDepth--;
-            if (root._txnDepth === 0) {
-                const t = root._txn;
-                root._txn = null;
-                if (t.changes.length > 0)
-                    root._push(t);
-            }
-        }
+        history.transaction(label, fn);
     }
 
-    function _replay(writes) {
-        root._replaying = true;
-        try {
-            writes.forEach(w => {
-                if (root._write(w.key, w.value, false))
-                    root.valueSet(w.key, w.value);
-            });
-        } finally {
-            root._replaying = false;
-        }
-    }
-
-    // Undoes the newest step. A step whose keys no longer hold what it set
-    // (changed elsewhere since) is dropped without writing. true: undone.
+    // Undoes the newest step (a step changed elsewhere since is dropped on
+    // the way). true: undone.
     function undo() {
-        if (!root.canUndo)
-            return false;
-        const stack = root.undoStack.slice();
-        const step = stack.pop();
-        root.undoStack = stack;
-        if (!UndoModel.holds(step, "after", root._current, SchemaUtil.equal, root._async)) {
-            root._announce(null, "");
-            return false;
-        }
-        root._replay(UndoModel.reverted(step));
-        root.redoStack = root.redoStack.concat([step]);
-        root._announce(step, "undone");
-        return true;
+        return history.undo();
     }
-
     function redo() {
-        if (!root.canRedo)
-            return false;
-        const stack = root.redoStack.slice();
-        const step = stack.pop();
-        root.redoStack = stack;
-        if (!UndoModel.holds(step, "before", root._current, SchemaUtil.equal, root._async)) {
-            root._announce(null, "");
-            return false;
-        }
-        root._replay(UndoModel.replayed(step));
-        step.time = 0;
-        root.undoStack = root.undoStack.concat([step]);
-        root._announce(step, "redone");
-        return true;
+        return history.redo();
     }
-
-    // The undo pill acts on the step it names and never on another one:
-    // only while that step is still the newest (else the pill just hides).
+    // The undo pill: only the step it names, while it is the newest.
     function undoStep(id) {
-        const top = root.undoStack[root.undoStack.length - 1];
-        if (!top || top.id !== id) {
-            root._announce(null, "");
-            return false;
-        }
-        return root.undo();
+        return history.undoStep(id);
     }
     function redoStep(id) {
-        const top = root.redoStack[root.redoStack.length - 1];
-        if (!top || top.id !== id) {
-            root._announce(null, "");
-            return false;
-        }
-        return root.redo();
+        return history.redoStep(id);
+    }
+    // The History menu: back to before the step `id` (it and every newer one).
+    function undoTo(id) {
+        return history.undoTo(id);
     }
 
     // ---- modified / reset ---------------------------------------------
@@ -486,7 +384,7 @@ Singleton {
     }
 
     // ---- what the window shows ----------------------------------------
-    // Shown in the window at all (not an out-of-window `advanced` entry).
+    // Reachable in the window (a card row or a row of the More card).
     function inWindow(entry, section) {
         return SchemaUtil.inWindow(entry, section);
     }
@@ -498,11 +396,12 @@ Singleton {
         return SchemaUtil.evalCondition(entry.visibleWhen, root.get);
     }
 
-    // A section has at least one row to show right now.
-    function sectionShown(section) {
+    // A section has at least one card row to show right now (`more`: one
+    // row of the More card, its advanced entries).
+    function sectionShown(section, more) {
         if (!section || !CompositorGate.allows(section.compositor, YozdService.compositorName))
             return false;
-        return (section.entries || []).some(e => SchemaUtil.inWindow(e, section) && root.visible(e));
+        return (section.entries || []).some(e => (more === true ? SchemaUtil.isAdvanced(e, section) : SchemaUtil.inCards(e, section)) && root.visible(e));
     }
 
     function enabled(entry) {

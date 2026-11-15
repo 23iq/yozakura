@@ -147,6 +147,39 @@ for r, corners in ((8, True), (12, True), (16, False), (20, True)):
     QTest.qWait(40)
 check(ev("SettingsStore.undoStack.length") == n0 + 1, "a macro drag over four points is one undo step")
 
+# ---- writes made elsewhere are no steps; stale steps are skipped --------------
+QTest.qWait(1600)
+n0 = ev("SettingsStore.undoStack.length")
+ev("SettingsStore.setElsewhere('dock.position', 'left')")
+check(ev("Config.dock.position") == "left" and ev("SettingsStore.undoStack.length") == n0,
+      "setElsewhere writes live and records no step (the AI panel's model pick)")
+ev("SettingsStore.set('bar.compact', true)")
+QTest.qWait(1600)
+ev("SettingsStore.set('bar.clockShowDate', true)")
+ev("Config.bar.clockShowDate = false")  # changed elsewhere since
+check(ev("SettingsStore.undo()") is True and ev("Config.bar.compact") is False,
+      "Ctrl+Z drops the stale newest step and undoes the one under it")
+ev("Config.bar.clockShowDate = false; Config.bar.compact = false")
+
+# ---- the History menu undoes back to a step, by its id -------------------------
+QTest.qWait(1600)
+ev("SettingsStore.set('bar.compact', true)")
+first = ev("SettingsStore.undoStack[SettingsStore.undoStack.length - 1].id")
+QTest.qWait(1600)
+ev("SettingsStore.set('bar.clockShowDate', true)")
+check(ev(f"SettingsStore.undoTo({first})") is True and ev("Config.bar.compact") is False and ev("Config.bar.clockShowDate") is False,
+      "undoTo(id) undoes that step and every newer one")
+n1 = ev("SettingsStore.undoStack.length")
+check(ev("SettingsStore.undoTo(99999)") is False and ev("SettingsStore.undoStack.length") == n1, "...and nothing for a step that is gone")
+
+# ---- a wallpaper pick is a step --------------------------------------------------
+QTest.qWait(1600)
+before = ev("SettingsStore.get('wallpaper.current')")
+ev("SettingsStore.set('wallpaper.current', '/walls/other.png')")
+check(ev("SettingsStore.get('wallpaper.current')") == "/walls/other.png", "a wallpaper pick goes to the manager")
+ev("SettingsStore.undo()")
+check(ev("SettingsStore.get('wallpaper.current')") == before, "...and one undo brings the old one back")
+
 if failures:
     print(f"settings-undo-store: {len(failures)} failure(s)")
     h.exit(1)

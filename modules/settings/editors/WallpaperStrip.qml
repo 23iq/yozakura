@@ -57,8 +57,9 @@ Item {
         return s.substring(s.lastIndexOf("/") + 1);
     }
     function pick(path) {
+        // through the store: a pick is a step of the window's history
         if (root.manager && path !== root.current)
-            root.manager.setWallpaper(path);
+            SettingsStore.transaction(root.entry && root.entry.label ? root.entry.label : "", () => SettingsStore.set("wallpaper.current", path));
     }
     // moves the keyboard focus to picture `i` (kept in the library), in view
     function focusAt(i) {

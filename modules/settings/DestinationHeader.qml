@@ -70,89 +70,59 @@ Item {
         }
     }
 
-    // the tabs: a sideways-scrolling line when wider than the window
-    Flickable {
-        id: tabsView
-        objectName: "destinationTabsView"
+    // the tabs: a sideways-scrolling line when wider than the window, its
+    // cut edges faded (a mask: it reads over the ambient background in every
+    // language)
+    EdgeFade {
+        id: tabsBox
         readonly property real room: header.tabsOwnLine ? header.width : header.tabsRoom
         width: Math.min(room, tabsLoader.implicitWidth)
         height: tabsLoader.implicitHeight
         x: header.tabsOwnLine ? 0 : header.tabsX
         y: header.tabsOwnLine ? Space.controlL + Space.s : (Space.controlL - height) / 2
         visible: tabsLoader.active
-        contentWidth: tabsLoader.implicitWidth
-        contentHeight: height
-        interactive: contentWidth > width
-        clip: interactive
-        boundsBehavior: Flickable.StopAtBounds
-        flickableDirection: Flickable.HorizontalFlick
+        horizontal: true
+        start: tabsView.interactive && tabsView.contentX > 1 ? Space.xl : 0
+        end: tabsView.interactive && tabsView.contentX < tabsView.contentWidth - tabsView.width - 1 ? Space.xl : 0
 
-        // the current tab scrolls into view
-        function reveal() {
-            if (!tabsLoader.item || !tabsView.interactive)
-                return;
-            const n = Math.max(1, header.tabs.length);
-            const i = Math.max(0, header.currentTab);
-            const centre = tabsView.contentWidth * (i + 0.5) / n;
-            tabsView.contentX = Math.max(0, Math.min(centre - tabsView.width / 2, tabsView.contentWidth - tabsView.width));
-        }
-        onWidthChanged: Qt.callLater(tabsView.reveal)
-        Connections {
-            target: header
-            function onCategoryChanged() {
-                Qt.callLater(tabsView.reveal);
-            }
-        }
+        Flickable {
+            id: tabsView
+            objectName: "destinationTabsView"
+            anchors.fill: parent
+            contentWidth: tabsLoader.implicitWidth
+            contentHeight: height
+            interactive: contentWidth > width + 1
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.HorizontalFlick
 
-        Loader {
-            id: tabsLoader
-            active: header.tabModel.length > 1
-            sourceComponent: Segmented {
-                objectName: "destinationTabs"
-                focusable: true
-                navigation: true
-                model: header.tabModel
-                currentIndex: header.currentTab
-                onActivated: i => header.tabSelected(header.tabs[i].id)
+            // the current tab scrolls into view
+            function reveal() {
+                if (!tabsLoader.item || !tabsView.interactive)
+                    return;
+                const n = Math.max(1, header.tabs.length);
+                const i = Math.max(0, header.currentTab);
+                const centre = tabsView.contentWidth * (i + 0.5) / n;
+                tabsView.contentX = Math.max(0, Math.min(centre - tabsView.width / 2, tabsView.contentWidth - tabsView.width));
             }
-        }
-    }
-    // edge fades while the line scrolls
-    Mark {
-        visible: tabsView.interactive && tabsView.contentX > 1
-        x: tabsView.x
-        y: tabsView.y
-        width: Space.xl
-        height: tabsView.height
-        radius: 0
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0
-                color: Colors.background
+            onWidthChanged: Qt.callLater(tabsView.reveal)
+            Connections {
+                target: header
+                function onCategoryChanged() {
+                    Qt.callLater(tabsView.reveal);
+                }
             }
-            GradientStop {
-                position: 1
-                color: "transparent"
-            }
-        }
-    }
-    Mark {
-        visible: tabsView.interactive && tabsView.contentX < tabsView.contentWidth - tabsView.width - 1
-        x: tabsView.x + tabsView.width - width
-        y: tabsView.y
-        width: Space.xl
-        height: tabsView.height
-        radius: 0
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0
-                color: "transparent"
-            }
-            GradientStop {
-                position: 1
-                color: Colors.background
+
+            Loader {
+                id: tabsLoader
+                active: header.tabModel.length > 1
+                sourceComponent: Segmented {
+                    objectName: "destinationTabs"
+                    focusable: true
+                    navigation: true
+                    model: header.tabModel
+                    currentIndex: header.currentTab
+                    onActivated: i => header.tabSelected(header.tabs[i].id)
+                }
             }
         }
     }

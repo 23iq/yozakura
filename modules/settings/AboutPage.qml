@@ -13,6 +13,8 @@ import qs.modules.globals
 // (a plain card fill, no wallpaper: About is not a desktop page; the mark glowing, the name, the version, one line about
 // it), then one row of cards: the version and its updates, the useful
 // places (setup again, the config folder, the source) and the legal notes.
+// The cards have the schema cards' padding and text edge (Look.rowInset);
+// a card header is its title alone, translated text wraps.
 FittedFrame {
     id: page
     stackable: true
@@ -98,22 +100,23 @@ FittedFrame {
         Card {
             width: cards.cardW
             height: page.rowH
+            padding: Look.boxPadding + Space.s
             readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.version")
             }
-            KitText {
+            Inset {
                 role: "display"
                 font.pixelSize: Type.size("display") * 0.8
                 text: Config.version
             }
-            KitText {
-                width: parent.width
+            Inset {
                 role: "secondary"
-                elide: Text.ElideRight
+                wrapMode: Text.WordWrap
                 text: UpdateService.updateAvailable === true && (UpdateService.lastDetectedVersion ?? "") !== "" ? I18n.t("prefs.updates.available", UpdateService.lastDetectedVersion) : I18n.t("prefs.updates.stage.up_to_date")
             }
             PillButton {
+                x: Look.rowInset
                 objectName: "aboutUpdates"
                 icon: "downloadSimple"
                 text: I18n.t("prefs.about.updates")
@@ -125,12 +128,14 @@ FittedFrame {
         Card {
             width: cards.cardW
             height: page.rowH
+            padding: Look.boxPadding + Space.s
             readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.places")
             }
             spacing: Space.s
             PillButton {
+                x: Look.rowInset
                 objectName: "aboutRunSetup"
                 icon: "seal"
                 text: I18n.t("onboarding.run_again")
@@ -140,11 +145,13 @@ FittedFrame {
                 }
             }
             PillButton {
+                x: Look.rowInset
                 icon: "folder"
                 text: I18n.t("prefs.about.open_config")
                 onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Config.configDir]))
             }
             PillButton {
+                x: Look.rowInset
                 icon: "code"
                 text: I18n.t("prefs.about.source")
                 onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Brand.repoUrl]))
@@ -156,23 +163,24 @@ FittedFrame {
             id: legalCard
             width: cards.cardW
             height: page.rowH
+            padding: Look.boxPadding + Space.s
             readonly property bool fittedCard: true
             Title {
                 text: I18n.t("prefs.about.card.legal")
             }
-            KitText {
+            Inset {
                 role: "display"
                 font.pixelSize: Type.size("display") * 0.8
                 text: "AGPL-3.0"
             }
-            KitText {
-                width: parent.width
+            Inset {
                 role: "secondary"
                 wrapMode: Text.WordWrap
                 text: I18n.t("prefs.about.free")
             }
             Flickable {
-                width: legalCard.contentWidth
+                x: Look.rowInset
+                width: legalCard.contentWidth - Look.rowInset * 2
                 height: Math.max(Space.xl, legalCard.height - legalCard.padding * 2 - y)
                 contentWidth: width
                 contentHeight: legal.height
@@ -186,8 +194,15 @@ FittedFrame {
         }
     }
 
-    // a card's title, as on the other pages' cards
-    component Title: KitText {
+    // a card's title, as on the other pages' cards: at the row inset, the
+    // card's content on its line (no value beside it: the content says it)
+    component Title: Inset {
         role: "title"
+        wrapMode: Text.WordWrap
+    }
+    // a line of a card at the row inset (the schema cards' text edge)
+    component Inset: KitText {
+        x: Look.rowInset
+        width: (parent ? parent.width : 0) - Look.rowInset * 2
     }
 }
