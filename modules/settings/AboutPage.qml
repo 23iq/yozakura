@@ -86,7 +86,8 @@ FittedFrame {
         objectName: "aboutRow"
         x: page.margin
         // stacked (narrow window): under the hint, one card a line
-        y: page.stacked ? scene.y + scene.height + page.gap : page.height - page.rowH - page.pad
+        // (a tall window: right under the scene, never at a far foot)
+        y: page.stacked ? scene.y + scene.height + page.gap : Math.min(page.rowY, scene.y + scene.height + page.gap)
         width: page.width - page.margin * 2
         spacing: page.gap
         // whole pixels: three fractional widths can add up past the row and

@@ -3351,6 +3351,7 @@
   "prefs.displays.refresh_upgrade": "Tu monitor admite %1",
   "prefs.displays.scale": "Escala",
   "prefs.displays.scale.desc": "Hace todo más grande. La chispa marca el tamaño sugerido para esta pantalla.",
+  "prefs.displays.scale_suggested": "%1 es la escala recomendada para esta pantalla",
   "prefs.displays.rotation": "Rotación",
   "prefs.displays.rotation.0": "Normal",
   "prefs.displays.rotation.1": "90°",

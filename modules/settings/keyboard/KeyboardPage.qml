@@ -100,7 +100,9 @@ FittedFrame {
         x: page.margin
         y: Space.s
         width: page.width - page.margin * 2
-        height: page.heroH
+        // stacked (narrow window, the page scrolls): a keyboard at a
+        // readable size, not the sliver the row leaves
+        height: page.stacked ? Math.max(page.heroH, Space.px(300), Math.round(hero.width * 0.45)) : page.heroH
 
         RectangularShadow {
             anchors.fill: stage
@@ -189,7 +191,7 @@ FittedFrame {
         objectName: "keyboardRow"
         x: page.margin
         // stacked (narrow window): under the hint, one card a line
-        y: page.stacked ? hint.y + hint.height + page.gap : page.height - page.rowH - page.pad
+        y: page.stacked ? hint.y + hint.height + page.gap : page.rowY
         width: page.width - page.margin * 2
         spacing: page.gap
         readonly property real unitW: (row.width - row.spacing * 2) / 3.2

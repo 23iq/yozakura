@@ -75,6 +75,15 @@ function scaleOptions(current, suggested) {
     });
 }
 
+// The scale steps the strip shows: the common ones up to 200 %, plus the
+// current one (a custom or bigger value) and the suggested one when they are
+// bigger; nothing above 200 % otherwise (a strip of equal tiles stays readable).
+function scaleSteps(options, current) {
+    return (options || []).filter(function (o) {
+        return o.value <= 2 || o.max === true || sameNumber(o.value, current);
+    });
+}
+
 // Same tolerance the chips use to decide which one is lit.
 function sameNumber(a, b) {
     return Math.abs(a - b) < 0.02;

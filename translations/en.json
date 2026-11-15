@@ -3351,6 +3351,7 @@
   "prefs.displays.refresh_upgrade": "Your monitor supports %1",
   "prefs.displays.scale": "Scale",
   "prefs.displays.scale.desc": "Makes everything larger. The sparkle marks the size suggested for this screen.",
+  "prefs.displays.scale_suggested": "%1 suits this screen best",
   "prefs.displays.rotation": "Rotation",
   "prefs.displays.rotation.0": "Normal",
   "prefs.displays.rotation.1": "90°",
