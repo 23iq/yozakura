@@ -259,6 +259,11 @@ QtObject {
         for (const part of key.split(".")) o = o ? o[part] : undefined;
         return o;
     }
+    // (a change made outside the Settings window: no undo step there)
+    function setElsewhere(key, value) {
+        set(key, value);
+        sets[sets.length - 1].elsewhere = true;
+    }
     function set(key, value) {
         sets = sets.concat([{key: key, value: value}]);
         const parts = key.split(".");

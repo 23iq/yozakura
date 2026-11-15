@@ -18,6 +18,8 @@ StyledRect {
     objectName: "connectSheet"
 
     property bool embedded: false
+    // in the Settings window (its changes are steps of its history)
+    property bool inSettings: false
     property bool opened: embedded
     property string provider: ""
 
@@ -162,6 +164,7 @@ StyledRect {
         id: formC
         ProviderForm {
             provider: root.provider
+            inSettings: root.inSettings
             interactive: !root.embedded
             Behavior on opacity {
                 enabled: BarLook.animDuration > 0

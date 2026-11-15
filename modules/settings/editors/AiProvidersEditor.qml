@@ -13,6 +13,7 @@ ColumnLayout {
 
     ConnectSheet {
         objectName: "settingsConnectSheet"
+        inSettings: true
         Layout.fillWidth: true
         Layout.preferredHeight: implicitHeight
         embedded: true
