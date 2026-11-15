@@ -41,6 +41,9 @@ QtObject {
     property bool isAvailable: true
     property var calls: []
     function setProfile(p) { calls = calls.concat([p]); currentProfile = p }
+    // (the bar's battery popup in a live preview)
+    function getProfileIcon(name) { return "" }
+    function getProfileDisplayName(name) { return name || "" }
 }"""
 
 # Two monitors side by side: a 27" Dell (DP-1, 2560x1440 at 60 Hz, 240 Hz

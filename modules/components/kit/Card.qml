@@ -4,7 +4,7 @@ import qs.modules.theme
 import qs.modules.components.kit
 
 // A bento card: one surface (Look.cardFill: translucent over the window's
-// Ambient in glass / ink, solid in the boxed languages; Look.bigRadius, a
+// Ambient in glass / ink, solid in the boxed languages; Look.radius("big"), a
 // hairline edge, a soft shadow) holding a concept - an optional label
 // (SectionLabel) over its content, laid out in a column. Visible in every
 // visual language (unlike Group, which ink leaves unboxed), so a grid of
@@ -28,7 +28,7 @@ Item {
     property bool shadow: true
     property int padding: Look.boxPadding + Space.xs
     property int spacing: Space.m
-    readonly property real radius: Look.bigRadius(Space.controlXL)
+    readonly property real radius: Look.radius("big", Space.controlXL)
     readonly property bool hovered: area.containsMouse || root.highlighted
     readonly property real contentWidth: root.width - root.padding * 2
     // Where the pointer is over an interactive card, -1..1 on each axis

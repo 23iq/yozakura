@@ -19,7 +19,7 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 ### Display & Feedback
 | Component | Role |
 |-----------|------|
-| `StyledToolTip.qml` | Themed tooltip |
+| `StyledToolTip.qml` | Legacy tooltip (bold label); new code and every kit control use the kit `Tooltip` |
 | `BarPopup.qml` | Base for all bar/notch flyout popups. Requires `anchorItem` + `bar` ref |
 | `ContextMenu.qml` | Right-click context menu |
 | `OptionsMenu.qml` | Dropdown option selector |

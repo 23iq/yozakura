@@ -175,7 +175,11 @@ Item {
                 function track(m: var) {
                     root.setFraction(root.vertical ? 1 - (m.y - Space.xs) / area.height : (m.x - Space.xs) / area.width);
                 }
-                onPressed: m => mouse.track(m)
+                onPressed: m => {
+                    // on a scrolling page the pressed slider takes the wheel
+                    WheelGuard.claim(root);
+                    mouse.track(m);
+                }
                 onPositionChanged: m => {
                     if (mouse.pressed)
                         mouse.track(m);

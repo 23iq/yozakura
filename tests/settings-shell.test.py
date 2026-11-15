@@ -126,7 +126,7 @@ ev("SettingsStore.set('bar.compact', false); SettingsStore.set('bar.clockShowDat
 # History (the header's labelled undo): the session's changes, newest
 # first; a click on an older one undoes back to it (past the 1.5 s in
 # which a setting changed again joins its last step)
-QTest.qWait(1700)
+env.end_undo_step(win)
 ev("SettingsStore.set('bar.compact', true)")
 ev("SettingsStore.set('bar.clockShowDate', true)")
 h.eval(ev('w.findItem("pageUndo")'), "clicked()")
@@ -258,7 +258,7 @@ check(sev("atHome") is True, "the back pill returns home")
 check(wait_until(lambda: sev("reveal") == 0), "home shown again")
 
 # home's History is the same menu: the session's changes, then All changes
-QTest.qWait(1700)
+env.end_undo_step(win)
 ev("SettingsStore.set('bar.compact', true)")
 h.eval(ev('w.findItem("homeHistory")'), "clicked()")
 QTest.qWait(50)
@@ -303,7 +303,7 @@ select("appearance")
 modes = ev('w.findItem("themeModeCards", w.findItem("settingsPage").item)')
 check(modes is not None, "the Mode editor is on the Look page")
 h.eval(modes, 'choose("light")')
-QTest.qWait(1700)  # past the merge window: two steps
+env.end_undo_step(win)  # past the merge window: two steps
 h.eval(modes, 'choose("oled")')
 check(ev("Config.theme.lightMode") is False and ev("Config.theme.oledMode") is True, "OLED picked")
 ev("SettingsStore.undo()")

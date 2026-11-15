@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.components.kit
+import "../../theme/InkContrast.js" as InkContrast
 
 // A window's atmosphere: the wallpaper (`source`) heavily blurred and
 // darkened with a soft vignette, so a whole window carries the desktop's
@@ -105,7 +106,8 @@ Item {
         anchors.fill: parent
         radius: 0
         visible: !root.plain
-        color: Qt.alpha(Colors.background, root.lightTheme ? 0.74 - 0.2 * root.level : 0.5 - 0.28 * root.level)
+        // (the muted ink's contrast model reads the same wash: InkContrast)
+        color: Qt.alpha(Colors.background, InkContrast.ambientWash(root.lightTheme, root.level))
         // a new theme: the wash turns with the palette
         Behavior on color {
             enabled: Motion.palette > 0

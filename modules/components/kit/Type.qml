@@ -4,6 +4,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components.kit
 import "../../theme/TypeRoles.js" as TypeRoles
+import "../../theme/InkContrast.js" as InkContrast
 
 // Type roles and ink colors of the shared kit (modules/components/kit).
 // Every text in the shell is one of six roles, sized from theme.fontSize:
@@ -47,9 +48,25 @@ QtObject {
     readonly property color text: Colors.overBackground
     readonly property color secondary: Colors.overSurfaceVariant
     // captions and hints: the outline role pulled 40 % toward the
-    // secondary ink, so small muted text keeps WCAG AA (>= 4.5:1) on the
-    // surfaces in light schemes too (the bare outline is ~3.9:1 there)
-    readonly property color muted: Qt.rgba(Colors.outline.r * 0.6 + Colors.overSurfaceVariant.r * 0.4, Colors.outline.g * 0.6 + Colors.overSurfaceVariant.g * 0.4, Colors.outline.b * 0.6 + Colors.overSurfaceVariant.b * 0.4, 1)
+    // secondary ink, and further (toward the secondary ink, then the text)
+    // as far as WCAG AA (>= 4.5:1) needs on the shell's surfaces and on the
+    // language's card over the ambient wallpaper (theme/InkContrast.js: the
+    // translucent languages turn grey in a light scheme)
+    readonly property color muted: {
+        const ink = InkContrast.mutedInk({
+            "outline": Colors.outline,
+            "overSurfaceVariant": Colors.overSurfaceVariant,
+            "overBackground": Colors.overBackground,
+            "background": Colors.background,
+            "surface": Colors.surface,
+            "surfaceContainerLow": Colors.surfaceContainerLow,
+            "surfaceContainer": Colors.surfaceContainer,
+            "surfaceContainerHigh": Colors.surfaceContainerHigh,
+            "shadow": Colors.shadow,
+            "card": Qt.color(Config.resolveColor(Look.card.fill || "surface"))
+        }, Look.card, Colors.background.hslLightness > 0.5);
+        return Qt.rgba(ink.r, ink.g, ink.b, 1);
+    }
     readonly property color hairline: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.08)
     readonly property color track: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.14)
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)
