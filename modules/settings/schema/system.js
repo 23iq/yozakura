@@ -6,7 +6,8 @@
 // the "only shell" card (Hyprland). Idle, sleep and the battery saver live
 // on Power (power.js). Sections shown on other tabs (Categories.js):
 // performance on Power, video wallpapers on Wallpapers, storage and the
-// clipboard on Dashboard.
+// clipboard on Dashboard. The file converter's output folder, quality and
+// "show when done" are a group of the More card.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -236,8 +237,11 @@ var category = {
             ]
         },
         {
+            // the file converter's output: rare knobs of a tool the stage
+            // cannot show (a group of the tab's More card)
             "id": "converter",
             "title": "prefs.sys.section.converter",
+            "advanced": true,
             "entries": [
                 {
                     "key": "system.converter.outputDir",
