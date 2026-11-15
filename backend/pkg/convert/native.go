@@ -38,12 +38,33 @@ func ConvertNative(src, from, dst, to string, q Quality) error {
 // errNativeTimeout: a native step ran past its timeout.
 var errNativeTimeout = Errorf(CodeTimeout, []string{"converter"}, "the conversion timed out")
 
+// nativeSlots bounds the native steps alive in this process, the ones a
+// cancel or a timeout left behind included: a decode cannot be
+// interrupted, so a step that gave up on one still holds its slot until it
+// really ends, and the next native step waits for it. Memory stays bounded
+// however often a job is started and stopped.
+var nativeSlots = make(chan struct{}, 2)
+
+// closedCh is a channel that is already closed.
+var closedCh = func() chan struct{} { c := make(chan struct{}); close(c); return c }()
+
 // runNative runs a native step off the caller's goroutine: cancelling or
-// the timeout returns at once (the step's result is then dropped with the
-// work dir), and a panic becomes the job's error.
-func runNative(ctx context.Context, st Step) error {
+// the timeout returns at once (the step's result is then dropped), and a
+// panic becomes the job's error. The returned channel closes when the
+// step's goroutine has really ended (the work dir may be removed then).
+func runNative(ctx context.Context, st Step) (<-chan struct{}, error) {
+	select {
+	case nativeSlots <- struct{}{}:
+	case <-ctx.Done():
+		return closedCh, ctx.Err()
+	}
 	done := make(chan error, 1)
+	ended := make(chan struct{})
 	go func() {
+		defer func() {
+			<-nativeSlots
+			close(ended)
+		}()
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Fprintf(os.Stderr, "convert: native step panicked: %v\n%s", r, debug.Stack())
@@ -60,10 +81,10 @@ func runNative(ctx context.Context, st Step) error {
 	defer t.Stop()
 	select {
 	case err := <-done:
-		return err
+		return ended, err
 	case <-ctx.Done():
-		return ctx.Err()
+		return ended, ctx.Err()
 	case <-t.C:
-		return errNativeTimeout
+		return ended, errNativeTimeout
 	}
 }

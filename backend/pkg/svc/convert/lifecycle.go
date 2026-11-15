@@ -48,6 +48,11 @@ func (s *Service) workDir(dir string) (string, func(), error) {
 			}
 		}
 	}
+	return s.hiddenWorkDir(dir)
+}
+
+// hiddenWorkDir makes a recorded hidden work dir in dir.
+func (s *Service) hiddenWorkDir(dir string) (string, func(), error) {
 	w, err := os.MkdirTemp(dir, hiddenPrefix()+strconv.Itoa(os.Getpid())+"-")
 	if err != nil {
 		return "", nil, conv.Errorf(conv.CodeNoWrite, []string{dir}, "cannot write to %s", dir)
@@ -61,8 +66,8 @@ func (s *Service) workDir(dir string) (string, func(), error) {
 		}
 	}
 	return w, func() {
-		_ = os.RemoveAll(w)
-		if record != "" {
+		// the record goes only with the dir: what is left is swept later
+		if os.RemoveAll(w) == nil && record != "" {
 			_ = os.Remove(record)
 		}
 	}, nil

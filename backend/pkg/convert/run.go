@@ -50,7 +50,9 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		}
 		if st.Native != nil {
 			onProgress(-1)
-			if err := runNative(ctx, st); err != nil {
+			ended, err := runNative(ctx, st)
+			p.settled = ended
+			if err != nil {
 				return err
 			}
 			continue
@@ -76,6 +78,16 @@ func (p *Plan) Run(ctx context.Context, onProgress ProgressFunc) error {
 		return Errorf(CodeNoOutput, nil, "the converter wrote no output")
 	}
 	return nil
+}
+
+// Settled closes once nothing of the plan runs any more: a native step a
+// cancel or timeout gave up on may still write into the work dir until
+// then. Remove the work dir only after it.
+func (p *Plan) Settled() <-chan struct{} {
+	if p == nil || p.settled == nil {
+		return closedCh
+	}
+	return p.settled
 }
 
 // writeFiles creates the plan's Files that do not exist yet.

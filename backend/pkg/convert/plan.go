@@ -84,6 +84,8 @@ type Plan struct {
 	// Files are written before the first step when missing (a tool's
 	// policy or settings): a relative path is inside Work.
 	Files map[string]string
+	// settled closes when the last native step's goroutine ended.
+	settled <-chan struct{}
 	// probe reads the duration of the placed input when Duration is 0.
 	probe func(context.Context, string) float64
 }
