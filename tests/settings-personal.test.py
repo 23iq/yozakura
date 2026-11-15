@@ -116,15 +116,20 @@ check(wait_until(lambda: h.eval(shell, "currentCategory") == "appearance"), "wal
 
 # ---- Launcher -----------------------------------------------------------------
 select("launcher")
-check(wait_until(lambda: item("launcherMini") is not None), "launcher: the stage draws the launcher itself")
-rows = lambda: h.eval(item("launcherStage"), "results.map(r => r.id).join(',')")  # noqa: E731
+check(wait_until(lambda: item("launcherLive") is not None and h.eval(item("launcherLive"), "ready") is True,
+                 timeout_ms=10000), "launcher: the stage shows the real launcher")
+# the real launcher's results (LauncherSearch.items): the live apps, sample rows
+rows = lambda: h.eval(item("launcherLive"), "find('launcherSearch').items.map(r => r.provider).join(',')")  # noqa: E731
+check(wait_until(lambda: "apps" in rows() and "calculator" in rows()),
+      "launcher: it answers with your apps and a sample row per provider")
+check(h.eval(item("launcherLive"), "find('launcherSearch').searchText") != "", "launcher: a sample query is typed")
 check(item("settingRow:layout.launcher.host") is not None, "launcher: Opens in is on the page")
 n = steps()
 h.eval(item("launcherSearch:calculator"), "toggled(false)")
 check("calculator" in ev("JSON.stringify(Config.prefix.launcher.disabled)") and steps() == n + 1,
       "launcher: a switch turns a provider off in one undo step")
 ev("SettingsStore.undo()")
-check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)") and "calculator" in rows(),
+check("calculator" not in ev("JSON.stringify(Config.prefix.launcher.disabled)") and wait_until(lambda: "calculator" in rows()),
       "launcher: undo brings it back, on the stage too")
 check(wait_until(lambda: item("card:grid") is not None), "launcher: a picture per result style")
 if item("card:grid") is not None:
@@ -134,7 +139,10 @@ ev("SettingsStore.undo()")
 
 # ---- Dashboard ----------------------------------------------------------------
 select("dashboard")
-check(wait_until(lambda: item("dashboardMini") is not None), "dashboard: the stage draws the dashboard itself")
+check(wait_until(lambda: item("dashboardLive") is not None and h.eval(item("dashboardLive"), "ready") is True,
+                 timeout_ms=10000), "dashboard: the stage shows the real dashboard")
+check(h.eval(item("dashboardLive"), "find('header') !== null && find('hero') !== null"),
+      "dashboard: its header and the stage home's hero are the real ones")
 check(item("settingRow:layout.dashboard.host") is not None, "dashboard: Opens in is on the page")
 n = steps()
 check(wait_until(lambda: item("dashboardTabSwitch:metrics") is not None), "dashboardTabSwitch:metrics" + " exists")

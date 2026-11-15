@@ -24,6 +24,16 @@ test('pick: the live value unless the preview overrides the key', () => {
     assert.equal(Preview.pick({}, 'x', 3), 3);
 });
 
+test('sample: the context\'s data for a key, else the live value', () => {
+    assert.equal(Preview.sample(null, 'launcher.query', 'live'), 'live');
+    const ctx = { overrides: { 'launcher.query': 'no' }, samples: { 'launcher.query': 'fi', 'dashboard.tab': 0 } };
+    assert.equal(Preview.sample(ctx, 'launcher.query', ''), 'fi');
+    // a falsy sample still wins; overrides are not samples
+    assert.equal(Preview.sample(ctx, 'dashboard.tab', 2), 0);
+    assert.equal(Preview.sample({ overrides: { a: 1 } }, 'a', 5), 5);
+    assert.equal(Preview.sample({}, 'x', 3), 3);
+});
+
 test('on: a part is a preview when it has a context', () => {
     assert.equal(Preview.on(null), false);
     assert.equal(Preview.on(undefined), false);

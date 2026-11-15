@@ -18,8 +18,44 @@ from qmlharness import REPO
 # Directories whose every QML gets a qmldir (the real bar and dock trees).
 FULL_QMLDIRS = ["modules/bar", "modules/dock", "modules/corners", "modules/frame", "modules/components/preview",
                 "modules/settings/live"]
-# Trees the stages show beyond the bar's (the whole dock: DockContent).
-EXTRA_DIRS = ["modules/dock"]
+# Trees the stages show beyond the bar's (the whole dock: DockContent; the
+# launcher; the host frames of hosted views: settings/live/HostedFrame).
+EXTRA_DIRS = ["modules/dock", "modules/widgets/launcher", "modules/widgets/dashboard/stage",
+              "modules/widgets/dashboard/home", "modules/widgets/dashboard/widgets",
+              "modules/aicenter/transcript", "modules/aicenter/markdown", "modules/aicenter/chat",
+              "modules/aicenter/lib", "modules/aicenter/composer", "modules/aicenter/common",
+              "modules/aicenter/assistant", "modules/aicenter/header"]
+EXTRA_FILES = ["modules/shell/hosts/HostFrame.qml", "modules/notch/NotchSilhouette.qml",
+               "modules/notch/NotchOutline.qml", "modules/notch/NotchShape.js",
+               "modules/notch/NotchAnimationBehavior.qml", "assets/commands/commands.json",
+               "modules/widgets/dashboard/Dashboard.qml", "modules/widgets/dashboard/DashboardSwipe.qml",
+               "modules/bar/modules/WorldClock.js", "modules/services/timers/TimerFormat.js",
+               "modules/aicenter/AiCenterPreview.qml", "modules/services/ai/Providers.js"]
+# QML modules the hosted views import, {module dir: types} (None: every
+# type of the directory); written after the settings harness' own.
+HOSTED_QMLDIRS = {
+    "modules/notch": ["NotchAnimationBehavior"],
+    # (the settings' own two, and the icon the dashboard's notifications use)
+    "modules/notifications": ["ToastCard", "ToastGroup", "NotificationAppIcon"],
+    "modules/widgets/dashboard/stage": None,
+    "modules/widgets/dashboard/home": None,
+    "modules/widgets/dashboard/widgets": None,
+    "modules/aicenter/transcript": None,
+    "modules/aicenter/markdown": None,
+    "modules/aicenter/chat": None,
+    "modules/aicenter/composer": None,
+    "modules/aicenter/assistant": None,
+    "modules/aicenter/header": None,
+}
+# Dashboard tabs the stage never shows in a test (heavy, I/O): stand-ins.
+HOSTED_STUB_MODULES = {
+    "qs.modules.widgets.dashboard.metrics": {"MetricsTab": "Item {}"},
+    "qs.modules.widgets.dashboard.wallpapers": {"WallpapersTab": "Item {}"},
+}
+# The launcher's prefix tabs (dashboard tabs, statically imported by
+# LauncherView; a preview never opens them): light stand-ins, like
+# launcher_env's, where the tree has no real one.
+LAUNCHER_TABS = (("clipboard", "ClipboardTab"), ("emoji", "EmojiTab"), ("tmux", "TmuxTab"), ("notes", "NotesTab"))
 # Directories the settings harness already declares with a restricted type
 # list: the bar's buttons are added to it.
 EXTRA_TYPES = {
@@ -45,6 +81,29 @@ def mirror(root: Path) -> None:
         if src.is_file() and not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src, dst)
+    for rel in EXTRA_FILES:
+        src, dst = REPO / rel, qs / rel
+        if src.is_file() and not dst.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(src, dst)
+    # the AI parts' pure helpers (the services themselves are stand-ins)
+    # (only these: another one would wake editors the harness has no data for)
+    for name in ("AgentTimeline.js", "ToolMedia.js", "EngineSelection.js", "ContextMath.js", "ModelInfo.js",
+                 "ProviderPresets.js", "Providers.js"):
+        src, dst = REPO / "modules/services/ai" / name, qs / "modules/services/ai" / name
+        if not dst.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(src, dst)
+    for tab, typ in LAUNCHER_TABS:
+        d = qs / "modules/widgets/dashboard" / tab
+        if (d / f"{typ}.qml").exists():
+            continue
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{typ}.qml").write_text(
+            "import QtQuick\nItem { property int leftPanelWidth; property string prefixIcon; "
+            "property string searchText: \"\"; signal backspaceOnEmpty; "
+            "signal requestOpenItem(var itemId, var items, var currentContent, var filePathGetter, var urlChecker); "
+            "function focusSearchInput() {} }\n")
     for rel, body in panels_env.OVERRIDES.items():
         (qs / rel).write_text(body)
     for top in FULL_QMLDIRS:
@@ -57,6 +116,43 @@ def mirror(root: Path) -> None:
         d = qs / rel
         if d.is_dir():
             _qmldir(d, ".".join(d.relative_to(root).parts), only=types)
+
+
+def global_states(qml: str) -> str:
+    """The settings' GlobalStates with the state the hosted views name in
+    their live branch (a preview never reads it, its Connections do)."""
+    extra = """    id: gs
+    property int dashboardCurrentTab: 0
+    property bool dashboardOpen: false
+    property int widgetsTabCurrentIndex: 0
+    property string launcherSearchText: ""
+    property int launcherSelectedIndex: -1
+    function clearLauncherState() {}
+    function clearLauncherStateAfter(ms) {}
+"""
+    if "property int dashboardCurrentTab" in qml:
+        return qml
+    return qml.replace("    id: gs\n", extra, 1)
+
+
+def finish(env) -> None:
+    """After the settings harness wrote its modules: the qmldirs and stub
+    modules of the hosted views (dashboard, notch frame), and the Quickshell
+    service types the dashboard's widgets name."""
+    qs = env.root / "qs"
+    for rel, types in HOSTED_QMLDIRS.items():
+        d = qs / rel
+        if d.is_dir():
+            _qmldir(d, ".".join(d.relative_to(env.root).parts), only=types)
+    for module, files in HOSTED_STUB_MODULES.items():
+        env.h.module(module, files)
+    env.h.module("Quickshell.Services.Mpris", {
+        "MprisLoopState": "QtObject { readonly property int None: 0; readonly property int Track: 1; "
+                          "readonly property int Playlist: 2 }",
+        "MprisPlaybackState": "QtObject { readonly property int Stopped: 0; readonly property int Playing: 1; "
+                              "readonly property int Paused: 2 }"})
+    env.h.module("Quickshell.Services.Pipewire", {
+        "PwNodePeakMonitor": "QtObject { property var node; property bool enabled: true; property real peak: 0.25 }"})
 
 
 _PROBES: dict = {}
@@ -155,9 +251,44 @@ def services(own: dict) -> dict:
     import panels_env
     import panels_stubs
 
-    out = {**panels_stubs.services(panels_env.icon_path), **own}
+    import dashboard_env
+
+    dash = dashboard_env.services(False, dashboard_env.SAMPLE_NOTIFICATIONS, "")
+    out = {**LAUNCHER_SERVICES, **dash, **panels_stubs.services(panels_env.icon_path), **own}
+    # the dashboard's player stand-in (nothing playing) is a superset of the
+    # settings' idle one: its widgets read the player list too
+    out["MprisController"] = dash["MprisController"]
     out["YozdService"] = panels_stubs.services(panels_env.icon_path)["YozdService"]
     return out
+
+
+# What the launcher's providers call (the live apps provider: pins, usage;
+# the others are samples in a preview): idle stand-ins under the settings'
+# own (AppSearch, Ai win).
+LAUNCHER_SERVICES = {
+    "UsageTracker": "pragma Singleton\nQtObject { signal usageDataReady; function recordUsage(id) {} "
+                    "function getUsageScore(id) { return 0 } }",
+    "TaskbarApps": "pragma Singleton\nQtObject { property var pinned: []; function isPinned(id) { return false } "
+                   "function togglePin(id) {} }",
+    "Visibilities": "pragma Singleton\nQtObject { property string currentActiveModule: ''; function setActiveModule(m) {} }",
+    "GlobalShortcuts": "pragma Singleton\nQtObject { function run(c) {} function toggle(c) {} function toggleSettings() {} }",
+    "PresetsService": "pragma Singleton\nQtObject { property var presets: []; function scanPresets() {} }",
+}
+
+
+def app_icons(stub: str, root: Path) -> str:
+    """The AppSearch stand-in with its apps' icon names resolved to PNG
+    files: the launcher preview's result icons load asynchronously, and an
+    `image://icon` from the Python provider deadlocks Qt's pixmap reader
+    thread (launcher_env.resolve_icons, an absolute path loads as a file)."""
+    import re
+
+    from launcher_env import resolve_icons
+
+    names = sorted(set(re.findall(r'"icon": "([^"/]+)"', stub)))
+    for n, f in zip(names, resolve_icons([{"id": n, "icon": n} for n in names], root / "icons"), strict=True):
+        stub = stub.replace(f'"icon": "{n}"', f'"icon": "{f["icon"]}"')
+    return stub
 
 
 def activities() -> dict:

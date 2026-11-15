@@ -95,7 +95,8 @@ modules/settings/
 │                           Providers, Routines); pure helpers WindowTiles / DesktopPlace / OsdPlace /
 │                           KeyDeck.js (node-tested)
 ├── live/                   LIVE PREVIEWS: the real bar panels / dock in a stage or a picture (LiveTarget,
-│                           LiveBars, LiveScreen, LivePanel, LiveDock; LiveKeys.js, LivePatch.js)
+│                           LiveBars, LiveScreen, LivePanel, LiveDock, LiveHosted + HostedFrame;
+│                           LiveKeys.js, LivePatch.js)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, ChoiceGrid (the one picture
@@ -660,10 +661,14 @@ code, and the preview cannot drift from the shell.
 Pieces (foundation: `modules/components/preview/`, importable by any part):
 - `PreviewContext` (QtObject): handed to a part's root as `preview` (null in
   the live shell). `overrides`: `{"dotted.key": value}` shown instead of the
-  live config. A part with a context is revealed at once (no auto-hide,
-  no hover reveal) and claims nothing session-wide.
+  live config; `samples`: `{"part.key": value}`, data a part shows instead
+  of a live service or its runtime state (a launcher query, the dashboard's
+  tab, a conversation; each key is documented where the part reads it). A
+  part with a context is revealed at once (no auto-hide, no hover reveal)
+  and claims nothing session-wide.
 - `Preview.js`: `pick(ctx, key, live)` (the override, else the live value,
-  read in the caller's binding so it keeps following the config), `on(ctx)`,
+  read in the caller's binding so it keeps following the config),
+  `sample(ctx, key, live)` (the same for `samples`), `on(ctx)`,
   `withValue(overrides, key, value)`.
 - `LivePart`: the generic host. `source` (URL), `properties` (initial, the
   required ones too), `nativeWidth/Height` (or the implicit size), `crop`
@@ -672,8 +677,10 @@ Pieces (foundation: `modules/components/preview/`, importable by any part):
   hover or keys, so its popups never open); `active` (a hidden page builds
   nothing); `snapshot` (built, pictured with grabToImage, destroyed: a
   gallery holds pictures, not objects) + `refreshKey` (a change pictures it
-  again); `mapFromPart(item, rect)` for a page's own overlays. Built
-  through `LiveGate`, asynchronously.
+  again); `mapFromPart(item, rect)` for a page's own overlays; `settleMs`
+  (time to settle before it is measured / pictured; a part whose root has
+  a `ready` property is waited for until it is true). Built through
+  `LiveGate`, asynchronously.
 - `LiveGate` (singleton): the build queue. A page shows first (no live part
   is created in the frames that lay it out: opening Bar costs ~40 ms, as
   before), then its parts are built one per frame (`ask(owner, build)`,
@@ -703,6 +710,20 @@ Settings side (`modules/settings/live/`):
   `dock.theme`), `surfaceRect` in the item.
 - `LiveKeys.js`: a module's StageSpot keys and the Bar card it opens
   (generic default: `bar.moduleOptions.<id>` / the layout card).
+- `LiveHosted`: a hosted surface as it opens: the shell's own view (`source`
+  by URL, `properties`, `overrides`, `samples`) inside its host's own frame
+  (`HostedFrame`: the notch's NotchSilhouette, the spotlight / sheet
+  HostFrame, both by URL; "sidebar": a view that is its own surface), where
+  the host puts it (`host`, default HostResolve of `surface`: the notch
+  hangs from its edge, the spotlight is centred, the sheet / sidebar stand
+  on their `side`). Scaled to fit up to `maxZoom`; below `minZoom` it stays
+  readable and the item's edge cuts it (the sidebar shows its end).
+  `snapshot` / `refreshKey` / `settleMs` as LivePart; `ready`, `view`,
+  `frameRect`, `find(objectName)`, `mapFromView(item)` for overlays. The
+  view stays enabled (a disabled kit row reads greyed out) and a cover
+  takes the pointer (the wheel scrolls the page). Not built while hidden.
+- `stages/ViewSpot`: a StageSpot over a named child of a LiveHosted view,
+  measured again after a change.
 
 Making a part previewable (shell side, the smallest seam): give its root
 `property var preview: null`; where it reveals, auto-hides or claims a
@@ -713,8 +734,24 @@ its buttons); read each look key a picture may vary through `Preview.pick`.
 Overridable today: `workspaces.indicatorStyle`, `numeralStyle`,
 `showNumbers`, `alwaysShowNumbers`, `showAppIcons`,
 `bar.moduleOptions.clock.face`, `dock.theme`, `dock.enabled` (integrated
-dock in a bar); a panel's style / groups / edge are its spec (LivePanel
+dock in a bar), `layout.launcher.resultStyle` / `.preview` /
+`.compactWhenEmpty` (LauncherView, LauncherSearch), `layout.dashboard.home`
+(Dashboard); a panel's style / groups / edge are its spec (LivePanel
 `patch`), no override needed.
+Samples read today: `launcher.query`, `launcher.selected`, `launcher.live`
+(providers created and searched for real: the apps, in memory),
+`launcher.rows` (`{providerId: [rows]}` of the others; LauncherSamples.js);
+`dashboard.tab` (a stable tab index); the Assistant panel's `ai.rows`,
+`ai.model`, `ai.effortLevels`, `ai.effort`, `ai.cost`, `ai.context`,
+`ai.limit` (modules/aicenter/AiCenterPreview.qml).
+Hosted views: the launcher (LauncherView: the search tab only, no focus,
+no GlobalStates writes, nothing runs) and the dashboard (Dashboard: your
+live widgets, the sample tab; no popups hidden, no tab shortcuts) take
+`preview` at their root. The Assistant's panel (AiCenterPanel) is wired to
+the Ai service throughout, so AiCenterPreview composes its surface from
+the same parts (CenterHeader, TranscriptView, ComposerStatus + EffortChip,
+Composer), which take `preview` and then never read Ai; keep its column in
+step with AiCenterPanel's.
 Showing a part in a stage: a LivePart (or LiveBars / LiveDock / LivePanel)
 in the stage, interaction drawn on top from mapped rects. A picture card:
 the thumb renders the part with its option as an override; galleries of
@@ -736,12 +773,23 @@ Test env: `tests/lib/live_previews.py` merges panels_env's import tree and
 fixture desktop into SettingsEnv (one 1920x1080 screen), so every settings
 test and render shows the real bar (it also leaves through
 `clean_exit`: the live modules crash PySide's teardown pass).
-Still drawn by hand (next phase): the island in ScreenMini and the Island
-stage / shape cards (NotchContent depends on Visibilities, EdgeService,
-HostRouter and the media / notification / timer services: it needs sample
-services in a PreviewContext), the dock's size and indicator cards
-(DockIndicator reads `dock.indicator` directly: add a pick), the windows,
-frame and the Launcher / Dashboard / Assistant / Notifications / OSD stages.
+Live: the Launcher stage and result-style cards (LiveHosted, LauncherView),
+the Dashboard stage and home cards (LiveHosted, Dashboard; the cards are
+snapshots), the Assistant stage (LiveHosted "sidebar", AiCenterPreview).
+Test env: live_previews also mirrors the launcher, the dashboard's stage /
+home / widgets and the AI center's transcript / composer / header trees
+(`HOSTED_QMLDIRS`, stand-in Metrics / Wallpapers tabs and launcher prefix
+tabs) with idle service stand-ins; app icons are PNG files (an
+asynchronous `image://icon` from the Python provider deadlocks).
+Still drawn by hand: the island in ScreenMini and the Island stage / shape
+cards, the Notifications / OSD stages (phase 2, part D), the dock's size
+and indicator cards, the windows and frame; the Windows stage and the
+Overview style cards (the overview and tiling show live compositor windows
+and screencopies: they need sample windows in a PreviewContext); the
+Assistant's message-style and size cards (BarLook, a singleton, reads the
+message style: an override cannot reach it; the size card is the panel's
+share of the screen, a placement diagram). Power, Updates and Terminal are
+settings views (Terminal already shows the real TerminalPreview).
 
 ## STAGE COMPONENTS (frame-independent)
 - Shortcuts: a KeyRecorder shares the keys it has while it records
@@ -820,7 +868,8 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
   `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
   `settings-connect`, `settings-keys`, `settings-power`, `settings-windows-stage`,
   `settings-displays-flow` (`.test.py`), `settings-strip.test.cjs`,
-  `live-preview.test.cjs` (Preview.js, LiveKeys.js, LivePatch.js).
+  `live-preview.test.cjs` (Preview.js, LiveKeys.js, LivePatch.js),
+  `settings-launcher-samples.test.cjs` (LauncherSamples.js).
 - Separate process: `tests/separate-windows.test.py`, `tests/preview-staging.test.py`
   (the wizard's relay), `tests/window-entries.test.py`, `tests/onboarding-*.test.py`.
 - Tests that open the whole shell end with `h.exit(...)`: kept-alive pages

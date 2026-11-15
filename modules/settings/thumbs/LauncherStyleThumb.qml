@@ -1,108 +1,45 @@
-pragma ComponentBehavior: Bound
-
 import QtQuick
 import qs.modules.theme
+import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.settings.store
+import qs.modules.settings.live
+import "../stages/LauncherSamples.js" as Samples
 
-// Card picture of a launcher result style (layout.launcher.resultStyle): a
-// small launcher over the wallpaper with its results as a list of lines,
-// as cards (taller rows, a second line) or as a grid of tiles.
+// Card picture of a launcher result style (layout.launcher.resultStyle):
+// the real launcher (live/LiveHosted, LauncherView) in your host's frame
+// with the stage's sample search in style `value` (list, cards, or the app
+// grid of an empty search). Pictured once, again when the look changes.
 MiniScreen {
     id: root
 
     property var entry
     property var value: "list"
-    readonly property real pad: root.u * 3
+    readonly property string style: String(root.value)
+    readonly property var appNames: (AppSearch.getAllApps ? AppSearch.getAllApps() : []).slice(0, 8).map(a => a.name)
+    readonly property string query: Samples.query(root.appNames, root.style)
+    // pictured again when what it shows changes
+    readonly property var look: [SettingsStore.get("layout.launcher.icons"), SettingsStore.get("prefix.launcher.order"), SettingsStore.get("prefix.launcher.disabled"), String(Colors.primary), String(Colors.background), Look.language]
 
-    Mark {
-        id: box
-        x: root.width * 0.16
-        y: root.height * 0.1
-        width: root.width * 0.68
-        height: root.height * 0.66
-        radius: root.u * 4
-        color: Qt.alpha(Colors.background, 0.92)
-        border.width: Space.hairline
-        border.color: Qt.alpha(Colors.outlineVariant, 0.8)
-
-        // the field
-        Mark {
-            x: root.pad
-            y: root.pad
-            width: box.width - root.pad * 2
-            height: root.u * 7
-            radius: height / 2
-            color: Look.raisedFill(false)
-        }
-
-        // list / cards
-        Column {
-            visible: root.value !== "grid"
-            x: root.pad
-            y: root.pad * 2 + root.u * 7
-            spacing: root.u * (root.value === "cards" ? 2 : 1.6)
-            Repeater {
-                model: root.value === "cards" ? 2 : 3
-                delegate: Mark {
-                    id: line
-                    required property int index
-                    width: box.width - root.pad * 2
-                    height: root.u * (root.value === "cards" ? 9 : 5)
-                    radius: root.u * 2
-                    color: index === 0 ? Qt.alpha(Type.accent, 0.3) : (root.value === "cards" ? Look.raisedFill(false) : "transparent")
-                    Mark {
-                        x: root.u * 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: root.u * (root.value === "cards" ? 6 : 3.4)
-                        height: width
-                        radius: root.u * 1.4
-                        color: line.index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
-                    }
-                    Column {
-                        x: root.u * (root.value === "cards" ? 10 : 7)
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: root.u * 1.2
-                        Mark {
-                            width: box.width * 0.4
-                            height: Math.max(2, root.u * 1.4)
-                            color: Qt.alpha(Type.text, 0.7)
-                        }
-                        Mark {
-                            visible: root.value === "cards"
-                            width: box.width * 0.26
-                            height: Math.max(2, root.u * 1.1)
-                            color: Qt.alpha(Type.text, 0.35)
-                        }
-                    }
-                }
-            }
-        }
-
-        // grid
-        Grid {
-            visible: root.value === "grid"
-            x: root.pad
-            y: root.pad * 2 + root.u * 7
-            columns: 4
-            spacing: root.u * 1.6
-            Repeater {
-                model: 8
-                delegate: Mark {
-                    id: tile
-                    required property int index
-                    width: (box.width - root.pad * 2 - root.u * 1.6 * 3) / 4
-                    height: width * 0.72
-                    radius: root.u * 2
-                    color: index === 0 ? Qt.alpha(Type.accent, 0.3) : Look.raisedFill(false)
-                    Mark {
-                        anchors.centerIn: parent
-                        width: parent.height * 0.45
-                        height: width
-                        radius: root.u
-                        color: tile.index === 0 ? Type.accent : Qt.alpha(Type.text, 0.5)
-                    }
-                }
-            }
-        }
+    LiveHosted {
+        anchors.fill: parent
+        anchors.margins: Math.round(root.u * 2)
+        surface: "launcher"
+        // a picture: the whole launcher, centred, whatever its host
+        host: "spotlight"
+        margin: 0
+        source: Qt.resolvedUrl("../../widgets/launcher/LauncherView.qml")
+        snapshot: true
+        refreshKey: root.look
+        overrides: ({
+                "layout.launcher.resultStyle": root.style,
+                "layout.launcher.preview": false,
+                "layout.launcher.compactWhenEmpty": false
+            })
+        samples: ({
+                "launcher.query": root.query,
+                "launcher.live": Samples.LIVE,
+                "launcher.rows": Samples.rows(root.style, root.query, k => I18n.t(k), n => Icons[n] ?? "")
+            })
     }
 }

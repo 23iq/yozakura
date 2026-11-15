@@ -78,6 +78,9 @@ Window {
     function texts(root, out) {
         walk(root, x => {
             if (!x.visible || x.opacity < 0.01) return false;
+            // a live hosted view (LiveHosted) is the shell's own layout, pictured
+            // at its own size: its texts are judged by its own tests
+            if (x.objectName === "liveHosted") return false;
             if (x.truncated === undefined || x.text === undefined || typeof x.text !== "string" || x.text === "") return;
             if (!shown(x)) return;
             var r = rect(x);

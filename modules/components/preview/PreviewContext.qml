@@ -9,6 +9,12 @@ import QtQuick
 // reservations). `overrides` shows config keys with another value than the
 // live config (the picture card of an option not chosen): {"dotted.key":
 // value}; every other key follows the live config.
+// `samples`: data a part shows instead of a live service or its runtime
+// state, {"part.key": value}, read with Preview.sample (the launcher's
+// query and the rows of providers that would do I/O, the tab a dashboard
+// shows, a sample conversation); each key is documented where a part
+// reads it.
 QtObject {
     property var overrides: ({})
+    property var samples: ({})
 }

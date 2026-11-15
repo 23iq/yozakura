@@ -47,13 +47,17 @@ Stage {
     ]
 
     stageHeight: Space.px(300)
+    // a short stage: the state on the left, the lanes stacked on the right
+    // (stacked under each other they would run over the action)
+    readonly property real laneHeight: Math.round(stage.u * 3.4)
+    readonly property bool sideBySide: summary.implicitHeight + stage.laneHeight + stage.u * 1.2 + stage.height * 0.12 + Space.m > stage.height
 
     // the state and its one action
     Column {
         id: summary
         objectName: "updatesState"
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(stage.height * 0.12)
+        x: stage.sideBySide ? Math.round(stage.width * 0.3 - width / 2) : Math.round((stage.width - width) / 2)
+        y: stage.sideBySide ? Math.round((stage.height - height) / 2) : Math.round(stage.height * 0.12)
         spacing: Math.round(stage.u * 0.5)
 
         Mark {
@@ -105,12 +109,12 @@ Stage {
     }
 
     // the channels as lanes; a click follows one
-    Row {
+    Grid {
         id: lanesRow
         objectName: "updatesLanes"
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Math.round(stage.u * 1.2)
+        columns: stage.sideBySide ? 1 : 3
+        x: stage.sideBySide ? Math.round(stage.width * 0.56) : Math.round((stage.width - width) / 2)
+        y: stage.sideBySide ? Math.round((stage.height - height) / 2) : stage.height - height - Math.round(stage.u * 1.2)
         spacing: Math.round(stage.u * 0.6)
         Repeater {
             model: stage.lanes
@@ -119,8 +123,8 @@ Stage {
                 required property var modelData
                 readonly property bool on: stage.channel === lane.modelData.id
                 objectName: "updatesLane:" + lane.modelData.id
-                width: Math.round(stage.width * 0.26)
-                height: Math.round(stage.u * 3.4)
+                width: Math.round(stage.width * (stage.sideBySide ? 0.36 : 0.26))
+                height: stage.laneHeight
                 radius: Look.radius("box", height)
                 color: lane.on ? Qt.alpha(Type.accent, 0.16) : Qt.alpha(Colors.surfaceContainer, area.containsMouse ? 0.95 : 0.8)
                 border.width: lane.on ? Math.max(2, Math.round(stage.u * 0.1)) : Space.hairline

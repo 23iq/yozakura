@@ -17,16 +17,19 @@ Stage {
     readonly property var connected: (BluetoothService.friendlyDeviceList || []).filter(d => d && d.connected)
 
     stageHeight: Space.px(150)
+    // the band got less than it asked for (a short window): the heading
+    // steps down from display size so it never runs over the band's top
+    readonly property bool roomy: band.height >= band.stageHeight - Space.s
 
     Column {
         x: Space.xxl
         width: parent.width - x - tile.width - Space.xxl * 2
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Space.m
+        spacing: band.roomy ? Space.m : Space.s
 
         KitText {
             objectName: "bluetoothState"
-            role: "display"
+            role: band.roomy ? "display" : "title"
             text: !band.on ? I18n.t("prefs.bt.off") : band.connected.length > 0 ? I18n.t("prefs.bt.n_connected").replace("%1", band.connected.length) : I18n.t("prefs.bt.none_connected")
         }
         Flow {

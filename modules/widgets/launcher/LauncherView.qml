@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.globals
 import qs.config
 import "Providers.js" as Providers
+import "../../components/preview/Preview.js" as Preview
 import "../dashboard/clipboard"
 import "../dashboard/emoji"
 import "../dashboard/tmux"
@@ -15,12 +16,18 @@ import "../dashboard/notes"
 // the prefix tabs (clipboard, emoji, tmux, notes) loaded on demand. Typing
 // exactly "<tab prefix> " switches to that tab; Backspace on its empty
 // search comes back with the prefix typed.
+// Preview (`preview`, a PreviewContext; Settings' launcher stage): the
+// search tab only, with the sample query (LauncherSearch); no focus, no
+// GlobalStates writes, nothing runs. Sized exactly like the live one.
 Item {
     id: root
 
+    property var preview: null
+    readonly property bool inPreview: Preview.on(root.preview)
+
     readonly property bool isCompact: currentTab === 0 || currentTab === 2
     // compactWhenEmpty: only the search field until the first keystroke
-    readonly property bool bare: Config.layout.launcher.compactWhenEmpty && currentTab === 0 && searchText.length === 0
+    readonly property bool bare: Preview.pick(root.preview, "layout.launcher.compactWhenEmpty", Config.layout.launcher.compactWhenEmpty) && currentTab === 0 && searchText.length === 0
     readonly property bool previewing: currentTab === 0 && searchView.previewOpen
     implicitWidth: !bare && (!isCompact || previewing) ? Metrics.launcherWideW : Metrics.launcherCompactW
     implicitHeight: bare ? Metrics.rowHeight : isCompact && !previewing ? Metrics.launcherCompactH : Metrics.launcherWideH
@@ -46,22 +53,25 @@ Item {
     focus: true
 
     property int leftPanelWidth: isCompact ? Metrics.launcherCompactW : Metrics.launcherLeftPanelW
-    property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=search, 1=clip, 2=emoji, 3=tmux, 4=notes
+    property int currentTab: root.inPreview ? 0 : GlobalStates.widgetsTabCurrentIndex  // 0=search, 1=clip, 2=emoji, 3=tmux, 4=notes
     // Set after Backspace left a tab, until the prefix is edited away.
     property bool prefixDisabled: false
-    readonly property string searchText: GlobalStates.launcherSearchText
+    readonly property string searchText: root.inPreview ? Preview.sample(root.preview, "launcher.query", "") : GlobalStates.launcherSearchText
 
     onCurrentTabChanged: {
+        if (root.inPreview)
+            return;
         GlobalStates.widgetsTabCurrentIndex = currentTab;
         focusSearchInput();
     }
 
     onActiveFocusChanged: {
-        if (activeFocus)
+        if (activeFocus && !root.inPreview)
             focusSearchInput();
     }
 
-    Component.onCompleted: focusSearchInput()
+    Component.onCompleted: if (!root.inPreview)
+        focusSearchInput()
 
     function prefixes() {
         const out = {};
@@ -97,6 +107,8 @@ Item {
     }
 
     onSearchTextChanged: {
+        if (root.inPreview)
+            return;
         const tab = detectPrefix(searchText);
         if (tab === currentTab)
             return;
@@ -152,6 +164,7 @@ Item {
         id: searchView
         objectName: "launcherSearch"
         anchors.fill: parent
+        preview: root.preview
         visible: root.currentTab === 0
     }
 

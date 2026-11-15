@@ -596,8 +596,8 @@ APP_SEARCH_STUB = """pragma Singleton
 import QtQuick
 QtObject {
     property var apps: [
-        {"id": "org.telegram.desktop", "name": "Telegram", "icon": "telegram", "execString": "Telegram -- %u"},
-        {"id": "discord", "name": "Discord", "icon": "discord", "execString": "/usr/bin/discord --url -- %u"}
+        {"id": "org.telegram.desktop", "name": "Telegram", "icon": "telegram", "execString": "Telegram -- %u", "comment": "Official desktop client"},
+        {"id": "discord", "name": "Discord", "icon": "discord", "execString": "/usr/bin/discord --url -- %u", "comment": "All-in-one voice and text chat"}
     ]
     property var list: apps
     function fuzzyQuery(q) {
@@ -626,6 +626,7 @@ QtObject {
     property bool discovering: false
     property var friendlyDeviceList: []
     function setEnabled(v) {}
+    function initialize() {}
     function startDiscovery() {}
     function stopDiscovery() {}
     function connectDevice(a) {}
@@ -913,7 +914,7 @@ class SettingsEnv:
         from device_fixtures import SERVICES as DEVICE_SERVICES
         own_services = {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
-                                              "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
+                                              "Notifications": NOTIFICATIONS_STUB, "AppSearch": live_previews.app_icons(APP_SEARCH_STUB, self.root),
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "NightLightClient": NIGHT_LIGHT_STUB, "BluetoothService": BLUETOOTH_STUB, "EasyEffectsService": EASY_EFFECTS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
@@ -929,7 +930,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services.activities", live_previews.activities())
         self.h.engine.addImageProvider("icon", live_previews.icon_provider())
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
-        self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
+        self.h.module("qs.modules.globals", {"GlobalStates": live_previews.global_states(global_states_qml(wallpaper or {})),
                                              "Brand": brand_qml(), "BatterySaver": BATTERY_SAVER_STUB})
         for module, types in live_previews.quickshell({"Quickshell": QUICKSHELL, "Quickshell.Io": QUICKSHELL_IO,
                                                          "Quickshell.Widgets": QUICKSHELL_WIDGETS}).items():
@@ -965,6 +966,8 @@ class SettingsEnv:
                   "modules/settings/changes", "modules/settings/thumbs", "modules/settings/stages", "modules/settings/home",
                   "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
+        # the hosted views the stages show (launcher, dashboard, chat)
+        live_previews.finish(self)
 
         # Modules first imported by a URL Loader (lock screen styles) load on
         # the QML loader thread, whose warnings wait for the GIL: preload.

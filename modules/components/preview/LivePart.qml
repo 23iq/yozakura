@@ -22,6 +22,8 @@ import QtQuick
 // `snapshot`: the part is built, pictured once (grabToImage) and destroyed
 // (a gallery of options: one picture each, no live objects); a change of
 // `refreshKey` pictures it again (the old picture stays until then).
+// A part whose root has a `ready` property (it builds more of itself by
+// URL) is measured and pictured once `ready` is true.
 Item {
     id: root
 
@@ -136,9 +138,20 @@ Item {
     Timer {
         id: settle
         interval: root.settleMs
+        // polls left while a part with a `ready` property is not ready
+        property int waits: 0
         onTriggered: {
             if (!root.item)
                 return;
+            // a part that builds more by URL (LiveHosted's HostedFrame)
+            // says when it is whole: measured / pictured only then (at
+            // most ~40 more settle periods)
+            if (root.item.ready === false && settle.waits < 40) {
+                settle.waits++;
+                settle.restart();
+                return;
+            }
+            settle.waits = 0;
             // live: the frame follows the part (what cropOf reads is bound)
             if (root.cropOf && !root.snapshot) {
                 root.crop = Qt.binding(() => root.item ? root.cropOf(root.item) : Qt.rect(0, 0, 0, 0));

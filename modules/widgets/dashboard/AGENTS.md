@@ -21,6 +21,15 @@ Central interactive hub of Yozakura. Tabbed interface with LRU-based lazy-loadin
   - `wallpapers/`: `WallpapersTab` / `Wallpaper.qml` — Wallpaper browser and manager. `Wallpaper.qml` (per-screen window + the manager API on `GlobalStates.wallpaperManager`) delegates to `WallpaperScanner` (folder/subfolder scans, fallback), `WallpaperColorPresets`, `MatugenRunner`, `WallpaperCacheJobs` (thumbnails, lock screen frame); rendering is `WallpaperImage` (slots `WallpaperSlot`, `StaticWallpaper`/`VideoWallpaper`, shader `WallpaperTransitionLayer`). `WallpapersTab` = top bar (`WallpaperToggle` x3, `SchemeSelector`), `FilterBar`, grid (`WallpaperGridCell`, `WallpaperGridHighlight`). Toggles and filters are kit `Chip`s. Tests: `wallpaper-manager.test.py`, `wallpapers-tab.test.py`, `wallpaper-transition.test.py`, `depth-video.test.py`.
   - `kanban/`: Kanban board for task management.
 
+## SETTINGS PREVIEW
+Settings shows this dashboard itself (modules/settings/AGENTS.md, LIVE
+PREVIEWS): Dashboard takes `preview` (a PreviewContext, null live): shown at
+once on the tab of the sample `dashboard.tab`, the home of an override of
+`layout.dashboard.home`; it never writes GlobalStates, hides popups or takes
+the tab shortcuts. Widgets read their live services as usual, so a new
+widget, tab or home view shows up in Settings with no settings-side code;
+a widget that claims something session-wide must skip it in a preview.
+
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|

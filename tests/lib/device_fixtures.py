@@ -153,6 +153,7 @@ QtObject {
     property var calls: []
     property var friendlyDeviceList: %s.map(d => Object.assign({ "connecting": false, "trusted": d.paired }, d))
     function setEnabled(v) { calls = calls.concat([["enabled", v]]); enabled = v }
+    function initialize() {}
     function startDiscovery() { discovering = true }
     function stopDiscovery() { discovering = false }
     function connectDevice(a) { calls = calls.concat([["connect", a]]) }

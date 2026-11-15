@@ -51,7 +51,13 @@ Stage {
     Loader {
         id: window
         objectName: "terminalWindow"
-        anchors.fill: parent
+        // the notice has its own line under the window (never over its text)
+        x: 0
+        y: 0
+        width: parent.width
+        height: notice.visible ? notice.y - Space.s : parent.height
+        // (the kitty window is as tall as its lines: a short stage cuts it)
+        clip: true
         asynchronous: true
         source: Qt.resolvedUrl("../../terminal/TerminalPreview.qml")
         onLoaded: {
@@ -76,6 +82,7 @@ Stage {
     }
 
     Chip {
+        id: notice
         objectName: "terminalNotice"
         visible: stage.notice !== null
         anchors.horizontalCenter: parent.horizontalCenter

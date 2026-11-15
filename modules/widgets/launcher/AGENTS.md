@@ -57,6 +57,16 @@ fileMaxResults, fileExcludes, currencyRefreshHours). Settings: category
 `LauncherProvidersEditor`). Word prefixes need a space ("ff notes"), symbol
 prefixes do not ("?why").
 
+## SETTINGS PREVIEW
+Settings shows this launcher itself (modules/settings/AGENTS.md, LIVE
+PREVIEWS): LauncherView takes `preview` (a PreviewContext, null live) and
+passes it to LauncherSearch / LauncherResults: the sample query
+(`launcher.query`), only the `launcher.live` providers are created (the
+apps), the others show `launcher.rows`; no focus, no GlobalStates writes,
+`activate` is inert. A new provider shows up in the stage once it has a row
+in `modules/settings/stages/LauncherSamples.js` (or is safe to run live);
+a new look key a card varies needs one `Preview.pick`.
+
 ## VERIFY
 `tests/launcher.test.cjs`, `tests/launcher-ui.test.py` (offscreen, stubs in
 `tests/lib/launcher_env.py`), renders: `tools/render/launcher_render.py`.

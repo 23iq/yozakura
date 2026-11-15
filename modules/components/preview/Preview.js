@@ -29,6 +29,19 @@ function pick(ctx, key, live) {
     return live;
 }
 
+// sample(ctx, key, live) -> the context's sample data for `key` (what a
+// part shows instead of a live service or its runtime state: a launcher
+// query, the tab a dashboard shows, a conversation), else `live`. Like
+// pick, but for data, not config keys.
+function sample(ctx, key, live) {
+    if (!ctx)
+        return live;
+    var s = ctx.samples;
+    if (s && Object.prototype.hasOwnProperty.call(s, key))
+        return s[key];
+    return live;
+}
+
 // withValue(overrides, key, value) -> a copy of `overrides` with `key` set
 // (a picture card of one option: the stage's overrides plus its value)
 function withValue(overrides, key, value) {
