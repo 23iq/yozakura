@@ -96,9 +96,9 @@ Card {
         activeFocusOnTab: true
         Accessible.role: Accessible.Button
         Accessible.name: titleText.text
-        Accessible.description: countText.text
-        Accessible.expandable: true
-        Accessible.expanded: moreCard.expanded
+        // the open / shut state is spoken in the description: Accessible.expanded
+        // needs a newer Qt than the oldest one we support (6.11)
+        Accessible.description: countText.text + ", " + I18n.t(moreCard.expanded ? "prefs.more.expanded" : "prefs.more.collapsed")
         Accessible.onPressAction: moreCard.expanded = !moreCard.expanded
         Keys.onReturnPressed: moreCard.expanded = !moreCard.expanded
         Keys.onEnterPressed: moreCard.expanded = !moreCard.expanded
