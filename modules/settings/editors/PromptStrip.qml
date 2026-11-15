@@ -6,8 +6,10 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.terminal
 import qs.modules.components.kit
+import qs.modules.settings
 import qs.modules.settings.controls
 import "../../terminal/TermModel.js" as TermModel
+import "StripFit.js" as StripFit
 
 // The fish prompts as a strip of pictures (a card of the page row): each
 // preset drawn as it renders (TerminalLookService previews, the engine in
@@ -24,7 +26,8 @@ Item {
     readonly property string engine: TerminalLookService.engine
     readonly property var presets: TerminalLookService.presets || []
     readonly property real cardH: root.fillHeight > 0 ? root.fillHeight - Space.s * 2 : Space.px(110)
-    readonly property real cardW: Math.round(root.cardH * 1.7)
+    // the last card cut about in half where the strip runs on (StripFit)
+    readonly property real cardW: StripFit.cardWidth(root.width, Space.m, Space.m, Math.round(root.cardH * 1.7), root.presets.length)
 
     implicitHeight: root.fillHeight > 0 ? root.fillHeight : root.cardH + Space.s * 2
 
@@ -40,87 +43,93 @@ Item {
     onPresetsChanged: Qt.callLater(root.reveal)
     onWidthChanged: Qt.callLater(root.reveal)
 
-    Flickable {
-        id: flick
-        objectName: "promptStrip"
+    // the strip runs on under the card's sides: a masked fade on the side
+    // that has more (EdgeFade, as the header tabs and the preset strip)
+    EdgeFade {
         anchors.fill: parent
-        contentWidth: row.width + Space.m * 2
-        interactive: contentWidth > width
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        flickableDirection: Flickable.HorizontalFlick
-        onContentWidthChanged: Qt.callLater(root.reveal)
+        horizontal: true
+        start: flick.interactive && flick.contentX > 1 ? Space.xxl : 0
+        end: flick.interactive && flick.contentX < flick.contentWidth - flick.width - 1 ? Space.xxl : 0
 
-        Row {
-            id: row
-            x: Space.m
-            y: Space.s
-            spacing: Space.m
-            Repeater {
-                model: root.presets
-                delegate: ChoiceCard {
-                    id: card
-                    required property var modelData
-                    readonly property var result: TerminalLookService.previews[TermModel.previewKey(root.engine, modelData.id)]
-                    objectName: "promptCard:" + modelData.id
-                    width: root.cardW
-                    previewHeight: root.cardH
-                    inset: true
-                    selected: root.on && root.current === modelData.id
-                    title: modelData.name
-                    onClicked: TerminalLookService.enablePrompt(modelData.id)
-                    Component.onCompleted: TerminalLookService.ensure(modelData.id, root.engine)
+        Flickable {
+            id: flick
+            objectName: "promptStrip"
+            anchors.fill: parent
+            contentWidth: row.width + Space.m * 2
+            interactive: contentWidth > width
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.HorizontalFlick
+            onContentWidthChanged: Qt.callLater(root.reveal)
 
-                    Mark {
-                        anchors.fill: parent
-                        radius: 0
-                        color: Colors.background
-                    }
-                    // the prompt, as large as the picture allows, over the title
-                    Item {
-                        id: area
-                        x: Space.s
-                        width: parent.width - Space.s * 2
-                        height: parent.height * 0.62
-                        clip: true
-                        Column {
-                            id: lines
-                            anchors.verticalCenter: parent.verticalCenter
-                            scale: Math.min(1, area.width / Math.max(1, lines.implicitWidth))
-                            transformOrigin: Item.Left
-                            Repeater {
-                                model: card.result && card.result.left ? card.result.left : []
-                                delegate: PromptLine {
-                                    required property var modelData
-                                    spans: modelData
-                                    fontFamily: TerminalLookService.fontFamily
-                                    pixelSize: Type.size("body")
-                                    foreground: Colors.overSurface
+            Row {
+                id: row
+                x: Space.m
+                y: Space.s
+                spacing: Space.m
+                Repeater {
+                    model: root.presets
+                    delegate: ChoiceCard {
+                        id: card
+                        required property var modelData
+                        readonly property var result: TerminalLookService.previews[TermModel.previewKey(root.engine, modelData.id)]
+                        objectName: "promptCard:" + modelData.id
+                        width: root.cardW
+                        previewHeight: root.cardH
+                        inset: true
+                        selected: root.on && root.current === modelData.id
+                        title: modelData.name
+                        onClicked: TerminalLookService.enablePrompt(modelData.id)
+                        Component.onCompleted: TerminalLookService.ensure(modelData.id, root.engine)
+
+                        Mark {
+                            anchors.fill: parent
+                            radius: 0
+                            color: Colors.background
+                        }
+                        // the prompt, as large as the picture allows, over the title
+                        Item {
+                            id: area
+                            x: Space.s
+                            width: parent.width - Space.s * 2
+                            height: parent.height * 0.62
+                            clip: true
+                            Column {
+                                id: lines
+                                anchors.verticalCenter: parent.verticalCenter
+                                scale: Math.min(1, area.width / Math.max(1, lines.implicitWidth))
+                                transformOrigin: Item.Left
+                                Repeater {
+                                    model: card.result && card.result.left ? card.result.left : []
+                                    delegate: PromptLine {
+                                        required property var modelData
+                                        spans: modelData
+                                        fontFamily: TerminalLookService.fontFamily
+                                        pixelSize: Type.size("body")
+                                        foreground: Colors.overSurface
+                                    }
                                 }
                             }
                         }
-                    }
-                    // while the engine renders it
-                    Row {
-                        x: Space.s
-                        y: Space.m
-                        spacing: Space.xs
-                        visible: !card.result
-                        Repeater {
-                            model: [0.3, 0.42, 0.18]
-                            delegate: Mark {
-                                required property real modelData
-                                width: card.width * modelData
-                                height: Type.size("caption")
-                                color: Type.placeholder
+                        // while the engine renders it
+                        Row {
+                            x: Space.s
+                            y: Space.m
+                            spacing: Space.xs
+                            visible: !card.result
+                            Repeater {
+                                model: [0.3, 0.42, 0.18]
+                                delegate: Mark {
+                                    required property real modelData
+                                    width: card.width * modelData
+                                    height: Type.size("caption")
+                                    color: Type.placeholder
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-    StripFade {
-        flick: flick
     }
 }
