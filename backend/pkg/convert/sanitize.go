@@ -90,6 +90,10 @@ type cleaner struct {
 func (c cleaner) clean(v any) any {
 	switch n := v.(type) {
 	case []any:
+		if isAttr(n) {
+			n[2] = cleanAttrs(n[2].([]any))
+			return n
+		}
 		for i := range n {
 			n[i] = c.clean(n[i])
 		}
@@ -142,6 +146,65 @@ func (c cleaner) rawSafe(format, s string) bool {
 		return true
 	}
 	return rawText[format]
+}
+
+// Element attributes (pandoc's Attr: [id, [classes], [[key, value]...]])
+// of a Div, Span, Header, Image, Link, Code, Table... are written into
+// html and epub as they are: a style with url() or a srcset there loads
+// when the result is opened. Keys that name a resource are dropped, a
+// style that fetches is dropped.
+var attrLoaders = map[string]bool{"src": true, "srcset": true, "imagesrcset": true, "poster": true, "background": true,
+	"data": true, "href": true, "xlink:href": true, "lowsrc": true, "dynsrc": true, "codebase": true, "manifest": true,
+	"archive": true, "classid": true, "icon": true, "action": true, "formaction": true, "ping": true}
+
+// isAttr: v is shaped like an Attr triple.
+func isAttr(v []any) bool {
+	if len(v) != 3 {
+		return false
+	}
+	if _, ok := v[0].(string); !ok {
+		return false
+	}
+	classes, ok := v[1].([]any)
+	if !ok {
+		return false
+	}
+	for _, c := range classes {
+		if _, ok := c.(string); !ok {
+			return false
+		}
+	}
+	kvs, ok := v[2].([]any)
+	if !ok {
+		return false
+	}
+	for _, kv := range kvs {
+		p, ok := kv.([]any)
+		if !ok || len(p) != 2 {
+			return false
+		}
+		if _, ok := p[0].(string); !ok {
+			return false
+		}
+		if _, ok := p[1].(string); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func cleanAttrs(kvs []any) []any {
+	out := kvs[:0]
+	for _, kv := range kvs {
+		p := kv.([]any)
+		k := strings.ToLower(strings.TrimSpace(p[0].(string)))
+		v := p[1].(string)
+		if attrLoaders[k] || strings.HasSuffix(k, ":href") || (k == "style" && cssLoads(v)) {
+			continue
+		}
+		out = append(out, kv)
+	}
+	return out
 }
 
 // LocalResource reports whether an image target is a file inside root:
