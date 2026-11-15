@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Window
 import qs.modules.theme
 import qs.modules.globals
 import qs.modules.components.kit
@@ -48,7 +49,8 @@ Item {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
-        sourceSize.width: 320
+        // decoded at the card's size in device pixels
+        sourceSize.width: Math.max(1, Math.ceil(width * Screen.devicePixelRatio))
     }
     Item {
         id: area

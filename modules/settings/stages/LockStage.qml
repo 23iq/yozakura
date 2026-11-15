@@ -170,12 +170,12 @@ Stage {
                 Mark {
                     width: player.width * 0.4
                     height: stage.u * 0.35
-                    color: Qt.rgba(1, 1, 1, 0.75)
+                    color: Qt.alpha(Type.text, 0.75)
                 }
                 Mark {
                     width: player.width * 0.28
                     height: stage.u * 0.3
-                    color: Qt.rgba(1, 1, 1, 0.4)
+                    color: Qt.alpha(Type.text, 0.4)
                 }
             }
         }
