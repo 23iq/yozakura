@@ -291,6 +291,9 @@ kit: numeric spacing / margins / padding, literal `font.pixelSize`, raw `Rectang
 a ratchet in `tools/lint/baselines/kit-literals.json`: a directory may only go down (new code uses
 `Space` / `Type` / `Look`, `KitText`, `Icon`, kit boxes); lower counts ask for
 `make kit-literals-baseline`.
+`singleton-members` (also in `make audit`) fails on a `Look.x` / `Type.x` / `Space.x` / `Motion.x`
+(and the other singletons in `tools/audit/config.json` `singletonMembers`) that the singleton
+does not declare (a member moved or renamed reads `undefined` only at runtime).
 `.claude/` (agent worktrees, full repo copies) is excluded from every audit/lint file list.
 
 Diff-based checks use `BASE` (default `origin/main`): `make check BASE=upstream/main`.

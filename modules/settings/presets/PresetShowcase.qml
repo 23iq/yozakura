@@ -126,7 +126,7 @@ FittedFrame {
         x: root.margin
         y: root.stacked ? hint.y + hint.height + root.gap : root.layoutH - root.rowH - Space.l
         width: root.width - root.margin * 2
-        height: root.stacked ? Look.cardRowHeight : root.rowH
+        height: root.stacked ? root.cardRowHeight : root.rowH
 
         Card {
             id: stripCard
