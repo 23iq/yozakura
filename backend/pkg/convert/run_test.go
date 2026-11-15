@@ -50,8 +50,14 @@ func TestPlanHardening(t *testing.T) {
 		for _, from := range []string{"docx", "md"} {
 			p := plan(t, from, to, QualityBalanced)
 			reg := p.Files["/prof/user/registrymodifications.xcu"]
+			// Writer keeps its UpdateLinks enum raw (sw/inc/linkenum.hxx:
+			// NEVER = 0, AUTOMATIC = 2), whatever Writer.xcs says; Calc's
+			// ScLkUpdMode has LM_NEVER = 1
+			if strings.Contains(reg, `Office.Writer/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>2<`) {
+				t.Errorf("Writer set to update links automatically")
+			}
 			for _, w := range []string{`"MacroSecurityLevel" oor:op="fuse"><value>3`, `"DisableMacrosExecution" oor:op="fuse"><value>true`,
-				`Office.Writer/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>2`, `Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>1`} {
+				`Office.Writer/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>0<`, `Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>1<`} {
 				if !strings.Contains(reg, w) {
 					t.Errorf("%s->%s: profile lacks %q", from, to, w)
 				}
