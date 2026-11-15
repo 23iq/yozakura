@@ -126,7 +126,32 @@ indicator dots, grooves, ticks, swatches; round by default), `Scrim` (the dimmin
 surface: `shown`, `strength`, `clicked()`); big controls `Tile`, `LevelSlider`, `Segmented`,
 `Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
 sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
-`Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
+`Look.tonal`). `Segmented`: each segment as wide as its label in the active weight (nothing but
+the pill moves), the pill glides (`Motion.glide`); `navigation` (a destination's tabs: neutral
+raised pill, text ink, no accent), `focusable` (Tab + Left / Right), `segmentExtra` (room added
+to every segment to fill a width; `naturalWidth` without it). `SearchField.onWindow` (the card's
+fill instead of the translucent control fill, over a busy ambient). `ActionButton.danger`
+(error tint and ink on hover / press). `Dropdown` in a ghost language (ink) is the raised fill box
+of the big controls, not an underline. `Switch` shows its keyboard focus with `FocusRing`.
+Window pieces (the settings window; generic, any window may use them): `Card` (a bento surface
+over the window's ambient, visible in every language, `Look.card*` tokens from
+`VisualLanguage.js` `KIT.card`; `interactive` lifts on hover, Tab / Enter / Space, `label`,
+`background`), `Ambient` (the wallpaper blurred, darkened and vignetted behind a window's cards;
+`Look.ambientStrength`, `plain`), `Tooltip` (the one kit tooltip: secondary text at a readable
+width, `shown`, `bounds`, hides while its view scrolls, flips above at a window's bottom edge;
+`IconButton.tooltip` uses it; the legacy `StyledToolTip` is only for non-kit code still naming
+it), `DashedFrame` (a dashed outline: a drop zone, a place something could go). Type role
+`group` (0.86x, semibold, muted, sentence case: a group of rows inside a card; `Group.labelRole`
+and `SectionLabel.role` take `"label"` or `"group"`). `Type.muted` is the outline pulled toward
+the secondary ink only as far as WCAG AA (4.5:1) needs on the shell's surfaces and on the
+language's card over the ambient (`modules/theme/InkContrast.js`, `tests/kit-muted-contrast.test.cjs`):
+quieter than `secondary` where the surfaces allow, never below AA.
+Live previews (`modules/components/preview/`, the settings stages and picture cards): `LivePart`
+(a real shell component created by URL, inert, scaled into the item; `snapshot` pictures it once),
+`LiveGate` (the queue that builds them one per step after the page), `PreviewContext` (a part's
+`preview`: `overrides` of config keys, `samples` instead of live services; null in the live shell)
+and `Preview.js` (`pick(preview, key, live)`, `sample`; `tests/live-preview.test.cjs`).
+Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
 Wheel: `LineSlider` / `LevelSlider` / `Knob` take the wheel only outside a scrolling view or
 once they hold the focus (`WheelGuard.js`): scrolling a page never moves a slider under the pointer.
 A press gives the focus (`Knob`, `LevelSlider` always; `LineSlider` inside a scrolling view, onto
