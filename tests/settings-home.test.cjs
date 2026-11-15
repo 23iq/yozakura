@@ -11,6 +11,7 @@ const dir = path.join(__dirname, '..', 'modules/settings');
 const HomeLayout = loadLibrary(path.join(dir, 'HomeLayout.js'));
 const BentoLayout = loadLibrary(path.join(dir, 'BentoLayout.js'));
 const HomeStatus = loadLibrary(path.join(dir, 'HomeStatus.js'));
+const SceneModel = loadLibrary(path.join(dir, 'home/SceneModel.js'));
 const Categories = loadLibrary(path.join(dir, 'schema/Categories.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 const tr = lang => require(`../translations/${lang}.json`);
@@ -157,7 +158,9 @@ test('every tile has a live status line in every language', () => {
     // the first letter is capitalised
     assert.equal(HomeStatus.line('system', { ...ctx, update: false }), 'Up to date');
     assert.equal(HomeStatus.line('system', { ...ctx, language: 'English', update: false }), 'English · up to date');
-    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', language: 'English', update: false }), '1.3.9 · up to date');
+    // the language before the version (the scene prints the version)
+    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', language: 'English', update: false }), 'English · up to date');
+    assert.equal(HomeStatus.line('system', { ...ctx, version: '1.3.9', update: true }), '1.3.9 · update ready');
     assert.equal(HomeStatus.line('assistant', ctx), 'Ready to chat');
     values['ai.defaultModel'] = 'claude-opus';
     assert.equal(HomeStatus.line('assistant', ctx), 'claude-opus');
@@ -194,8 +197,9 @@ test('a status line drops its last parts until it fits one line', () => {
 test('every home scene is registered by its full path (the audit sees it) and exists', () => {
     const fs = require('node:fs');
     const Registry = loadLibrary(path.join(dir, 'Registry.js'));
-    // Screen and Look are pictures; the other tiles are their icon
-    for (const id of ['screen', 'look']) {
+    // every destination draws a scene of its subject (the icon on a plate
+    // is the fallback of a tile too small for it)
+    for (const { id } of Categories.home()) {
         const f = Registry.scene(id);
         assert.ok(f, `${id} has a scene`);
         assert.ok(fs.existsSync(path.join(dir, f)), f);
@@ -203,6 +207,61 @@ test('every home scene is registered by its full path (the audit sees it) and ex
     const files = fs.readdirSync(path.join(dir, 'home')).filter(f => f.endsWith('Scene.qml'));
     const listed = Object.values(Registry.SCENES).map(f => f.replace('home/', ''));
     assert.deepEqual(files.sort(), listed.sort());
+});
+
+test('tile scenes: windows tiled by layout inside the gaps, without overlap', () => {
+    const inside = (r, w, h, outer) => r.x >= outer && r.y >= outer && r.y + r.h <= h - outer;
+    for (const layout of ['dwindle', 'master']) {
+        const rs = plain(SceneModel.windows(layout, 160, 100, 2, 4));
+        assert.equal(rs.filter(r => r.active).length, 1, layout);
+        for (const r of rs)
+            assert.ok(inside(r, 160, 100, 4) && r.x + r.w <= 156, `${layout} ${JSON.stringify(r)}`);
+        for (let i = 0; i < rs.length; i++)
+            for (let j = i + 1; j < rs.length; j++) {
+                const a = rs[i], b = rs[j];
+                assert.ok(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, `${layout} ${i}/${j}`);
+            }
+    }
+    // scrolling: columns run past the right edge
+    const cols = plain(SceneModel.windows('scrolling', 160, 100, 2, 4));
+    assert.ok(cols[cols.length - 1].x + cols[cols.length - 1].w > 160);
+    // a real gap stays visible, none stays none
+    assert.equal(SceneModel.scaled(0, 100), 0);
+    assert.equal(SceneModel.scaled(2, 100), 1);
+    assert.equal(SceneModel.scaled(36, 100), 10);
+});
+
+test('tile scenes: keycaps follow the layout family, the second layout beside them', () => {
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'us' }, 5)), [['Q', 'W', 'E', 'R', 'T'], ['A', 'S', 'D', 'F', 'G']]);
+    assert.deepEqual(plain(SceneModel.keyRows('de', 6))[0].join(''), 'QWERTZ');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'fr' }, 3))[0].join(''), 'AZE');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'ru' }, 4))[1].join(''), 'ФЫВА');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'us', variant: 'colemak' }, 4))[1].join(''), 'ARST');
+    assert.deepEqual(plain(SceneModel.keyRows({ layout: 'xx' }, 2))[0], ['Q', 'W']);
+});
+
+test('tile scenes: device gauges from what the machine has', () => {
+    const icons = new Proxy({}, { get: (_, k) => String(k) });
+    const g = plain(SceneModel.gauges({
+        battery: { available: true, percent: 76, charging: false },
+        network: { name: 'Sakura 5G', strength: 86 },
+        volume: 0.62,
+        bluetooth: { enabled: true, connected: 2 },
+    }, icons));
+    assert.deepEqual(g.map(x => x.id), ['battery', 'network', 'volume', 'bluetooth']);
+    assert.deepEqual(g.map(x => x.text), ['76%', '86%', '62%', '2']);
+    assert.equal(g[0].icon, 'batteryHigh');
+    // a desktop: no battery, the cable, no sound device, Bluetooth off
+    const d = plain(SceneModel.gauges({ network: { ethernet: true }, volume: -1, bluetooth: { enabled: false } }, icons));
+    assert.deepEqual(d.map(x => [x.id, x.icon, x.value]), [['network', 'ethernet', 1], ['bluetooth', 'bluetoothOff', 0]]);
+});
+
+test('scenes read the same resolved state as the status line', () => {
+    const get = v => k => v[k];
+    assert.equal(HomeStatus.launcherHost({ get: get({ 'notch.enabled': false }) }), 'spotlight');
+    assert.equal(HomeStatus.launcherHost({ get: get({}) }), 'notch');
+    const n = plain(HomeStatus.notificationState({ get: get({ 'notifications.presentation': 'corner', 'notifications.dnd.enabled': true }) }));
+    assert.deepEqual(n, { dnd: true, presentation: 'corner', position: 'top-right' });
 });
 
 test('the page order: plain rows, then big controls, the lead ones first in each', () => {

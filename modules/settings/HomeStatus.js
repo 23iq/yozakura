@@ -9,7 +9,7 @@
 // now, in a few words that fit one line at every tile size ("Dark · Ink ·
 // Tonal spot", "Top bar · island · dock", "Spotlight launcher", "Corner
 // toasts · top right", "Ollama · llama3", "English (US), Russian",
-// "1.3.9 · up to date"). Pure, node-tested (tests/settings-home.test.cjs).
+// "English (US) · up to date"). Pure, node-tested (tests/settings-home.test.cjs).
 // ctx = {get(key), tr(i18nKey), wallpapers: number, preset: string,
 //        outputs: [{width, height, refresh, enabled}], network: string,
 //        volume: 0..1.5 (-1 none), language: string, update: bool,
@@ -76,22 +76,26 @@ function displays(ctx) {
     return o.width + "×" + o.height + (o.refresh > 0 ? " · " + Math.round(o.refresh) + " Hz" : "") + (on.length > 1 ? " · +" + (on.length - 1) : "");
 }
 
-// Where the launcher opens now ("auto" resolved as the shell does).
-function panels(ctx) {
-    var host = HostResolve.resolve({
+// Where the launcher opens now ("auto" resolved as the shell does):
+// "notch" | "spotlight" | "sheet".
+function launcherHost(ctx) {
+    return HostResolve.resolve({
         "launcher": {
             "host": ctx.get("layout.launcher.host") || "auto"
         }
     }, "launcher", {
         "notchEnabled": ctx.get("notch.enabled") !== false
     });
-    return ctx.tr("prefs.home.launcher_style").replace("%1", ctx.tr("prefs.layout.host." + host));
 }
 
-// How and where notifications show now ("auto" resolved as the shell does).
-function notifications(ctx) {
-    if (ctx.get("notifications.dnd.enabled") === true)
-        return ctx.tr("prefs.home.dnd_on");
+function panels(ctx) {
+    return ctx.tr("prefs.home.launcher_style").replace("%1", ctx.tr("prefs.layout.host." + launcherHost(ctx)));
+}
+
+// How and where notifications show now ("auto" resolved as the shell
+// does): {dnd, presentation: "notch" | "strips" | "corner", position:
+// "top-right" | ...}.
+function notificationState(ctx) {
     var bar = firstBar(ctx);
     var pres = Policy.resolvePresentation(ctx.get("notifications.presentation") || "auto", {
         "barStyle": bar.style,
@@ -99,14 +103,24 @@ function notifications(ctx) {
         "notchPosition": ctx.get("notch.position") || "top",
         "notchEnabled": ctx.get("notch.enabled") !== false
     });
-    if (pres === "notch")
+    return {
+        "dnd": ctx.get("notifications.dnd.enabled") === true,
+        "presentation": pres === "notch" || pres === "strips" ? pres : "corner",
+        "position": Policy.resolvePosition(ctx.get("notifications.position") || "auto", {
+            "barPosition": bar.edge
+        })
+    };
+}
+
+function notifications(ctx) {
+    var n = notificationState(ctx);
+    if (n.dnd)
+        return ctx.tr("prefs.home.dnd_on");
+    if (n.presentation === "notch")
         return ctx.tr("prefs.home.in_island");
-    if (pres === "strips")
+    if (n.presentation === "strips")
         return ctx.tr("prefs.home.toasts_strips");
-    var pos = Policy.resolvePosition(ctx.get("notifications.position") || "auto", {
-        "barPosition": bar.edge
-    });
-    return ctx.tr("prefs.home.toasts_corner").replace("%1", ctx.tr("prefs.notif.position." + pos).toLowerCase());
+    return ctx.tr("prefs.home.toasts_corner").replace("%1", ctx.tr("prefs.notif.position." + n.position).toLowerCase());
 }
 
 // The layouts by name ("English (US), Russian"); their codes until the
@@ -154,13 +168,15 @@ function capital(s) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-// "1.3.9 · up to date" (the language where the version is unknown).
+// "English (US) · up to date": the UI language and the update state (the
+// version where the language is unknown; the System scene prints the
+// version itself).
 function system(ctx) {
     var sys = [];
-    if (ctx.version && ctx.version !== "0.0.0")
-        sys.push(ctx.version);
-    else if (ctx.language)
+    if (ctx.language)
         sys.push(ctx.language);
+    else if (ctx.version && ctx.version !== "0.0.0")
+        sys.push(ctx.version);
     sys.push(ctx.tr(ctx.update ? "prefs.home.update" : "prefs.home.uptodate"));
     // "up to date" is a mid-line phrase; leading the line it starts
     // with a capital

@@ -13,7 +13,7 @@ home and on desktop pages, toned down on the others). It opens on a home
 screen (the brand, one big search "What do you want to change?" that
 turns into a command palette with breadcrumbs, a History button and the
 nine destinations as a bento whose tile sizes follow their weight: Screen
-and Look big live scenes, the others their icon on a plate, each with its
+and Look big, every tile a small live scene of its subject, each with its
 name and one live status line) and the tile grows into its destination (a
 shared element, home/MorphFrame). A destination page: a round back button,
 the title, the tabs, History and ⋯ (Reset page) stay on top (a hairline
@@ -51,10 +51,16 @@ modules/settings/
 ├── SettingsShell.qml       the frame: home <-> destination (shared-element growth), shortcuts,
 │                           UndoPill, preset overlays; select / openDestination / goHome / navigate
 ├── SettingsHome.qml        brand, search (window rows, value shown), undo, the weighted tile bento, preset footer
-├── HomeTile.qml            one destination tile (kit Card): a scene (home/<X>Scene.qml, by URL) or its icon
-│                           on a plate (`glyph`; side by side with the name on a wide tile), name, status
-├── home/                   tile scenes: Layout (ScreenMini; the only one on the wallpaper), Look (Aa + font
-│                           name + palette strip); HomeResults (the search palette), MorphFrame
+├── HomeTile.qml            one destination tile (kit Card): a scene (home/<X>Scene.qml, by URL; beside the
+│                           name on a wide tile, above it on a squarer one) or, without one or room for it,
+│                           its icon on a plate (`glyph`), name, status
+├── home/                   tile scenes (Registry.SCENES, one per destination): Layout (ScreenMini on a
+│                           monitor with a stand), Look (wallpaper + a card of the language, Aa, font, mode,
+│                           palette), Panels (launcher at its host), Windows (tiling, gaps, border to scale),
+│                           Notifications (toast stack, DND moon), Devices (battery / Wi-Fi / volume / BT
+│                           rings), Assistant (chat + provider logo), Keys (keycaps of your layouts), System
+│                           (sakura, version, channel, update badge); SceneModel.js (pure geometry),
+│                           SceneScreen (the small screen); HomeResults (the search palette), MorphFrame
 │                           (the tile <-> page shared element)
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
 ├── HomeLayout.js           pure: home columns (6 / 4 / 2), weighted tile packing (no holes), arrow-key
@@ -135,12 +141,15 @@ branches on the language name (`Look`).
   status as description). Screen draws your whole screen as a 16:9 monitor
   (Stage + ScreenMini, every bar, the island and the dock) on its card,
   beside the name and its line (centred on the left) where the tile is
-  wide, the parts that are off named too ("dock off"); Look a big "Aa" with the font's
-  name on its baseline, standing on the palette strip; every other tile is
-  its icon on a plate at the top left (the language's control box:
-  hairline ring, tonal box, solid tile, an instrument's well; accent tonal
-  on hover / focus), the name and status at the foot (one layout for all
-  of them). Name = `title` role, status one size down (`secondary`), one
+  wide, the parts that are off named too ("dock off"); every other tile
+  draws a small live scene of its subject from config / services
+  (`Registry.SCENES`, by URL; `tile` is passed in): on a one-row tile the
+  scene takes the right part, the icon on a plate (the language's control
+  box: hairline ring, tonal box, solid tile, an instrument's well; accent
+  tonal on hover / focus) and the name and status the left; on a squarer
+  tile the scene stands above the name. A tile without a scene, or too
+  small for one (`HomeTile.glyph`), shows its plate. Scenes draw with
+  `Mark` / kit pieces only, adapt to their room, and never animate idle. Name = `title` role, status one size down (`secondary`), one
   line that never wraps: its room is there from the first frame, the
   words fade in, trailing " · " parts drop where it is too long
   (`HomeStatus.fit`); in device a lit LED precedes it. Search: typing
