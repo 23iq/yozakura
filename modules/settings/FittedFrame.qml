@@ -51,7 +51,9 @@ Flickable {
     // content): the row grows to it, the hero gives up the room, so a card
     // never scrolls inside itself while the window has room for it
     property real rowNeed: 0
-    readonly property real rowH: frame.listForm ? Math.max(Look.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Math.max(Look.cardRowHeight, Math.min(frame.rowNeed, frame.height - Space.s - frame.hintH - frame.gap - frame.pad - Space.px(200)))
+    // the least height of the row of cards (a settings layout constant)
+    readonly property int cardRowHeight: Space.px(216)
+    readonly property real rowH: frame.listForm ? Math.max(frame.cardRowHeight, frame.height - Space.s - frame.bandH - frame.hintH - frame.gap - frame.pad) : Math.max(frame.cardRowHeight, Math.min(frame.rowNeed, frame.height - Space.s - frame.hintH - frame.gap - frame.pad - Space.px(200)))
     // The stage form's hero is never taller than a 16:9 picture of its
     // width (`heroCap`): a tall window keeps it in proportion with the row
     // right under it, the rest of the page stays empty at the foot (no
