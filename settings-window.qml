@@ -58,9 +58,9 @@ ShellRoot {
 
     // The window is shown: tell the daemon (the main shell drops its
     // "Opening..." pill) and run what was asked while it started (a close
-    // from the main shell's toggle, another page); closed (after the
-    // unsaved-changes question): report hiding and quit, the daemon reaps
-    // us. An open meanwhile raises it again (command).
+    // from the main shell's toggle, another page); closed (nothing to ask:
+    // every change is already saved): report hiding and quit, the daemon
+    // reaps us. An open meanwhile raises it again (command).
     Connections {
         target: root.win
         ignoreUnknownSignals: true
