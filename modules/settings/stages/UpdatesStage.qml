@@ -49,7 +49,8 @@ Stage {
         }
     ]
 
-    stageHeight: Space.px(300)
+    readonly property real preferredHeight: Space.px(280)
+    stageHeight: stage.preferredHeight
     // a short stage: the state on the left, the lanes stacked on the right
     // (stacked under each other they would run over the action)
     readonly property bool tight: stage.height > 0 && stage.height < Space.px(150)

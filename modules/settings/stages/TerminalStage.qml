@@ -31,7 +31,10 @@ Stage {
     // the one thing in the way, if any: [icon, i18n key]
     readonly property var notice: !stage.promptOn ? ["info", "prefs.term.look.off.title"] : (stage.fish === "missing" ? ["warning", "prefs.term.look.fish.missing"] : (stage.needsNerdFont ? ["textAa", "prefs.term.look.nerd.title"] : null))
 
-    stageHeight: Space.px(300)
+    // as tall as the window and its notice (the page caps it on a short
+    // window: the window then shrinks a little and its top is cut)
+    readonly property real preferredHeight: stage.windowHeight > 0 ? Math.ceil(stage.windowHeight + (stage.notice !== null ? notice.height + Space.s + Space.m : 0)) : Space.px(300)
+    stageHeight: stage.preferredHeight
     backdrop: false
 
     Component.onCompleted: {
@@ -66,7 +69,9 @@ Stage {
         id: window
         objectName: "terminalWindow"
         parent: room
-        width: room.width / stage.fit
+        // (its width never follows the fit: no layout loop)
+        width: room.width
+        x: Math.round(room.width * (1 - stage.fit) / 2)
         height: stage.windowHeight > 0 ? stage.windowHeight : room.height
         scale: stage.fit
         transformOrigin: Item.TopLeft
