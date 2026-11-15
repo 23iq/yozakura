@@ -18,7 +18,7 @@ func TestPlaceInput(t *testing.T) {
 	src := filepath.Join(dir, "a%d.png")
 	_ = os.WriteFile(src, []byte("data"), 0o644)
 	dst := filepath.Join(dir, "in.png")
-	if err := placeInput(context.Background(), src, dst); err != nil {
+	if err := placeInput(context.Background(), src, dst, false); err != nil {
 		t.Fatal(err)
 	}
 	var a, b syscall.Stat_t
@@ -32,7 +32,7 @@ func TestPlaceInput(t *testing.T) {
 		t.Skip(err)
 	}
 	done := make(chan error, 1)
-	go func() { done <- placeInput(context.Background(), fifo, filepath.Join(dir, "in2.png")) }()
+	go func() { done <- placeInput(context.Background(), fifo, filepath.Join(dir, "in2.png"), false) }()
 	select {
 	case err := <-done:
 		if err == nil {

@@ -84,6 +84,8 @@ type Plan struct {
 	// Files are written before the first step when missing (a tool's
 	// policy or settings): a relative path is inside Work.
 	Files map[string]string
+	// copyInput: the input is hard-linked or copied, never symlinked.
+	copyInput bool
 	// settled closes when the last native step's goroutine ended.
 	settled <-chan struct{}
 	// probe reads the duration of the placed input when Duration is 0.
@@ -154,6 +156,7 @@ func BuildPlan(req Request, t *Tools, work string, o PlanOptions) (*Plan, error)
 		p.probe = t.ProbeDuration
 		p.Steps = []Step{{Prog: prog, Args: ffmpegArgs(r, out), Progress: true, Out: out, Timeout: timeout}}
 	case EngineMagick:
+		p.copyInput = true
 		p.Files = map[string]string{magickPolicyFile: magickPolicy(req.From, req.To, t.magickCoder(req.From), work)}
 		p.Steps = []Step{{Prog: prog, Args: magickArgs(r, out, t), Env: magickEnv(work), Out: out, Timeout: timeout}}
 	case EngineRsvg:
