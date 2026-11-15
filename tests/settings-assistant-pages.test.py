@@ -16,6 +16,7 @@ from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 env = SettingsEnv("settings-assistant-pages")
 h = env.h
@@ -35,6 +36,7 @@ import qs.config
 import qs.modules.services
 import qs.modules.settings
 import qs.modules.settings.store
+import qs.modules.globals
 Window {
     id: w
     width: 1180; height: 780; visible: true
@@ -94,6 +96,15 @@ def row(entry):
 select("ai")
 check(ev('w.findItem("assistantPanel") !== null'), "assistant: the stage is the chat itself")
 check(ev("Config.ai.sidebarPosition") == "right", "assistant: on the right by default")
+# the panel's header is the sample's, never the live assistant's (wide, code)
+size_btn = 'w.findItem("headerSize", w.findItem("assistantPanel"))'
+check(wait_until(lambda: ev(f"{size_btn} !== null"), timeout_ms=15000), "assistant: the stage's panel has its header")
+ev("GlobalStates.assistantWide = true")
+ev("GlobalStates.aiSpace = 'code'")
+check(ev(f"{size_btn}.parent.size") == "compact" and ev(f"{size_btn}.parent.code") is False,
+      "assistant: the stage's header shows the sample size and space, not the live assistant's")
+ev("GlobalStates.assistantWide = false")
+ev("GlobalStates.aiSpace = 'assistant'")
 for e in ("ai.appearance.defaultSize", "ai.appearance.messageStyle", "ai.enabled", "ai.showThinking",
           "ai.sidebarPosition", "ai.quickAsk.enabled", "layout.aiquick.host"):
     check(row(e), f"assistant: {e} is on the page")
