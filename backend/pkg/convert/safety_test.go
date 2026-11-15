@@ -76,10 +76,15 @@ func TestPandocPullsOnlyTheDocumentsOwnFiles(t *testing.T) {
 	_ = os.Mkdir(filepath.Join(doc, "img"), 0o755)
 	pngFile(t, filepath.Join(doc, "img", "pic.png"), 2, 2, "LOCAL-MARKER")
 	_ = os.Symlink(secret, filepath.Join(doc, "img", "sneaky.png"))
-	md := "---\nepub-cover-image: " + secret + "\n---\n# t\n\n![a](" + secret + ")\n\n![b](../" + filepath.Base(outside) + "/secret.png)\n\n" +
-		"![c](img/sneaky.png)\n\n![d](https://example.invalid/x.png)\n\n<img src=\"" + secret + "\">\n\n![local](img/pic.png)\n"
+	md := "---\nepub-cover-image: " + secret + "\ntitle: \"![t](" + secret + ")\"\nabstract: \"![t](" + secret + ")\"\n---\n# t\n\n" +
+		"![a](" + secret + ")\n\n![b](../" + filepath.Base(outside) + "/secret.png)\n\n" +
+		"![c](img/sneaky.png)\n\n![d](https://example.invalid/x.png)\n\n<img src=\"" + secret + "\">\n\n" +
+		"<img src = \"" + secret + "\">\n\n<video poster=\"" + secret + "\"></video>\n\n![local](img/pic.png)\n"
 	src := filepath.Join(doc, "notes.md")
 	_ = os.WriteFile(src, []byte(md), 0o644)
+	if got := runPlan(t, src, "md", "html"); bytes.Contains(got, []byte(secret)) || !bytes.Contains(got, []byte("data:image/png;base64")) {
+		t.Error("md->html names a file outside the document's folder, or did not embed its own image")
+	}
 	for _, to := range []string{"docx", "epub", "odt"} {
 		got := zipText(t, runPlan(t, src, "md", to))
 		if strings.Contains(got, "SECRET-MARKER") {
@@ -100,6 +105,31 @@ func TestPandocPullsOnlyTheDocumentsOwnFiles(t *testing.T) {
 	_ = os.WriteFile(docx, runPlan(t, src, "md", "docx"), 0o644)
 	if !strings.Contains(zipText(t, runPlan(t, docx, "docx", "epub")), "LOCAL-MARKER") {
 		t.Error("docx->epub lost the embedded image")
+	}
+	// docx -> html embeds the document's images (the extracted media dies
+	// with the work dir); docx -> md ships them in a folder next to it
+	if html := runPlan(t, docx, "docx", "html"); !bytes.Contains(html, []byte("data:image/png;base64")) {
+		t.Error("docx->html lost the embedded image")
+	}
+	work := t.TempDir()
+	p, err := BuildPlan(Request{Src: docx, From: "docx", To: "md"}, realTools, work, PlanOptions{MediaLink: "d_media"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := p.Run(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	mdOut, _ := os.ReadFile(p.Out)
+	var shipped []string
+	_ = filepath.WalkDir(p.Media, func(path string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			rel, _ := filepath.Rel(p.Media, path)
+			shipped = append(shipped, rel)
+		}
+		return nil
+	})
+	if len(shipped) == 0 || !strings.Contains(string(mdOut), "d_media/"+shipped[0]) {
+		t.Errorf("docx->md: media %v, text %q", shipped, mdOut)
 	}
 }
 

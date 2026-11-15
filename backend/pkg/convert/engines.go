@@ -66,6 +66,8 @@ type Tools struct {
 	ffprobe string
 	// pandoc is installed but older than 2.15 (no --sandbox): not used
 	pandocOld bool
+	// pandoc is older than 2.19: --self-contained, not --embed-resources
+	pandocNoEmbed bool
 	// what a real ImageMagick run showed for PDF (policy, Ghostscript)
 	magickPDF *pdfAbility
 }
@@ -110,12 +112,25 @@ func DetectTools(look LookFunc) *Tools {
 			delete(t.progs, EnginePandoc)
 			t.pandocOld = true
 		}
+		t.pandocNoEmbed = !pandocAtLeast(string(out), 2, 19)
 	}
 	return t
 }
 
 // PandocHasSandbox reads `pandoc --version`: --sandbox exists from 2.15 on.
 func PandocHasSandbox(version string) bool {
+	return pandocAtLeast(version, 2, 15)
+}
+
+// pandocEmbedFlag makes an html result a single file with its images.
+func (t *Tools) pandocEmbedFlag() string {
+	if t != nil && t.pandocNoEmbed {
+		return "--self-contained"
+	}
+	return "--embed-resources"
+}
+
+func pandocAtLeast(version string, wantMajor, wantMinor int) bool {
 	f := strings.Fields(version)
 	if len(f) < 2 {
 		return false
@@ -124,7 +139,7 @@ func PandocHasSandbox(version string) bool {
 	if _, err := fmt.Sscanf(f[1], "%d.%d", &major, &minor); err != nil {
 		return false
 	}
-	return major > 2 || (major == 2 && minor >= 15)
+	return major > wantMajor || (major == wantMajor && minor >= wantMinor)
 }
 
 // probeMagickPDF writes and reads back a one-pixel PDF: a security policy
