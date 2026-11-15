@@ -47,6 +47,15 @@ Primary system panel supporting horizontal (top/bottom) and vertical (left/right
 | **Integrated dock** | `IntegratedDock.qml` | App switching within bar |
 | **Clock** | `clock/Clock.qml` | Faces (`ClockFaces.js` + `faces/`), Pomodoro indicators (`PomodoroStyles.js` + `indicators/`), `ClockPanel` popup (column / wide / bento) |
 
+## SETTINGS PREVIEWS
+Settings shows the real panels (modules/settings/AGENTS.md, LIVE PREVIEWS):
+BarContent and DockContent take `preview` (a PreviewContext, null live),
+modules see it as `bar.preview`; keys a picture card varies are read with
+`Preview.pick(preview, "key", Config...)` (components/preview/Preview.js).
+BarModuleSlot names each slot `barSlot:<id>` so previews find modules.
+A new module or style needs nothing more; a new look key a card varies
+needs one `Preview.pick`.
+
 ## CONVENTIONS
 - **Adaptive styling**: Widgets use `startRadius`/`endRadius` for "pill" continuity based on group position.
 - **Visibility registration**: Panels must register with `Visibilities` in `Component.onCompleted`.

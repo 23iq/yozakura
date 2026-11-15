@@ -15,7 +15,8 @@ Item {
     required property int workspaceId
     property color color
 
-    readonly property var numeralSystem: Numerals.get(Config.workspaces.numeralStyle)
+    property string numeralStyle: Config.workspaces.numeralStyle
+    readonly property var numeralSystem: Numerals.get(numeralStyle)
     readonly property var fit: numeralSystem.fit
     readonly property bool optical: !!fit
     readonly property string text: Numerals.format(numeralSystem.id, workspaceId)

@@ -6,26 +6,27 @@ import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings
-import "../PanelSketch.js" as PanelSketch
+import qs.modules.settings.live
 import "../SchemaUtil.js" as SchemaUtil
 import "../../bar/panels/PanelLayout.js" as PanelLayout
-import "../../bar/workspaces/WorkspaceNumerals.js" as WorkspaceNumerals
-import "../../bar/workspaces/indicators/IndicatorStyles.js" as IndicatorStyles
+import "../live/LiveKeys.js" as ScreenParts
 
-// The shared screen miniature of the settings stages: your whole screen
-// arrangement at once and to one scale, from the live config. Layers, back
-// to front: windows in the space everything else leaves (reserved space
-// made visible), the screen frame and rounded corners, every bar panel by
-// its style and edge (PanelSketch.js: several bars, vertical rails,
-// islands, floating docks; the real clock face and workspace indicator),
-// the dock on its edge, the island, then the page's `overlay` (surfaces
-// that open somewhere, drawn in screen coordinates: `freeRect`,
-// `islandRect`, `edgeDepth(edge)`). A page turns layers on and off
-// (`showWindows`, `showDock`, `showIsland`) and marks parts with
-// StageSpot (keys below). With `selectable`, a click on a panel emits
-// `panelPicked(index)` and `selectedPanel` is ringed in the accent; with
+// The shared screen miniature of the settings stages: your screen as the
+// shell draws it, to one scale. The bars and the dock are the shell's own
+// components (live/LiveScreen: the real panels laid out at the screen's
+// native size, then scaled; LIVE PREVIEWS in modules/settings/AGENTS.md),
+// so every module, icon, workspace indicator, clock face, style and colour
+// is the real one, and a new module or style shows up here by itself.
+// Layers, back to front: windows in the space everything else leaves
+// (reserved space made visible), the screen frame, the panels, the
+// island, the rounded screen corners, then the page's `overlay` (surfaces
+// that open somewhere, in screen coordinates: `freeRect`, `islandRect`,
+// `edgeDepth(edge)`). A page turns layers on and off (`showWindows`,
+// `showDock`, `showIsland`) and marks parts with StageSpot. With
+// `selectable`, a click on a panel emits `panelPicked(index)` (the bars
+// editor's index) and `selectedPanel` is ringed; with `modulesClickable`
+// every module of every bar is a button (`modulePicked(id)`); with
 // `partsClickable` the island and the dock emit `partPicked(part)`.
-// Any change of the arrangement settles it in again (a soft fade).
 Item {
     id: screen
 
@@ -36,7 +37,7 @@ Item {
     property bool showIsland: true
     property bool selectable: false
     property int selectedPanel: -1
-    // The bar surface is drawn at least this opaque (see Stage.barOpacity).
+    // (kept for the stages that pass it: the bars draw their own surface)
     property real barOpacity: 0.82
     property real cornerRadius: Space.surfaceRadius
     // A part ringed in the accent: "island" | "dock" | "" (the page that
@@ -66,49 +67,26 @@ Item {
     readonly property var panels: PanelLayout.normalize(screen.bar).panels.filter(p => p && p.enabled !== false)
     readonly property bool compact: screen.get("bar.compact", false) === true
     readonly property bool frame: screen.get("bar.frameEnabled", false) === true
-    readonly property bool showDate: screen.get("bar.clockShowDate", false) === true
-    readonly property bool use12h: screen.get("bar.use12hFormat", false) === true
-    readonly property string face: screen.get("bar.moduleOptions.clock.face", "digital")
-    readonly property int workspaces: Math.max(1, Math.min(6, Number(screen.get("workspaces.shown", 5))))
-    readonly property bool numbers: screen.get("workspaces.showNumbers", true) !== false
-    readonly property string numerals: screen.get("workspaces.numeralStyle", WorkspaceNumerals.DEFAULT_ID)
-    readonly property string indicator: screen.get("workspaces.indicatorStyle", IndicatorStyles.DEFAULT_ID)
     readonly property bool island: screen.get("notch.enabled", true) !== false
 
-    // Module size in stage pixels: a bar of a 1920 px screen at the scale
-    // of the stage, never so small that a glyph stops reading.
-    // the smallest module size: a strip that magnifies the bar (the Bar
-    // loupe) asks for more so its glyphs read
+    // Native px -> miniature px: the real screen's width onto this one.
+    readonly property real k: screen.width > 0 ? screen.width / LiveTarget.width : 1
+    // A readable unit for what pages draw in the overlay (toasts, widgets):
+    // about a module of a bar at the scale of the stage.
     property real minUnit: Space.px(16)
     readonly property real unit: Math.max(screen.minUnit, Math.round(screen.width * 0.03)) * (screen.compact ? 0.86 : 1)
-    readonly property real frameWidth: screen.frame ? Math.max(Space.xs, Math.round(screen.unit * 0.3)) : 0
-    // Slots the wide modules take (the real clock and workspace strip).
-    readonly property var spans: ({
-            "clock": 2.3 + (screen.use12h ? 1.1 : 0) + (screen.showDate ? 2 : 0),
-            "workspaces": screen.workspaces * 0.85 + 0.3
+    readonly property real frameWidth: screen.frame ? Number(screen.get("bar.frameThickness", 6)) * screen.k : 0
+    // Room the bars take on each edge (the frame excluded), stage px.
+    readonly property var depths: ({
+            "top": live.depth("top") * screen.k,
+            "bottom": live.depth("bottom") * screen.k,
+            "left": live.depth("left") * screen.k,
+            "right": live.depth("right") * screen.k
         })
-    readonly property real innerWidth: screen.width - screen.frameWidth * 2
-    readonly property real innerHeight: screen.height - screen.frameWidth * 2
-    readonly property var sketches: screen.panels.map(p => PanelSketch.sketch(p, screen.innerWidth, screen.innerHeight, screen.unit, screen.spans))
-    readonly property var depths: {
-        const d = {
-            "top": 0,
-            "bottom": 0,
-            "left": 0,
-            "right": 0
-        };
-        const n = Math.min(screen.panels.length, screen.sketches.length);
-        for (let i = 0; i < n; i++)
-            d[screen.panels[i].edge] = Math.max(d[screen.panels[i].edge], screen.sketches[i].depth);
-        return d;
-    }
 
     // The dock on its edge (not when it lives inside the bar).
-    readonly property bool dockOn: screen.showDock && screen.get("dock.enabled", true) !== false && screen.get("dock.theme", "default") !== "integrated"
-    readonly property string dockEdge: screen.get("dock.position", "bottom")
-    readonly property bool dockFloating: screen.get("dock.theme", "default") === "floating"
-    readonly property real dockThick: Math.round(screen.unit * Math.max(1.2, Number(screen.get("dock.height", 48)) / 30))
-    readonly property real dockGap: Math.round(screen.unit * (screen.dockFloating ? 0.5 : 0.2))
+    readonly property bool dockOn: screen.showDock && live.dockOn
+    readonly property string dockEdge: live.dockEdge
     // the shell's rounded screen corners (a tile that crops the screen sets false)
     property bool corners: screen.get("theme.enableCorners", true) !== false
     // the island's edge (on a side edge it stands upright, centred)
@@ -116,7 +94,7 @@ Item {
     readonly property bool islandUpright: screen.islandEdge === "left" || screen.islandEdge === "right"
     // Room taken on an edge by the bars, the frame and the dock.
     function edgeDepth(edge) {
-        return screen.frameWidth + (screen.depths[edge] || 0) + (screen.dockOn && screen.dockEdge === edge ? screen.dockThick + screen.dockGap * 2 : 0);
+        return screen.frameWidth + (screen.depths[edge] || 0) + (screen.dockOn && screen.dockEdge === edge ? live.dockDepth * screen.k : 0);
     }
     // The space windows get: {x, y, w, h}.
     readonly property var freeRect: {
@@ -135,10 +113,70 @@ Item {
             "h": island.height
         })
 
-    // A change of the bar settles it in again (a soft fade and lift).
-    readonly property string signature: JSON.stringify([screen.panels, screen.compact, screen.spans, screen.dockOn, screen.dockEdge, screen.dockThick])
+    // Where the panels and their modules are, in stage px (measured on the
+    // live panels after each change: `refresh()`).
+    property var panelRects: []
+    property var moduleRects: []
+    function refresh() {
+        // (torn down with the page: nothing to measure)
+        if (typeof live.bars.modules !== "function")
+            return;
+        const b = live.bars;
+        const k = screen.k;
+        const scaled = r => ({
+                    "x": r.x * k,
+                    "y": r.y * k,
+                    "w": r.width * k,
+                    "h": r.height * k
+                });
+        const all = b.panels;
+        const pr = [];
+        for (let i = 0; i < all.length; i++) {
+            const r = b.panelRect(i);
+            if (r.width > 0 && r.height > 0)
+                pr.push(Object.assign({
+                    "index": i
+                }, scaled(r)));
+        }
+        screen.panelRects = pr;
+        screen.moduleRects = b.modules().map(m => {
+            const p = m.item.mapToItem(live, 0, 0);
+            return Object.assign({
+                "id": m.id,
+                "panel": m.panel
+            }, scaled(Qt.rect(p.x, p.y, m.item.width, m.item.height)));
+        });
+    }
+    Timer {
+        id: refreshTimer
+        interval: 120
+        onTriggered: screen.refresh()
+    }
+    function scheduleRefresh() {
+        refreshTimer.restart();
+    }
+    onWidthChanged: screen.scheduleRefresh()
+    onHeightChanged: screen.scheduleRefresh()
+    onDepthsChanged: screen.scheduleRefresh()
+    Connections {
+        target: live.bars
+        function onBarsChanged() {
+            screen.scheduleRefresh();
+        }
+    }
+    // fresh places whenever the pointer arrives (a module grew meanwhile)
+    HoverHandler {
+        onHoveredChanged: if (hovered)
+            screen.refresh()
+    }
+
+    // A change of the arrangement settles it in again (a soft fade).
+    readonly property string signature: JSON.stringify([screen.panels, screen.compact, screen.dockOn, screen.dockEdge])
     property real settle: 1
-    onSignatureChanged: settleAnim.restart()
+    onSignatureChanged: {
+        settleAnim.restart();
+        screen.scheduleRefresh();
+    }
     NumberAnimation {
         id: settleAnim
         target: screen
@@ -232,227 +270,106 @@ Item {
         }
     }
 
-    // The bar (every panel).
+    // The bars and the dock: the shell's own, at the screen's size, scaled.
     Item {
-        id: barLayer
-        x: screen.frameWidth
-        y: screen.frameWidth
-        width: screen.innerWidth
-        height: screen.innerHeight
+        id: sandbox
+        width: LiveTarget.width
+        height: screen.k > 0 ? screen.height / screen.k : 0
+        scale: screen.k
+        transformOrigin: Item.TopLeft
         opacity: 0.25 + 0.75 * screen.settle
-        transform: Translate {
-            y: (1 - screen.settle) * -Space.s
+
+        LiveScreen {
+            id: live
+            objectName: "screenMiniLive"
+            anchors.fill: parent
+            showDock: screen.showDock
         }
+    }
 
-        Repeater {
-            model: screen.sketches
-            delegate: Item {
-                id: panel
-                required property var modelData
-                required property int index
-                readonly property string edge: screen.panels[panel.index] ? screen.panels[panel.index].edge : "top"
-                readonly property bool vertical: panel.edge === "left" || panel.edge === "right"
+    // Each panel: its spot, the picked ring, and a click that picks it.
+    Repeater {
+        model: screen.panelRects
+        delegate: Item {
+            id: panelPart
+            required property var modelData
+            x: modelData.x
+            y: modelData.y
+            width: modelData.w
+            height: modelData.h
+
+            StageSpot {
+                keys: ["bar.layout", "bar.position", "bar.compact", "bar.panels", "bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen", "bar.screenList"]
+                cornerRadius: Space.smallRadius
+            }
+            // the panel picked for editing (ringed), or under the pointer
+            // (a fainter ring: it can be picked)
+            Mark {
                 anchors.fill: parent
-
-                Repeater {
-                    model: panel.modelData.shapes
-                    // The ring sits beside the surface, not in it (a
-                    // StyledRect clips its children to its shape).
-                    delegate: Item {
-                        required property var modelData
-                        x: modelData.x
-                        y: modelData.y
-                        width: modelData.w
-                        height: modelData.h
-
-                        // under the bar surface: a floor of the theme background, so
-                        // every bar (a thin rail too) reads as clearly as the top one
-                        Mark {
-                            anchors.fill: parent
-                            radius: shape.radius
-                            color: Qt.alpha(Colors.background, 0.7)
-                        }
-                        StyledRect {
-                            id: shape
-                            anchors.fill: parent
-                            variant: "barbg"
-                            backgroundOpacity: screen.barOpacity
-                            enableShadow: false
-                            radius: Math.min(parent.modelData.r, Styling.radius(0))
-                        }
-                        StageSpot {
-                            keys: ["bar.layout", "bar.position", "bar.compact", "bar.panels", "bar.pinnedOnStartup", "bar.showPinButton", "bar.availableOnFullscreen", "bar.screenList"]
-                            cornerRadius: shape.radius
-                        }
-                        // the panel picked for editing (ringed), or under
-                        // the pointer (a fainter ring: it can be picked)
-                        Mark {
-                            anchors.fill: parent
-                            anchors.margins: -Space.xs
-                            readonly property bool picked: screen.selectable && screen.selectedPanel === panel.index
-                            opacity: picked ? 1 : (panelArea.containsMouse ? 0.55 : 0)
-                            visible: opacity > 0
-                            radius: shape.radius + Space.xs
-                            color: "transparent"
-                            border.width: Space.stroke - 1
-                            border.color: Type.accent
-                            Behavior on opacity {
-                                enabled: Motion.micro.duration > 0
-                                NumberAnimation {
-                                    duration: Motion.micro.duration
-                                    easing.type: Motion.micro.easing
-                                }
-                            }
-                        }
-                        MouseArea {
-                            id: panelArea
-                            objectName: "barPanel:" + panel.index
-                            anchors.fill: parent
-                            enabled: screen.selectable
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: screen.panelPicked(panel.index)
-                        }
+                anchors.margins: -Space.xs
+                readonly property bool picked: screen.selectable && screen.selectedPanel === panelPart.modelData.index
+                opacity: picked ? 1 : (panelArea.containsMouse ? 0.55 : 0)
+                visible: opacity > 0
+                radius: Space.smallRadius + Space.xs
+                color: "transparent"
+                border.width: Space.stroke - 1
+                border.color: Type.accent
+                Behavior on opacity {
+                    enabled: Motion.micro.duration > 0
+                    NumberAnimation {
+                        duration: Motion.micro.duration
+                        easing.type: Motion.micro.easing
                     }
                 }
+            }
+            MouseArea {
+                id: panelArea
+                objectName: "barPanel:" + panelPart.modelData.index
+                anchors.fill: parent
+                enabled: screen.selectable
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: screen.panelPicked(panelPart.modelData.index)
+            }
+        }
+    }
 
-                Repeater {
-                    model: panel.modelData.icons
-                    delegate: Item {
-                        id: slot
-                        required property var modelData
-                        readonly property bool wide: modelData.id === "clock" || modelData.id === "workspaces"
-                        readonly property real along: slot.wide ? modelData.span : modelData.size
-                        x: panel.vertical ? modelData.x : modelData.x + (modelData.size - slot.along) / 2
-                        y: panel.vertical ? modelData.y + (modelData.size - slot.along) / 2 : modelData.y
-                        width: panel.vertical ? modelData.size : slot.along
-                        height: panel.vertical ? slot.along : modelData.size
+    // Each module: its spot and, on the Bar tab, a button to its card.
+    Repeater {
+        model: screen.moduleRects
+        delegate: Item {
+            id: modulePart
+            required property var modelData
+            x: modelData.x
+            y: modelData.y
+            width: modelData.w
+            height: modelData.h
 
-                        Icon {
-                            anchors.centerIn: parent
-                            visible: !slot.wide
-                            icon: Icons[slot.modelData.icon] ?? ""
-                            size: Math.round(slot.modelData.size * 0.86)
-                            tone: slot.modelData.id === "launcher" ? "accent" : "text"
-                        }
+            StageSpot {
+                keys: ScreenParts.moduleKeys(modulePart.modelData.id)
+            }
+            MouseArea {
+                id: moduleArea
+                objectName: "barModule:" + modulePart.modelData.id
+                anchors.fill: parent
+                enabled: screen.modulesClickable
+                visible: enabled
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: screen.modulePicked(modulePart.modelData.id)
 
-                        // The real bar clock face, a fixed 21:47.
-                        Row {
-                            anchors.centerIn: parent
-                            visible: slot.modelData.id === "clock"
-                            spacing: Math.round(screen.unit * 0.3)
-                            KitText {
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: screen.showDate && !panel.vertical
-                                text: Qt.formatDate(new Date(2026, 3, 9), "ddd d")
-                                color: Type.secondary
-                                font.pixelSize: Math.round(screen.unit * 0.6)
-                            }
-                            Loader {
-                                anchors.verticalCenter: parent.verticalCenter
-                                active: slot.modelData.id === "clock"
-                                source: Qt.resolvedUrl("../../bar/clock/ClockFace.qml")
-                                onLoaded: {
-                                    item.now = new Date(2026, 3, 9, 21, 47);
-                                    item.textColor = Qt.binding(() => Colors.overBackground);
-                                    item.fontSize = Qt.binding(() => Math.round(screen.unit * 0.66 * (slot.modelData.fit || 1)));
-                                    item.face = Qt.binding(() => screen.face);
-                                    item.use12h = Qt.binding(() => screen.use12h);
-                                    item.vertical = Qt.binding(() => panel.vertical);
-                                }
-                            }
-                        }
-                        StageSpot {
-                            visible: slot.modelData.id === "clock"
-                            keys: ["bar.clockShowDate", "bar.use12hFormat", "bar.moduleOptions.clock"]
-                        }
-
-                        // Workspaces: your count and numerals, the real
-                        // active indicator on the second one.
-                        Grid {
-                            id: strip
-                            anchors.centerIn: parent
-                            visible: slot.modelData.id === "workspaces"
-                            columns: panel.vertical ? 1 : screen.workspaces
-                            readonly property real cell: Math.round(screen.unit * 0.85 * (slot.modelData.fit || 1))
-                            Repeater {
-                                model: slot.modelData.id === "workspaces" ? screen.workspaces : 0
-                                delegate: Item {
-                                    id: ws
-                                    required property int index
-                                    readonly property bool current: index === 1
-                                    width: strip.cell
-                                    height: strip.cell
-
-                                    // A fake ActiveIndicator for the style component.
-                                    QtObject {
-                                        id: fake
-                                        readonly property bool vertical: false
-                                        readonly property real width: strip.cell
-                                        readonly property real height: strip.cell
-                                        readonly property real slotSize: strip.cell
-                                        readonly property real padding: 0
-                                        readonly property bool occupied: true
-                                        readonly property real baseRadius: Styling.radius(0)
-                                        readonly property int workspaceId: 2
-                                    }
-                                    Loader {
-                                        active: ws.current
-                                        source: {
-                                            const s = IndicatorStyles.get(screen.indicator);
-                                            return s && !s.strip ? Qt.resolvedUrl("../../bar/workspaces/indicators/" + s.component) : Qt.resolvedUrl("../../bar/workspaces/indicators/PillIndicator.qml");
-                                        }
-                                        onLoaded: item.indicator = fake
-                                    }
-                                    KitText {
-                                        anchors.centerIn: parent
-                                        visible: screen.numbers
-                                        text: WorkspaceNumerals.format(screen.numerals, ws.index + 1)
-                                        font.pixelSize: Math.round(screen.unit * 0.5)
-                                        font.weight: Font.DemiBold
-                                        color: ws.current ? Colors.primary : Qt.alpha(Colors.overBackground, ws.index < 3 ? 0.9 : 0.45)
-                                    }
-                                    Mark {
-                                        anchors.centerIn: parent
-                                        visible: !screen.numbers && !ws.current
-                                        width: Math.round(strip.cell * 0.22)
-                                        height: width
-                                        color: Qt.alpha(Colors.overBackground, ws.index < 3 ? 0.8 : 0.35)
-                                    }
-                                }
-                            }
-                        }
-                        StageSpot {
-                            visible: slot.modelData.id === "workspaces"
-                            keys: ["workspaces"]
-                        }
-                        MouseArea {
-                            id: moduleArea
-                            objectName: "barModule:" + slot.modelData.id
-                            anchors.fill: parent
-                            anchors.margins: -Math.round(screen.unit * 0.12)
-                            enabled: screen.modulesClickable
-                            visible: enabled
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: screen.modulePicked(slot.modelData.id)
-
-                            // under the pointer: a soft wash (a click goes
-                            // to its card)
-                            Mark {
-                                anchors.fill: parent
-                                radius: Space.smallRadius
-                                color: Qt.alpha(Type.accent, 0.18)
-                                opacity: moduleArea.containsMouse ? 1 : 0
-                                visible: opacity > 0
-                                Behavior on opacity {
-                                    enabled: Motion.micro.duration > 0
-                                    NumberAnimation {
-                                        duration: Motion.micro.duration
-                                        easing.type: Motion.micro.easing
-                                    }
-                                }
-                            }
+                // under the pointer: a soft wash (a click goes to its card)
+                Mark {
+                    anchors.fill: parent
+                    radius: Space.smallRadius
+                    color: Qt.alpha(Type.accent, 0.18)
+                    opacity: moduleArea.containsMouse ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity {
+                        enabled: Motion.micro.duration > 0
+                        NumberAnimation {
+                            duration: Motion.micro.duration
+                            easing.type: Motion.micro.easing
                         }
                     }
                 }
@@ -460,49 +377,24 @@ Item {
         }
     }
 
-    // The dock on its edge.
+    // The dock: its spot and ring (the dock itself is in the live layer).
     Item {
         id: dock
-        readonly property bool vertical: screen.dockEdge === "left" || screen.dockEdge === "right"
-        readonly property real length: (dock.vertical ? screen.height : screen.width) * 0.34
+        readonly property rect r: screen.dockOn ? live.dockRect() : Qt.rect(0, 0, 0, 0)
         visible: screen.dockOn
-        width: dock.vertical ? screen.dockThick : dock.length
-        height: dock.vertical ? dock.length : screen.dockThick
-        x: screen.dockEdge === "left" ? screen.frameWidth + (screen.depths.left || 0) + screen.dockGap : (screen.dockEdge === "right" ? screen.width - width - screen.frameWidth - (screen.depths.right || 0) - screen.dockGap : (screen.width - width) / 2)
-        y: screen.dockEdge === "top" ? screen.frameWidth + (screen.depths.top || 0) + screen.dockGap : (screen.dockEdge === "bottom" ? screen.height - height - screen.frameWidth - (screen.depths.bottom || 0) - screen.dockGap : (screen.height - height) / 2)
+        x: dock.r.x * screen.k
+        y: dock.r.y * screen.k
+        width: dock.r.width * screen.k
+        height: dock.r.height * screen.k
 
-        StyledRect {
-            id: dockBox
-            anchors.fill: parent
-            variant: "bg"
-            enableShadow: false
-            radius: Math.min(Styling.radius(0), Math.min(width, height) / 2)
-        }
-        Grid {
-            anchors.centerIn: parent
-            rows: dock.vertical ? 6 : 1
-            columns: dock.vertical ? 1 : 6
-            spacing: Math.round(screen.dockThick * 0.22)
-            Repeater {
-                model: 6
-                delegate: Mark {
-                    required property int index
-                    width: Math.round(screen.dockThick * 0.56)
-                    height: width
-                    radius: Look.radius("small", height)
-                    color: index === 0 ? Colors.primary : (index % 2 ? Colors.secondaryContainer : Colors.tertiaryContainer)
-                }
-            }
-        }
         StageSpot {
             keys: ["dock"]
-            cornerRadius: dockBox.radius
         }
         Mark {
             anchors.fill: parent
             anchors.margins: -Space.xs
             visible: screen.emphasis === "dock"
-            radius: dockBox.radius + Space.xs
+            radius: Space.smallRadius + Space.xs
             color: "transparent"
             border.width: Space.stroke - 1
             border.color: Type.accent
@@ -549,15 +441,18 @@ Item {
         }
     }
 
-    // Rounded screen corners (theme.enableCorners): the shell's fillets.
-    Mark {
+    // Rounded screen corners (theme.enableCorners): the shell's own.
+    Item {
+        width: LiveTarget.width
+        height: sandbox.height
+        scale: screen.k
+        transformOrigin: Item.TopLeft
         visible: screen.corners
-        anchors.fill: parent
-        anchors.margins: -Math.round(screen.unit * 0.5)
-        radius: Math.round(screen.unit * 1.0)
-        color: "transparent"
-        border.width: Math.round(screen.unit * 0.5)
-        border.color: Colors.background
+        Loader {
+            anchors.fill: parent
+            active: screen.corners && Number(screen.get("theme.roundness", 0)) > 0
+            source: Qt.resolvedUrl("../../corners/ScreenCornersContent.qml")
+        }
     }
 
     // The page's own layer (surfaces opening somewhere).

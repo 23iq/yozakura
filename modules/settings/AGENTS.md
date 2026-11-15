@@ -88,6 +88,8 @@ modules/settings/
 │                           and the list bands <X>Band.qml (Network, Bluetooth, Sound, Effects, Keys,
 │                           Providers, Routines); pure helpers WindowTiles / DesktopPlace / OsdPlace /
 │                           KeyDeck.js (node-tested)
+├── live/                   LIVE PREVIEWS: the real bar panels / dock in a stage or a picture (LiveTarget,
+│                           LiveBars, LiveScreen, LivePanel, LiveDock; LiveKeys.js, LivePatch.js)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, ChoiceGrid (the one picture
@@ -455,12 +457,11 @@ card of the tab. Nothing hides in a sheet; the page scrolls.
 
 - Previews are the thing itself, big and readable, never a shrunk desktop
   where the desktop is not the subject. Strip stages (`pageWide: true`,
-  `preferredHeight`): the Bar (ScreenMini drawn page-wide and cropped to
-  the bar: the real clock face and workspace indicator, every module
-  glyph; a click on a module scrolls to and flashes its card), the Island
+  `preferredHeight`): the Bar (the real panel picked for editing, live/LiveBars,
+  laid out on a screen as wide as the page at up to its true size; a click
+  on a module scrolls to and flashes its card), the Island
   (drawn big in its shape, a state picked with chips: at rest, music,
-  notification, timer), the Dock (the real indicator styles, magnification
-  on hover), and on a plain ground the Launcher, the Dashboard, the Chat,
+  notification, timer), the Dock (the real dock, live/LiveDock), and on a plain ground the Launcher, the Dashboard, the Chat,
   a notification (a toast at its real size, grouped, from the island or
   as a strip; with corner toasts a small screen whose corners move them)
   and the real OSD beside a bar menu in the popup style (a small screen
@@ -588,10 +589,11 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
    concept (Island; Lock screen; Assistant). Descriptions stay (tooltip and
    catalog) but are one or two plain sentences; never narrate a picture.
 5. Visual choices become picture cards: `display: "cards"` + a `thumb`
-   (thumbs/<Name>.qml with `property var entry`, `property var value`; draw
-   on `MiniScreen` with `Mark` / `StyledRect` / `KitText`, the real shell
-   component where it is self-contained, e.g. the bar clock face; register
-   it in `Registry.THUMBS`). Options of a registry (styles, numerals) ->
+   (thumbs/<Name>.qml with `property var entry`, `property var value`, on
+   `MiniScreen`; a look of a shell part is the real part with the option
+   as an override (LIVE PREVIEWS: LivePanel / LiveDock / LivePart), only
+   abstract choices are drawn with `Mark` / `StyledRect` / `KitText`;
+   register it in `Registry.THUMBS`). Options of a registry (styles, numerals) ->
    a small editor that feeds `CardSelector` (editors/IndicatorCards.qml).
 6. The stage: anything that sits somewhere on the screen (Island, Dock,
    Notifications, OSD, Desktop widgets, Lock screen, menus, overview) is
@@ -639,6 +641,99 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
     clipping, overlap, alignment, blank thumbs, contrast.
 12. `make schema`, `make check`.
 
+## LIVE PREVIEWS
+A stage or a picture card of a shell part shows THE part: the shell's own
+component, created by URL, at its native size, scaled down, never a
+drawing of it. So a new bar module, panel style, indicator style, numeral
+system, clock face or dock style shows up in Settings with no settings-side
+code, and the preview cannot drift from the shell.
+
+Pieces (foundation: `modules/components/preview/`, importable by any part):
+- `PreviewContext` (QtObject): handed to a part's root as `preview` (null in
+  the live shell). `overrides`: `{"dotted.key": value}` shown instead of the
+  live config. A part with a context is revealed at once (no auto-hide,
+  no hover reveal) and claims nothing session-wide.
+- `Preview.js`: `pick(ctx, key, live)` (the override, else the live value,
+  read in the caller's binding so it keeps following the config), `on(ctx)`,
+  `withValue(overrides, key, value)`.
+- `LivePart`: the generic host. `source` (URL), `properties` (initial, the
+  required ones too), `nativeWidth/Height` (or the implicit size), `crop`
+  or `cropOf(item)` (the native rect framed, measured once settled and then
+  bound), `fit` / `zoom` / `maxZoom`; inert (`interactive: false`: no pointer,
+  hover or keys, so its popups never open); `active` (a hidden page builds
+  nothing); `snapshot` (built, pictured with grabToImage, destroyed: a
+  gallery holds pictures, not objects) + `refreshKey` (a change pictures it
+  again); `mapFromPart(item, rect)` for a page's own overlays. Built
+  through `LiveGate`, asynchronously.
+- `LiveGate` (singleton): the build queue. A page shows first (no live part
+  is created in the frames that lay it out: opening Bar costs ~40 ms, as
+  before), then its parts are built one per frame (`ask(owner, build)`,
+  `forget(owner)` on destruction). Tests and renders that look at a stage
+  wait for it: `live_previews.wait_built(env)` (settings_render does).
+  Until its panels exist LiveBars reports the configured depth
+  (PanelLayout.estimateDepth), so nothing moves when they arrive.
+
+Settings side (`modules/settings/live/`):
+- `LiveTarget` (singleton): the screen previews are laid out on (the
+  focused one, else the first); its logical size is the native size.
+- `LiveBars`: every bar panel of a bar config (`bar`, default the live
+  `Config.bar`; `only: index`) as real BarContents with a context.
+  Geometry in native px: `bars`, `depth(edge)`, `panelRect(i)`, `modules()`
+  (every module slot, found by its objectName `barSlot:<id>`, set by
+  BarModuleSlot for any module of the registry).
+- `LiveScreen`: LiveBars + the real dock (DockContent) at the screen's size;
+  ScreenMini scales it (`k`) and draws the windows, frame, island (still a
+  drawing, see below), corners (the real ScreenCornersContent) and the
+  page's interaction (panel rings / picking, module buttons and StageSpots
+  from `panelRects` / `moduleRects`, re-measured after each change and
+  when the pointer arrives).
+- `LivePanel`: one real panel in a picture: your primary panel's spec with
+  `patch` over it (`LivePatch.only(ids)`, `sample(groups)`, `style(id)`),
+  `overrides`, `frame: "panel" | "modules"`, `snapshot`, `refreshKey`.
+- `LiveDock`: the real dock framed on its surface (`overrides`, e.g.
+  `dock.theme`), `surfaceRect` in the item.
+- `LiveKeys.js`: a module's StageSpot keys and the Bar card it opens
+  (generic default: `bar.moduleOptions.<id>` / the layout card).
+
+Making a part previewable (shell side, the smallest seam): give its root
+`property var preview: null`; where it reveals, auto-hides or claims a
+session-wide thing (IPC targets, owners, edge reservations, weather covers)
+skip that when `Preview.on(preview)`; pass the context down where children
+read it (bar modules get it as `bar.preview`; Workspaces passes its looks to
+its buttons); read each look key a picture may vary through `Preview.pick`.
+Overridable today: `workspaces.indicatorStyle`, `numeralStyle`,
+`showNumbers`, `alwaysShowNumbers`, `showAppIcons`,
+`bar.moduleOptions.clock.face`, `dock.theme`, `dock.enabled` (integrated
+dock in a bar); a panel's style / groups / edge are its spec (LivePanel
+`patch`), no override needed.
+Showing a part in a stage: a LivePart (or LiveBars / LiveDock / LivePanel)
+in the stage, interaction drawn on top from mapped rects. A picture card:
+the thumb renders the part with its option as an override; galleries of
+the dock styles use `snapshot` with a `refreshKey` of what they show. The
+bar Shape cards stay live (a few modules each): their snapshots came out
+blank offscreen for some styles (grabToImage of a just-rebuilt panel;
+investigate before using `snapshot` for panels).
+Why live parts and not a look object threaded through every component:
+the shell reads its config in many places; only the keys a picture varies
+need a seam, and a preview of the current value needs none (the part reads
+the live config, so every other setting follows by itself). Why pictures
+for galleries: whole parts stay objects otherwise; strips (workspaces,
+clock) are small and stay live (they follow the workspaces too).
+The Bar stage (BarStage) lays the picked panel out on a screen as wide as
+the stage at up to its true size (`laneWidth`, taken after layout: the page
+sizes stages from their height), measured once at the real width after each
+change (`need`: its groups' natural length): wider bars are shown smaller.
+Test env: `tests/lib/live_previews.py` merges panels_env's import tree and
+fixture desktop into SettingsEnv (one 1920x1080 screen), so every settings
+test and render shows the real bar (it also leaves through
+`clean_exit`: the live modules crash PySide's teardown pass).
+Still drawn by hand (next phase): the island in ScreenMini and the Island
+stage / shape cards (NotchContent depends on Visibilities, EdgeService,
+HostRouter and the media / notification / timer services: it needs sample
+services in a PreviewContext), the dock's size and indicator cards
+(DockIndicator reads `dock.indicator` directly: add a pick), the windows,
+frame and the Launcher / Dashboard / Assistant / Notifications / OSD stages.
+
 ## STAGE COMPONENTS (frame-independent)
 - Shortcuts: a KeyRecorder shares the keys it has while it records
   (`KeybindsStore.recordingDraft`); the Keys band lights them as they are
@@ -652,8 +747,10 @@ Notifications (`stages/NotifStage.qml`) and Look (`schema/appearance.js`,
   ("island" | "dock": accent ring), `selectable`, `selectedPanel`, signal
   `panelPicked(index)`, `partsClickable` + signal `partPicked(part)`,
   `barOpacity`, `cornerRadius`, default `overlay` children in screen
-  coordinates; read-only geometry `unit`, `freeRect`, `islandRect`,
-  `islandEdge`, `depths`, `edgeDepth(edge)`, `panels`, `sketches`.
+  coordinates; read-only geometry `unit` (a readable overlay unit, not the
+  scale), `k` (native px -> stage px), `freeRect`, `islandRect`,
+  `islandEdge`, `depths`, `edgeDepth(edge)`, `panels`, `panelRects`,
+  `moduleRects`. Its bars and dock are the real ones (live/LiveScreen).
 - `StageSpot`: `keys`, `spread`, `cornerRadius`; lit while
   `SettingsStore.focusKeys` (set by `SettingsStore.point(owner, keys)` /
   `unpoint(owner)`) matches a key by prefix.
@@ -713,7 +810,8 @@ a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
   (columns switch once each way). Page tests: `settings-personal`,
   `settings-system-pages`, `settings-assistant-pages`, `settings-changes-page`,
   `settings-connect`, `settings-keys`, `settings-power`, `settings-windows-stage`,
-  `settings-displays-flow` (`.test.py`), `settings-bar-shape.test.cjs`.
+  `settings-displays-flow` (`.test.py`), `settings-strip.test.cjs`,
+  `live-preview.test.cjs` (Preview.js, LiveKeys.js, LivePatch.js).
 - Separate process: `tests/separate-windows.test.py`, `tests/preview-staging.test.py`
   (the wizard's relay), `tests/window-entries.test.py`, `tests/onboarding-*.test.py`.
 - Tests that open the whole shell end with `h.exit(...)`: kept-alive pages

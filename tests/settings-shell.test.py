@@ -213,7 +213,8 @@ mini = ev("""(function() {
     (function walk(it) { if (!found && it.panelPicked !== undefined) found = it; for (var i = 0; i < it.children.length; i++) walk(it.children[i]); })(w.findItem("sharedCanvas"));
     return found;
 })()""")
-check(mini is not None and h.eval(mini, "sketches.length") == 2, "the stage draws every bar")
+check(mini is not None and wait_until(lambda: h.eval(mini, "panelRects.length") == 2),
+      "the stage draws every bar (the real panels)")
 check(h.eval(mini, "depths.left") > 0 and h.eval(mini, "freeRect.x") >= h.eval(mini, "depths.left"),
       "the rail's reserved space is left free")
 h.eval(mini, "panelPicked(1)")

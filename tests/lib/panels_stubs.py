@@ -199,7 +199,8 @@ QtObject {{
     property var focusedMonitor: monitor
     property var focusedClient: ({{ address: "0xf1", "class": "{WINDOWS[0][0]}", title: {json.dumps(WINDOWS[0][2])}, workspace: {{ id: {ACTIVE_WS} }} }})
     property var monitors: ({{ values: [monitor] }})
-    property var workspaces: ({{ values: [1, 2, 3, 4, 5, 6].map(i => ({{ id: i, name: String(i) }})) }})
+    // a QtObject like the real list holder (Connections target it)
+    property QtObject workspaces: QtObject {{ property var values: [1, 2, 3, 4, 5, 6].map(i => ({{ id: i, name: String(i) }})) }}
     property var clients: ({{ values: {_toplevels()} }})
     property var toplevels: ({{ values: {_toplevels()} }})
     function monitorFor(s) {{ return monitor }}

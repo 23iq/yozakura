@@ -13,12 +13,16 @@ import qs.modules.bar.panels
 import qs.modules.shell
 import qs.modules.bar.workspaces
 import "../specials/Specials.js" as Specials
+import "../components/preview/Preview.js" as Preview
 
 Item {
     id: root
 
     required property ShellScreen screen
     property bool unifiedEffectActive: false
+    // A settings preview of the dock (PreviewContext, components/preview):
+    // always revealed; may show another style (dock.theme). Null live.
+    property var preview: null
 
     // Pass pinned state from parent or config
     readonly property bool keepHidden: Config.dock?.keepHidden ?? false
@@ -26,7 +30,8 @@ Item {
 
     // Theme configuration
     // "integrated" without a bar that hosts it falls back to the default look
-    readonly property string theme: (Config.dock?.theme ?? "default") === "integrated" ? "default" : (Config.dock?.theme ?? "default")
+    readonly property string configTheme: Preview.pick(root.preview, "dock.theme", Config.dock?.theme ?? "default")
+    readonly property string theme: root.configTheme === "integrated" ? "default" : root.configTheme
     readonly property bool isFloating: theme === "floating"
     readonly property bool isDefault: theme === "default"
 
@@ -96,6 +101,8 @@ Item {
 
     // Reveal logic
     property bool reveal: {
+        if (Preview.on(root.preview))
+            return true;
         // Priority: Fullscreen check
         if (activeWindowFullscreen) {
             return (Config.dock?.availableOnFullscreen ?? false) && (Config.dock?.hoverToReveal && dockMouseArea.containsMouse);

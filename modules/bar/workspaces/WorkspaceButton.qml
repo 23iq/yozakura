@@ -30,7 +30,12 @@ Button {
     // Label color of the active slot: the kit's accent state (accent on the
     // pill's tint, the on-accent ink on a solid fill: tiles, classic, brush),
     // accent on the bar background (underline, dot, bracket styles).
-    readonly property string indicatorStyle: Config.workspaces.indicatorStyle
+    property string indicatorStyle: Config.workspaces.indicatorStyle
+    // workspaces.numeralStyle (a settings preview may show another one)
+    property string numeralStyle: Config.workspaces.numeralStyle
+    // What the slot shows (WorkspaceSlot.js: showNumbers, alwaysShowNumbers,
+    // showAppIcons): Config.workspaces, or a settings preview's view of it
+    property var slotConfig: Config.workspaces
     readonly property bool solidIndicator: IndicatorStyles.filled(root.indicatorStyle) && (root.indicatorStyle !== "pill" || Look.solidActive || BarLook.surfacePill)
     readonly property color activeColor: root.solidIndicator ? Styling.srItem("primary") : Type.accent
     // Strip styles (the branch) draw the slot themselves: the button only
@@ -63,19 +68,20 @@ Button {
             }
             return Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow ? focusedWindow.class : undefined), "image-missing");
         }
-        readonly property bool iconFullSize: WorkspaceSlot.iconFullSize(Config.workspaces)
+        readonly property bool iconFullSize: WorkspaceSlot.iconFullSize(root.slotConfig)
         visible: !root.stripIndicator
 
         WorkspaceNumberLabel {
             z: 3
             anchors.fill: parent
             workspaceId: root.workspaceId
-            opacity: WorkspaceSlot.numberVisible(Config.workspaces, slot.hasWindow) ? 1 : 0
+            numeralStyle: root.numeralStyle
+            opacity: WorkspaceSlot.numberVisible(root.slotConfig, slot.hasWindow) ? 1 : 0
             color: root.active ? root.activeColor : (root.occupied ? Type.text : Type.muted)
         }
 
         Rectangle {
-            opacity: WorkspaceSlot.dotOpacity(Config.workspaces, slot.hasWindow, root.active, root.occupied)
+            opacity: WorkspaceSlot.dotOpacity(root.slotConfig, slot.hasWindow, root.active, root.occupied)
             visible: opacity > 0
             anchors.centerIn: parent
             width: root.slotSize * 0.2
@@ -96,7 +102,7 @@ Button {
             anchors.centerIn: parent
             width: root.slotSize
             height: root.slotSize
-            opacity: WorkspaceSlot.iconOpacity(Config.workspaces, slot.hasWindow, root.iconOpacityShrinked)
+            opacity: WorkspaceSlot.iconOpacity(root.slotConfig, slot.hasWindow, root.iconOpacityShrinked)
             visible: opacity > 0
 
             IconImage {

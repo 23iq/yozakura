@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.bar.look
 import "../../widgets/dashboard/widgets/WidgetFormat.js" as WidgetFormat
+import "../../components/preview/Preview.js" as Preview
 
 // Bar clock: the weather symbol (or day name), a clock face
 // (bar.moduleOptions.clock.face, ClockFaces.js; a vertical bar shows digital
@@ -33,6 +34,9 @@ Item {
     property date now: new Date()
 
     readonly property var options: Config.bar.moduleOptions?.clock ?? ({})
+    // a settings preview (bar.preview) may show another face
+    readonly property var preview: root.bar ? (root.bar.preview ?? null) : null
+    readonly property string face: Preview.pick(root.preview, "bar.moduleOptions.clock.face", root.options.face ?? "digital")
     readonly property bool showDate: Config.bar.clockShowDate ?? false
     readonly property bool use12h: Config.bar.use12hFormat ?? false
     // bar.moduleOptions.clock.showWeather: false leaves the weather to its own module
@@ -106,7 +110,7 @@ Item {
             ClockFace {
                 objectName: "clockFace"
                 Layout.alignment: Qt.AlignCenter
-                face: root.options.face ?? "digital"
+                face: root.face
                 vertical: root.vertical
                 use12h: root.use12h
                 now: root.now
@@ -186,8 +190,12 @@ Item {
         use12h: root.use12h
     }
 
-    PomodoroSync {
-        onRequestPanel: clockPopup.open()
+    // (one per live clock; a settings preview owns nothing)
+    Loader {
+        active: !Preview.on(root.preview)
+        sourceComponent: PomodoroSync {
+            onRequestPanel: clockPopup.open()
+        }
     }
 
     // minute ticks, aligned to the wall clock

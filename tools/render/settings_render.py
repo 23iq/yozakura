@@ -46,6 +46,7 @@ headless.ensure(gl=True)
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window as QQuickWindow)
 from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+import live_previews  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -297,6 +298,8 @@ Window {{
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)
+        # the stages' and pictures' real shell parts are built after the page
+        live_previews.wait_built(env)
         if cat == "presets":
             # `preset list` runs the app binary (YOZAKURA_BIN), then the
             # strip draws each preset

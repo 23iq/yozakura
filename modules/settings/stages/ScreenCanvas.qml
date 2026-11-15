@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.settings
+import "../live/LiveKeys.js" as LiveKeys
 
 // The Screen destination's canvas (two panes): the whole screen as it is
 // laid out (every bar, the island, the dock, the frame, on your wallpaper).
@@ -130,7 +131,7 @@ Item {
             // on the Bar tab the bar's modules are buttons: each scrolls
             // to its card and flashes it (never adds or picks a bar)
             modulesClickable: canvas.part === "bar"
-            onModulePicked: id => SettingsStore.navigate("bar", id === "clock" ? "clock" : (id === "workspaces" ? "workspaces" : "layout"), "")
+            onModulePicked: id => SettingsStore.navigate("bar", LiveKeys.sectionOf(id), "")
             // every bar can be picked; on the Bar tab the picked one is ringed
             selectable: !canvas.covered
             selectedPanel: canvas.part === "bar" ? SettingsStore.selectedPanel : -1
