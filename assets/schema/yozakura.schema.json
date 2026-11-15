@@ -8518,7 +8518,7 @@
           }
         },
         "pauseWallpaperOnFullscreen": {
-          "title": "Pause wallpaper on fullscreen",
+          "title": "Pause on fullscreen",
           "type": "boolean",
           "default": true,
           "description": "Pause video wallpapers while a fullscreen window covers the monitor",
@@ -8531,7 +8531,7 @@
           }
         },
         "pauseWallpaperWhenCovered": {
-          "title": "Pause wallpaper when covered",
+          "title": "Pause when covered",
           "type": "boolean",
           "default": true,
           "description": "Pause video wallpapers while windows cover every pixel of the monitor (no gaps, e.g. monocle)",
@@ -8544,7 +8544,7 @@
           }
         },
         "pauseWallpaperOnIdle": {
-          "title": "Pause wallpaper when idle",
+          "title": "Pause when idle",
           "type": "boolean",
           "default": true,
           "description": "Pause video wallpapers while you are away (no input and nothing inhibiting idle)",
@@ -8580,7 +8580,7 @@
           "maximum": 3600
         },
         "pauseWallpaperOnBattery": {
-          "title": "Pause wallpaper on battery",
+          "title": "Pause on battery",
           "type": "boolean",
           "default": false,
           "description": "Pause video wallpapers while the laptop runs on battery",
