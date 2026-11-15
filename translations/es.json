@@ -1791,7 +1791,6 @@
   "prefs.launcher.file_max.desc": "Máximo de resultados tras el prefijo de archivos",
   "prefs.launcher.currency_refresh": "Actualización de divisas",
   "prefs.launcher.currency_refresh.desc": "Las tasas se guardan y funcionan sin conexión; se actualizan al superar esta edad",
-  "prefs.launcher.reorder": "Arrastra para reordenar · Arriba / Abajo con el foco",
   "prefs.launcher.prefix_empty": "El prefijo no puede estar vacío: desactiva el proveedor en su lugar.",
   "prefs.launcher.prefix_space": "El prefijo no puede contener espacios.",
   "prefs.launcher.prefix_duplicate": "Otro proveedor ya usa este prefijo.",
@@ -1972,8 +1971,6 @@
   "prefs.bar.sentence.fragment.media": "Pista sonando",
   "prefs.bar.sentence.fragment.notifications": "Notificaciones",
   "prefs.bar.sentence.fragment.weather": "Tiempo",
-  "prefs.bar.sentence.move_up": "Subir",
-  "prefs.bar.sentence.move_down": "Bajar",
   "prefs.bar.sentence.empty": "Nada que decir ahora.",
   "prefs.bar.module.worldClocks": "Relojes mundiales",
   "prefs.bar.style.classic": "Clásica",
@@ -3699,8 +3696,6 @@
   "prefs.dashboard.section.tabs": "Pestañas",
   "prefs.dashboard.tabs": "Pestañas del panel",
   "prefs.dashboard.tabs.desc": "Orden y visibilidad de las pestañas del panel. Los widgets se colocan desde el propio panel con el lápiz.",
-  "prefs.dashboard.move_up": "Subir",
-  "prefs.dashboard.move_down": "Bajar",
   "prefs.appearance.corner_style": "Estilo de esquinas",
   "prefs.appearance.corner_style.desc": "Forma de las esquinas de paneles, ventanas emergentes y botones.",
   "prefs.appearance.corner_style.round": "Redondeadas",
@@ -4770,5 +4765,9 @@
   "prefs.windows.border_role.error": "Rojo",
   "prefs.windows.border_role.outline": "Contorno",
   "prefs.windows.border_role.overBackground": "Texto",
-  "prefs.wall.use_main": "Usar el fondo principal"
+  "prefs.wall.use_main": "Usar el fondo principal",
+  "prefs.reorder.move": "Mover %1",
+  "prefs.reorder.hint": "Arrastra para reordenar · Arriba / Abajo con el foco",
+  "prefs.reorder.up": "Subir",
+  "prefs.reorder.down": "Bajar"
 }

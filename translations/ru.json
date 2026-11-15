@@ -1795,7 +1795,6 @@
   "prefs.launcher.file_max.desc": "Максимум результатов после префикса файлов",
   "prefs.launcher.currency_refresh": "Обновление курсов валют",
   "prefs.launcher.currency_refresh.desc": "Курсы кэшируются и работают офлайн; обновляются, когда старше этого",
-  "prefs.launcher.reorder": "Перетащите, чтобы изменить порядок · ↑ / ↓ в фокусе",
   "prefs.launcher.prefix_empty": "Префикс не может быть пустым: лучше отключите источник.",
   "prefs.launcher.prefix_space": "Префикс не может содержать пробелы.",
   "prefs.launcher.prefix_duplicate": "Этот префикс уже занят другим источником.",
@@ -1980,8 +1979,6 @@
   "prefs.bar.sentence.fragment.media": "Что играет",
   "prefs.bar.sentence.fragment.notifications": "Уведомления",
   "prefs.bar.sentence.fragment.weather": "Погода",
-  "prefs.bar.sentence.move_up": "Выше",
-  "prefs.bar.sentence.move_down": "Ниже",
   "prefs.bar.sentence.empty": "Сейчас сказать нечего.",
   "prefs.bar.module.worldClocks": "Мировое время",
   "prefs.bar.style.classic": "Классика",
@@ -3723,8 +3720,6 @@
   "prefs.dashboard.section.tabs": "Вкладки",
   "prefs.dashboard.tabs": "Вкладки панели",
   "prefs.dashboard.tabs.desc": "Порядок и видимость вкладок панели. Виджеты расставляются в самой панели кнопкой с карандашом.",
-  "prefs.dashboard.move_up": "Выше",
-  "prefs.dashboard.move_down": "Ниже",
   "prefs.appearance.corner_style": "Стиль углов",
   "prefs.appearance.corner_style.desc": "Форма углов панелей, всплывающих окон и кнопок.",
   "prefs.appearance.corner_style.round": "Скруглённые",
@@ -4810,5 +4805,9 @@
   "prefs.windows.border_role.error": "Красный",
   "prefs.windows.border_role.outline": "Контур",
   "prefs.windows.border_role.overBackground": "Текст",
-  "prefs.wall.use_main": "Использовать основные обои"
+  "prefs.wall.use_main": "Использовать основные обои",
+  "prefs.reorder.move": "Переместить: %1",
+  "prefs.reorder.hint": "Перетащите, чтобы изменить порядок · ↑ / ↓ в фокусе",
+  "prefs.reorder.up": "Выше",
+  "prefs.reorder.down": "Ниже"
 }

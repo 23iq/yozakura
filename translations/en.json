@@ -1791,7 +1791,6 @@
   "prefs.launcher.file_max.desc": "Maximum results after the files prefix",
   "prefs.launcher.currency_refresh": "Currency rates refresh",
   "prefs.launcher.currency_refresh.desc": "Rates are cached and work offline; refreshed when older than this",
-  "prefs.launcher.reorder": "Drag to reorder · Up / Down when focused",
   "prefs.launcher.prefix_empty": "A prefix cannot be empty: switch the provider off instead.",
   "prefs.launcher.prefix_space": "A prefix cannot contain spaces.",
   "prefs.launcher.prefix_duplicate": "Another provider already uses this prefix.",
@@ -1972,8 +1971,6 @@
   "prefs.bar.sentence.fragment.media": "Playing track",
   "prefs.bar.sentence.fragment.notifications": "Notifications",
   "prefs.bar.sentence.fragment.weather": "Weather",
-  "prefs.bar.sentence.move_up": "Move up",
-  "prefs.bar.sentence.move_down": "Move down",
   "prefs.bar.sentence.empty": "Nothing to say right now.",
   "prefs.bar.module.worldClocks": "World clocks",
   "prefs.bar.style.classic": "Classic",
@@ -3699,8 +3696,6 @@
   "prefs.dashboard.section.tabs": "Tabs",
   "prefs.dashboard.tabs": "Dashboard tabs",
   "prefs.dashboard.tabs.desc": "Order and visibility of the dashboard tabs. Widgets are arranged from the dashboard itself with the pencil button.",
-  "prefs.dashboard.move_up": "Move up",
-  "prefs.dashboard.move_down": "Move down",
   "prefs.appearance.corner_style": "Corner style",
   "prefs.appearance.corner_style.desc": "Shape of the corners of panels, popups and buttons.",
   "prefs.appearance.corner_style.round": "Round",
@@ -4770,5 +4765,9 @@
   "prefs.windows.border_role.error": "Red",
   "prefs.windows.border_role.outline": "Outline",
   "prefs.windows.border_role.overBackground": "Text",
-  "prefs.wall.use_main": "Use the main wallpaper"
+  "prefs.wall.use_main": "Use the main wallpaper",
+  "prefs.reorder.move": "Move %1",
+  "prefs.reorder.hint": "Drag to reorder · Up / Down when focused",
+  "prefs.reorder.up": "Move up",
+  "prefs.reorder.down": "Move down"
 }
