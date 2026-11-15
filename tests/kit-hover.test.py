@@ -1,15 +1,18 @@
 """Kit hover and placement: a ListRow stays hovered while the pointer is over
 one of its trailing controls (a HoverHandler, not a MouseArea the controls
-cover), and a Dropdown near the bottom of its window opens its list above
-the control instead of off-screen."""
+cover), a Dropdown near the bottom of its window opens its list above
+the control instead of off-screen, and an IconButton's tooltip (the kit
+Tooltip) opens below the button, or above it at the bottom of the window
+(a dock), inside the window either way."""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lib.kit_env import KitEnv  # noqa: E402
-from PySide6.QtCore import QPoint  # noqa: E402
+from PySide6.QtCore import QObject, QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 SCENE = """import QtQuick
 import QtQuick.Window
@@ -24,6 +27,8 @@ Window {
                options: [{ value: "a", text: "Alpha" }, { value: "b", text: "Beta" }, { value: "c", text: "Gamma" }] }
     Dropdown { objectName: "high"; y: 60; width: 200; value: "a"
                options: [{ value: "a", text: "Alpha" }, { value: "b", text: "Beta" }] }
+    IconButton { objectName: "tipTop"; x: 300; y: 100; icon: Icons.gear; tooltip: "Settings" }
+    IconButton { objectName: "tipLow"; x: 300; y: 300 - height; icon: Icons.gear; tooltip: "Pin to dock" }
 }"""
 
 env = KitEnv("kit-hover")
@@ -56,5 +61,24 @@ for name, above in (("low", True), ("high", False)):
     assert (y < 0) == above, (name, y)
     lst.close()
     QTest.qWait(20)
+
+for name, below in (("tipTop", True), ("tipLow", False)):
+    btn = h.find(win, name)
+    c = h.eval(btn, "mapToItem(null, width / 2, height / 2)")
+    move(c.x(), c.y())
+    tip = btn.findChild(QObject, "iconButtonTooltip")
+    assert tip is not None, f"{name}: IconButton carries the kit Tooltip"
+    wait_until(lambda: tip.property("opened"))
+    assert tip.property("text") == btn.property("tooltip"), name
+    top = tip.property("y") + h.eval(btn, "mapToItem(null, 0, 0)").y()
+    by = h.eval(btn, "mapToItem(null, 0, 0)").y()
+    tip_h = tip.property("height")
+    if below:
+        assert top >= by + btn.property("height"), (name, "below the button", top, by)
+    else:
+        assert top + tip_h <= by + 1, (name, "above the button", top, tip_h, by)
+    assert top >= 0 and top + tip_h <= 300 + 1, (name, "inside the window", top, tip_h)
+    move(10, 10)
+    wait_until(lambda: not tip.property("visible"))
 
 print("kit-hover: ok")
