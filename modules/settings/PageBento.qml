@@ -151,11 +151,26 @@ Item {
         bento.implicitHeight = r.height;
         bento.floor = r.floor;
     }
-    function relayoutEased() {
-        bento.relayout(true);
+    // Deferred relayouts (coalesced to one per turn, eased if any asked to
+    // be). A Timer, not Qt.callLater: it dies with the page, so a page that
+    // is dropped from the cache never runs one in a dead context.
+    function relayoutLater(eased) {
+        if (eased === true)
+            later.eased = true;
+        later.restart();
     }
-    onColsChanged: Qt.callLater(bento.relayoutEased)
-    onColWChanged: Qt.callLater(bento.relayout)
+    Timer {
+        id: later
+        property bool eased: false
+        interval: 0
+        onTriggered: {
+            const e = later.eased;
+            later.eased = false;
+            bento.relayout(e);
+        }
+    }
+    onColsChanged: bento.relayoutLater(true)
+    onColWChanged: bento.relayoutLater(false)
 
     Repeater {
         id: sections
@@ -238,11 +253,11 @@ Item {
             onVisibleChanged: {
                 if (card.visible && bento.settled && bento.complete && !card.fresh && Motion.glide.duration > 0)
                     fadeIn.restart();
-                Qt.callLater(bento.relayoutEased);
+                bento.relayoutLater(true);
             }
             Component.onCompleted: {
                 card.moveTo(card.place, false);
-                Qt.callLater(bento.relayout);
+                bento.relayoutLater(false);
             }
         }
     }
