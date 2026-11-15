@@ -211,22 +211,14 @@ Item {
         root.built = true;
         root.generation++;
         loader.setSource(root.source, root.properties || {});
-        stuck.restart();
+        stuck.arm();
     }
-    // an asynchronous build that never lands (seen offscreen under load:
-    // the Loader stays Loading) is started again, a few times
-    Timer {
+    // an asynchronous build that never lands is started again (LoadWatch)
+    LoadWatch {
         id: stuck
-        property int tries: 0
-        interval: 4000
-        onTriggered: {
-            if (loader.status !== Loader.Loading || !root.wanted) {
-                stuck.tries = 0;
-                return;
-            }
-            if (stuck.tries++ < 3)
-                root.reload();
-        }
+        loader: loader
+        wanted: root.wanted
+        onRetry: root.reload()
     }
     // build and settle again (a snapshot pictures it again); hidden, it is
     // built when it shows

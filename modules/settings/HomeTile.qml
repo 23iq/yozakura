@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components.preview
 import qs.modules.settings.store
 import "HomeStatus.js" as HomeStatus
 import "Registry.js" as Registry
@@ -89,10 +90,21 @@ Card {
             }
         }
         function load() {
-            if (scene.active && !scene.item)
-                scene.setSource(Qt.resolvedUrl(tile.sceneFile), {
-                    "tile": tile
-                });
+            if (!scene.active || scene.item)
+                return;
+            scene.setSource(Qt.resolvedUrl(tile.sceneFile), {
+                "tile": tile
+            });
+            scene.watch.arm();
+        }
+        // a build that stays Loading (offscreen under load) starts again
+        property LoadWatch watch: LoadWatch {
+            loader: scene
+            wanted: scene.active
+            onRetry: {
+                scene.source = "";
+                scene.load();
+            }
         }
         onActiveChanged: scene.load()
         Component.onCompleted: scene.load()
