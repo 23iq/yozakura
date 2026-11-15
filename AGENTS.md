@@ -129,6 +129,8 @@ sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; l
 `Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
 Wheel: `LineSlider` / `LevelSlider` / `Knob` take the wheel only outside a scrolling view or
 once they hold the focus (`WheelGuard.js`): scrolling a page never moves a slider under the pointer.
+A press gives the focus (`Knob`, `LevelSlider` always; `LineSlider` inside a scrolling view, onto
+its focusable wrapper if any, `WheelGuard.claim`), so a clicked slider then takes the wheel.
 Animated lists: `KeyedListModel` (keys -> insert/remove/move, `KeyedSync.js`) under a ListView's
 add/remove/displaced transitions; `displaced` and `move` are a `SettleTransition` (finishes an
 interrupted enter's opacity/scale) and view transitions use NumberAnimation, never Animators. Motion: `Motion.micro` (fills, hover, focus, <= 120 ms),
