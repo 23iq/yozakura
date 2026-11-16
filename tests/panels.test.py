@@ -132,6 +132,26 @@ for enabled in (False, True, False, True):
     assert (ev(env, gaps, "middleHalf") > 0) is enabled, ev(env, gaps, "middleHalf")
 win.close()
 
+# Under a fullscreen window a panel that may not show there
+# (bar.availableOnFullscreen off) drops its edge hover strip from the input
+# mask: the Overlay panel would otherwise take the pointer from the game at
+# that edge. With the option on, the strip stays to reveal the panel.
+for available in (False, True):
+    env, win, host = scene({"frameEnabled": True, "availableOnFullscreen": available,
+                            "panels": [{"id": "rail", "edge": "left", "style": "rail", "autohide": "auto",
+                                        "groups": {"start": ["launcher"]}}]})
+    assert ev(env, host, "hitRegions[0].item !== null"), "no fullscreen: the panel takes input"
+    compositor = env.h.engine.singletonInstance("qs.modules.bar.workspaces", "CompositorData")
+    compositor.setProperty("anyFullscreen", True)
+    settle()
+    if not available:
+        assert ev(env, host, "primary.reveal") is False
+    assert ev(env, host, "hitRegions[0].item !== null") is available, available
+    compositor.setProperty("anyFullscreen", False)
+    settle()
+    assert ev(env, host, "hitRegions[0].item !== null"), "leaving fullscreen restores the input"
+    win.close()
+
 errors = [e for env in ENVS for e in env.h.type_errors]
 assert not errors, errors
 print("panels: ok", flush=True)

@@ -73,6 +73,10 @@ Item {
     onActiveWindowFullscreenChanged: if (screen && !preview)
         WeatherFx.setCovered(screen.name, activeWindowFullscreen)
 
+    // A fullscreen window covers this screen and the panel may not show over
+    // it (bar.availableOnFullscreen off): it neither reveals nor takes input
+    readonly property bool fullscreenBlocked: !preview && activeWindowFullscreen && !(Config.bar && Config.bar.availableOnFullscreen !== undefined ? Config.bar.availableOnFullscreen : false)
+
     // Whether auto-hide should be active (not pinned, or fullscreen forces it)
     // (a preview always shows the panel)
     readonly property bool shouldAutoHide: !preview && (!pinned || activeWindowFullscreen)
@@ -192,9 +196,8 @@ Item {
             return true;
 
         // If fullscreen and not available on fullscreen, hide
-        if (activeWindowFullscreen && !(Config.bar && Config.bar.availableOnFullscreen !== undefined ? Config.bar.availableOnFullscreen : false)) {
+        if (fullscreenBlocked)
             return false;
-        }
 
         // Show if: hovering, notch hovering (when at top), notch open
         // IMPORTANT: notchHoverActive must be checked to synchronize with notch
@@ -328,10 +331,13 @@ Item {
     // Shadow logic for bar components (tab styles carry the shadow instead)
     readonly property bool shadowsEnabled: !flat && styleMeta.containable && Config.showBackground && (!actualContainBar || (Config.bar && Config.bar.keepBarShadow !== undefined ? Config.bar.keepBarShadow : false))
 
-    // The hitbox for the mask
+    // The hitbox for the mask. A panel that cannot reveal over a fullscreen
+    // window leaves its edge strip out: the unified panel is an Overlay
+    // surface, the strip would take the pointer from the fullscreen client
+    // (a game's cursor stops at that edge)
     property alias barHitbox: barMouseArea
     readonly property Region hitRegion: Region {
-        item: root.visible ? barMouseArea : null
+        item: root.visible && !root.fullscreenBlocked ? barMouseArea : null
     }
 
     readonly property int hoverStrip: Math.max((Config.bar && Config.bar.hoverRegionHeight !== undefined ? Config.bar.hoverRegionHeight : 8), 4) + root.frameOffset
