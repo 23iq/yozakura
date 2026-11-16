@@ -14,6 +14,7 @@ import qs.modules.shell
 import qs.modules.bar.workspaces
 import "../specials/Specials.js" as Specials
 import "../components/preview/Preview.js" as Preview
+import "DockReveal.js" as DockReveal
 
 Item {
     id: root
@@ -99,23 +100,18 @@ Item {
         return false;
     }
 
-    // Reveal logic
-    property bool reveal: {
-        if (Preview.on(root.preview))
-            return true;
-        // Priority: Fullscreen check
-        if (activeWindowFullscreen) {
-            return (Config.dock?.availableOnFullscreen ?? false) && (Config.dock?.hoverToReveal && dockMouseArea.containsMouse);
-        }
-
-        // If keepHidden is true, ONLY show on hover
-        // IMPORTANT: keepHidden overrides pinned and desktop mode
-        if (keepHidden) {
-            return (Config.dock?.hoverToReveal && dockMouseArea.containsMouse);
-        }
-
-        return root.pinned || (Config.dock?.hoverToReveal && dockMouseArea.containsMouse) || !hasWindows;
-    }
+    // Reveal and input (DockReveal.js)
+    readonly property var revealState: ({
+            "preview": Preview.on(root.preview),
+            "fullscreen": root.activeWindowFullscreen,
+            "availableOnFullscreen": Config.dock?.availableOnFullscreen ?? false,
+            "hoverToReveal": Config.dock?.hoverToReveal ?? false,
+            "keepHidden": root.keepHidden,
+            "pinned": root.pinned,
+            "hovered": dockMouseArea.containsMouse,
+            "hasWindows": root.hasWindows
+        })
+    property bool reveal: DockReveal.reveal(revealState)
 
     readonly property int totalMargin: root.windowSideMargin + root.edgeSideMargin
     readonly property int shadowSpace: 32
@@ -127,8 +123,9 @@ Item {
     readonly property int frameOffset: Config.bar?.frameEnabled ? (Config.bar?.frameThickness ?? 6) : 0
     readonly property int edgeOffset: frameOffset + barStack
 
-    // The hitbox for the mask
-    readonly property Item dockHitbox: dockMouseArea
+    // The hitbox for the mask; none while the dock cannot show over a
+    // fullscreen window (DockReveal.takesInput)
+    readonly property Item dockHitbox: DockReveal.takesInput(revealState) ? dockMouseArea : null
 
     // The dock's surface in this item's coordinates (it fills the panel),
     // with the reveal slide: its analytic shadow follows it every frame

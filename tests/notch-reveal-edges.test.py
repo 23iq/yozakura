@@ -39,7 +39,7 @@ QtObject {
 }""",
     "ShellLayout": "pragma Singleton\nQtObject { property bool notchEnabled: true; property var notchSegments: [] }",
     "YozdService": "pragma Singleton\nQtObject { property var focusedMonitor: null; property var clients: ({ values: [({ workspace: { id: 1 } })] }); function monitorFor(s) { return ({ activeWorkspace: { id: 1 } }) } }",
-    "CompositorData": "pragma Singleton\nQtObject { function monitorHasFullscreen(m) { return false } }",
+    "CompositorData": "pragma Singleton\nQtObject { property bool fs: false; function monitorHasFullscreen(m) { return fs } }",
     "FocusGrabManager": "pragma Singleton\nQtObject { property bool hasActiveGrab: false }",
 })
 h.module("qs.modules.shell.hosts", {"HostRouter": "pragma Singleton\nQtObject { function notchOpen(v) { return false } }", "NotchHostedSurfaces": "Item { property var screen; property var vis; property var container }"})
@@ -155,5 +155,19 @@ for pos in EDGES:
     # corner junction into a visible seam
     sx, sy = ev(nc, "[silhouetteRect.x, silhouetteRect.y]")
     assert sx == round(sx) and sy == round(sy), f"{pos}: silhouette on whole pixels ({sx}, {sy})"
+
+# A fullscreen window with bar.availableOnFullscreen off: the hidden island
+# leaves its edge strip out of the input mask (the panel is an Overlay
+# surface, the strip would take the pointer from the fullscreen client)
+compositor = h.engine.singletonInstance("qs.modules.services", "CompositorData")
+for pos in EDGES:
+    h.eval(root, f"setPos('{pos}')")
+    assert h.eval(nc, "notchHitbox !== null"), f"{pos}: no fullscreen, the island takes input"
+    compositor.setProperty("fs", True)
+    wait_until(lambda: h.eval(nc, "notchHitbox === null"))
+    assert not h.eval(nc, "reveal"), pos
+    assert h.eval(nc, "notchHitbox === null && notchStemHitbox === null"), f"{pos}: fullscreen, no input"
+    compositor.setProperty("fs", False)
+    wait_until(lambda: h.eval(nc, "notchHitbox !== null"))
 
 print("notch reveal edges: keepHidden on every edge incl. the bar's, hover strip shows, follows the pin otherwise passed")

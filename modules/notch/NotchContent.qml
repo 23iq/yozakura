@@ -197,8 +197,12 @@ Item {
         value: root.raised
     }
 
-    // The hitbox for the mask
-    readonly property Item notchHitbox: root.reveal ? notchHoverArea : notchHoverRegion
+    // The hitbox for the mask. Hard-hidden over a fullscreen window
+    // (bar.availableOnFullscreen off) it has none: the unified panel is an
+    // Overlay surface, the hover strip would take the pointer from the
+    // fullscreen client at that edge
+    readonly property bool fullscreenBlocked: activeWindowFullscreen && !(Config.bar && Config.bar.availableOnFullscreen === true)
+    readonly property Item notchHitbox: root.reveal ? notchHoverArea : (root.fullscreenBlocked ? null : notchHoverRegion)
 
     // Resting view; auto panels off the notch: PanelSurfaces (layout.panels.host)
     Component {
