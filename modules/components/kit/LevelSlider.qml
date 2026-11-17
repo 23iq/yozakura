@@ -185,6 +185,8 @@ Item {
         hoverEnabled: true
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
+        // a drag that drifts never hands the press to a scrolling page
+        preventStealing: true
         function track(m: var) {
             root.setFraction((m.x - root.cap / 2) / root.span);
         }

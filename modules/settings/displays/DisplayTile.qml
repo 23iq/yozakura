@@ -196,6 +196,8 @@ StyledRect {
         id: area
         anchors.fill: parent
         hoverEnabled: true
+        // a vertical drag is the tile's, not the scrolling page's
+        preventStealing: true
         cursorShape: tile.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         property real startX: 0
         property real startY: 0

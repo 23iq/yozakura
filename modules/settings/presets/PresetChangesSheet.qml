@@ -42,16 +42,22 @@ Item {
         }
     }
 
+    // Under the card, over the scrim: a press anywhere on the card, its
+    // padding included, never reaches the scrim (a MouseArea inside the
+    // Surface would only cover its inset content).
+    MouseArea {
+        x: card.x
+        y: card.y
+        width: card.width
+        height: card.height
+    }
+
     Surface {
         id: card
         anchors.centerIn: parent
         width: Math.min(root.width - Space.xxl * 2, Space.px(520))
         focus: true
         Keys.onEscapePressed: root.closed()
-
-        MouseArea {
-            anchors.fill: parent
-        }
 
         Column {
             width: parent.width

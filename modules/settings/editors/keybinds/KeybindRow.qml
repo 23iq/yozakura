@@ -165,6 +165,8 @@ Item {
                     MouseArea {
                         id: skipArea
                         anchors.fill: parent
+                        // hover only (the tooltip): a click opens the row
+                        acceptedButtons: Qt.NoButton
                         hoverEnabled: true
                     }
                     StyledToolTip {

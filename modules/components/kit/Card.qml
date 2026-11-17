@@ -29,11 +29,11 @@ Item {
     property int padding: Look.boxPadding + Space.xs
     property int spacing: Space.m
     readonly property real radius: Look.radius("big", Space.controlXL)
-    readonly property bool hovered: area.containsMouse || root.highlighted
+    readonly property bool hovered: hover.hovered || root.highlighted
     readonly property real contentWidth: root.width - root.padding * 2
     // Where the pointer is over an interactive card, -1..1 on each axis
     // (0, 0 when it is away): for a picture that follows it (parallax).
-    readonly property point pointer: area.containsMouse && root.width > 0 && root.height > 0 ? Qt.point(area.mouseX / root.width * 2 - 1, area.mouseY / root.height * 2 - 1) : Qt.point(0, 0)
+    readonly property point pointer: hover.hovered && root.width > 0 && root.height > 0 ? Qt.point(hover.point.position.x / root.width * 2 - 1, hover.point.position.y / root.height * 2 - 1) : Qt.point(0, 0)
     default property alias content: body.data
     // Painted under the label and content, clipped to the card (a picture).
     property alias background: backdrop.data
@@ -70,6 +70,23 @@ Item {
             duration: Motion.glide.duration
             easing.type: Motion.glide.easing
         }
+    }
+
+    // Hover of the whole card, controls inside it included (a MouseArea
+    // loses containsMouse to the controls over it).
+    HoverHandler {
+        id: hover
+        enabled: root.interactive
+        cursorShape: Qt.PointingHandCursor
+    }
+
+    // Under the content: a control inside the card (a bar's remove button)
+    // gets its own clicks instead of the card's.
+    MouseArea {
+        id: area
+        anchors.fill: parent
+        enabled: root.interactive
+        onClicked: root.clicked()
     }
 
     // The box, lifted a little while hovered, pressed in on a press (sized
@@ -166,14 +183,5 @@ Item {
             shown: root.activeFocus
             radius: root.radius + Space.stroke
         }
-    }
-
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        enabled: root.interactive
-        hoverEnabled: root.interactive
-        cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: root.clicked()
     }
 }

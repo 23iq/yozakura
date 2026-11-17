@@ -171,6 +171,8 @@ Item {
                 anchors.fill: parent
                 anchors.margins: -Space.xs
                 hoverEnabled: true
+                // a drag that drifts never hands the press to a scrolling page
+                preventStealing: true
                 enabled: root.enabled
                 function track(m: var) {
                     root.setFraction(root.vertical ? 1 - (m.y - Space.xs) / area.height : (m.x - Space.xs) / area.width);

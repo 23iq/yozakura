@@ -50,8 +50,11 @@ Column {
                     danger: true
                     tooltip: I18n.t("prefs.bar.panels.remove")
                     onClicked: {
-                        SettingsStore.transaction("prefs.bar.panels.remove", () => SettingsStore.set("bar.panels", PanelsModel.removePanel(root.panels, bar.index)));
-                        SettingsStore.selectedPanel = Math.max(0, bar.index - 1);
+                        // the delegate goes away with the write: keep its index
+                        const at = bar.index;
+                        const panels = root.panels;
+                        SettingsStore.selectedPanel = Math.max(0, at - 1);
+                        SettingsStore.transaction("prefs.bar.panels.remove", () => SettingsStore.set("bar.panels", PanelsModel.removePanel(panels, at)));
                     }
                 }
                 Row {
