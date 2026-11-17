@@ -393,6 +393,13 @@ var category = {
                     "label": "prefs.bar.ws_dynamic",
                     "description": "prefs.bar.ws_dynamic.desc",
                     "keywords": "dynamic workspaces occupied auto"
+                },
+                {
+                    "key": "workspaces.invertScroll",
+                    "type": "toggle",
+                    "label": "prefs.bar.ws_invert_scroll",
+                    "description": "prefs.bar.ws_invert_scroll.desc",
+                    "keywords": "workspace scroll wheel invert reverse direction natural"
                 }
             ]
         },

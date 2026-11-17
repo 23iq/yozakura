@@ -6,6 +6,7 @@ var data = {
     "alwaysShowNumbers": false,
     "showNumbers": false,
     "dynamic": false,
+    "invertScroll": false,
     "showSpecialWorkspace": true,
     "specialWorkspaceAnimationDuration": 100,
     "specialWorkspaceFont": "",

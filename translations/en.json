@@ -1103,6 +1103,8 @@
   "prefs.bar.ws_app_icons.desc": "Show the icons of the windows on each workspace.",
   "prefs.bar.ws_dynamic": "Only used ones",
   "prefs.bar.ws_dynamic.desc": "Only show workspaces that are in use.",
+  "prefs.bar.ws_invert_scroll": "Invert scroll direction",
+  "prefs.bar.ws_invert_scroll.desc": "Scrolling over the workspaces moves the other way: up goes to the next workspace, down to the previous one.",
   "prefs.bar.pinned": "Shown at start",
   "prefs.bar.pinned.desc": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
   "prefs.bar.pin_button": "Pin button",

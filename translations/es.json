@@ -1103,6 +1103,8 @@
   "prefs.bar.ws_app_icons.desc": "Muestra los iconos de las ventanas en cada espacio.",
   "prefs.bar.ws_dynamic": "Solo los usados",
   "prefs.bar.ws_dynamic.desc": "Muestra solo los espacios en uso.",
+  "prefs.bar.ws_invert_scroll": "Invertir el desplazamiento",
+  "prefs.bar.ws_invert_scroll.desc": "La rueda sobre los espacios de trabajo va al revés: hacia arriba pasa al siguiente, hacia abajo al anterior.",
   "prefs.bar.pinned": "Visible al iniciar",
   "prefs.bar.pinned.desc": "Inicia con la barra fijada en lugar de oculta. Los paneles con ocultación siempre o nunca la ignoran.",
   "prefs.bar.pin_button": "Botón de fijar",

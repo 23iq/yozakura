@@ -80,6 +80,19 @@
         "keywords": "dynamic workspaces occupied auto"
       }
     },
+    "invertScroll": {
+      "title": "Invert scroll direction",
+      "type": "boolean",
+      "default": false,
+      "description": "Scrolling over the workspaces moves the other way: up goes to the next workspace, down to the previous one.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_invert_scroll",
+        "control": "toggle",
+        "keywords": "workspace scroll wheel invert reverse direction natural"
+      }
+    },
     "showSpecialWorkspace": {
       "title": "Show special workspace",
       "type": "boolean",

@@ -15,6 +15,7 @@ import qs.modules.bar.look
 import qs.modules.components.kit
 import "../../specials/Specials.js" as Specials
 import "indicators/IndicatorStyles.js" as IndicatorStyles
+import "WorkspaceScroll.js" as WorkspaceScroll
 import "../../components/preview/Preview.js" as Preview
 
 Item {
@@ -236,11 +237,12 @@ Item {
     }
 
     WheelHandler {
+        // down: the next workspace, up: the previous one
+        // (workspaces.invertScroll swaps them)
         onWheel: event => {
-            if (event.angleDelta.y < 0)
-                YozdService.dispatch(`workspace r+1`);
-            else if (event.angleDelta.y > 0)
-                YozdService.dispatch(`workspace r-1`);
+            const to = WorkspaceScroll.target(event.angleDelta.y, Config.workspaces.invertScroll ?? false);
+            if (to !== "")
+                YozdService.dispatch(to);
         }
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
     }
