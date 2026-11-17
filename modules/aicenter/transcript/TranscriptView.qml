@@ -6,6 +6,7 @@ import qs.modules.aicenter.common
 import qs.modules.theme
 import qs.modules.components.kit
 import "../../components/preview/Preview.js" as Preview
+import "ScrollAnchor.js" as ScrollAnchor
 
 // The conversation of any engine: an HTTP chat (`session`, a ChatSession)
 // or a CLI agent session (`agentId`). Styles: "compact" (Assistant) and
@@ -41,10 +42,14 @@ Item {
     }
 
     // Scroll position per session (Ai.drafts), restored when switching back:
-    // {index, offset} of the row at the top of the view, -1 = following the
-    // end. A row, not a pixel offset: a recreated ListView only estimates
-    // the heights of rows it has not built, so a pixel offset would land on
-    // much older messages of a long conversation.
+    // {key, source, index, offset} of the row at the top of the view, -1 =
+    // following the end. A row, not a pixel offset: a recreated ListView
+    // only estimates the heights of rows it has not built, so a pixel offset
+    // would land on much older messages of a long conversation. Found again
+    // by its key (ScrollAnchor.js): indices move when thinking rows are
+    // shown or hidden. Rows not there yet (an agent session still loading)
+    // are waited for; when none arrive for `waitMs`, the closest row of the
+    // same message, else the end.
     property string scrollKey: ""
     property bool restoringScroll: false
     property var scrollPosition: -1
@@ -63,22 +68,85 @@ Item {
         scrollKey = root.persistKey || Ai.sessionKey;
         restoringScroll = true;
         Qt.callLater(() => {
+            // (the view may be gone by then: a panel closed at once)
+            if (!root.alive)
+                return;
             scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : -1;
             const at = scrollPosition;
-            if (!at || typeof at !== "object" || !(at.index >= 0) || at.index >= list.count) {
-                scrollPosition = -1;
-                list.stick = true;
-                list.positionViewAtEnd();
+            if (at && typeof at === "object") {
+                root.restoreAt(at);
             } else {
-                list.stick = false;
-                list.showRow(at);
+                scrollPosition = -1;
+                root.followEnd();
             }
             restoringScroll = false;
         });
     }
+    property var pendingAt: null
+    readonly property int waitMs: 400
+    function followEnd() {
+        root.pendingAt = null;
+        waitRows.stop();
+        list.stick = true;
+        list.positionViewAtEnd();
+    }
+    // Shows `at` once its row is there (`accept`: a stand-in will do).
+    function placeAt(at, accept): bool {
+        const r = ScrollAnchor.resolve(list.count, i => root.model.rows.get(i), at);
+        if (r.index < 0 || !(r.exact || r.complete || accept))
+            return false;
+        root.pendingAt = null;
+        waitRows.stop();
+        list.showRow({
+            "index": r.index,
+            "offset": r.exact ? (at.offset || 0) : 0
+        });
+        return true;
+    }
+    function restoreAt(at) {
+        list.stick = false;
+        root.pendingAt = at;
+        if (!root.placeAt(at, false))
+            waitRows.restart();
+    }
+    Timer {
+        id: waitRows
+        interval: root.waitMs
+        onTriggered: {
+            if (root.pendingAt && !root.placeAt(root.pendingAt, true)) {
+                root.scrollPosition = -1;
+                root.followEnd();
+            }
+        }
+    }
+    // The same conversation rebuilt (thinking shown / hidden, rows removed
+    // or moved): the row at the top stays there.
+    property var reshapeAt: null
+    Connections {
+        target: root.model
+        function onReshaping() {
+            root.reshapeAt = root.pendingAt || (list.stick ? null : list.topRow());
+        }
+        function onReshaped() {
+            const at = root.reshapeAt;
+            root.reshapeAt = null;
+            if (at && typeof at === "object")
+                Qt.callLater(() => {
+                    if (root.alive)
+                        root.restoreAt(at);
+                });
+        }
+    }
+
     Component.onCompleted: restoreScroll()
     onPersistKeyChanged: restoreScroll()
-    Component.onDestruction: saveScroll()
+    // false once destroyed (a deleted view reads undefined): deferred calls
+    // check it before touching the view
+    property bool alive: true
+    Component.onDestruction: {
+        root.alive = false;
+        saveScroll();
+    }
     Connections {
         target: root.inPreview ? null : Ai
         function onSessionKeyChanged() {
@@ -117,7 +185,10 @@ Item {
         function topRow() {
             const i = indexAt(width / 2, contentY + topMargin);
             const item = i >= 0 ? itemAtIndex(i) : null;
+            const row = item ? root.model.rows.get(i) : null;
             return item ? {
+                "key": row ? row.key : "",
+                "source": row ? row.source : -1,
                 "index": i,
                 "offset": contentY - item.y
             } : -1;
@@ -141,7 +212,11 @@ Item {
             holdPin();
             follow();
         }
-        onMovementStarted: pinned = null
+        onMovementStarted: {
+            pinned = null;
+            root.pendingAt = null;
+            waitRows.stop();
+        }
         Timer {
             id: unpin
             interval: 1500
@@ -157,7 +232,12 @@ Item {
             if (stick && BarLook.autoScroll && !root.restoringScroll)
                 Qt.callLater(positionViewAtEnd);
         }
-        onCountChanged: follow()
+        onCountChanged: {
+            // a remembered row waits for its rows (all of a rebuild)
+            if (root.pendingAt && !root.model.rebuilding && !root.placeAt(root.pendingAt, false))
+                waitRows.restart();
+            follow();
+        }
 
         add: Transition {
             enabled: BarLook.animDuration > 0
@@ -185,9 +265,11 @@ Item {
             policy: ScrollBar.AsNeeded
             // a drag of the bar is no flick: settle where it was let go
             onPressedChanged: {
-                if (pressed)
+                if (pressed) {
                     list.pinned = null;
-                else
+                    root.pendingAt = null;
+                    waitRows.stop();
+                } else
                     list.settle();
             }
         }

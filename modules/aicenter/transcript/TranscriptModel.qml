@@ -66,19 +66,32 @@ QtObject {
         }
     }
 
-    function rebuild() {
+    // A rebuild of the same conversation (thinking shown / hidden, rows
+    // removed or moved) is announced, so a view can keep its place across
+    // it (TranscriptView); a new source is a new conversation (no signals).
+    signal reshaping
+    signal reshaped
+    // rows are being refilled (a view waits for the whole list)
+    property bool rebuilding: false
+
+    function rebuild(keepPlace) {
+        const keep = keepPlace === true;
+        if (keep)
+            reshaping();
+        rebuilding = true;
         rows.clear();
         _items = [];
-        if (!source)
-            return;
         const items = [];
-        for (let i = 0; i < source.count; i++) {
+        for (let i = 0; source && i < source.count; i++) {
             const list = _normalize(i);
             items.push(list);
             for (const r of list)
                 rows.append(r);
         }
         _items = items;
+        rebuilding = false;
+        if (keep)
+            reshaped();
     }
 
     function _refresh(first, last) {
@@ -91,7 +104,7 @@ QtObject {
 
     function _inserted(first, last) {
         if (first !== _items.length) {
-            rebuild(); // only appends happen in practice
+            rebuild(true); // only appends happen in practice
             return;
         }
         for (let i = first; i <= last; i++) {
@@ -103,7 +116,7 @@ QtObject {
 
     onSourceChanged: rebuild()
     onKindChanged: rebuild()
-    onShowThinkingChanged: rebuild()
+    onShowThinkingChanged: rebuild(true)
     onUndoStatesChanged: _applyUndoStates()
 
     readonly property Connections _watch: Connections {
@@ -116,13 +129,13 @@ QtObject {
             root._refresh(topLeft.row, bottomRight.row);
         }
         function onRowsRemoved() {
-            root.rebuild();
+            root.rebuild(true);
         }
         function onModelReset() {
-            root.rebuild();
+            root.rebuild(true);
         }
         function onRowsMoved() {
-            root.rebuild();
+            root.rebuild(true);
         }
     }
 }
