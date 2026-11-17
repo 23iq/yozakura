@@ -104,6 +104,8 @@ Scope {
         sourceComponent: Component {
             DashboardView {
                 visible: false
+                // the host's frame fades and scales it (NotchAnimationBehavior)
+                ownMotion: false
                 screenName: root.screen ? root.screen.name : ""
             }
         }

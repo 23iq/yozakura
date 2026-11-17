@@ -85,7 +85,7 @@ h.singleton("qs.modules.services", "Visibilities", """QtObject {
 }""")
 VIEW = "Item { objectName: 'view'; focus: true; implicitWidth: 464; implicitHeight: 296; property string screenName }"
 h.module("qs.modules.widgets.launcher", {"LauncherView": VIEW})
-h.module("qs.modules.widgets.dashboard", {"DashboardView": VIEW.replace("464", "900")})
+h.module("qs.modules.widgets.dashboard", {"DashboardView": VIEW.replace("464", "900").replace("}", "; property bool ownMotion: true }")})
 h.module("qs.modules.keybinds", {"CheatsheetView": VIEW.replace("'view'", "'cheatsheet'")})
 
 h.copy("modules/shell/EdgeService.qml", "qs/modules/shell")

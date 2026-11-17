@@ -13,13 +13,20 @@ Item {
 
     // Shown (animated in) or hidden (animated out)
     property bool isVisible: false
+    // false: the host animates the view (the spotlight / side sheet frame
+    // fades and scales it): no motion of its own. Render-thread Animators
+    // there misfire: the view is first built off any window (WarmLoader)
+    // and then shown inside the frame's layer (its shadow), which does not
+    // see the animators' last frames, so it stayed half faded until
+    // something else repainted it.
+    property bool ownMotion: true
 
     readonly property int duration: Config.animDuration > 0 ? Config.animDuration : 0
     // Set the moment the view hides and held for the leave motion
     property bool leaving: false
 
-    scale: root.isVisible ? 1.0 : 0.8
-    opacity: root.isVisible ? 1.0 : 0.0
+    scale: root.isVisible || !root.ownMotion ? 1.0 : 0.8
+    opacity: root.isVisible || !root.ownMotion ? 1.0 : 0.0
     visible: root.isVisible || root.leaving
 
     onIsVisibleChanged: {
@@ -37,7 +44,7 @@ Item {
 
     Behavior on scale {
         // an Animator of duration 0 never writes its value back
-        enabled: root.duration > 0
+        enabled: root.duration > 0 && root.ownMotion
         ScaleAnimator {
             duration: root.duration
             easing.type: Motion.morph.easing
@@ -46,7 +53,7 @@ Item {
     }
 
     RenderFade on opacity {
-        duration: root.duration
+        duration: root.ownMotion ? root.duration : 0
         easingType: Motion.enter.easing
     }
 }

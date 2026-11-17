@@ -9,6 +9,8 @@ Item {
     implicitWidth: dashboardItem.implicitWidth
     implicitHeight: dashboardItem.implicitHeight
     property string screenName: ""
+    // false off the notch: the host (spotlight, side sheet) animates it
+    property bool ownMotion: true
 
     readonly property int leftPanelWidth: 270
 
@@ -17,6 +19,7 @@ Item {
         anchors.fill: parent
         leftPanelWidth: root.leftPanelWidth
         screenName: root.screenName
+        ownMotion: root.ownMotion
 
         Keys.onPressed: event => {
             if (event.key === Qt.Key_Escape) {
