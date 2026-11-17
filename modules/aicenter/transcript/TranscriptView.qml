@@ -41,11 +41,13 @@ Item {
     }
 
     // Scroll position per session (Ai.drafts), restored when switching back:
-    // the offset from the list origin (the origin moves when a recreated
-    // ListView estimates row heights), -1 = following the end.
+    // {index, offset} of the row at the top of the view, -1 = following the
+    // end. A row, not a pixel offset: a recreated ListView only estimates
+    // the heights of rows it has not built, so a pixel offset would land on
+    // much older messages of a long conversation.
     property string scrollKey: ""
     property bool restoringScroll: false
-    property real scrollPosition: -1
+    property var scrollPosition: -1
     function saveScroll() {
         if (root.inPreview)
             return;
@@ -62,12 +64,14 @@ Item {
         restoringScroll = true;
         Qt.callLater(() => {
             scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : -1;
-            if (scrollPosition < 0) {
+            const at = scrollPosition;
+            if (!at || typeof at !== "object" || !(at.index >= 0) || at.index >= list.count) {
+                scrollPosition = -1;
                 list.stick = true;
                 list.positionViewAtEnd();
             } else {
-                list.contentY = list.originY + scrollPosition;
-                list.stick = list.atYEnd;
+                list.stick = false;
+                list.showRow(at);
             }
             restoringScroll = false;
         });
@@ -104,16 +108,55 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         property bool stick: true
 
-        onMovementEnded: {
-            stick = atYEnd;
-            root.scrollPosition = stick ? -1 : contentY - originY;
+        // At the end, give or take a few px: positionViewAtEnd stops short
+        // of the bottom margin, where atYEnd is still false.
+        function nearEnd() {
+            return contentY + height >= originY + contentHeight + bottomMargin - Space.xl;
+        }
+        // the row at the top of the view and how far it is scrolled
+        function topRow() {
+            const i = indexAt(width / 2, contentY + topMargin);
+            const item = i >= 0 ? itemAtIndex(i) : null;
+            return item ? {
+                "index": i,
+                "offset": contentY - item.y
+            } : -1;
+        }
+        // A restored row stays at the top while the list builds the rows
+        // around it (their real heights shift it) until the user moves.
+        property var pinned: null
+        function showRow(at) {
+            pinned = at;
+            positionViewAtIndex(at.index, ListView.Beginning);
+            contentY += at.offset || 0;
+            unpin.restart();
+        }
+        function holdPin() {
+            const item = pinned && !moving ? itemAtIndex(pinned.index) : null;
+            if (item && Math.abs(contentY - item.y - (pinned.offset || 0)) > 0.5)
+                contentY = item.y + (pinned.offset || 0);
+        }
+        onOriginYChanged: holdPin()
+        onContentHeightChanged: {
+            holdPin();
+            follow();
+        }
+        onMovementStarted: pinned = null
+        Timer {
+            id: unpin
+            interval: 1500
+            onTriggered: list.pinned = null
+        }
+        function settle() {
+            stick = nearEnd();
+            root.scrollPosition = stick ? -1 : topRow();
             root.saveScroll();
         }
+        onMovementEnded: settle()
         function follow() {
             if (stick && BarLook.autoScroll && !root.restoringScroll)
                 Qt.callLater(positionViewAtEnd);
         }
-        onContentHeightChanged: follow()
         onCountChanged: follow()
 
         add: Transition {
@@ -140,6 +183,13 @@ Item {
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
+            // a drag of the bar is no flick: settle where it was let go
+            onPressedChanged: {
+                if (pressed)
+                    list.pinned = null;
+                else
+                    list.settle();
+            }
         }
     }
 }

@@ -103,7 +103,8 @@ QtObject {
             });
     }
 
-    // Offset from the transcript origin; -1 (never scrolled) = the end.
+    // {index, offset} of the transcript row at the top of the view (see
+    // TranscriptView); -1 (never scrolled, or following the end) = the end.
     function scroll(key) {
         return key in _scrolls ? _scrolls[key] : -1;
     }
