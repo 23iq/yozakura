@@ -6,6 +6,7 @@ import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components
 import qs.modules.settings.stages
 import qs.modules.extras
 import "../../extras/ExtrasModel.js" as ExtrasModel
@@ -86,11 +87,11 @@ FittedFrame {
                 Flow {
                     width: parent.width
                     // at most two whole lines of chips (a dense chip's height)
-                    readonly property real chipH: chips.count > 0 && chips.itemAt(0) ? chips.itemAt(0).height : Space.chip
+                    readonly property real chipH: chips.liveItemAt(0)?.height ?? Space.chip
                     height: Math.min(implicitHeight, chipH * 2 + spacing)
                     clip: true
                     spacing: Space.xs
-                    Repeater {
+                    LiveRepeater {
                         id: chips
                         model: page.installed
                         delegate: Chip {

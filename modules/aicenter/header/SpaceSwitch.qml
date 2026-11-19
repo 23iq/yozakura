@@ -40,7 +40,7 @@ StyledRect {
         id: highlight
         y: 3
         height: parent.height - 6
-        readonly property Item target: repeater.count > root.current ? repeater.itemAt(root.current) : null
+        readonly property Item target: repeater.liveItemAt(root.current)
         width: target ? target.width : 0
         x: 3 + (target ? target.x : 0)
         variant: "focus"
@@ -65,7 +65,7 @@ StyledRect {
         id: segments
         x: 3
         anchors.verticalCenter: parent.verticalCenter
-        Repeater {
+        LiveRepeater {
             id: repeater
             model: root.spaces
             delegate: Item {

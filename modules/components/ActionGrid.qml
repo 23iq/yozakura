@@ -98,12 +98,12 @@ FocusScope {
         // Highlight que se desplaza entre botones
         StyledRect {
             id: highlight
-            variant: (repeater.count > 0 && repeater.itemAt(root.currentIndex) && repeater.itemAt(root.currentIndex).actionModel.variant) ? repeater.itemAt(root.currentIndex).actionModel.variant : "primary"
+            variant: targetItem?.actionModel.variant || "primary"
             radius: Styling.radius(4)
             z: 0 // Por debajo de los botones
             visible: repeater.count > 0
 
-            property Item targetItem: repeater.count > 0 ? repeater.itemAt(root.currentIndex) : null
+            readonly property Item targetItem: repeater.liveItemAt(root.currentIndex)
 
             // Target values (geometry relative to container)
             property real tx: targetItem ? targetItem.x : 0
@@ -196,7 +196,7 @@ FocusScope {
             columnSpacing: root.spacing
             rowSpacing: root.spacing
 
-            Repeater {
+            LiveRepeater {
                 id: repeater
 
                 delegate: Item {

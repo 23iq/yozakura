@@ -9,6 +9,7 @@ import qs.modules.settings.controls
 import "../BarModules.js" as BarModules
 import "../Ui.js" as Ui
 import qs.modules.components.kit
+import qs.modules.components
 
 // Generic drag & drop editor of bar modules split in groups (the legacy
 // bar.layout editor and the panels editor use it). One MouseArea on top
@@ -44,7 +45,7 @@ Item {
     readonly property real rowHeight: {
         let h = 0;
         for (let i = 0; i < zoneRepeater.count; i++) {
-            const z = zoneRepeater.itemAt(i) as Zone;
+            const z = zoneRepeater.liveItemAt(i) as Zone;
             if (z)
                 h = Math.max(h, z.naturalHeight);
         }
@@ -232,7 +233,7 @@ Item {
             columns: root.columns
             spacing: Space.m
 
-            Repeater {
+            LiveRepeater {
                 id: zoneRepeater
                 model: root.groups
                 delegate: Zone {

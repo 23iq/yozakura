@@ -30,14 +30,14 @@ Item {
     readonly property real naturalWidth: {
         let w = Space.xs * 2;
         for (let i = 0; i < segments.count; i++) {
-            const s = segments.itemAt(i);
+            const s = segments.liveItemAt(i);
             if (s)
                 w += s.implicitWidth;
         }
         return Math.ceil(w);
     }
     readonly property int count: Array.isArray(root.model) ? root.model.length : 0
-    readonly property Item currentItem: segments.count > root.currentIndex && root.currentIndex >= 0 ? segments.itemAt(root.currentIndex) : null
+    readonly property Item currentItem: segments.liveItemAt(root.currentIndex)
 
     signal activated(int index)
 
@@ -67,14 +67,15 @@ Item {
         }
     }
 
-    // Where the current segment is: the pill glides there (off until the
-    // first layout, so nothing slides in from the start).
+    // Where the current segment is: the pill glides there (off until it has
+    // a segment on a shown window, so nothing slides in from the start, also
+    // when the delegates of an async-built view arrive late).
     Item {
         id: pill
         objectName: "segmentPill"
         property bool ready: false
         Timer {
-            running: true
+            running: !pill.ready && root.currentItem !== null && root.visible && root.Window.window !== null
             interval: 0
             onTriggered: pill.ready = true
         }
@@ -131,7 +132,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         height: root.height - Space.xs * 2
 
-        Repeater {
+        LiveRepeater {
             id: segments
             model: root.model
 

@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components
 import "PictureGrid.js" as PictureGrid
 
 // The one grid of single-choice pictures: a ChoiceCard per option (the
@@ -53,7 +54,7 @@ Item {
     readonly property real cardHeight: {
         let h = 0;
         for (let i = 0; i < cards.count; i++) {
-            const it = cards.itemAt(i);
+            const it = cards.liveItemAt(i);
             if (it)
                 h = Math.max(h, it.implicitHeight);
         }
@@ -65,7 +66,7 @@ Item {
 
     implicitHeight: root.rows > 0 ? root.rows * root.cardHeight + (root.rows - 1) * root.gap : 0
 
-    Repeater {
+    LiveRepeater {
         id: cards
         model: root.options
 

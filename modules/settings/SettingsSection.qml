@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components
 import qs.modules.settings.store
 import "Ui.js" as Ui
 import "SchemaUtil.js" as SchemaUtil
@@ -281,7 +282,7 @@ Card {
                         }
                         spacing: Space.m * 2
 
-                        Repeater {
+                        LiveRepeater {
                             id: lineRepeater
                             model: lineRow.line
                             delegate: rowDelegate
@@ -291,7 +292,7 @@ Card {
                             id: sideColumn
                             visible: lineRow.side.length > 0
                             // the pictures folded away: the whole line
-                            readonly property bool beside: lineRepeater.count > 0 && !!lineRepeater.itemAt(0) && lineRepeater.itemAt(0).visible
+                            readonly property bool beside: lineRepeater.liveItemAt(0)?.visible ?? false
                             width: Math.max(0, rowsColumn.width - (sideColumn.beside ? lineRow.picturesW + lineRow.spacing : 0))
                             function rowWidth(i) {
                                 return sideColumn.width;

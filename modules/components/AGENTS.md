@@ -41,6 +41,7 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 |-----------|------|
 | `GradientCache.qml` | **Singleton**. Shares GPU gradient textures across `StyledRect` instances |
 | `GradientCanvas.qml` | Canvas-based gradient renderer |
+| `LiveRepeater.qml` | Repeater with `liveItemAt(i)`, the reactive read for bindings: `itemAt()` notifies nothing and async-built views get their delegates after `count` |
 
 ## SURFACE EFFECTS (`surfaceeffects/`)
 `theme.surfaceEffect` (`none` | `crt` | `ink`) + `theme.surfaceEffectOptions`.

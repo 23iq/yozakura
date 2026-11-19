@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components
 import qs.modules.settings.store
 import qs.modules.settings
 import "../live/LiveKeys.js" as LiveKeys
@@ -61,7 +62,7 @@ Item {
     // past the first placement (later height changes ease)
     property bool ready: false
     readonly property bool covered: canvas.part === "desktop" || canvas.part === "lock"
-    readonly property Item current: loupes.count > 0 ? loupes.itemAt(canvas.parts.indexOf(canvas.part)) : null
+    readonly property Item current: loupes.liveItemAt(canvas.parts.indexOf(canvas.part))
     readonly property var loupe: (canvas.current as Loader)?.item ?? null
     // a part that is off has nothing to magnify (the canvas shows it gone)
     readonly property bool partOn: canvas.part === "dock" ? SettingsStore.get("dock.enabled") !== false : canvas.part === "island" ? SettingsStore.get("notch.enabled") !== false : true
@@ -175,7 +176,7 @@ Item {
 
     // every visited tab's stage, kept: the loupe under the canvas, or the
     // cover over it (desktop, lock screen); the current one fades in
-    Repeater {
+    LiveRepeater {
         id: loupes
         model: canvas.parts
         delegate: Loader {
