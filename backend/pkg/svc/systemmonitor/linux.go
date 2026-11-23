@@ -4,14 +4,12 @@ package systemmonitor
 
 import (
 	"context"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
-
-
-
 
 	"yozakura/backend/pkg/proc"
 )
@@ -34,13 +32,23 @@ func nvidiaQuery(pciID string) (usage float64, temp int) {
 	if err != nil {
 		return 0, -1
 	}
-	parts := strings.Split(strings.TrimSpace(string(out)), ",")
-	if len(parts) >= 2 {
-		u, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
-		t, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
-		return u, t
+	return parseNvidiaSmi(string(out))
+}
+
+// parseNvidiaSmi reads one "utilization, temperature" line from nvidia-smi.
+// Newer drivers report fractional degrees ("34.80"), so the temperature is
+// parsed as a float and rounded. -1 means the temperature is unknown.
+func parseNvidiaSmi(out string) (usage float64, temp int) {
+	parts := strings.Split(strings.TrimSpace(out), ",")
+	if len(parts) < 2 {
+		return 0, -1
 	}
-	return 0, -1
+	u, _ := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+	t, err := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+	if err != nil {
+		return u, -1
+	}
+	return u, int(math.Round(t))
 }
 
 func amdTemp(card string) int {
