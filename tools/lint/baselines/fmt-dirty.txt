@@ -19,7 +19,6 @@ backend/pkg/svc/powerprofile/service.go
 backend/pkg/svc/powerprofile/service_test.go
 backend/pkg/svc/preset/service_test.go
 backend/pkg/svc/recorder/service.go
-backend/pkg/svc/systemmonitor/linux.go
 backend/pkg/svc/systemmonitor/monitor.go
 backend/pkg/svc/systemmonitor/service.go
 backend/pkg/svc/weather/client.go
