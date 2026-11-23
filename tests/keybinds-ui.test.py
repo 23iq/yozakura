@@ -1,5 +1,5 @@
 """Keybinds UI, offscreen: keycap rendering, the settings editor (enable,
-record incl. Super, chips, mouse, conflicts kept + filter, the add dialog
+record incl. Super, held modifiers, mouse, conflicts kept + filter, the add dialog
 (keys, action search, app picker, group by action, Esc/Cancel), remove,
 reset, Advanced, search + empty state) and the cheatsheet panel (search,
 edit, Esc). Real modules/components,
@@ -191,11 +191,18 @@ check(ev(f"JSON.stringify([{tools}.modifiers, {tools}.key])") == '[["SUPER","SHI
 wait_until(lambda: find("keyCapture") is not None and h.eval(find("keyCapture"), "parent.recording") is False)
 check(h.eval(find("keyCapture"), "parent.recording") is False, "record mode ends on capture")
 
-# chips: the compositor grabs Super combos, so toggle it and press the key
+# a released modifier no longer counts; the recorder holds compositor binds off
 pad, recorder = recorder_start()
-h.eval(recorder, "toggleMod('SUPER', true)")
-key(pad, Qt.Key_F5, Qt.NoModifier)
-check(ev(f"JSON.stringify([{tools}.modifiers, {tools}.key])") == '[["SUPER"],"F5"]', "chip Super + F5")
+check(ev("KeybindsStore.recorders") == 1, "recording holds the compositor binds off")
+check(find("keyName") is None, "no typed key name, only a press")
+key(pad, Qt.Key_Control, Qt.ControlModifier)
+key(pad, Qt.Key_Control, Qt.NoModifier, release=True)
+check(h.eval(recorder, "draftMods.length") == 0 and h.eval(recorder, "recording") is True,
+      "a released Ctrl is dropped and records nothing")
+key(pad, Qt.Key_Alt, Qt.AltModifier)
+key(pad, Qt.Key_F5, Qt.AltModifier)
+check(ev(f"JSON.stringify([{tools}.modifiers, {tools}.key])") == '[["ALT"],"F5"]', "Alt + F5")
+check(ev("KeybindsStore.recorders") == 0, "compositor binds back once recorded")
 
 # shifted symbols record the unshifted key
 pad, recorder = recorder_start()
@@ -244,14 +251,6 @@ check(h.eval(note, "visible") is True and "Terminal" in h.eval(note, "text"), "t
 clash = ev('w.findItem("clashNote", w.findItem("keybindRow:custom:0"))')
 check(h.eval(clash, "visible") is True and "kept" in h.eval(clash, "text"),
       f"the editor warns and says both are kept ({h.eval(clash, 'text')})")
-# while recording, a typed key name is checked live
-pad = find("keyCapture")
-rec = h.eval(pad, "parent")
-h.eval(rec, "start(); toggleMod('SUPER', true)")
-h.eval(ev('w.findItem("keyName", w.findItem("keybindRow:custom:0"))'), "text = 'S'")
-check("Take a screenshot" not in (h.eval(rec, "draftClashText") or "")
-      and "Open tools" in (h.eval(rec, "draftClashText") or ""), f"live clash: {h.eval(rec, 'draftClashText')}")
-h.eval(rec, "cancel()")
 # the toolbar chip lists only the conflicting binds
 ev("KeybindsStore.conflictFilter = true")
 settle()

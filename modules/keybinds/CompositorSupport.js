@@ -4,12 +4,6 @@
 // What the running compositor can and cannot do with binds, and the notes
 // the editor shows for binds it left out (pure; tests/keybinds-support.test.cjs).
 
-// Recording holds the compositor's binds off through a submap (see
-// KeybindsStore): only Hyprland has one the shell can enter.
-function canSuppress(compositor) {
-    return compositor === "hyprland";
-}
-
 // Native (non-shell) binds: hyprctl on Hyprland, `yozd config list-binds`
 // (the compositor's config files) on niri and MangoWC.
 function nativeSource(compositor) {

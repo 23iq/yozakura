@@ -42,6 +42,7 @@ src = (REPO / rel).read_text()
 item = src.replace("FloatingWindow {", "Item {\n    property var screen\n    property size minimumSize\n    property string title\n    property color color", 1)
 h.copy(rel, "app", replace={src: item}, siblings=False)
 h.stub("SettingsShell", "Item {}", "app")
+h.stub("RecordInhibitor", "QtObject { property var window }", "app")
 
 root = h.load("""import QtQuick
 import QtQuick.Window

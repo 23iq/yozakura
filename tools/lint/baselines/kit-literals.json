@@ -112,8 +112,8 @@
   "rectangle": 5
  },
  "modules/settings/editors/keybinds": {
-  "rectangle": 15,
-  "text": 3
+  "rectangle": 14,
+  "text": 2
  },
  "modules/settings/editors/specials": {
   "rectangle": 7

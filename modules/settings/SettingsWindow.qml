@@ -26,6 +26,11 @@ FloatingWindow {
     visible: GlobalStates.settingsWindowVisible && !_parked
     property bool _parked: false
 
+    // A shortcut being recorded reaches the window, not the compositor's binds.
+    RecordInhibitor {
+        window: settingsWindow
+    }
+
     color: "transparent"
 
     // The output, set once by the shell's Loader as an initial property

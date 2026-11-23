@@ -46,7 +46,6 @@ Singleton {
     readonly property string compositor: YozdService.compositorName
     // Recording needs the empty submap only Hyprland offers: elsewhere the
     // recorder cannot keep the compositor from running the pressed combo.
-    readonly property bool canRecord: CompositorSupport.canSuppress(root.compositor) || root.compositor === ""
     readonly property var nativeBinds: BindModel.nativeBinds(hyprBinds, rows)
     readonly property var conflicts: BindModel.findConflicts(rows, nativeBinds)
     readonly property int conflictCount: Object.keys(conflicts).length
@@ -400,7 +399,9 @@ Singleton {
     // --- Recording: compositor binds held off --------------------------------
     // While a recorder records, Hyprland sits in yozd's empty submap
     // (<app>-record, Ctrl+Alt+Escape leaves it), so every combo reaches the
-    // recorder instead of firing the bind it already has.
+    // recorder instead of firing the bind it already has. Other compositors
+    // honour keyboard-shortcuts-inhibit on the Settings window while
+    // recorders > 0 (modules/settings/RecordInhibitor.qml).
 
     readonly property string recordSubmap: BrandActions.appId + "-record"
     property int recorders: 0

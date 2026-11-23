@@ -12,15 +12,15 @@ import "../../../keybinds/KeyNames.js" as KeyNames
 import "../../../keybinds/BindModel.js" as BindModel
 import qs.modules.components.kit
 
-// One key combo of a bind with a "record" mode: a focused capture pad takes
-// the next key press (held modifiers count, a lone Super press records
-// Super), a mouse button or the wheel (with a modifier). The compositor
-// keeps combos it already binds, so the modifier chips can be toggled by
-// hand and the key typed by name (also for XF86 keys and switches).
-// While recording, the compositor's binds are held off (KeybindsStore), so
-// combos it already binds (Super+E, a lone Super) reach the pad too.
-// A combo another bind (or the compositor) already uses is marked, live
-// while typing a key name too, but always saved: both binds are kept.
+// One key combo of a bind with a "record" mode: Record focuses a capture
+// pad that takes the next combo pressed on the keyboard (held modifiers
+// count, a lone Super press records Super), or a mouse button / the wheel
+// with a modifier held. While recording, the compositor's own binds are held
+// off so combos it already binds (Super+E, a lone Super) reach the pad too:
+// Hyprland through an empty submap (KeybindsStore), every compositor through
+// keyboard-shortcuts-inhibit on the Settings window (RecordInhibitor).
+// A combo another bind (or the compositor) already uses is marked, but
+// always saved: both binds are kept.
 ColumnLayout {
     id: root
 
@@ -35,31 +35,20 @@ ColumnLayout {
     signal removed
 
     property bool recording: false
-    // Compositors that cannot pause their own binds (niri, MangoWC): the
-    // pressed combo would run its bind, so the key is typed instead.
-    readonly property bool manualOnly: !KeybindsStore.canRecord
-    property string keyError: ""
-    property var chipMods: []
+    // the modifiers held down so far while recording
+    property var heldMods: []
     property bool sawKey: false
 
-    readonly property var draftMods: KeyNames.normalizeMods(chipMods)
-    // the keys so far while recording (the held / toggled modifiers and a
-    // typed key name), shared through KeybindsStore.recordingDraft
+    readonly property var draftMods: KeyNames.normalizeMods(heldMods)
+    // the keys so far while recording, shared through KeybindsStore.recordingDraft
     readonly property var draft: recording ? ({
             "modifiers": draftMods,
-            "key": keyName.text.trim()
+            "key": ""
         }) : null
     onDraftChanged: KeybindsStore.recordingDraft = draft
     readonly property var clashRows: BindModel.rowsUsing(KeybindsStore.rows, combo.modifiers, combo.key, exceptUid)
     readonly property var clashNative: nativeUsing(combo.modifiers, combo.key)
     readonly property string clashText: clashList(clashRows, clashNative)
-    // While recording: the modifiers held/toggled + the key name typed.
-    readonly property string draftClashText: {
-        const key = keyName.text.trim();
-        if (!recording || !key)
-            return "";
-        return clashList(BindModel.rowsUsing(KeybindsStore.rows, draftMods, key, exceptUid), nativeUsing(draftMods, key));
-    }
 
     function nativeUsing(mods, key) {
         const id = KeyNames.comboId(mods, key);
@@ -73,15 +62,10 @@ ColumnLayout {
     spacing: Space.s
 
     function start() {
-        chipMods = [];
+        heldMods = [];
         sawKey = false;
-        keyName.text = "";
-        keyError = "";
         recording = true;
-        if (manualOnly)
-            keyName.forceActiveFocus();
-        else
-            pad.forceActiveFocus();
+        pad.forceActiveFocus();
     }
 
     function cancel() {
@@ -97,32 +81,20 @@ ColumnLayout {
             });
     }
 
-    // The typed key name ("e", "Super+Shift+E", "enter") normalized, or an error.
-    function commitTyped() {
-        const parsed = KeyNames.parseKeyText(keyName.text, root.chipMods);
-        if (parsed.error) {
-            keyError = I18n.t("binds.key_invalid");
-            return;
-        }
-        keyError = "";
-        commit(parsed.mods, parsed.key);
-    }
-
-    function toggleMod(mod, on) {
-        const rest = chipMods.filter(m => m !== mod);
-        chipMods = on ? rest.concat([mod]) : rest;
+    function holdMod(mod, on) {
+        const rest = heldMods.filter(m => m !== mod);
+        heldMods = on ? rest.concat([mod]) : rest;
     }
 
     Component.onCompleted: if (autoStart)
         Qt.callLater(start)
 
-    onRecordingChanged: if (!manualOnly)
-        KeybindsStore.holdCompositorBinds(recording)
+    onRecordingChanged: KeybindsStore.holdCompositorBinds(recording)
     Component.onDestruction: {
-        if (recording && !manualOnly)
+        if (recording) {
             KeybindsStore.holdCompositorBinds(false);
-        if (recording)
             KeybindsStore.recordingDraft = null;
+        }
     }
 
     Connections {
@@ -150,8 +122,8 @@ ColumnLayout {
         }
         PillButton {
             objectName: "keyRecord"
-            icon: root.manualOnly ? "keyboard" : "record"
-            text: root.manualOnly ? I18n.t("binds.set_key") : I18n.t("binds.record")
+            icon: "record"
+            text: I18n.t("binds.record")
             onClicked: root.start()
         }
         PillButton {
@@ -169,10 +141,9 @@ ColumnLayout {
         objectName: "clashNote"
         role: "caption"
         Layout.fillWidth: true
-        readonly property string list: root.recording ? root.draftClashText : root.clashText
-        visible: list !== ""
+        visible: !root.recording && root.clashText !== ""
         wrapMode: Text.Wrap
-        text: I18n.t("binds.also_used_by", list) + ". " + I18n.t(KeybindsStore.compositor === "niri" ? "binds.conflict_first_wins" : "binds.conflict_kept")
+        text: I18n.t("binds.also_used_by", root.clashText) + ". " + I18n.t(KeybindsStore.compositor === "niri" ? "binds.conflict_first_wins" : "binds.conflict_kept")
         color: Colors.error
     }
 
@@ -181,9 +152,9 @@ ColumnLayout {
         id: pad
         objectName: "keyCapture"
         Layout.fillWidth: true
-        visible: root.recording && !root.manualOnly
+        visible: root.recording
         implicitHeight: Math.round(Styling.fontSize(0) * 4.2)
-        focus: root.recording && !root.manualOnly
+        focus: root.recording
 
         // The settings window's own shortcuts (Ctrl+S, Ctrl+Tab, ...) must
         // not fire while a combo is being captured.
@@ -193,11 +164,11 @@ ColumnLayout {
             event.accepted = true;
             const mod = KeyNames.qtModifierKey(event.key);
             if (mod) {
-                root.toggleMod(mod, true);
+                root.holdMod(mod, true);
                 return;
             }
             const held = KeyNames.modsFromQt(event.modifiers);
-            if (event.key === Qt.Key_Escape && held.length === 0 && root.chipMods.length === 0) {
+            if (event.key === Qt.Key_Escape && held.length === 0) {
                 root.cancel();
                 return;
             }
@@ -205,13 +176,18 @@ ColumnLayout {
             if (!key)
                 return;
             root.sawKey = true;
-            root.commit(root.chipMods.concat(held), key);
+            root.commit(root.heldMods.concat(held), key);
         }
         Keys.onReleased: event => {
             event.accepted = true;
+            const mod = KeyNames.qtModifierKey(event.key);
+            if (!mod)
+                return;
             // A lone Super press binds Super itself (like the launcher).
-            if (KeyNames.qtModifierKey(event.key) === "SUPER" && !root.sawKey && root.draftMods.length === 1)
+            if (mod === "SUPER" && !root.sawKey && root.draftMods.length === 1 && root.draftMods[0] === "SUPER")
                 root.commit(["SUPER"], "Super_L");
+            else
+                root.holdMod(mod, false);
         }
 
         Rectangle {
@@ -239,13 +215,13 @@ ColumnLayout {
             acceptedButtons: Qt.AllButtons
             onPressed: mouse => {
                 pad.forceActiveFocus();
-                const held = KeyNames.modsFromQt(mouse.modifiers).concat(root.chipMods);
+                const held = KeyNames.modsFromQt(mouse.modifiers).concat(root.heldMods);
                 const key = KeyNames.mouseKey(mouse.button);
                 if (key && held.length > 0)
                     root.commit(held, key);
             }
             onWheel: wheel => {
-                const held = KeyNames.modsFromQt(wheel.modifiers).concat(root.chipMods);
+                const held = KeyNames.modsFromQt(wheel.modifiers).concat(root.heldMods);
                 if (held.length > 0)
                     root.commit(held, wheel.angleDelta.y > 0 ? "mouse_up" : "mouse_down");
             }
@@ -272,85 +248,23 @@ ColumnLayout {
         }
     }
 
-    // Recording: modifier chips, key by name, cancel
-    Flow {
+    // Recording: the note and Cancel
+    RowLayout {
         Layout.fillWidth: true
         visible: root.recording
-        spacing: Space.s
+        spacing: Space.m
 
-        Repeater {
-            model: KeyNames.MOD_ORDER
-            delegate: ChipToggle {
-                required property string modelData
-                text: KeyNames.modcap(modelData).kind === "super" ? I18n.t("binds.mod_super") : KeyNames.modcap(modelData).text
-                checked: root.draftMods.indexOf(modelData) !== -1
-                onToggled: v => {
-                    root.toggleMod(modelData, v);
-                    pad.forceActiveFocus();
-                }
-            }
+        KitText {
+            role: "caption"
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: KeybindsStore.compositor === "hyprland" ? I18n.t("binds.record_super_note") : I18n.t("binds.record_paused_note")
+            color: Colors.overSurfaceVariant
         }
-
-        Item {
-            width: 160
-            height: 30
-            Rectangle {
-                anchors.fill: parent
-                radius: height / 2
-                color: Ui.alpha(Colors.overBackground, 0.06)
-                border.width: keyName.activeFocus ? 2 : 1
-                border.color: keyName.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
-            }
-            TextInput {
-                id: keyName
-                objectName: "keyName"
-                anchors.fill: parent
-                anchors.leftMargin: Space.m
-                anchors.rightMargin: Space.m
-                verticalAlignment: TextInput.AlignVCenter
-                clip: true
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overBackground
-                onAccepted: root.commitTyped()
-                onTextChanged: root.keyError = ""
-                Keys.onShortcutOverride: event => event.accepted = true
-                Keys.onEscapePressed: root.cancel()
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: parent.text === ""
-                    text: I18n.t("binds.key_placeholder")
-                    font: parent.font
-                    color: Colors.outline
-                    elide: Text.ElideRight
-                    width: parent.width
-                }
-            }
-        }
-
         PillButton {
             kind: "ghost"
             text: I18n.t("binds.cancel")
             onClicked: root.cancel()
         }
-    }
-
-    KitText {
-        objectName: "keyError"
-        role: "caption"
-        Layout.fillWidth: true
-        visible: root.recording && root.keyError !== ""
-        wrapMode: Text.Wrap
-        text: root.keyError
-        color: Colors.error
-    }
-
-    KitText {
-        role: "caption"
-        Layout.fillWidth: true
-        visible: root.recording
-        wrapMode: Text.Wrap
-        text: root.manualOnly ? I18n.t("binds.record_manual_note") : I18n.t("binds.record_super_note")
-        color: Colors.overSurfaceVariant
     }
 }
